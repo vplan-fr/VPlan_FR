@@ -11,6 +11,8 @@ def group_forms(forms: list[str]) -> list[list[str]]:
             cur_group = [elem for elem in klassen if elem.split("/")[0] == cur_klasse.split("/")[0]]
         elif "-" in cur_klasse:
             cur_group = [elem for elem in klassen if elem.split("-")[0] == cur_klasse.split("-")[0]]
+        elif "." in cur_klasse:
+            cur_group = [elem for elem in klassen if elem.split(".")[0] == cur_klasse.split(".")[0]]
         elif cur_klasse.isdigit():
             cur_group = [elem for elem in klassen if elem.isdigit()]
         elif not cur_klasse[0].isdigit():

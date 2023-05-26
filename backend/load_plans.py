@@ -102,15 +102,21 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
+    VERSION = "1"
+
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
         self.cache = cache
 
         self._logger = logging.getLogger(f"{__name__}-{client.school_number}")
 
-    async def update(self):
+    async def update_fetch(self):
         self._logger.debug("Checking for new plans...")
         plan_files = await self.client.fetch_dates_indiware_mobil()  # requests vpdir.php
+
+        await self.update(plan_files)
+
+    async def update(self, plan_files: dict[str, datetime.datetime]):
         needs_meta_update = False
 
         for filename, timestamp in plan_files.items():
@@ -122,25 +128,34 @@ class PlanCrawler:
             date = datetime.datetime.strptime(filename, "PlanKl%Y%m%d.xml").date()
 
             # check if plan is already cached
-            if self.cache.is_cached(date, timestamp, cache_filename):
-                continue
+            if self.cache.is_cached(date, timestamp, ".processed"):
+                if self.cache.get_plan_file(date, timestamp, ".processed") == self.VERSION:
+                    continue
+
+                self._logger.info(f" * Reprocessing plan for {date} for new version...")
+
+                plan = self.cache.get_plan_file(date, timestamp, cache_filename)
+            else:
+                self._logger.info(f" * Downloading plan for {date}...")
+
+                # download plan
+                plan = await self.client.fetch_indiware_mobil(filename)
+
+                self.cache.store_plan_file(date, timestamp, plan, cache_filename)
+                self.cache.set_newest(date, timestamp)
 
             needs_meta_update = True
-            self._logger.info(f"Processing plan for {date}...")
-
-            # download plan
-            plan = await self.client.fetch_indiware_mobil(filename)
-
-            self.cache.store_plan_file(date, timestamp, plan, cache_filename)
-
             self.process_plan(date, timestamp, plan)
 
         if needs_meta_update:
+            self._logger.info(" -> Updating meta data...")
             self.update_meta()
+
+        self._logger.debug("...Done.")
 
     async def check_infinite(self, interval: int = 30):
         while True:
-            await self.update()
+            await self.update_fetch()
 
             await asyncio.sleep(interval)
 
@@ -163,17 +178,11 @@ class PlanCrawler:
 
         self.cache.store_plan_file(
             date, timestamp,
-            json.dumps(plan_extractor.room_plan(), default=models.Lesson.to_json), "room_plan.json"
-        )
-
-        self.cache.store_plan_file(
-            date, timestamp,
-            json.dumps(plan_extractor.teacher_plan(), default=models.Lesson.to_json), "teacher_plan.json"
-        )
-
-        self.cache.store_plan_file(
-            date, timestamp,
-            json.dumps(plan_extractor.form_plan(), default=models.Lesson.to_json), "form_plan.json"
+            json.dumps({
+                "room_plan": plan_extractor.room_plan(),
+                "teacher_plan": plan_extractor.teacher_plan(),
+                "form_plan": plan_extractor.form_plan()}, default=models.Lesson.to_json),
+            "plans.json"
         )
 
         all_rooms = set(MetaExtractor(self.cache).rooms())
@@ -185,10 +194,11 @@ class PlanCrawler:
 
         self.cache.store_plan_file(
             date, timestamp,
-            json.dumps(rooms_data, default=list), "rooms.json"
+            json.dumps(rooms_data, default=list),
+            "rooms.json"
         )
 
-        self.cache.set_newest(date, timestamp)
+        self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")
 
 
 @dataclasses.dataclass
@@ -351,7 +361,7 @@ class PlanExtractor:
         return self.plan.group_by("room")
 
     def teacher_plan(self):
-        return self.plan.group_by("teacher")
+        return self.plan.group_by("current_teacher")
 
     def form_plan(self):
         return self.plan.group_by("form_name")
