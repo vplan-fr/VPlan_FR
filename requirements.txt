@@ -1,0 +1,1 @@
+git+https://github.com/Belissimo-T/stundenplan24-wrapper
