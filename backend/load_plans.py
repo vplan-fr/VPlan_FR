@@ -110,9 +110,13 @@ class PlanCrawler:
 
         self._logger = logging.getLogger(f"{__name__}-{client.school_number}")
 
-    async def update(self):
+    async def update_fetch(self):
         self._logger.debug("Checking for new plans...")
         plan_files = await self.client.fetch_dates_indiware_mobil()  # requests vpdir.php
+
+        await self.update(plan_files)
+
+    async def update(self, plan_files: dict[str, datetime.datetime]):
         needs_meta_update = False
 
         for filename, timestamp in plan_files.items():
@@ -151,7 +155,7 @@ class PlanCrawler:
 
     async def check_infinite(self, interval: int = 30):
         while True:
-            await self.update()
+            await self.update_fetch()
 
             await asyncio.sleep(interval)
 
