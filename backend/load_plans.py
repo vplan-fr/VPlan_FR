@@ -102,6 +102,8 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
+    VERSION = "1"
+
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
         self.cache = cache
@@ -123,18 +125,23 @@ class PlanCrawler:
 
             # check if plan is already cached
             if self.cache.is_cached(date, timestamp, ".processed"):
-                continue
+                if self.cache.get_plan_file(date, timestamp, ".processed") == self.VERSION:
+                    continue
+
+                self._logger.info(f" * Reprocessing plan for {date} for new version...")
+
+                plan = self.cache.get_plan_file(date, timestamp, cache_filename)
+            else:
+                self._logger.info(f" * Downloading plan for {date}...")
+
+                # download plan
+                plan = await self.client.fetch_indiware_mobil(filename)
+
+                self.cache.store_plan_file(date, timestamp, plan, cache_filename)
+                self.cache.set_newest(date, timestamp)
 
             needs_meta_update = True
-            self._logger.info(f" * Processing plan for {date}...")
-
-            # download plan
-            plan = await self.client.fetch_indiware_mobil(filename)
-
-            self.cache.store_plan_file(date, timestamp, plan, cache_filename)
-
             self.process_plan(date, timestamp, plan)
-            self.cache.set_newest(date, timestamp)
 
         if needs_meta_update:
             self._logger.info(" -> Updating meta data...")
@@ -187,7 +194,7 @@ class PlanCrawler:
             "rooms.json"
         )
 
-        self.cache.store_plan_file(date, timestamp, "", ".processed")
+        self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")
 
 
 @dataclasses.dataclass
