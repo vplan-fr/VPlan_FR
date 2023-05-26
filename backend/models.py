@@ -11,11 +11,12 @@ from stundenplan24_py import indiware_mobil
 @dataclasses.dataclass
 class Lesson:
     form_name: str
-    # subject_name: str
-    subject: str
-    course_id: str
+    current_subject: str
+    current_teacher: str
+    class_subject: str
+    class_group: str
+    class_teacher: str
     room: list[str]
-    teacher: str
     period: int
     info: str
 
@@ -31,16 +32,17 @@ class Lesson:
             "form": self.form_name,
             "period": self.period,
             "room": self.room,
-            "subject": self.subject,
-            # "subject_name": self.subject_name,
+            "current_subject": self.current_subject,
+            "current_teacher": self.current_teacher,
+            "class_subject": self.class_subject,
+            "class_group": self.class_group,
+            "class_teacher": self.class_teacher,
             "info": self.info,
-            "teacher": self.teacher,
             "subject_changed": self.subject_changed,
             "teacher_changed": self.teacher_changed,
             "room_changed": self.room_changed,
             "begin": self.begin.isoformat() if self.begin else None,
-            "end": self.end.isoformat() if self.end else None,
-            "course_id": self.course_id
+            "end": self.end.isoformat() if self.end else None
         }
 
 
@@ -89,10 +91,12 @@ class Plan:
             for lesson in form.lessons:
                 lessons.append(Lesson(
                     form_name=form.short_name,
-                    subject=lesson.subject(),
-                    course_id=lesson.number,
+                    class_subject=form.classes[lesson.class_number].subject if lesson.class_number else None,
+                    class_group=form.classes[lesson.class_number].group if lesson.class_number else None,
+                    class_teacher=form.classes[lesson.class_number].teacher if lesson.class_number else None,
+                    current_subject=lesson.subject(),
+                    current_teacher=lesson.teacher(),
                     room=lesson.room().split(" ") if lesson.room() else [],
-                    teacher=lesson.teacher(),
                     period=lesson.period,
                     info=lesson.information,
                     subject_changed=lesson.subject.was_changed,
