@@ -13,7 +13,7 @@ class Lesson:
     form_name: str
     # subject_name: str
     subject: str
-    course_id: int
+    course_id: str
     room: list[str]
     teacher: str
     period: int
