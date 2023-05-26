@@ -122,11 +122,11 @@ class PlanCrawler:
             date = datetime.datetime.strptime(filename, "PlanKl%Y%m%d.xml").date()
 
             # check if plan is already cached
-            if self.cache.is_cached(date, timestamp, cache_filename):
+            if self.cache.is_cached(date, timestamp, ".processed"):
                 continue
 
             needs_meta_update = True
-            self._logger.info(f"Processing plan for {date}...")
+            self._logger.info(f" * Processing plan for {date}...")
 
             # download plan
             plan = await self.client.fetch_indiware_mobil(filename)
@@ -134,9 +134,13 @@ class PlanCrawler:
             self.cache.store_plan_file(date, timestamp, plan, cache_filename)
 
             self.process_plan(date, timestamp, plan)
+            self.cache.set_newest(date, timestamp)
 
         if needs_meta_update:
+            self._logger.info(" -> Updating meta data...")
             self.update_meta()
+
+        self._logger.debug("...Done.")
 
     async def check_infinite(self, interval: int = 30):
         while True:
@@ -167,7 +171,7 @@ class PlanCrawler:
                 "room_plan": plan_extractor.room_plan(),
                 "teacher_plan": plan_extractor.teacher_plan(),
                 "form_plan": plan_extractor.form_plan()}, default=models.Lesson.to_json),
-                "plans.json"
+            "plans.json"
         )
 
         all_rooms = set(MetaExtractor(self.cache).rooms())
@@ -183,7 +187,7 @@ class PlanCrawler:
             "rooms.json"
         )
 
-        self.cache.set_newest(date, timestamp)
+        self.cache.store_plan_file(date, timestamp, "", ".processed")
 
 
 @dataclasses.dataclass
