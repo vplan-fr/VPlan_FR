@@ -106,7 +106,7 @@ class PlanCrawler:
         self.client = client
         self.cache = cache
 
-        self._logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger(f"{__name__}-{client.school_number}")
 
     async def update(self):
         self._logger.debug("Checking for new plans...")
@@ -397,28 +397,34 @@ async def main():
     logging.basicConfig(level=logging.DEBUG)
 
     # parse credentials
-    with open("../creds.json", "r", encoding="utf-8") as f:
+    with open("creds.json", "r", encoding="utf-8") as f:
         _creds = json.load(f)
 
-    school_creds_data = _creds["10001329"]
+    clients = []
 
-    creds = Stundenplan24Credentials(
-        school_creds_data["username"],
-        school_creds_data["password"]
+    for school_number, creds_data in _creds.items():
+        creds = Stundenplan24Credentials(
+            creds_data["username"],
+            creds_data["password"]
+        )
+
+        # create client
+        client = Stundenplan24Client(
+            school_number=creds_data["school_number"],
+            credentials=creds,
+            base_url=creds_data["api_server"]
+        )
+
+        cache = Cache(Path(f".cache/{school_number}").absolute())
+
+        # create crawler
+        p = PlanCrawler(client, cache)
+
+        clients.append(p)
+
+    await asyncio.gather(
+        *[client.check_infinite() for client in clients]
     )
-
-    # create client
-    client = Stundenplan24Client(
-        school_number=school_creds_data["school_number"],
-        credentials=creds,
-        base_url=school_creds_data["api_server"]
-    )
-
-    cache = Cache(Path(".cache").absolute())
-
-    # create crawler
-    p = PlanCrawler(client, cache)
-    await p.check_infinite()
 
 
 if __name__ == "__main__":
