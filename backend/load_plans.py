@@ -163,17 +163,11 @@ class PlanCrawler:
 
         self.cache.store_plan_file(
             date, timestamp,
-            json.dumps(plan_extractor.room_plan(), default=models.Lesson.to_json), "room_plan.json"
-        )
-
-        self.cache.store_plan_file(
-            date, timestamp,
-            json.dumps(plan_extractor.teacher_plan(), default=models.Lesson.to_json), "teacher_plan.json"
-        )
-
-        self.cache.store_plan_file(
-            date, timestamp,
-            json.dumps(plan_extractor.form_plan(), default=models.Lesson.to_json), "form_plan.json"
+            json.dumps({
+                "room_plan": plan_extractor.room_plan(),
+                "teacher_plan": plan_extractor.teacher_plan(),
+                "form_plan": plan_extractor.form_plan()}, default=models.Lesson.to_json),
+                "plans.json"
         )
 
         all_rooms = set(MetaExtractor(self.cache).rooms())
@@ -185,7 +179,8 @@ class PlanCrawler:
 
         self.cache.store_plan_file(
             date, timestamp,
-            json.dumps(rooms_data, default=list), "rooms.json"
+            json.dumps(rooms_data, default=list),
+            "rooms.json"
         )
 
         self.cache.set_newest(date, timestamp)
