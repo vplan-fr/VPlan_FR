@@ -135,7 +135,7 @@ class PlanCrawler:
 
             self.process_plan(date, timestamp, plan)
 
-        if needs_meta_update or 1:
+        if needs_meta_update:
             self.update_meta()
 
     async def check_infinite(self, interval: int = 30):
