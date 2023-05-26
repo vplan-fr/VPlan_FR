@@ -351,7 +351,7 @@ class PlanExtractor:
         return self.plan.group_by("room")
 
     def teacher_plan(self):
-        return self.plan.group_by("teacher")
+        return self.plan.group_by("current_teacher")
 
     def form_plan(self):
         return self.plan.group_by("form_name")
