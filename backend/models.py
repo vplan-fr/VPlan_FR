@@ -91,9 +91,15 @@ class Plan:
             for lesson in form.lessons:
                 lessons.append(Lesson(
                     form_name=form.short_name,
-                    class_subject=form.classes[lesson.class_number].subject if lesson.class_number else None,
-                    class_group=form.classes[lesson.class_number].group if lesson.class_number else None,
-                    class_teacher=form.classes[lesson.class_number].teacher if lesson.class_number else None,
+                    class_subject=(
+                        form.classes[lesson.class_number].subject if lesson.class_number in form.classes else None
+                    ),
+                    class_group=(
+                        form.classes[lesson.class_number].group if lesson.class_number in form.classes else None
+                    ),
+                    class_teacher=(
+                        form.classes[lesson.class_number].teacher if lesson.class_number in form.classes else None
+                    ),
                     current_subject=lesson.subject(),
                     current_teacher=lesson.teacher(),
                     room=lesson.room().split(" ") if lesson.room() else [],
