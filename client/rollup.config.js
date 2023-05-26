@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import svelte from 'rollup-plugin-svelte';
+import sveltePreprocess from 'svelte-preprocess';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
 import resolve from '@rollup/plugin-node-resolve';
@@ -39,9 +40,13 @@ export default {
 	},
 	plugins: [
 		svelte({
+            preprocess: sveltePreprocess(),
 			compilerOptions: {
 				// enable run-time checks when not in production
-				dev: !production
+				dev: !production,
+                css: css => {
+                    css.write('public/bundle.css')
+                },
 			}
 		}),
 		// we'll extract any component CSS out into
