@@ -23,20 +23,13 @@ def home(path):
 
 # PLAN JSON API
 
-@app.route(f"{API_BASE_URL}/dates")
-def dates(school_num):
-    if school_num not in VALID_SCHOOLS:
-        return {"error": "school not in database"}
-    with open(f".cache/{school_num}/meta.json", "r") as f:
-        return jsonify(json.load(f)["dates"])
-
-
 @app.route(f"{API_BASE_URL}/meta")
 def meta(school_num):
     if school_num not in VALID_SCHOOLS:
         return {"error": "school not in database"}
     with open(f".cache/{school_num}/meta.json", "r") as f:
-        return jsonify(json.load(f))
+        data = json.load(f)
+        return jsonify(data)
 
 
 @app.route(f"{API_BASE_URL}/plan")

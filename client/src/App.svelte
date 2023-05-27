@@ -1,29 +1,63 @@
 <script>
-	export let name;
-    let lessons = [
-    ]
-    function load_lessons(school_num, date, plan_type, entity) {
-        fetch(`./api/v69.420/${school_num}/plan?date=${date}`)
+  import { get } from "svelte/store";
+
+    let name = "_qRtrenH&5367";
+    let school_num = "10001329";
+    const api_base = `./api/v69.420/${school_num}`;
+    let meta;
+    let lessons;
+    let title = "";
+    function get_meta() {
+        fetch(`${api_base}/meta`)
             .then(response => response.json())
             .then(data => {
-                lessons = data["plans"][plan_type + "_plan"][entity];
-                console.log(lessons);
+                meta = data;
+                console.log(meta);
             })
             .catch(error => {
                 console.error(error);
         });
     }
-    load_lessons("10001329", "2023-05-22", "form", "JG12");
-    console.log(lessons)
+    function load_lessons(date, plan_type, entity) {
+        title = `${plan_type}-plan for ${plan_type} ${entity}`
+        fetch(`${api_base}/plan?date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                lessons = data["plans"][plan_type + "_plan"][entity];
+            })
+            .catch(error => {
+                console.error(error);
+        });
+    }
+    get_meta();
+    console.log(meta);
+    load_lessons("2023-05-22", "form", "JG12");
+    console.log(lessons);
 </script>
 
 <main>
 	<h1>Hello {name}!</h1>
+    <input id="inp_school_num" type="text" bind:value={school_num}>
+    <br>
+    <label for="rooms">Select a Room:</label>
+    <select name="rooms" id="rooms">
+    </select>
+    <br>
+    <br>
+    <div>{title}</div>
     {#each lessons as lesson}
         <div class="card lesson-head">{lesson.begin}-{lesson.end} (#{lesson.period})</div>
-        <div class="card">{lesson.form}</div>
+        <div class="card clickable">
+            <button on:click={load_lessons("2023-05-22", "form", lesson.form)}>{lesson.form}</button>
+        </div>
         <div class="card">{lesson.current_subject}</div>
-        <div class="card">{lesson.current_teacher}</div>
+        <div class="card clickable">
+            <button on:click={load_lessons("2023-05-22", "teacher", lesson.current_teacher)}>{lesson.current_teacher}</button>
+        </div>
+        <div class="card clickable">
+            <button on:click={load_lessons("2023-05-22", "room", lesson.room)}>{lesson.room}</button>
+        </div>
         {#if lesson.info}
             <div class="card">{lesson.info}</div>
         {/if}
@@ -44,6 +78,9 @@
             color: black;
             &.lesson-head {
                 color: red;
+            }
+            &.clickable:hover {
+                background-color: grey;
             }
         }
 	}
