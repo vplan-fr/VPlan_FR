@@ -31,7 +31,7 @@ async def main():
         await clients[school_nr].update({f"PlanKl{_date}.xml": timestamp}, no_meta_update=True)
 
     await asyncio.gather(
-        client.update_fetch() for client in clients.values()
+        *[client.update_fetch() for client in clients.values()]
     )
 
 
