@@ -116,7 +116,7 @@ class PlanCrawler:
 
         await self.update(plan_files)
 
-    async def update(self, plan_files: dict[str, datetime.datetime]):
+    async def update(self, plan_files: dict[str, datetime.datetime], no_meta_update: bool = False):
         needs_meta_update = False
 
         for filename, timestamp in plan_files.items():
@@ -147,11 +147,11 @@ class PlanCrawler:
             needs_meta_update = True
             self.process_plan(date, timestamp, plan)
 
-        if needs_meta_update:
+        if needs_meta_update and not no_meta_update:
             self._logger.info(" -> Updating meta data...")
             self.update_meta()
 
-        self._logger.debug("...Done.")
+        self._logger.info("...Done.")
 
     async def check_infinite(self, interval: int = 30):
         while True:
@@ -403,14 +403,14 @@ class PlanExtractor:
         return out
 
 
-async def main():
+async def get_clients() -> dict[str, PlanCrawler]:
     logging.basicConfig(level=logging.DEBUG)
 
     # parse credentials
     with open("creds.json", "r", encoding="utf-8") as f:
         _creds = json.load(f)
 
-    clients = []
+    clients = {}
 
     for school_number, creds_data in _creds.items():
         creds = Stundenplan24Credentials(
@@ -430,10 +430,16 @@ async def main():
         # create crawler
         p = PlanCrawler(client, cache)
 
-        clients.append(p)
+        clients |= {school_number: p}
+
+    return clients
+
+
+async def main():
+    clients = await get_clients()
 
     await asyncio.gather(
-        *[client.check_infinite() for client in clients]
+        *[client.check_infinite() for client in clients.values()]
     )
 
 
