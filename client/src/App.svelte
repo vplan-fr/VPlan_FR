@@ -54,7 +54,7 @@
             <button on:click={load_lessons("2023-05-22", "teachers", lesson.current_teacher)}>{lesson.current_teacher}</button>
         </div>
         <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "rooms", lesson.room)}>{lesson.room}</button>
+            <button on:click={load_lessons("2023-05-22", "rooms", lesson.rooms)}>{lesson.rooms}</button>
         </div>
         {#if lesson.info}
             <div class="card">{lesson.info}</div>

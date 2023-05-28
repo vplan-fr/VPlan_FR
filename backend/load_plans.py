@@ -51,6 +51,9 @@ class Cache:
         """Return a list of all days for which plans are stored."""
 
         path = self.path / "plans"
+        if not path.exists():
+            return []
+
         return sorted([
             datetime.date.fromisoformat(elem.stem)
             for elem in path.iterdir() if elem.is_dir()
@@ -108,7 +111,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "2"
+    VERSION = "3"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -384,13 +387,13 @@ class PlanExtractor:
         self.plan = models.Plan.from_form_plan(form_plan)
 
     def room_plan(self):
-        return self.plan.group_by("room")
+        return self.plan.group_by("rooms")
 
     def teacher_plan(self):
         return self.plan.group_by("current_teacher")
 
     def form_plan(self):
-        return self.plan.group_by("form_name")
+        return self.plan.group_by("form")
 
     # def next_day(self, forward=True):
     #     year, month, day = int(self.date[:4]), int(self.date[4:6]), int(self.date[6:])
@@ -405,7 +408,7 @@ class PlanExtractor:
         out: dict[int, set[str]] = defaultdict(set)
 
         for lesson in self.plan.lessons:
-            out[lesson.period].update(lesson.room)
+            out[lesson.period].update(lesson.rooms)
 
         return out
 
