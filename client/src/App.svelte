@@ -4,8 +4,8 @@
     let name = "_qRtrenH&5367";
     let school_num = "10001329";
     const api_base = `./api/v69.420/${school_num}`;
-    let meta;
-    let lessons;
+    let meta = {};
+    let lessons = [];
     let title = "";
     function get_meta() {
         fetch(`${api_base}/meta`)
@@ -24,16 +24,14 @@
             .then(response => response.json())
             .then(data => {
                 console.log(data);
-                lessons = data["plans"][plan_type + "_plan"][entity];
+                lessons = data["plans"][plan_type][entity];
             })
             .catch(error => {
                 console.error(error);
         });
     }
     get_meta();
-    console.log(meta);
-    load_lessons("2023-05-22", "form", "JG12");
-    console.log(lessons);
+    load_lessons("2023-05-22", "forms", "JG12");
 </script>
 
 <main>
@@ -49,14 +47,14 @@
     {#each lessons as lesson}
         <div class="card lesson-head">{lesson.begin}-{lesson.end} (#{lesson.period})</div>
         <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "form", lesson.form)}>{lesson.form}</button>
+            <button on:click={load_lessons("2023-05-22", "forms", lesson.form)}>{lesson.form}</button>
         </div>
         <div class="card">{lesson.current_subject}</div>
         <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "teacher", lesson.current_teacher)}>{lesson.current_teacher}</button>
+            <button on:click={load_lessons("2023-05-22", "teachers", lesson.current_teacher)}>{lesson.current_teacher}</button>
         </div>
         <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "room", lesson.room)}>{lesson.room}</button>
+            <button on:click={load_lessons("2023-05-22", "rooms", lesson.room)}>{lesson.room}</button>
         </div>
         {#if lesson.info}
             <div class="card">{lesson.info}</div>

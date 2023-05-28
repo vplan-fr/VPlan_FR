@@ -102,7 +102,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "1"
+    VERSION = "2"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -151,7 +151,7 @@ class PlanCrawler:
             self._logger.info(" -> Updating meta data...")
             self.update_meta()
 
-        self._logger.info("...Done.")
+        self._logger.debug("...Done.")
 
     async def check_infinite(self, interval: int = 30):
         while True:
@@ -179,9 +179,9 @@ class PlanCrawler:
         self.cache.store_plan_file(
             date, timestamp,
             json.dumps({
-                "room_plan": plan_extractor.room_plan(),
-                "teacher_plan": plan_extractor.teacher_plan(),
-                "form_plan": plan_extractor.form_plan()}, default=models.Lesson.to_json),
+                "rooms": plan_extractor.room_plan(),
+                "teachers": plan_extractor.teacher_plan(),
+                "forms": plan_extractor.form_plan()}, default=models.Lesson.to_json),
             "plans.json"
         )
 
