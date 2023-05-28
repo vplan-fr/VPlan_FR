@@ -1,12 +1,17 @@
+import datetime
 import os
 import json
-from flask import Flask, send_from_directory, request, jsonify
-import random
+from pathlib import Path
+
+from flask import Flask, send_from_directory, request, Response
+
+import backend.load_plans
 
 VALID_SCHOOLS = os.listdir(".cache")
 API_BASE_URL = "/api/v69.420/<school_num>"
 
 app = Flask(__name__)
+
 
 # COMPILED SVELTE FILES
 
@@ -23,33 +28,51 @@ def home(path):
 
 # PLAN JSON API
 
+
 @app.route(f"{API_BASE_URL}/meta")
 def meta(school_num):
     if school_num not in VALID_SCHOOLS:
-        return {"error": "school not in database"}
-    with open(f".cache/{school_num}/meta.json", "r") as f:
-        data = json.load(f)
-        return jsonify(data)
+        return {"error": "Invalid school."}
+
+    cache = backend.load_plans.Cache(Path(".cache") / school_num)
+    data = cache.get_meta_file("meta.json")
+
+    return Response(data, mimetype='application/json')
 
 
 @app.route(f"{API_BASE_URL}/plan")
 def plan(school_num: str):
-    print("getting plan")
     if school_num not in VALID_SCHOOLS:
-        return {"error": "school not in database"}
-    date = request.args.get("date")
-    if not date:
-        return {"error": "please specify a date"}
-    if date not in os.listdir(f".cache/{school_num}/plans"):
-        return {"error": "date not found"}
-    revision_stamp = request.args.get("revision", ".newest")
-    if revision_stamp not in os.listdir(f".cache/{school_num}/plans/{date}"):
-        return {"error": "revision not found"}
-    data = {}
-    for plan_type in ["plans", "rooms"]:
-        with open(f".cache/{school_num}/plans/{date}/{revision_stamp}/{plan_type}.json", "r") as f:
-            data[plan_type] = json.load(f)
-    return jsonify(data)
+        return {"error": "Invalid school."}
+
+    cache = backend.load_plans.Cache(Path(".cache") / school_num)
+
+    _date = request.args.get("date")
+    if not _date:
+        return {"error": "Missing date url parameter (YYYY-MM-DD)."}
+
+    try:
+        date = datetime.datetime.strptime(_date, "%Y-%m-%d").date()
+    except ValueError:
+        return {"error": "Invalid date format. Must be YYYY-MM-DD."}
+
+    _revision = request.args.get("revision", default=".newest")
+
+    try:
+        revision = datetime.datetime.fromisoformat(_revision) if _revision != ".newest" else ".newest"
+    except ValueError:
+        return {"error": "Invalid revision timestamp format. Must be in ISO format."}
+
+    try:
+        plan_data = cache.get_plan_file(date, revision, "plans.json")
+        rooms_data = cache.get_plan_file(date, revision, "rooms.json")
+    except FileNotFoundError:
+        return {"error": "Invalid revision."}
+
+    return {
+        "plans": json.loads(plan_data),
+        "rooms": json.loads(rooms_data)
+    }
 
 
 if __name__ == "__main__":

@@ -13,8 +13,8 @@ import xml.etree.ElementTree as ET
 
 from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil
 
-from vplan_utils import group_forms
-import models
+from .vplan_utils import group_forms
+from . import models
 
 
 class Cache:
