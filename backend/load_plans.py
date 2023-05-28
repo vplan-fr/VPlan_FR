@@ -63,6 +63,12 @@ class Cache:
         newest_path.unlink(missing_ok=True)
         newest_path.symlink_to(target_path, target_is_directory=True)
 
+    def update_newest(self, day: datetime.date):
+        timestamps = self.get_timestamps(day)
+        self.get_plan_path(day, ".newest").unlink(missing_ok=True)
+        if timestamps:
+            self.set_newest(day, timestamps[0])
+
     def get_plan_file(self,
                       day: datetime.date,
                       timestamp: datetime.datetime | typing.Literal[".newest"],
@@ -116,44 +122,62 @@ class PlanCrawler:
 
         await self.update(plan_files)
 
-    async def update(self, plan_files: dict[str, datetime.datetime], no_meta_update: bool = False):
+    async def update(self, downloadable_plan_files: dict[str, datetime.datetime], no_meta_update: bool = False):
         needs_meta_update = False
 
-        for filename, timestamp in plan_files.items():
+        for filename, timestamp in downloadable_plan_files.items():
             if filename == "Klassen.xml":
                 # this is always the latest day planned
                 continue
 
-            cache_filename = "PlanKl.xml"
             date = datetime.datetime.strptime(filename, "PlanKl%Y%m%d.xml").date()
 
             # check if plan is already cached
-            if self.cache.is_cached(date, timestamp, ".processed"):
-                if self.cache.get_plan_file(date, timestamp, ".processed") == self.VERSION:
-                    continue
+            if not self.cache.is_cached(date, timestamp, "PlanKl.xml"):
+                self._logger.info(f" -> Downloading plan for {date}...")
 
-                self._logger.info(f" * Reprocessing plan for {date} for new version...")
-
-                plan = self.cache.get_plan_file(date, timestamp, cache_filename)
-            else:
-                self._logger.info(f" * Downloading plan for {date}...")
-
-                # download plan
                 plan = await self.client.fetch_indiware_mobil(filename)
 
-                self.cache.store_plan_file(date, timestamp, plan, cache_filename)
-                self.cache.set_newest(date, timestamp)
+                self.cache.store_plan_file(date, timestamp, plan, "PlanKl.xml")
+            else:
+                plan = None
 
-            needs_meta_update = True
-            self.process_plan(date, timestamp, plan)
+            needs_meta_update |= self.update_plans(date, timestamp, plan)
 
         if needs_meta_update and not no_meta_update:
             self._logger.info(" -> Updating meta data...")
             self.update_meta()
 
-        self._logger.debug("...Done.")
+            self._logger.info("...Done.")
+        else:
+            self._logger.debug("...Done.")
+
+    def migrate_all(self):
+        self._logger.info("Migrating cache...")
+
+        for day in self.cache.get_days():
+            self.cache.update_newest(day)
+
+            for revision in self.cache.get_timestamps(day):
+                self.update_plans(day, revision)
+
+    def update_plans(self, day: datetime.date, revision: datetime.datetime, plan: str | None = None) -> bool:
+        if self.cache.is_cached(day, revision, ".processed"):
+            if self.cache.get_plan_file(day, revision, ".processed") == self.VERSION:
+                return False
+
+            self._logger.info(f" * Migrating plan for {day} to current version...")
+        else:
+            self._logger.info(f" * Processing plan for {day}...")
+
+        plan = self.cache.get_plan_file(day, revision, "PlanKl.xml") if plan is None else plan
+        self.compute_plans(day, revision, plan)
+
+        return True
 
     async def check_infinite(self, interval: int = 30):
+        self.migrate_all()
+
         while True:
             await self.update_fetch()
 
@@ -173,7 +197,7 @@ class PlanCrawler:
         self._last_meta_data = data
         self.cache.store_meta_file(json.dumps(data), "meta.json")
 
-    def process_plan(self, date: datetime.date, timestamp: datetime.datetime, plan: str) -> None:
+    def compute_plans(self, date: datetime.date, timestamp: datetime.datetime, plan: str) -> None:
         plan_extractor = PlanExtractor(plan)
 
         self.cache.store_plan_file(
@@ -199,6 +223,8 @@ class PlanCrawler:
         )
 
         self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")
+
+        self.cache.update_newest(date)
 
 
 @dataclasses.dataclass
