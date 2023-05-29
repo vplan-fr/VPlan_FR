@@ -1,98 +1,70 @@
 <script>
-  import { get } from "svelte/store";
+    import Plan from "./Plan.svelte";
+    import { onMount } from 'svelte';
 
-    let name = "_qRtrenH&5367";
     let school_num = "10001329";
-    const api_base = `./api/v69.420/${school_num}`;
+    let date = "2023-05-23";
+    let plan_type = "room_plan";
+    let plan_value = "110";
+    let teacher_list = [];
+    let api_base;
+    $: api_base = `./api/v69.420/${school_num}`;
+
+    let selected_teacher;
+    let selected_room;
+    $: console.log(selected_room);
     let meta = {};
-    let lessons = [];
-    let title = "";
-    function get_meta() {
+    function get_meta(api_base) {
         fetch(`${api_base}/meta`)
             .then(response => response.json())
             .then(data => {
                 meta = data;
-                console.log(meta);
             })
             .catch(error => {
                 console.error(error);
         });
     }
-    function load_lessons(date, plan_type, entity) {
-        title = `${plan_type}-plan for ${plan_type} ${entity}`
-        fetch(`${api_base}/plan?date=${date}`)
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                lessons = data["plans"][plan_type][entity];
-            })
-            .catch(error => {
-                console.error(error);
-        });
-    }
-    get_meta();
-    load_lessons("2023-05-22", "form_plan", "JG12");
+    $: get_meta(api_base);
+    $: teacher_list = (Object.keys(meta).length !== 0) ? Object.keys(meta["teachers"]) : [];
 </script>
 
 <main>
-	<h1>Hello {name}!</h1>
     <input id="inp_school_num" type="text" bind:value={school_num}>
     <br>
-    <label for="rooms">Select a Room:</label>
-    <select name="rooms" id="rooms">
-    </select>
+    <div class="input-field" id="room-select">
+        <label for="rooms">Select a Room:</label>
+        <select name="rooms" id="rooms" bind:value={selected_room}
+            on:change="{() => {plan_type = "room_plan"; plan_value = selected_room}}">
+            {#each meta["rooms"] || [] as room}
+                <option value="{room}">{room}</option>
+            {/each}
+        </select>
+    </div>
+    <div class="input-field" id="teacher-select">
+        <label for="teachers">Select a Teacher:</label>
+        <select name="teachers" id="teachers" bind:value={selected_teacher}
+            on:change="{() => {plan_type = "teacher_plan"; plan_value = selected_teacher}}">
+            {#each teacher_list as teacher}
+                <option value="{teacher}">{teacher}</option>
+            {/each}
+        </select>
+    </div>
     <br>
     <br>
-    <div>{title}</div>
-    {#each lessons as lesson}
-        <div class="card lesson-head">{lesson.begin}-{lesson.end} (#{lesson.period})</div>
-        <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "form_plan", lesson.form)}>{lesson.form}</button>
-        </div>
-        <div class="card">{lesson.current_subject}</div>
-        <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "teacher_plan", lesson.current_teacher)}>{lesson.current_teacher}</button>
-        </div>
-        <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "room_plan", lesson.rooms)}>{lesson.rooms}</button>
-        </div>
-        {#if lesson.info}
-            <div class="card">{lesson.info}</div>
-        {/if}
-        <br>
-    {/each}
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps. <span class="material-symbols-outlined">settings</span></p>
+    <Plan bind:api_base bind:date bind:plan_type bind:plan_value bind:meta />
+	<span class="material-symbols-outlined">settings</span>
     Lorem<br>ipsum<br>dolor<br>sit<br>amet<br>consectetur<br>adipisicing<br>elit.<br>Commodi<br>officia<br>natus<br>ad,<br>aut<br>accusantium<br>dolores<br>totam<br>veritatis<br>placeat<br>eligendi<br>repudiandae,<br>fugiat<br>facere<br>veniam<br>non<br>fugit<br>fuga<br>temporibus<br>optio<br>ex<br>deserunt.
     Lorem<br>ipsum<br>dolor<br>sit<br>amet<br>consectetur<br>adipisicing<br>elit.<br>Commodi<br>officia<br>natus<br>ad,<br>aut<br>accusantium<br>dolores<br>totam<br>veritatis<br>placeat<br>eligendi<br>repudiandae,<br>fugiat<br>facere<br>veniam<br>non<br>fugit<br>fuga<br>temporibus<br>optio<br>ex<br>deserunt.
 </main>
 
 <style lang="scss">
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-        .card {
-            color: black;
-            &.lesson-head {
-                color: red;
-            }
-            &.clickable:hover {
-                background-color: grey;
+    .select-wrapper {
+        background-color: white;
+        color: black;
+        select {
+            option {
+                color: black !important;
             }
         }
-	}
-
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
-
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
+    }
 </style>
