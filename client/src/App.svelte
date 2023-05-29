@@ -31,7 +31,7 @@
         });
     }
     get_meta();
-    load_lessons("2023-05-22", "forms", "JG12");
+    load_lessons("2023-05-22", "form_plan", "JG12");
 </script>
 
 <main>
@@ -47,14 +47,14 @@
     {#each lessons as lesson}
         <div class="card lesson-head">{lesson.begin}-{lesson.end} (#{lesson.period})</div>
         <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "forms", lesson.form)}>{lesson.form}</button>
+            <button on:click={load_lessons("2023-05-22", "form_plan", lesson.form)}>{lesson.form}</button>
         </div>
         <div class="card">{lesson.current_subject}</div>
         <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "teachers", lesson.current_teacher)}>{lesson.current_teacher}</button>
+            <button on:click={load_lessons("2023-05-22", "teacher_plan", lesson.current_teacher)}>{lesson.current_teacher}</button>
         </div>
         <div class="card clickable">
-            <button on:click={load_lessons("2023-05-22", "rooms", lesson.rooms)}>{lesson.rooms}</button>
+            <button on:click={load_lessons("2023-05-22", "room_plan", lesson.rooms)}>{lesson.rooms}</button>
         </div>
         {#if lesson.info}
             <div class="card">{lesson.info}</div>
