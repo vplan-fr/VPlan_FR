@@ -6,6 +6,9 @@ import terser from '@rollup/plugin-terser';
 import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
 import css from 'rollup-plugin-css-only';
+import makeAttractionsImporter from 'attractions/importer.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -40,7 +43,13 @@ export default {
 	},
 	plugins: [
 		svelte({
-            preprocess: sveltePreprocess(),
+            preprocess: sveltePreprocess({
+                scss: {
+                    importer: makeAttractionsImporter({
+                        themeFile: path.join(path.dirname(fileURLToPath(import.meta.url)), 'src/theme.scss')
+                    })
+                }
+            }),
 			compilerOptions: {
 				// enable run-time checks when not in production
 				dev: !production,

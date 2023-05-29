@@ -27,7 +27,6 @@
     $: get_meta(api_base);
     $: teacher_list = (Object.keys(meta).length !== 0) ? Object.keys(meta["teachers"]) : [];
 </script>
-
 <main>
     <input id="inp_school_num" type="text" bind:value={school_num}>
     <br>
