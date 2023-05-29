@@ -4,6 +4,7 @@ from __future__ import annotations
 import dataclasses
 import datetime
 from collections import defaultdict
+from .vplan_utils import remove_duplicates
 
 from stundenplan24_py import indiware_mobil
 
@@ -58,7 +59,7 @@ class Plan:
     # exams: list[Exam]
     # TODO: reimplement exams
 
-    def group_by(self, attribute: str) -> dict[str, list[Lesson]]:
+    def group_by(self, attribute: str, group_lessons: bool = False) -> dict[str, list[Lesson]]:
         grouped = defaultdict(list)
 
         for lesson in self.lessons:
@@ -69,7 +70,8 @@ class Plan:
 
             for element in value:
                 grouped[element].append(lesson)
-
+        if group_lessons:
+            grouped = {k: remove_duplicates(v) for k, v in grouped.items()}
         return grouped
 
     def to_json(self) -> dict:

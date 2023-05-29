@@ -23,35 +23,50 @@
     $: load_lessons(date, plan_type, plan_value);
 </script>
 
-{#if lessons.length == 0}
-No lessons
-{/if}
-{#each lessons as lesson}
-    <div class="card lesson-head">{lesson.begin}-{lesson.end} (#{lesson.period})</div>
-    <div class="card clickable">
-        <button on:click={() => {
-            plan_type = "form_plan";
-            plan_value = lesson.form;
-        }}>{lesson.form}</button>
-    </div>
-    <div class="card">{lesson.current_subject}</div>
-    <div class="card clickable">
-        <button on:click={() => {
-            plan_type = "teacher_plan";
-            plan_value = lesson.current_teacher;
-        }}>{lesson.current_teacher}</button>
-    </div>
-    <div class="card clickable">
-        <button on:click={() => {
-            plan_type = "room_plan";
-            plan_value = lesson.room;
-        }}>{lesson.room}</button>
-    </div>
-    {#if lesson.info}
-        <div class="card">{lesson.info}</div>
+<div class="plan">
+    {#if lessons.length == 0}
+    No lessons
     {/if}
-    <br>
-{/each}
+    {#each lessons as lesson}
+    <div class="card">
+        <div>{lesson.begin}-{lesson.end} (#{lesson.period})</div>
+        <div>
+            <button on:click={() => {
+                plan_type = "forms";
+                plan_value = lesson.form;
+            }}>{lesson.form}</button>
+        </div>
+        <div>{lesson.current_subject}</div>
+        <div>
+            <button on:click={() => {
+                plan_type = "teachers";
+                plan_value = lesson.current_teacher;
+            }}>{lesson.current_teacher}</button>
+        </div>
+        <div>
+            {#each lesson.rooms as room}
+                <button on:click={() => {
+                    plan_type = "rooms";
+                    plan_value = room;
+                }}>{room}</button>
+            {/each}
+        </div>
+        {#if lesson.info}
+            <div>{lesson.info}</div>
+        {/if}
+        <br>
+    </div>
+    {/each}
+</div>
 
-<style>
+<style lang="scss">
+    .plan {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+    }
 </style>
