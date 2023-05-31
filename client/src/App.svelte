@@ -21,8 +21,8 @@
         fetch(`${api_base}/meta`)
             .then(response => response.json())
             .then(data => {
-                meta = data.data;
-                date = meta.date;
+                meta = data.meta;
+                date = data.date;
             })
             .catch(error => {
                 console.error(error);
