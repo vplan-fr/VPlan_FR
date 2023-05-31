@@ -12,7 +12,11 @@
         fetch(`${api_base}/plan?date=${date}`)
             .then(response => response.json())
             .then(data => {
-                lessons = data["plans"][plan_type][entity] || [];
+                try {
+                    lessons = data["plans"][plan_type][entity] || [];
+                } catch {
+                    lessons = []
+                }
                 console.log(lessons);
             })
             .catch(error => {

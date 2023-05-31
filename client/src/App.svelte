@@ -1,6 +1,7 @@
 <script>
     import Plan from "./Plan.svelte";
     import { onMount } from 'svelte';
+    import { DatePicker } from 'attractions';
 
     let school_num = "10001329";
     let date = "2023-06-01";
@@ -10,10 +11,12 @@
     let api_base;
     $: api_base = `./api/v69.420/${school_num}`;
 
+    const pad = (n,s=2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
+
     let selected_teacher;
     let selected_room;
-    $: console.log(selected_room);
     let meta = {};
+    let disabledDates = [];
     function get_meta(api_base) {
         fetch(`${api_base}/meta`)
             .then(response => response.json())
@@ -24,10 +27,41 @@
                 console.error(error);
         });
     }
+    function update_disabled_dates(meta) {
+        if(meta.dates === undefined)
+            return;
+        let enabled_dates = Object.keys(meta.dates);
+        let tmp_start = new Date(enabled_dates[enabled_dates.length-1]);
+        let tmp_end = new Date(enabled_dates[0]);
+        tmp_start.setDate(tmp_start.getDate() + 1);
+        tmp_end.setDate(tmp_end.getDate() - 1);
+        disabledDates = [
+            {start: new Date("0"), end: tmp_end},
+            {start: tmp_start, end: new Date("9999")},
+        ];
+        for(let i = 0; i < enabled_dates.length; i++) {
+            tmp_start = new Date(enabled_dates[i]);
+            tmp_end = new Date(enabled_dates[i+1]);
+            tmp_start.setDate(tmp_start.getDate() + 1);
+            tmp_end.setDate(tmp_end.getDate() - 1);
+            disabledDates.push({
+                start: tmp_start,
+                end: tmp_end
+            })
+        }
+        console.log(enabled_dates);
+    }
     $: get_meta(api_base);
+    $: update_disabled_dates(meta);
     $: teacher_list = (Object.keys(meta).length !== 0) ? Object.keys(meta["teachers"]) : [];
 </script>
+
 <main>
+    {date}
+    <DatePicker format="%Y-%m-%d" closeOnSelection bind:disabledDates on:change={(evt) => {
+        let tmp_dat = evt.detail.value;
+        date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
+    }} />
     <input id="inp_school_num" type="text" bind:value={school_num}>
     <br>
     <div class="input-field" id="room-select">

@@ -6,6 +6,9 @@
     python -m pip install -r requirements.txt
     ```
 - [creds.json](#credsjson) in repository root directory
+- Installing npm packages
+  - `cd client`
+  - `npm install --force`
 
 ### `creds.json`
 Example:
