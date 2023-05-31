@@ -4,7 +4,7 @@
     import { DatePicker } from 'attractions';
 
     let school_num = "10001329";
-    let date = "2023-06-01";
+    let date = "";
     let plan_type = "rooms";
     let plan_value = "110";
     let teacher_list = [];
@@ -21,7 +21,8 @@
         fetch(`${api_base}/meta`)
             .then(response => response.json())
             .then(data => {
-                meta = data;
+                meta = data.data;
+                date = meta.date;
             })
             .catch(error => {
                 console.error(error);
@@ -63,6 +64,7 @@
         date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
     }} />
     <input id="inp_school_num" type="text" bind:value={school_num}>
+    {date}
     <br>
     <div class="input-field" id="room-select">
         <label for="rooms">Select a Room:</label>

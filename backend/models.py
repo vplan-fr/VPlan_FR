@@ -1,10 +1,10 @@
 # coding=utf-8
 from __future__ import annotations
 
+import copy
 import dataclasses
 import datetime
 from collections import defaultdict
-from .vplan_utils import remove_duplicates
 
 from stundenplan24_py import indiware_mobil
 
@@ -12,14 +12,14 @@ from stundenplan24_py import indiware_mobil
 @dataclasses.dataclass
 class Lesson:
     form: str
-    current_subject: str
-    current_teacher: str
-    class_subject: str
-    class_group: str
-    class_teacher: str
-    class_number: str
+    current_subject: str | None
+    current_teacher: str | None
+    class_subject: str | None
+    class_group: str | None
+    class_teacher: str | None
+    class_number: str | None
     rooms: list[str]
-    period: int
+    periods: list[int]
     info: str
 
     subject_changed: bool
@@ -32,7 +32,7 @@ class Lesson:
     def to_json(self) -> dict:
         return {
             "form": self.form,
-            "period": self.period,
+            "periods": self.periods,
             "rooms": self.rooms,
             "current_subject": self.current_subject,
             "current_teacher": self.current_teacher,
@@ -50,16 +50,10 @@ class Lesson:
 
 
 @dataclasses.dataclass
-class Plan:
+class Lessons:
     lessons: list[Lesson]
-    additional_info: list[str]
 
-    form_plan: indiware_mobil.FormPlan
-
-    # exams: list[Exam]
-    # TODO: reimplement exams
-
-    def group_by(self, attribute: str, group_lessons: bool = False) -> dict[str, list[Lesson]]:
+    def group_by(self, attribute: str) -> dict[str, list[Lesson]]:
         grouped = defaultdict(list)
 
         for lesson in self.lessons:
@@ -70,9 +64,56 @@ class Plan:
 
             for element in value:
                 grouped[element].append(lesson)
-        if group_lessons:
-            grouped = {k: remove_duplicates(v) for k, v in grouped.items()}
+
         return grouped
+
+    def blocks_grouped(self) -> Lessons:
+        assert all(len(x.periods) <= 1 for x in self.lessons)
+
+        sorted_lessons = sorted(
+            self.lessons,
+            key=lambda x: (x.form, x.class_number if x.class_number is not None else "", x.periods[0])
+        )
+
+        grouped: list[Lesson] = []
+
+        previous_lesson: Lesson | None = None
+        for lesson in sorted_lessons:
+            should_get_grouped = (
+                    previous_lesson is not None and
+                    lesson.form == previous_lesson.form and
+                    lesson.periods[0] - 1 == previous_lesson.periods[0] and
+                    previous_lesson.periods[0] % 2 == 1 and
+                    lesson.class_number == previous_lesson.class_number and
+                    lesson.rooms == previous_lesson.rooms and
+                    lesson.current_subject == previous_lesson.current_subject and
+                    lesson.current_teacher == previous_lesson.current_teacher
+            )
+
+            if should_get_grouped:
+                grouped[-1].periods.append(lesson.periods[0])
+                grouped[-1].info += "\n" + lesson.info
+                grouped[-1].end = lesson.end
+            else:
+                grouped.append(copy.deepcopy(lesson))
+
+            previous_lesson = lesson
+
+        return Lessons(sorted(grouped, key=lambda x: x.periods[0]))
+
+    def __iter__(self):
+        return iter(self.lessons)
+
+
+@dataclasses.dataclass
+class Plan:
+    lessons: Lessons
+    additional_info: list[str]
+
+    form_plan: indiware_mobil.FormPlan
+
+    # exams: list[Exam]
+    # TODO: reimplement exams
 
     def to_json(self) -> dict:
         return {
@@ -101,8 +142,8 @@ class Plan:
                     current_subject=lesson.subject(),
                     current_teacher=lesson.teacher(),
                     rooms=lesson.room().split(" ") if lesson.room() else [],
-                    period=lesson.period,
-                    info=lesson.information,
+                    periods=[lesson.period] if lesson.period is not None else [],
+                    info=lesson.information if lesson.information is not None else "",
                     subject_changed=lesson.subject.was_changed,
                     teacher_changed=lesson.teacher.was_changed,
                     room_changed=lesson.room.was_changed,
@@ -111,7 +152,7 @@ class Plan:
                 ))
 
         return cls(
-            lessons=lessons,
+            lessons=Lessons(lessons),
             additional_info=form_plan.additional_info,
 
             form_plan=form_plan
