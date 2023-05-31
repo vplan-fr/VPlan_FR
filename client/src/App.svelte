@@ -4,7 +4,7 @@
     import { DatePicker } from 'attractions';
 
     let school_num = "10001329";
-    let date = "";
+    let date = null;
     let plan_type = "rooms";
     let plan_value = "110";
     let teacher_list = [];
@@ -50,19 +50,18 @@
                 end: tmp_end
             })
         }
-        console.log(enabled_dates);
     }
     $: get_meta(api_base);
     $: update_disabled_dates(meta);
-    $: teacher_list = (Object.keys(meta).length !== 0) ? Object.keys(meta["teachers"]) : [];
+    $: teacher_list = (Object.keys(meta).length !== 0) ? Object.keys(meta.teachers) : [];
 </script>
 
 <main>
     {date}
-    <DatePicker format="%Y-%m-%d" closeOnSelection bind:disabledDates on:change={(evt) => {
+    <DatePicker format="%Y-%m-%d" value={(date === null) ? null : new Date(date)} bind:disabledDates on:change={(evt) => {
         let tmp_dat = evt.detail.value;
         date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
-    }} />
+    }} closeOnSelection />
     <input id="inp_school_num" type="text" bind:value={school_num}>
     {date}
     <br>

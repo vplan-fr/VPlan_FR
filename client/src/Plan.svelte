@@ -17,7 +17,6 @@
                 } catch {
                     lessons = []
                 }
-                console.log(lessons);
             })
             .catch(error => {
                 console.error(error);
