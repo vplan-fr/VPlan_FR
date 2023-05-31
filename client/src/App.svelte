@@ -51,17 +51,28 @@
             })
         }
     }
+
+    onMount(() => {
+        document.querySelector('.date-picker .handle input').setAttribute("readonly", "true");
+    });
+
     $: get_meta(api_base);
     $: update_disabled_dates(meta);
     $: teacher_list = (Object.keys(meta).length !== 0) ? Object.keys(meta.teachers) : [];
 </script>
 
 <main>
-    {date}
-    <DatePicker format="%Y-%m-%d" value={(date === null) ? null : new Date(date)} bind:disabledDates on:change={(evt) => {
-        let tmp_dat = evt.detail.value;
-        date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
-    }} closeOnSelection />
+    <DatePicker 
+        format="%Y-%m-%d" 
+        locale="de-DE" 
+        closeOnSelection 
+        bind:disabledDates 
+        value={(date === null) ? null : new Date(date)}
+        on:change={(evt) => {
+            let tmp_dat = evt.detail.value;
+            date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
+        }}
+    />
     <input id="inp_school_num" type="text" bind:value={school_num}>
     {date}
     <br>
@@ -85,7 +96,7 @@
     </div>
     <br>
     <br>
-    <Plan bind:api_base bind:date bind:plan_type bind:plan_value bind:meta />
+    <Plan bind:api_base bind:date bind:plan_type bind:plan_value />
 	<!-- <span class="material-symbols-outlined">settings</span> -->
 </main>
 

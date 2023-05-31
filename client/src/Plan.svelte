@@ -3,7 +3,6 @@
     export let date;
     export let plan_type;
     export let plan_value;
-    export let meta;
     let lessons = [];
     let title = "";
     
