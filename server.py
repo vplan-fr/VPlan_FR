@@ -6,6 +6,7 @@ from pathlib import Path
 from flask import Flask, send_from_directory, request, Response
 
 import backend.load_plans
+from backend.vplan_utils import find_closest_date
 
 VALID_SCHOOLS = os.listdir(".cache")
 API_BASE_URL = "/api/v69.420/<school_num>"
@@ -35,9 +36,12 @@ def meta(school_num):
         return {"error": "Invalid school."}
 
     cache = backend.load_plans.Cache(Path(".cache") / school_num)
-    data = cache.get_meta_file("meta.json")
+    data = json.loads(cache.get_meta_file("meta.json"))
+    dates = sorted([datetime.datetime.strptime(elem, "%Y-%m-%d").date() for elem in list(data["dates"].keys())])
+    date = find_closest_date(dates)
+    print(date)
 
-    return Response(data, mimetype='application/json')
+    return Response(json.dumps({"meta": data, "date": date.strftime("%Y-%m-%d")}), mimetype='application/json')
 
 
 @app.route(f"{API_BASE_URL}/plan")

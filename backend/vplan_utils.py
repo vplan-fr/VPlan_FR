@@ -1,4 +1,5 @@
 # coding=utf-8
+import datetime
 
 
 def group_forms(forms: list[str]) -> list[list[str]]:
@@ -28,3 +29,19 @@ def group_forms(forms: list[str]) -> list[list[str]]:
                 klassen.remove(elem)
         groups.append(cur_group)
     return groups
+
+
+def find_closest_date(dates):
+    now = datetime.datetime.now()
+    today = now.date()
+    future_dates = [d for d in dates if d > today]
+    past_dates = [d for d in dates if d < today]
+
+    if today in dates and now.time().hour < 17:
+        return today
+    elif future_dates:
+        return min(future_dates)
+    elif past_dates:
+        return max(past_dates)
+    else:
+        return None
