@@ -47,7 +47,7 @@ class Cache:
             for elem in path.iterdir() if elem.is_dir() and not elem.stem.startswith(".")
         ], reverse=True)
 
-    def get_days(self) -> list[datetime.date]:
+    def get_days(self, reverse=True) -> list[datetime.date]:
         """Return a list of all days for which plans are stored."""
 
         path = self.path / "plans"
@@ -57,7 +57,7 @@ class Cache:
         return sorted([
             datetime.date.fromisoformat(elem.stem)
             for elem in path.iterdir() if elem.is_dir()
-        ], reverse=True)
+        ], reverse=reverse)
 
     def set_newest(self, day: datetime.date, timestamp: datetime.datetime):
         newest_path = self.get_plan_path(day, ".newest")
@@ -111,7 +111,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "3"
+    VERSION = "4"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -370,7 +370,7 @@ class MetaExtractor:
         # noinspection PyTypeChecker
         return {
             day.isoformat(): list(map(datetime.datetime.isoformat, self.cache.get_timestamps(day)))
-            for day in self.cache.get_days()
+            for day in self.cache.get_days(reverse=False)
         }
 
     def form_groups_data(self):
