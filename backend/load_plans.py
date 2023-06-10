@@ -190,16 +190,15 @@ class PlanCrawler:
         self._logger.info(" -> Updating meta data...")
 
         data = {
-            "dates": self.meta_extractor.dates_data(),
             "forms": group_forms(self.meta_extractor.forms()),
             "groups": self.meta_extractor.form_groups_data(),
             "teachers": self.meta_extractor.teachers(),
             "rooms": self.meta_extractor.rooms(),
-            "default_times": self.meta_extractor.default_times().to_json(),
-            "free_days": map(datetime.date.isoformat, self.meta_extractor.free_days()),
+            "default_times": self.meta_extractor.default_times(),
+            "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
         }
-        self._last_meta_data = data
-        self.cache.store_meta_file(json.dumps(data), "meta.json")
+        self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_json), "meta.json")
+        self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
     def compute_plans(self, date: datetime.date, timestamp: datetime.datetime, plan: str) -> None:
         plan_extractor = PlanExtractor(plan)
@@ -290,7 +289,7 @@ class DailyMetaExtractor:
         return teachers
 
     def forms(self) -> list[str]:
-        return [elem.text for elem in self.element_tree.findall(".//Kurz")]
+        return [form.short_name for form in self.form_plan.forms]
 
     def rooms(self) -> set[str]:
         return set(room for elem in self.element_tree.findall(".//Ra") if elem.text for room in elem.text.split())
@@ -313,19 +312,14 @@ class DailyMetaExtractor:
         #               for elem in unterricht if elem]
         # return unterricht
 
-    def default_times(self) -> DefaultTimesInfo:
-        if not self.element_tree.find(".//KlStunden"):
-            return DefaultTimesInfo({})
+    def default_times(self) -> dict[str, DefaultTimesInfo]:
+        return {
+            form.short_name: DefaultTimesInfo({
+                int(period): time_data for period, time_data in form.periods.items()
+            })
 
-        _klstunden = self.element_tree.find(".//KlStunden").findall("KlSt")
-        data = {
-            int(elem.text): (
-                datetime.datetime.strptime(elem.get("ZeitVon"), "%H:%M").time(),
-                datetime.datetime.strptime(elem.get("ZeitBis"), "%H:%M").time()
-            ) for elem in _klstunden
+            for form in self.form_plan.forms
         }
-
-        return DefaultTimesInfo(data)
 
     def free_days(self) -> list[datetime.date]:
         return self.form_plan.free_days
@@ -371,13 +365,13 @@ class MetaExtractor:
 
         return sorted(forms)
 
-    def default_times(self) -> DefaultTimesInfo:
+    def default_times(self) -> dict[str, DefaultTimesInfo]:
         for extractor in self.iterate_daily_extractors():
             default_times = extractor.default_times()
-            if default_times.data:
+            if default_times:
                 return default_times
 
-        return DefaultTimesInfo({})
+        return {}
 
     def dates_data(self) -> dict[str, list[str]]:
         # noinspection PyTypeChecker
