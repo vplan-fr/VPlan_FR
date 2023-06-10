@@ -92,7 +92,7 @@ class Lessons:
 
             if should_get_grouped:
                 grouped[-1].periods.append(lesson.periods[0])
-                grouped[-1].info += "\n" + lesson.info
+                grouped[-1].info = "\n".join(filter(lambda x: x, [grouped[-1].info, lesson.info]))
                 grouped[-1].end = lesson.end
             else:
                 grouped.append(copy.deepcopy(lesson))
