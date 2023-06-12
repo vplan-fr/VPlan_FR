@@ -11,15 +11,15 @@ from stundenplan24_py import indiware_mobil
 
 @dataclasses.dataclass
 class Lesson:
-    form: str
+    forms: set[str]
     current_subject: str | None
     current_teacher: str | None
     class_subject: str | None
     class_group: str | None
     class_teacher: str | None
     class_number: str | None
-    rooms: list[str]
-    periods: list[int]
+    rooms: set[str]
+    periods: set[int]
     info: str
 
     subject_changed: bool
@@ -31,9 +31,9 @@ class Lesson:
 
     def to_json(self) -> dict:
         return {
-            "form": self.form,
-            "periods": self.periods,
-            "rooms": self.rooms,
+            "forms": list(self.forms),
+            "periods": list(self.periods),
+            "rooms": list(self.rooms),
             "current_subject": self.current_subject,
             "current_teacher": self.current_teacher,
             "class_subject": self.class_subject,
@@ -59,7 +59,7 @@ class Lessons:
         for lesson in self.lessons:
             value = getattr(lesson, attribute)
 
-            if not isinstance(value, list):
+            if not isinstance(value, (list, set)):
                 value = [value]
 
             for element in value:
@@ -68,11 +68,12 @@ class Lessons:
         return grouped
 
     def blocks_grouped(self) -> Lessons:
-        assert all(len(x.periods) <= 1 for x in self.lessons)
+        assert all(len(x.periods) <= 1 and len(x.forms) for x in self.lessons), \
+            "Lessons must be ungrouped. (Must only have one period.)"
 
         sorted_lessons = sorted(
             self.lessons,
-            key=lambda x: (x.form, x.class_number if x.class_number is not None else "", x.periods[0])
+            key=lambda x: (x.current_subject if x.current_subject is not None else "", x.forms, x.periods)
         )
 
         grouped: list[Lesson] = []
@@ -81,25 +82,36 @@ class Lessons:
         for lesson in sorted_lessons:
             should_get_grouped = (
                     previous_lesson is not None and
-                    lesson.form == previous_lesson.form and
-                    lesson.periods[0] - 1 == previous_lesson.periods[0] and
-                    previous_lesson.periods[0] % 2 == 1 and
-                    lesson.class_number == previous_lesson.class_number and
                     lesson.rooms == previous_lesson.rooms and
                     lesson.current_subject == previous_lesson.current_subject and
                     lesson.current_teacher == previous_lesson.current_teacher
             )
 
+            if previous_lesson is not None:
+                if list(lesson.forms)[0] in grouped[-1].forms:
+                    should_get_grouped &= (
+                            # lesson.periods[0] - previous_lesson.periods[0] == 1 and
+
+                            list(lesson.periods)[0] % 2 == 0
+                    )
+                else:
+                    should_get_grouped &= (
+                            list(lesson.periods)[-1] in grouped[-1].periods
+                    )
+
             if should_get_grouped:
-                grouped[-1].periods.append(lesson.periods[0])
+                grouped[-1].periods |= lesson.periods
+                grouped[-1].forms |= lesson.forms
                 grouped[-1].info = "\n".join(filter(lambda x: x, [grouped[-1].info, lesson.info]))
+                if grouped[-1].class_number != lesson.class_number:
+                    grouped[-1].class_number = None
                 grouped[-1].end = lesson.end
             else:
                 grouped.append(copy.deepcopy(lesson))
 
             previous_lesson = lesson
 
-        return Lessons(sorted(grouped, key=lambda x: x.periods[0]))
+        return Lessons(sorted(grouped, key=lambda x: x.periods))
 
     def __iter__(self):
         return iter(self.lessons)
@@ -128,7 +140,7 @@ class Plan:
         for form in form_plan.forms:
             for lesson in form.lessons:
                 lessons.append(Lesson(
-                    form=form.short_name,
+                    forms={form.short_name},
                     class_subject=(
                         form.classes[lesson.class_number].subject if lesson.class_number in form.classes else None
                     ),
@@ -142,7 +154,7 @@ class Plan:
                     current_subject=lesson.subject(),
                     current_teacher=lesson.teacher(),
                     rooms=lesson.room().split(" ") if lesson.room() else [],
-                    periods=[lesson.period] if lesson.period is not None else [],
+                    periods={lesson.period} if lesson.period is not None else [],
                     info=lesson.information if lesson.information is not None else "",
                     subject_changed=lesson.subject.was_changed,
                     teacher_changed=lesson.teacher.was_changed,

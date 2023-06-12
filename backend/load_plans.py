@@ -111,7 +111,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "7"
+    VERSION = "8"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -405,7 +405,7 @@ class PlanExtractor:
         return self.lessons_grouped.group_by("current_teacher")
 
     def form_plan(self):
-        return self.lessons_grouped.group_by("form")
+        return self.lessons_grouped.group_by("forms")
 
     # def next_day(self, forward=True):
     #     year, month, day = int(self.date[:4]), int(self.date[4:6]), int(self.date[6:])
@@ -421,7 +421,7 @@ class PlanExtractor:
 
         for lesson in self.plan.lessons:
             assert len(lesson.periods) == 1
-            out[lesson.periods[0]].update(lesson.rooms)
+            out[list(lesson.periods)[0]].update(lesson.rooms)
 
         return out
 
