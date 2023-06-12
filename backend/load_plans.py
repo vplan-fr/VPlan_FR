@@ -111,11 +111,12 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "5"
+    VERSION = "7"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
         self.cache = cache
+        self.meta_extractor = MetaExtractor(self.cache)
 
         self._logger = logging.getLogger(f"{__name__}-{client.school_number}")
 
@@ -148,7 +149,6 @@ class PlanCrawler:
             needs_meta_update |= self.update_plans(date, timestamp, plan)
 
         if needs_meta_update and not no_meta_update:
-            self._logger.info(" -> Updating meta data...")
             self.update_meta()
 
             self._logger.info("...Done.")
@@ -187,18 +187,18 @@ class PlanCrawler:
             await asyncio.sleep(interval)
 
     def update_meta(self):
-        meta_extractor = MetaExtractor(self.cache)
+        self._logger.info(" -> Updating meta data...")
 
         data = {
-            "dates": meta_extractor.dates_data(),
-            "forms": group_forms(meta_extractor.forms()),
-            "groups": meta_extractor.form_groups_data(),
-            "teachers": meta_extractor.teachers(),
-            "rooms": meta_extractor.rooms(),
-            "default_times": meta_extractor.default_times().to_json()
+            "forms": group_forms(self.meta_extractor.forms()),
+            "groups": self.meta_extractor.form_groups_data(),
+            "teachers": self.meta_extractor.teachers(),
+            "rooms": self.meta_extractor.rooms(),
+            "default_times": self.meta_extractor.default_times(),
+            "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
         }
-        self._last_meta_data = data
-        self.cache.store_meta_file(json.dumps(data), "meta.json")
+        self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_json), "meta.json")
+        self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
     def compute_plans(self, date: datetime.date, timestamp: datetime.datetime, plan: str) -> None:
         plan_extractor = PlanExtractor(plan)
@@ -212,7 +212,7 @@ class PlanCrawler:
             "plans.json"
         )
 
-        all_rooms = set(MetaExtractor(self.cache).rooms())
+        all_rooms = set(self.meta_extractor.rooms())
         rooms_data = {
             "used_rooms": plan_extractor.used_rooms_by_lesson(),
             "free_rooms": plan_extractor.free_rooms_by_lesson(all_rooms),
@@ -223,6 +223,12 @@ class PlanCrawler:
             date, timestamp,
             json.dumps(rooms_data, default=list),
             "rooms.json"
+        )
+
+        self.cache.store_plan_file(
+            date, timestamp,
+            json.dumps(plan_extractor.info_data()),
+            "info.json"
         )
 
         self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")
@@ -259,6 +265,7 @@ class DailyMetaExtractor:
 
     def __init__(self, plankl_file: str):
         self.element_tree = ET.fromstring(plankl_file)
+        self.form_plan = indiware_mobil.FormPlan.from_xml(self.element_tree)
 
     def teachers(self) -> dict[str, list[str]]:
         teachers = {}
@@ -282,7 +289,7 @@ class DailyMetaExtractor:
         return teachers
 
     def forms(self) -> list[str]:
-        return [elem.text for elem in self.element_tree.findall(".//Kurz")]
+        return [form.short_name for form in self.form_plan.forms]
 
     def rooms(self) -> set[str]:
         return set(room for elem in self.element_tree.findall(".//Ra") if elem.text for room in elem.text.split())
@@ -305,22 +312,22 @@ class DailyMetaExtractor:
         #               for elem in unterricht if elem]
         # return unterricht
 
-    def default_times(self) -> DefaultTimesInfo:
-        if not self.element_tree.find(".//KlStunden"):
-            return DefaultTimesInfo({})
+    def default_times(self) -> dict[str, DefaultTimesInfo]:
+        return {
+            form.short_name: DefaultTimesInfo({
+                int(period): time_data for period, time_data in form.periods.items()
+            })
 
-        _klstunden = self.element_tree.find(".//KlStunden").findall("KlSt")
-        data = {
-            int(elem.text): (
-                datetime.datetime.strptime(elem.get("ZeitVon"), "%H:%M").time(),
-                datetime.datetime.strptime(elem.get("ZeitBis"), "%H:%M").time()
-            ) for elem in _klstunden
+            for form in self.form_plan.forms
         }
 
-        return DefaultTimesInfo(data)
+    def free_days(self) -> list[datetime.date]:
+        return self.form_plan.free_days
 
 
 class MetaExtractor:
+    # TODO: implement memory cache of rooms, teachers, etc.
+
     def __init__(self, cache: Cache, num_last_days: int = 10):
         self.cache = cache
         self.num_last_days = num_last_days
@@ -358,13 +365,13 @@ class MetaExtractor:
 
         return sorted(forms)
 
-    def default_times(self) -> DefaultTimesInfo:
+    def default_times(self) -> dict[str, DefaultTimesInfo]:
         for extractor in self.iterate_daily_extractors():
             default_times = extractor.default_times()
-            if default_times.data:
+            if default_times:
                 return default_times
 
-        return DefaultTimesInfo({})
+        return {}
 
     def dates_data(self) -> dict[str, list[str]]:
         # noinspection PyTypeChecker
@@ -379,6 +386,10 @@ class MetaExtractor:
                 form: extractor.form_groups(form)
                 for form in self.forms()
             }
+
+    def free_days(self) -> list[datetime.date]:
+        for extractor in self.iterate_daily_extractors():
+            return extractor.free_days()
 
 
 class PlanExtractor:
@@ -432,6 +443,12 @@ class PlanExtractor:
                 out[block].intersection_update(free_rooms)
 
         return out
+
+    def info_data(self) -> dict[str, typing.Any]:
+        return {
+            "additional_info": self.plan.additional_info,
+            "timestamp": self.plan.form_plan.timestamp.isoformat(),
+        }
 
 
 async def get_clients() -> dict[str, PlanCrawler]:
