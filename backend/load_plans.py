@@ -186,6 +186,7 @@ class PlanCrawler:
         self.migrate_all()
         self.update_meta()
         self.update_forms()
+        self.update_teachers()
 
         while True:
             needs_meta_update = await self.update_fetch()

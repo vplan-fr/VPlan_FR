@@ -19,7 +19,15 @@ def group_forms(forms: list[str]) -> dict[str, list[str]]:
             major = match.group("major")
             groups[major].append(form)
 
-    return groups
+    def sort_key(form):
+        if form is None:
+            return float("inf"), 1, ""
+        try:
+            return int(form), 0, ""
+        except ValueError:
+            return float("inf"), 0, form
+
+    return {k: v for k, v in sorted(groups.items(), key=lambda x: sort_key(x[0]))}
 
 
 def find_closest_date(dates):
