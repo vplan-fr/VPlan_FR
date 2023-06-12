@@ -143,7 +143,7 @@
 
     .last-updated {
         margin-top: 16px;
-        font-size: clamp(10px, 2vmin, 20px);
+        font-size: clamp(12.5px, 2.5vmin, 25px);
     }
 
     .additional-info {

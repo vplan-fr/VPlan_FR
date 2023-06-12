@@ -22,6 +22,7 @@
             .then(response => response.json())
             .then(data => {
                 meta = data.meta;
+                teacher_list = Object.keys(data.teachers);
                 date = data.date;
             })
             .catch(error => {
@@ -58,7 +59,6 @@
 
     $: get_meta(api_base);
     $: update_disabled_dates(meta);
-    $: teacher_list = (Object.keys(meta).length !== 0) ? Object.keys(meta.teachers) : [];
 </script>
 
 <main>
