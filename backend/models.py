@@ -39,7 +39,7 @@ class Lesson:
             "class_subject": self.class_subject,
             "class_group": self.class_group,
             "class_teacher": self.class_teacher,
-            "class_number": self.class_number,
+            # "class_number": self.class_number,
             "info": self.info,
             "subject_changed": self.subject_changed,
             "teacher_changed": self.teacher_changed,
