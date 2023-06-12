@@ -16,6 +16,7 @@
                 } catch {
                     lessons = []
                 }
+                console.log(lessons);
             })
             .catch(error => {
                 console.error(error);
@@ -68,11 +69,11 @@
             <div class="subject max-width-center" class:changed={lesson.subject_changed}>
                 {lesson.current_subject}
             </div>
-            <div class="teachers vert-align max-width-center info-element" class:changed={lesson.teacher_changed}>
+            <div class="teachers vert-align max-width-center info-element" class:changed={lesson.teacher_changed} class:teacher_absent={lesson.current_teacher === null}>
                 <button on:click={() => {
                     plan_type = "teachers";
                     plan_value = lesson.current_teacher;
-                }}>{lesson.current_teacher}</button>
+                }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>
             </div>
             <div class="rooms vert-align max-width-center info-element" class:changed={lesson.room_changed}>
                 {#each lesson.rooms as room}
@@ -113,6 +114,7 @@
         padding: 8px !important;
         font-size: 14px;
         font-weight: 300;
+        line-height: 21px;
     }
     .info-element {
         background: rgba(255, 255, 255, 0.08);
@@ -127,6 +129,10 @@
         
         &.changed {
             background: var(--accent-color);
+        }
+        &.teacher_absent {
+            background: rgba(255, 255, 255, 0.08);
+            outline: 3px solid var(--accent-color);
         }
     }
     .mobile-view {
