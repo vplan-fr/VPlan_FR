@@ -34,9 +34,9 @@
 </script>
 
 <div class="plan">
-    {#if show_title}
+    {#if show_title && info}
         <div class="responsive-heading">
-            Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> ([]-Woche)
+            Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> ({info.week}-Woche)
         </div>
     {/if}
     {#if lessons.length == 0}
