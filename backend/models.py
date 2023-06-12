@@ -53,19 +53,26 @@ class Lesson:
 class Lessons:
     lessons: list[Lesson]
 
-    def group_by(self, attribute: str) -> dict[str, list[Lesson]]:
-        grouped = defaultdict(list)
+    def group_by(self, *attributes: str, include_none: bool = False) -> dict[str, list[Lesson]]:
+        grouped_i = defaultdict(set)
 
-        for lesson in self.lessons:
-            value = getattr(lesson, attribute)
+        for lesson_i, lesson in enumerate(self.lessons):
+            for attribute in attributes:
+                value = getattr(lesson, attribute)
 
-            if not isinstance(value, (list, set)):
-                value = [value]
+                if not include_none and value is None:
+                    continue
 
-            for element in value:
-                grouped[element].append(lesson)
+                if not isinstance(value, (list, set)):
+                    value = [value]
 
-        return grouped
+                for element in value:
+                    grouped_i[element].add(lesson_i)
+
+        grouped = {attribute: [self.lessons[i] for i in indices] for attribute, indices in grouped_i.items()}
+
+        return {attribute: sorted(lessons, key=lambda x: list(x.periods)[0])
+                for attribute, lessons in grouped.items()}
 
     def blocks_grouped(self) -> Lessons:
         assert all(len(x.periods) <= 1 and len(x.forms) for x in self.lessons), \

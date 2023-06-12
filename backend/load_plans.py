@@ -111,7 +111,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "9"
+    VERSION = "10"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -402,7 +402,7 @@ class PlanExtractor:
         return self.lessons_grouped.group_by("rooms")
 
     def teacher_plan(self):
-        return self.lessons_grouped.group_by("current_teacher")
+        return self.lessons_grouped.group_by("class_teacher", "current_teacher")
 
     def form_plan(self):
         return self.lessons_grouped.group_by("forms")
