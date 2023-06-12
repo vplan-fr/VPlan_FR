@@ -31,7 +31,7 @@
     {/if}
     {#each lessons as lesson}
     <div class="card desktop-view">
-        <div>{lesson.begin}-{lesson.end} (#{lesson.period})</div>
+        <div>{lesson.begin}-{lesson.end} (#{lesson.periods[1]/2})</div>
         <div>
             <button on:click={() => {
                 plan_type = "forms";
@@ -61,9 +61,10 @@
     <div class="card mobile-view">
         <div class="horizontal-align">
             <div class="vert-align max-width-center lesson-time-info">
-                <span class="lesson-period">{lesson.period}</span>
+                <span class="lesson-period">{lesson.periods[1]/2}</span>
                 <span class="lesson-time">{lesson.begin}</span>
             </div>
+            {#if lesson.current_subject !== "---"}
             <div class="subject max-width-center" class:changed={lesson.subject_changed}>
                 {lesson.current_subject}
             </div>
@@ -81,6 +82,17 @@
                     }}>{room}</button>
                 {/each}
             </div>
+            {:else}
+            <div class="max-width-center info-element mobile-cancelled vert-align changed">X</div>
+            {/if}
+            {#if plan_type !== "forms"}
+            <div class="forms max-width-center info-element">
+                <button on:click={() => {
+                    plan_type = "forms";
+                    plan_value = lesson.form;
+                }}>{lesson.form}</button>
+            </div>
+            {/if}
         </div>
         {#if lesson.info}
             <div class="info-element lesson-info">{lesson.info}</div>
@@ -90,16 +102,29 @@
 </div>
 
 <style lang="scss">
+    .mobile-cancelled {
+        width: 400% !important;
+    }
+    .forms {
+        font-size: 14px;
+    }
     .lesson-info {
         margin-top: 12px;
-        padding: 7px !important;
+        padding: 8px !important;
         font-size: 14px;
+        font-weight: 300;
     }
     .info-element {
         background: rgba(255, 255, 255, 0.08);
         border-radius: 5px;
         padding: 5px 0px;
+        min-height: 21px;
 
+        button {
+            padding: 0;
+            line-height: 21px;
+        }
+        
         &.changed {
             background: var(--accent-color);
         }
@@ -117,7 +142,7 @@
             font-size: 12px;
             font-weight: 400;
         }
-        .subject, .teachers button, .rooms button {
+        .subject, .teachers button, .rooms button, .forms button {
             color: var(--text-color);
             font-size: 14px;
             font-weight: 400;

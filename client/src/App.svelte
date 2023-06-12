@@ -5,8 +5,8 @@
 
     let school_num = "10001329";
     let date = null;
-    let plan_type = "teachers";
-    let plan_value = "ZWR";
+    let plan_type = "forms";
+    let plan_value = "JG11";
     let teacher_list = [];
     let api_base;
     $: api_base = `./api/v69.420/${school_num}`;
