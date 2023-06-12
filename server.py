@@ -72,12 +72,15 @@ def plan(school_num: str):
     try:
         plan_data = cache.get_plan_file(date, revision, "plans.json")
         rooms_data = cache.get_plan_file(date, revision, "rooms.json")
+        info_data = cache.get_plan_file(date, revision, "info.json")
+        
     except FileNotFoundError:
         return {"error": "Invalid revision."}
 
     return {
         "plans": json.loads(plan_data),
-        "rooms": json.loads(rooms_data)
+        "rooms": json.loads(rooms_data),
+        "info": json.loads(info_data)
     }
 
 
