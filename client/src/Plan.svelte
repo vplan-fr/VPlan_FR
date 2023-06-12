@@ -30,6 +30,23 @@
         });
     }
 
+    function periods_to_block_label(periods) {
+        periods.sort();
+
+        const rests = {
+            0: " - 2",
+            1: " - 1",
+        };
+
+        if (periods.length === 1) {
+            return `${Math.floor((periods[0] - 1) / 2) + 1}${rests[periods[0] % 2]}`;
+        } else if (periods.length === 2 && periods[0] % 2 === 1) {
+            return `${Math.floor(periods[periods.length - 1] / 2)}`;
+        } else {
+            return periods.map(p => periods_to_block_label([p])).join(", ");
+        }
+    }
+
     $: load_lessons(date, plan_type, plan_value);
 </script>
 
@@ -44,7 +61,7 @@
     {/if}
     {#each lessons as lesson}
     <div class="card desktop-view">
-        <div>{lesson.begin}-{lesson.end} (#{lesson.periods[1]/2})</div>
+        <div>{lesson.begin}-{lesson.end} ({periods_to_block_label(lesson.periods)})</div>
         <div>
             <button on:click={() => {
                 plan_type = "forms";
@@ -74,7 +91,7 @@
     <div class="card mobile-view">
         <div class="horizontal-align">
             <div class="vert-align max-width-center lesson-time-info">
-                <span class="lesson-period">{lesson.periods[1]/2}</span>
+                <span class="lesson-period">{periods_to_block_label(lesson.periods)}</span>
                 <span class="lesson-time">{lesson.begin}</span>
             </div>
             {#if lesson.current_subject !== "---"}
@@ -93,6 +110,8 @@
                         plan_type = "rooms";
                         plan_value = room;
                     }}>{room}</button>
+                {:else}
+                    X
                 {/each}
             </div>
             {:else}
@@ -129,7 +148,7 @@
 
 <style lang="scss">
     .responsive-heading {
-        font-size: clamp(15px, 3vmax, 30px);
+        font-size: clamp(17px, 4vw, 2.28rem);
         line-height: clamp(22.5px, 4.5vmax, 45px);
         margin-bottom: 15px;
     }
