@@ -3,9 +3,15 @@
     export let date;
     export let plan_type;
     export let plan_value;
+    export let show_title;
     let lessons = [];
     let info;
     let title = "";
+    let plan_type_map = {
+        "forms": "Klasse",
+        "rooms": "Raum",
+        "teachers": "Lehrer"
+    }
     
     function load_lessons(date, plan_type, entity) {
         title = `${plan_type}-plan for ${plan_type} ${entity}`
@@ -18,7 +24,6 @@
                 } catch {
                     lessons = []
                 }
-                console.log(lessons);
             })
             .catch(error => {
                 console.error(error);
@@ -26,17 +31,16 @@
     }
 
     $: load_lessons(date, plan_type, plan_value);
-    $: console.log(info);
 </script>
 
 <div class="plan">
+    {#if show_title}
+        <div class="responsive-heading">
+            Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> ([]-Woche)
+        </div>
+    {/if}
     {#if lessons.length == 0}
     No lessons
-    {/if}
-    {#if info}
-        <div>
-            Stand: {info.timestamp}
-        </div>
     {/if}
     {#each lessons as lesson}
     <div class="card desktop-view">
@@ -111,15 +115,43 @@
     </div>
     {/each}
     {#if info}
-        <div>
+        <p class="additional-info">
             {#each info.additional_info as cur_info}
-                {cur_info}<br>
+                {#if cur_info !== null}
+                    {cur_info}
+                {/if}
+                <br>
             {/each}
-        </div>
+        </p>
+        <span class="last-updated">Stand der Daten: <span class="custom-badge">{info.timestamp}</span></span>
     {/if}
 </div>
 
 <style lang="scss">
+    .responsive-heading {
+        font-size: clamp(15px, 3vmax, 30px);
+        line-height: clamp(22.5px, 4.5vmax, 45px);
+        margin-bottom: 15px;
+    }
+
+    .custom-badge {
+        background: rgba(255, 255, 255, 0.07);
+        padding: 2px 7px;
+        border-radius: 5px;
+        white-space: nowrap;
+    }
+
+    .last-updated {
+        margin-top: 16px;
+        font-size: clamp(10px, 2vmin, 20px);
+    }
+
+    .additional-info {
+        margin-top: 20px;
+        font-size: clamp(15px, 3vmin, 30px);
+        line-height: 1.5;
+    }
+
     .mobile-cancelled {
         width: 400% !important;
     }
