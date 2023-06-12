@@ -44,8 +44,8 @@ class Lesson:
             "subject_changed": self.subject_changed,
             "teacher_changed": self.teacher_changed,
             "room_changed": self.room_changed,
-            "begin": self.begin.isoformat() if self.begin else None,
-            "end": self.end.isoformat() if self.end else None
+            "begin": self.begin.strftime("%H:%M") if self.begin else None,
+            "end": self.end.strftime("%H:%M") if self.end else None
         }
 
 
