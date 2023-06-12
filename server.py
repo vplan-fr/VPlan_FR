@@ -37,13 +37,20 @@ def meta(school_num):
 
     cache = backend.load_plans.Cache(Path(".cache") / school_num)
     meta_data = json.loads(cache.get_meta_file("meta.json"))
+    teachers_data = json.loads(cache.get_meta_file("teachers.json"))["teachers"]
+    forms_data = json.loads(cache.get_meta_file("forms.json"))
     dates_data = json.loads(cache.get_meta_file("dates.json"))
 
     dates = sorted([datetime.datetime.strptime(elem, "%Y-%m-%d").date() for elem in list(dates_data.keys())])
     date = find_closest_date(dates)
     print(date)
 
-    return Response(json.dumps({"meta": meta_data, "date": date.strftime("%Y-%m-%d")}), mimetype='application/json')
+    return Response(json.dumps({
+        "meta": meta_data,
+        "teachers": teachers_data,
+        "forms": forms_data,
+        "date": date.strftime("%Y-%m-%d")
+    }), mimetype='application/json')
 
 
 @app.route(f"{API_BASE_URL}/plan")
