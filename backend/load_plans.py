@@ -113,7 +113,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "10"
+    VERSION = "11"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -128,7 +128,7 @@ class PlanCrawler:
 
         await self.update(plan_files)
 
-    async def update(self, downloadable_plan_files: dict[str, datetime.datetime], no_meta_update: bool = False):
+    async def update(self, downloadable_plan_files: dict[str, datetime.datetime], no_meta_update: bool = False) -> bool:
         needs_meta_update = False
 
         for filename, timestamp in downloadable_plan_files.items():
@@ -154,8 +154,10 @@ class PlanCrawler:
             self.update_meta()
 
             self._logger.info("...Done.")
+            return True
         else:
             self._logger.debug("...Done.")
+            return False
 
     def migrate_all(self):
         self._logger.info("Migrating cache...")
@@ -182,11 +184,16 @@ class PlanCrawler:
 
     async def check_infinite(self, interval: int = 30):
         self.migrate_all()
+        self.update_meta()
+        self.update_forms()
+        self.update_teachers()
 
         while True:
-            self.update_teachers()
+            needs_meta_update = await self.update_fetch()
 
-            await self.update_fetch()
+            if needs_meta_update:
+                self.update_teachers()
+                self.update_forms()
 
             await asyncio.sleep(interval)
 
@@ -194,8 +201,6 @@ class PlanCrawler:
         self._logger.info(" -> Updating meta data...")
 
         data = {
-            "forms": group_forms(self.meta_extractor.forms()),
-            "groups": self.meta_extractor.form_groups_data(),
             "rooms": self.meta_extractor.rooms(),
             "default_times": self.meta_extractor.default_times(),
             "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
@@ -288,6 +293,19 @@ class PlanCrawler:
             "teachers.json"
         )
 
+    def update_forms(self):
+        self._logger.info("Updating forms...")
+
+        data = {
+            "grouped_forms": group_forms(self.meta_extractor.forms()),
+            "forms": self.meta_extractor.forms_data()
+        }
+
+        self.cache.store_meta_file(
+            json.dumps(data),
+            "forms.json"
+        )
+
 
 @dataclasses.dataclass
 class DefaultTimesInfo:
@@ -357,13 +375,8 @@ class DailyMetaExtractor:
 
         kurse = kl.find("Kurse")
         kurse = [elem.find("KKz") for elem in kurse.findall("Ku")]
-        kurse = [(elem.text.strip(), elem.get("KLe", "")) for elem in kurse]
+        kurse = [{"name": elem.text.strip(), "teacher": elem.get("KLe", "")} for elem in kurse]
         return kurse
-        # unterricht = kl.find("Unterricht")
-        # unterricht = [elem.find("UeNr") for elem in unterricht.find_all("Ue")]
-        # unterricht = [(elem.get("UeFa", ""), elem.get("UeLe", ""), elem.get("UeGr", ""), elem.text.strip())
-        #               for elem in unterricht if elem]
-        # return unterricht
 
     def default_times(self) -> dict[str, DefaultTimesInfo]:
         return {
@@ -436,7 +449,7 @@ class MetaExtractor:
             for day in self.cache.get_days(reverse=False)
         }
 
-    def form_groups_data(self):
+    def form_groups_data(self) -> dict[str, list[str]]:
         for extractor in self.iterate_daily_extractors():
             return {
                 form: extractor.form_groups(form)
@@ -446,6 +459,18 @@ class MetaExtractor:
     def free_days(self) -> list[datetime.date]:
         for extractor in self.iterate_daily_extractors():
             return extractor.free_days()
+
+    def forms_data(self):
+        default_times = self.default_times()
+        form_groups = self.form_groups_data()
+
+        return {
+            form: {
+                "default_times": default_times[form].to_json(),
+                "class_groups": form_groups[form],
+            }
+            for form in form_groups.keys()
+        }
 
 
 class PlanExtractor:
@@ -506,6 +531,7 @@ class PlanExtractor:
         return {
             "additional_info": self.plan.additional_info,
             "timestamp": self.plan.form_plan.timestamp.isoformat(),
+            "week": self.plan.week_letter()
         }
 
 

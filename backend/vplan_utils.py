@@ -1,34 +1,33 @@
 # coding=utf-8
+from __future__ import annotations
+
 import datetime
+import re
+from collections import defaultdict
 
 
-def group_forms(forms: list[str]) -> list[list[str]]:
-    klassen = list(forms)
+def group_forms(forms: list[str]) -> dict[str, list[str]]:
+    groups: dict[str | None, list[str]] = defaultdict(list)
 
-    groups = []
-    while len(klassen) > 0:
-        cur_klasse = klassen[0]
-        if "/" in cur_klasse:
-            cur_group = [elem for elem in klassen if elem.split("/")[0] == cur_klasse.split("/")[0]]
-        elif "-" in cur_klasse:
-            cur_group = [elem for elem in klassen if elem.split("-")[0] == cur_klasse.split("-")[0]]
-        elif "." in cur_klasse:
-            cur_group = [elem for elem in klassen if elem.split(".")[0] == cur_klasse.split(".")[0]]
-        elif cur_klasse.isdigit():
-            cur_group = [elem for elem in klassen if elem.isdigit()]
-        elif not cur_klasse[0].isdigit():
-            identifier = "".join([char for char in cur_klasse if not char.isdigit()])
-            cur_group = [elem for elem in klassen if elem.startswith(identifier)]
-        elif cur_klasse[0].isdigit():
-            identifier = "".join([char for char in cur_klasse if char.isdigit()])
-            cur_group = [elem for elem in klassen if elem.startswith(identifier)]
+    pattern = re.compile(r"^((?P<alpha>([A-Za-zÄÖÜäöüß]+)|(\d+))|((?P<major>[\dA-Za-zÄÖÜäöüß]+?)[^A-Za-zÄÖÜäöüß0-9]?(?P"
+                         r"<minor>(\d+)|([A-Za-zÄÖÜäöüß]+?))))$")
+    for form in forms:
+        match = pattern.match(form)
+        if match is None or match.group("alpha"):
+            groups[None].append(form)
         else:
-            cur_group = [cur_klasse]
-        for elem in cur_group:
-            if elem in klassen:
-                klassen.remove(elem)
-        groups.append(cur_group)
-    return groups
+            major = match.group("major")
+            groups[major].append(form)
+
+    def sort_key(form):
+        if form is None:
+            return float("inf"), 1, ""
+        try:
+            return int(form), 0, ""
+        except ValueError:
+            return float("inf"), 0, form
+
+    return {k: v for k, v in sorted(groups.items(), key=lambda x: sort_key(x[0]))}
 
 
 def find_closest_date(dates):
