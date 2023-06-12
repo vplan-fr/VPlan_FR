@@ -4,6 +4,7 @@
     export let plan_type;
     export let plan_value;
     let lessons = [];
+    let info;
     let title = "";
     
     function load_lessons(date, plan_type, entity) {
@@ -13,6 +14,7 @@
             .then(data => {
                 try {
                     lessons = data["plans"][plan_type][entity] || [];
+                    info = data["info"];
                 } catch {
                     lessons = []
                 }
@@ -24,11 +26,17 @@
     }
 
     $: load_lessons(date, plan_type, plan_value);
+    $: console.log(info);
 </script>
 
 <div class="plan">
     {#if lessons.length == 0}
     No lessons
+    {/if}
+    {#if info}
+        <div>
+            Stand: {info.timestamp}
+        </div>
     {/if}
     {#each lessons as lesson}
     <div class="card desktop-view">
@@ -100,6 +108,13 @@
         {/if}
     </div>
     {/each}
+    {#if info}
+        <div>
+            {#each info.additional_info as cur_info}
+                {cur_info}<br>
+            {/each}
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
