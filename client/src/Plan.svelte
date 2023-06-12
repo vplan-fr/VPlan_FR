@@ -4,6 +4,7 @@
     export let plan_type;
     export let plan_value;
     export let show_title;
+    export let extra_height;
     let lessons = [];
     let info;
     let title = "";
@@ -50,7 +51,7 @@
     $: load_lessons(date, plan_type, plan_value);
 </script>
 
-<div class="plan">
+<div class="plan" class:extra-height={extra_height}>
     {#if show_title && info}
         <div class="responsive-heading">
             Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> ({info.week}-Woche)
@@ -162,7 +163,7 @@
 
     .last-updated {
         margin-top: 16px;
-        font-size: clamp(12.5px, 2.5vmin, 25px);
+        font-size: clamp(14px, 2.8vmin, 28px);
     }
 
     .additional-info {
@@ -281,6 +282,10 @@
             .lesson-time-info {
                 gap: 5px;
             }
+        }
+
+        &.extra-height {
+            min-height: calc(100vh - 20px);
         }
     }
 </style>

@@ -96,15 +96,11 @@
     </div>
     <br>
     <br>
-    <Plan bind:api_base bind:date bind:plan_type bind:plan_value show_title=true />
+    <Plan bind:api_base bind:date bind:plan_type bind:plan_value show_title=true extra_height=true />
 	<!-- <span class="material-symbols-outlined">settings</span> -->
-    <div class="bottom-spacer"></div>
 </main>
 
 <style lang="scss">
-    .bottom-spacer {
-        height: 100px;
-    }
     main {
         margin: 0 auto;
         max-width: 1280px;
