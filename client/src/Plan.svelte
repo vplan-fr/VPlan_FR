@@ -80,7 +80,7 @@
             <div class="teachers vert-align max-width-center info-element" class:changed={lesson.teacher_changed} class:teacher_absent={lesson.current_teacher === null}>
                 <button on:click={() => {
                     plan_type = "teachers";
-                    plan_value = lesson.current_teacher;
+                    plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;
                 }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>
             </div>
             <div class="rooms vert-align max-width-center info-element" class:changed={lesson.room_changed}>
@@ -95,11 +95,13 @@
             <div class="max-width-center info-element mobile-cancelled vert-align changed">X</div>
             {/if}
             {#if plan_type !== "forms"}
-            <div class="forms max-width-center info-element">
-                <button on:click={() => {
-                    plan_type = "forms";
-                    plan_value = lesson.form;
-                }}>{lesson.form}</button>
+            <div class="forms max-width-center info-element vert-align">
+                {#each lesson.forms as form}
+                    <button on:click={() => {
+                        plan_type = "forms";
+                        plan_value = form;
+                    }}>{form}</button>
+                {/each}
             </div>
             {/if}
         </div>
@@ -136,20 +138,39 @@
         border-radius: 5px;
         padding: 5px 0px;
         min-height: 21px;
-
+        overflow: hidden;
+        
         button {
-            padding: 0;
+            transition: background-color .2s ease;
+            width: 100%;
+            padding: 5px;
+            margin: -5px;
             line-height: 21px;
+
+            &:hover, &:focus-visible {
+                background: rgba(0, 0, 0, 0.2) !important;
+            }
         }
         
         &.changed {
             background: var(--accent-color);
+
+            &:not(.teacher_absent) {
+                button:hover, button:focus-visible {
+                    background: rgba(0, 0, 0, 0.3) !important;
+                }
+            }
         }
         &.teacher_absent {
             background: rgba(255, 255, 255, 0.08);
             outline: 3px solid var(--accent-color);
         }
     }
+
+    .rooms, .forms {
+        gap: 10px;
+    }
+
     .mobile-view {
         display: none;
         @media only screen and (max-width: 600px) {
