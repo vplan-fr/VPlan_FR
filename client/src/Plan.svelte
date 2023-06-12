@@ -30,7 +30,7 @@
     No lessons
     {/if}
     {#each lessons as lesson}
-    <div class="card">
+    <div class="card desktop-view">
         <div>{lesson.begin}-{lesson.end} (#{lesson.period})</div>
         <div>
             <button on:click={() => {
@@ -58,10 +58,100 @@
         {/if}
         <br>
     </div>
+    <div class="card mobile-view">
+        <div class="horizontal-align">
+            <div class="vert-align max-width-center lesson-time-info">
+                <span class="lesson-period">{lesson.period}</span>
+                <span class="lesson-time">{lesson.begin}</span>
+            </div>
+            <div class="subject max-width-center" class:changed={lesson.subject_changed}>
+                {lesson.current_subject}
+            </div>
+            <div class="teachers vert-align max-width-center info-element" class:changed={lesson.teacher_changed}>
+                <button on:click={() => {
+                    plan_type = "teachers";
+                    plan_value = lesson.current_teacher;
+                }}>{lesson.current_teacher}</button>
+            </div>
+            <div class="rooms vert-align max-width-center info-element" class:changed={lesson.room_changed}>
+                {#each lesson.rooms as room}
+                    <button on:click={() => {
+                        plan_type = "rooms";
+                        plan_value = room;
+                    }}>{room}</button>
+                {/each}
+            </div>
+        </div>
+        {#if lesson.info}
+            <div class="info-element lesson-info">{lesson.info}</div>
+        {/if}
+    </div>
     {/each}
 </div>
 
 <style lang="scss">
+    .lesson-info {
+        margin-top: 12px;
+        padding: 7px !important;
+        font-size: 14px;
+    }
+    .info-element {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 5px;
+        padding: 5px 0px;
+
+        &.changed {
+            background: var(--accent-color);
+        }
+    }
+    .mobile-view {
+        display: none;
+        @media only screen and (max-width: 600px) {
+            display: block;
+        }
+        .lesson-period {
+            font-size: 14px;
+            font-weight: 400;
+        }
+        .lesson-time {
+            font-size: 12px;
+            font-weight: 400;
+        }
+        .subject, .teachers button, .rooms button {
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 400;
+            border: none;
+            background: none;
+        }
+        .teachers button {
+            font-weight: 600;
+        }
+    }
+    .desktop-view {
+        display: none;
+        @media only screen and (min-width: 601px) {
+            display: block;
+        }
+    }
+    .horizontal-align {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8vw;
+    }
+    .vert-align {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .max-width-center {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
     .plan {
         display: flex;
         flex-direction: column;
@@ -69,6 +159,10 @@
         .card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 5px;
+            padding: 10px;
+            .lesson-time-info {
+                gap: 5px;
+            }
         }
     }
 </style>
