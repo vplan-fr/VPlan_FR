@@ -13,6 +13,8 @@ import xml.etree.ElementTree as ET
 
 from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil
 
+from .teachers import Teacher
+from .scraper.vars import teacher_scrapers
 from .vplan_utils import group_forms
 from . import models
 
@@ -182,6 +184,8 @@ class PlanCrawler:
         self.migrate_all()
 
         while True:
+            self.update_teachers()
+
             await self.update_fetch()
 
             await asyncio.sleep(interval)
@@ -192,7 +196,6 @@ class PlanCrawler:
         data = {
             "forms": group_forms(self.meta_extractor.forms()),
             "groups": self.meta_extractor.form_groups_data(),
-            "teachers": self.meta_extractor.teachers(),
             "rooms": self.meta_extractor.rooms(),
             "default_times": self.meta_extractor.default_times(),
             "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
@@ -234,6 +237,56 @@ class PlanCrawler:
         self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")
 
         self.cache.update_newest(date)
+
+    def update_teachers(self):
+        try:
+            last_update_timestamp = datetime.datetime.fromisoformat(
+                json.loads(self.cache.get_meta_file("teachers.json"))["timestamp"]
+            )
+        except FileNotFoundError:
+            last_update_timestamp = datetime.datetime.min
+
+        if datetime.datetime.now() - last_update_timestamp < datetime.timedelta(hours=6):
+            self._logger.info(" * Skipping teacher update. Last update was less than 6 hours ago.")
+            return
+
+        self._logger.info("Updating teachers...")
+
+        if self.client.school_number not in teacher_scrapers:
+            self._logger.error(" * No teacher scraper available for this school.")
+            scraped_teachers = {}
+        else:
+            self._logger.info(" * Scraping teachers...")
+            _scraped_teachers = teacher_scrapers[str(self.client.school_number)]()
+            scraped_teachers = {teacher.abbreviation: teacher for teacher in _scraped_teachers}
+
+            self._logger.debug(f" -> Found {len(scraped_teachers)} teachers.")
+
+        self._logger.info(" * Merging with extracted data...")
+
+        _extracted_teachers = self.meta_extractor.teachers()
+        extracted_teachers = {teacher.abbreviation: teacher for teacher in _extracted_teachers}
+
+        all_abbreviations = set(extracted_teachers.keys()) | set(scraped_teachers.keys())
+
+        merged_teachers = {}
+        for abbreviation in all_abbreviations:
+            scraped_teacher = scraped_teachers.get(abbreviation, Teacher(abbreviation))
+            extracted_teacher = extracted_teachers.get(abbreviation, Teacher(abbreviation))
+
+            merged_teachers[abbreviation] = Teacher.merge(
+                scraped_teacher, extracted_teacher
+            )
+
+        teachers_data = {
+            "teachers": merged_teachers,
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+
+        self.cache.store_meta_file(
+            json.dumps(teachers_data, default=Teacher.to_json),
+            "teachers.json"
+        )
 
 
 @dataclasses.dataclass
@@ -345,7 +398,7 @@ class MetaExtractor:
 
         return sorted(rooms)
 
-    def teachers(self):
+    def teachers(self) -> list[Teacher]:
         teachers: dict[str, list[str]] = defaultdict(list)
 
         for extractor in self.iterate_daily_extractors():
@@ -355,7 +408,10 @@ class MetaExtractor:
         for teacher, subjects in teachers.items():
             teachers[teacher] = sorted(set(subjects))
 
-        return teachers
+        return [
+            Teacher(abbreviation, None, None, None, subjects=subjects)
+            for abbreviation, subjects in teachers.items()
+        ]
 
     def forms(self) -> list[str]:
         forms: set[str] = set()
@@ -397,6 +453,8 @@ class PlanExtractor:
         form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = models.Plan.from_form_plan(form_plan)
         self.lessons_grouped = self.plan.lessons.blocks_grouped()
+        # if form_plan.plan_date == "Montag, 12. Juni 2023":
+        #     breakpoint()
 
     def room_plan(self):
         return self.lessons_grouped.group_by("rooms")
