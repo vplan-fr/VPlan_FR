@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import dataclasses
 import datetime
 import logging
 import typing
@@ -13,100 +12,10 @@ import xml.etree.ElementTree as ET
 
 from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil
 
-from .teachers import Teacher
-from .scraper.vars import teacher_scrapers
+from .cache import Cache
 from .vplan_utils import group_forms
-from . import models
-
-
-class Cache:
-    def __init__(self, path: Path):
-        self.path = path
-
-    def get_plan_path(self, day: datetime.date, timestamp: datetime.datetime | str | None):
-        if timestamp is None:
-            return self.path / "plans" / day.isoformat()
-        elif isinstance(timestamp, datetime.datetime):
-            return self.path / "plans" / day.isoformat() / timestamp.strftime("%Y-%m-%dT%H-%M-%S")
-        else:
-            return self.path / "plans" / day.isoformat() / timestamp
-
-    def store_plan_file(self, day: datetime.date, timestamp: datetime.datetime, content: str, filename: str):
-        """Store a plan file in the cache such as "PlanKl.xml" or "rooms.json"."""
-
-        path = self.get_plan_path(day, timestamp) / filename
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
-
-    def get_timestamps(self, day: datetime.date) -> list[datetime.datetime]:
-        """Return all stored timestamps for a given day."""
-
-        path = self.get_plan_path(day, None)
-        return sorted([
-            datetime.datetime.strptime(elem.stem, "%Y-%m-%dT%H-%M-%S")
-            for elem in path.iterdir() if elem.is_dir() and not elem.stem.startswith(".")
-        ], reverse=True)
-
-    def get_days(self, reverse=True) -> list[datetime.date]:
-        """Return a list of all days for which plans are stored."""
-
-        path = self.path / "plans"
-        if not path.exists():
-            return []
-
-        return sorted([
-            datetime.date.fromisoformat(elem.stem)
-            for elem in path.iterdir() if elem.is_dir()
-        ], reverse=reverse)
-
-    def set_newest(self, day: datetime.date, timestamp: datetime.datetime):
-        newest_path = self.get_plan_path(day, ".newest")
-        target_path = self.get_plan_path(day, timestamp)
-
-        newest_path.unlink(missing_ok=True)
-        newest_path.symlink_to(target_path, target_is_directory=True)
-
-    def update_newest(self, day: datetime.date):
-        timestamps = self.get_timestamps(day)
-        self.get_plan_path(day, ".newest").unlink(missing_ok=True)
-        if timestamps:
-            self.set_newest(day, timestamps[0])
-
-    def get_plan_file(self,
-                      day: datetime.date,
-                      timestamp: datetime.datetime | typing.Literal[".newest"],
-                      filename: str) -> str:
-        """Return the contents of a plan file from the cache."""
-
-        path = self.get_plan_path(day, timestamp) / filename
-
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
-
-    def is_cached(self,
-                  day: datetime.date,
-                  timestamp: datetime.datetime | typing.Literal[".newest"],
-                  filename: str) -> bool:
-        return (self.get_plan_path(day, timestamp) / filename).exists()
-
-    def store_meta_file(self, content: str, filename: str):
-        """Store a meta file in the cache such as "meta.json"."""
-
-        path = self.path / filename
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
-
-    def get_meta_file(self, filename: str) -> str:
-        """Return the contents of a meta file from the cache."""
-
-        path = self.path / filename
-
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
+from .models import Lesson, Plan, Teacher, DefaultTimesInfo
+from . import schools
 
 
 class PlanCrawler:
@@ -120,10 +29,10 @@ class PlanCrawler:
         self.cache = cache
         self.meta_extractor = MetaExtractor(self.cache)
 
-        self._logger = logging.getLogger(f"{__name__}-{client.school_number}")
+        self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
 
     async def update_fetch(self):
-        self._logger.debug("Checking for new plans...")
+        self._logger.debug("=> Checking for new plans...")
         plan_files = await self.client.fetch_dates_indiware_mobil()  # requests vpdir.php
 
         await self.update(plan_files)
@@ -160,7 +69,7 @@ class PlanCrawler:
             return False
 
     def migrate_all(self):
-        self._logger.info("Migrating cache...")
+        self._logger.info("=> Migrating cache...")
 
         for day in self.cache.get_days():
             self.cache.update_newest(day)
@@ -185,28 +94,24 @@ class PlanCrawler:
     async def check_infinite(self, interval: int = 30):
         self.migrate_all()
         self.update_meta()
-        self.update_forms()
-        self.update_teachers()
 
         while True:
-            needs_meta_update = await self.update_fetch()
-
-            if needs_meta_update:
-                self.update_teachers()
-                self.update_forms()
+            await self.update_fetch()
 
             await asyncio.sleep(interval)
 
     def update_meta(self):
-        self._logger.info(" -> Updating meta data...")
+        self._logger.info("=> Updating meta data...")
 
         data = {
-            "rooms": self.meta_extractor.rooms(),
-            "default_times": self.meta_extractor.default_times(),
             "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
         }
         self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_json), "meta.json")
         self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
+
+        self.update_teachers()
+        self.update_forms()
+        self.update_rooms()
 
     def compute_plans(self, date: datetime.date, timestamp: datetime.datetime, plan: str) -> None:
         plan_extractor = PlanExtractor(plan)
@@ -216,7 +121,7 @@ class PlanCrawler:
             json.dumps({
                 "rooms": plan_extractor.room_plan(),
                 "teachers": plan_extractor.teacher_plan(),
-                "forms": plan_extractor.form_plan()}, default=models.Lesson.to_json),
+                "forms": plan_extractor.form_plan()}, default=Lesson.to_json),
             "plans.json"
         )
 
@@ -252,17 +157,17 @@ class PlanCrawler:
             last_update_timestamp = datetime.datetime.min
 
         if datetime.datetime.now() - last_update_timestamp < datetime.timedelta(hours=6):
-            self._logger.info(" * Skipping teacher update. Last update was less than 6 hours ago.")
+            self._logger.info("=> Skipping teacher update. Last update was less than 6 hours ago.")
             return
 
-        self._logger.info("Updating teachers...")
+        self._logger.info("=> Updating teachers...")
 
-        if self.client.school_number not in teacher_scrapers:
+        if self.client.school_number not in schools.teacher_scrapers:
             self._logger.error(" * No teacher scraper available for this school.")
             scraped_teachers = {}
         else:
             self._logger.info(" * Scraping teachers...")
-            _scraped_teachers = teacher_scrapers[str(self.client.school_number)]()
+            _scraped_teachers = schools.teacher_scrapers[str(self.client.school_number)]()
             scraped_teachers = {teacher.abbreviation: teacher for teacher in _scraped_teachers}
 
             self._logger.debug(f" -> Found {len(scraped_teachers)} teachers.")
@@ -294,7 +199,7 @@ class PlanCrawler:
         )
 
     def update_forms(self):
-        self._logger.info("Updating forms...")
+        self._logger.info("=> Updating forms...")
 
         data = {
             "grouped_forms": group_forms(self.meta_extractor.forms()),
@@ -306,29 +211,33 @@ class PlanCrawler:
             "forms.json"
         )
 
+    def update_rooms(self):
+        self._logger.info("=> Updating rooms...")
 
-@dataclasses.dataclass
-class DefaultTimesInfo:
-    data: dict[int, tuple[datetime.time, datetime.time]]
+        all_rooms = self.meta_extractor.rooms()
+        parsed_rooms: dict[str, dict] = {}
+        try:
+            room_parser = schools.room_parsers[str(self.client.school_number)]
 
-    def to_json(self) -> dict:
-        return {
-            period: (start.isoformat(), end.isoformat()) for period, (start, end) in self.data.items()
+            for room in all_rooms:
+                try:
+                    parsed_rooms[room] = room_parser(room).to_json()
+                except Exception as e:
+                    self._logger.error(f" -> Error while parsing room {room!r}: {e}")
+
+        except KeyError:
+            self._logger.error(" * No room parser available for this school.")
+
+            parsed_rooms = {room: None for room in all_rooms}
+
+        data = {
+            room: parsed_rooms.get(room) for room in all_rooms
         }
 
-    def current_period(self) -> int:
-        """Return the current period based on the current time.
-
-        If we are in the break between two periods, the next period is returned."""
-
-        now = datetime.datetime.now().time()
-
-        for period, (start, end) in self.data.items():
-            if now < start:
-                return period - 1
-
-            if start <= now < end:
-                return period
+        self.cache.store_meta_file(
+            json.dumps(data),
+            "rooms.json"
+        )
 
 
 class DailyMetaExtractor:
@@ -339,6 +248,7 @@ class DailyMetaExtractor:
         self.form_plan = indiware_mobil.FormPlan.from_xml(self.element_tree)
 
     def teachers(self) -> dict[str, list[str]]:
+        # TODO: Stop relying on manual xml parsing
         teachers = {}
         for elem in self.element_tree.findall(".//UeNr"):
             cur_teacher = elem.get("UeLe")
@@ -476,7 +386,7 @@ class MetaExtractor:
 class PlanExtractor:
     def __init__(self, plan_kl: str):
         form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
-        self.plan = models.Plan.from_form_plan(form_plan)
+        self.plan = Plan.from_form_plan(form_plan)
         self.lessons_grouped = self.plan.lessons.blocks_grouped()
         # if form_plan.plan_date == "Montag, 12. Juni 2023":
         #     breakpoint()
@@ -568,6 +478,8 @@ async def get_clients() -> dict[str, PlanCrawler]:
 
 
 async def main():
+    logging.basicConfig(level=logging.DEBUG, format="[%(levelname)8s] %(name)s: %(message)s")
+
     clients = await get_clients()
 
     await asyncio.gather(

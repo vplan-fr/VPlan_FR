@@ -8,6 +8,7 @@
     let plan_type = "forms";
     let plan_value = "VK/1";
     let teacher_list = [];
+    let room_list = [];
     let grouped_forms = [];
     let api_base;
     $: api_base = `./api/v69.420/${school_num}`;
@@ -24,6 +25,7 @@
             .then(response => response.json())
             .then(data => {
                 meta = data.meta;
+                room_list = Object.keys(data.rooms);
                 teacher_list = Object.keys(data.teachers);
                 grouped_forms = data.forms.grouped_forms;
                 date = data.date;
@@ -84,7 +86,7 @@
         <label for="rooms">Wähle einen Raum aus:</label>
         <select name="rooms" id="rooms" bind:value={selected_room}
             on:change="{() => {plan_type = "rooms"; plan_value = selected_room}}">
-            {#each meta["rooms"] || [] as room}
+            {#each room_list || [] as room}
                 <option value="{room}">{room}</option>
             {/each}
         </select>

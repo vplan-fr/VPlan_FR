@@ -5,6 +5,7 @@ from pathlib import Path
 
 from flask import Flask, send_from_directory, request, Response
 
+import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
 
@@ -35,10 +36,11 @@ def meta(school_num):
     if school_num not in VALID_SCHOOLS:
         return {"error": "Invalid school."}
 
-    cache = backend.load_plans.Cache(Path(".cache") / school_num)
+    cache = backend.cache.Cache(Path(".cache") / school_num)
     meta_data = json.loads(cache.get_meta_file("meta.json"))
     teachers_data = json.loads(cache.get_meta_file("teachers.json"))["teachers"]
     forms_data = json.loads(cache.get_meta_file("forms.json"))
+    rooms_data = json.loads(cache.get_meta_file("rooms.json"))
     dates_data = json.loads(cache.get_meta_file("dates.json"))
 
     dates = sorted([datetime.datetime.strptime(elem, "%Y-%m-%d").date() for elem in list(dates_data.keys())])
@@ -49,6 +51,7 @@ def meta(school_num):
         "meta": meta_data,
         "teachers": teachers_data,
         "forms": forms_data,
+        "rooms": rooms_data,
         "date": date.strftime("%Y-%m-%d")
     }), mimetype='application/json')
 
@@ -58,7 +61,7 @@ def plan(school_num: str):
     if school_num not in VALID_SCHOOLS:
         return {"error": "Invalid school."}
 
-    cache = backend.load_plans.Cache(Path(".cache") / school_num)
+    cache = backend.cache.Cache(Path(".cache") / school_num)
 
     _date = request.args.get("date")
     if not _date:
@@ -80,7 +83,7 @@ def plan(school_num: str):
         plan_data = cache.get_plan_file(date, revision, "plans.json")
         rooms_data = cache.get_plan_file(date, revision, "rooms.json")
         info_data = cache.get_plan_file(date, revision, "info.json")
-        
+
     except FileNotFoundError:
         return {"error": "Invalid revision."}
 
