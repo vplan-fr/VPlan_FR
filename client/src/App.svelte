@@ -8,6 +8,7 @@
     let plan_type = "forms";
     let plan_value = "VK/1";
     let teacher_list = [];
+    let grouped_forms = [];
     let api_base;
     $: api_base = `./api/v69.420/${school_num}`;
 
@@ -15,6 +16,7 @@
 
     let selected_teacher;
     let selected_room;
+    let selected_form;
     let meta = {};
     let disabledDates = [];
     function get_meta(api_base) {
@@ -23,7 +25,9 @@
             .then(data => {
                 meta = data.meta;
                 teacher_list = Object.keys(data.teachers);
+                grouped_forms = data.forms.grouped_forms;
                 date = data.date;
+                console.log(data);
             })
             .catch(error => {
                 console.error(error);
@@ -77,7 +81,7 @@
     {date}
     <br>
     <div class="input-field" id="room-select">
-        <label for="rooms">Select a Room:</label>
+        <label for="rooms">Wähle einen Raum aus:</label>
         <select name="rooms" id="rooms" bind:value={selected_room}
             on:change="{() => {plan_type = "rooms"; plan_value = selected_room}}">
             {#each meta["rooms"] || [] as room}
@@ -86,11 +90,24 @@
         </select>
     </div>
     <div class="input-field" id="teacher-select">
-        <label for="teachers">Select a Teacher:</label>
+        <label for="teachers">Wähle einen Lehrer aus:</label>
         <select name="teachers" id="teachers" bind:value={selected_teacher}
             on:change="{() => {plan_type = "teachers"; plan_value = selected_teacher}}">
             {#each teacher_list as teacher}
                 <option value="{teacher}">{teacher}</option>
+            {/each}
+        </select>
+    </div>
+    <div class="input-field" id="form-select">
+        <label for="forms">Wähle eine Klasse aus:</label>
+        <select name="forms" id="forms" bind:value={selected_form}
+            on:change="{() => {plan_type = "forms"; plan_value = selected_form}}">
+            {#each Object.entries(grouped_forms) as [form_group, forms]}
+                <optgroup label="{form_group}">
+                {#each forms as form}
+                    <option value="{form}">{form}</option>
+                {/each}
+                </optgroup>
             {/each}
         </select>
     </div>
