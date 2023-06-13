@@ -22,7 +22,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "12"
+    VERSION = "13"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -274,18 +274,15 @@ class DailyMetaExtractor:
             for room in lesson.room().split()
         )
 
-    def form_groups(self, form_name: str) -> dict[str, dict]:
+    def courses(self, form_name: str) -> dict[str, dict]:
         classes: dict[str, dict] = {}
 
         for form in self.form_plan.forms:
             if form.short_name != form_name:
                 continue
 
-            for class_ in form.classes.values():
-                if not class_.group:
-                    continue
-
-                classes[class_.group] = {"teacher": class_.teacher, "subject": class_.subject}
+            for class_number, class_ in form.classes.items():
+                classes[class_number] = {"teacher": class_.teacher, "subject": class_.subject, "group": class_.group}
 
         return classes
 
@@ -360,10 +357,10 @@ class MetaExtractor:
             for day in self.cache.get_days(reverse=False)
         }
 
-    def form_groups_data(self) -> dict[str, list[str]]:
+    def courses_data(self) -> dict[str, list[str]]:
         for extractor in self.iterate_daily_extractors():
             return {
-                form: extractor.form_groups(form)
+                form: extractor.courses(form)
                 for form in self.forms()
             }
 
@@ -373,14 +370,14 @@ class MetaExtractor:
 
     def forms_data(self):
         default_times = self.default_times()
-        form_groups = self.form_groups_data()
+        courses = self.courses_data()
 
         return {
             form: {
                 "default_times": default_times[form].to_json(),
-                "class_groups": form_groups[form],
+                "class_groups": courses[form],
             }
-            for form in form_groups.keys()
+            for form in courses.keys()
         }
 
 
@@ -389,8 +386,6 @@ class PlanExtractor:
         form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = Plan.from_form_plan(form_plan)
         self.lessons_grouped = self.plan.lessons.blocks_grouped()
-        # if form_plan.plan_date == "Montag, 12. Juni 2023":
-        #     breakpoint()
 
     def room_plan(self):
         return self.lessons_grouped.group_by("rooms")
