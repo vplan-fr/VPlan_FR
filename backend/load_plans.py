@@ -22,7 +22,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "11"
+    VERSION = "12"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -92,8 +92,8 @@ class PlanCrawler:
         return True
 
     async def check_infinite(self, interval: int = 30):
-        self.migrate_all()
         self.update_meta()
+        self.migrate_all()
 
         while True:
             await self.update_fetch()
@@ -244,28 +244,22 @@ class DailyMetaExtractor:
     """Extracts meta information for a single day's plan."""
 
     def __init__(self, plankl_file: str):
-        self.element_tree = ET.fromstring(plankl_file)
-        self.form_plan = indiware_mobil.FormPlan.from_xml(self.element_tree)
+        self.form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plankl_file))
 
     def teachers(self) -> dict[str, list[str]]:
-        # TODO: Stop relying on manual xml parsing
-        teachers = {}
-        for elem in self.element_tree.findall(".//UeNr"):
-            cur_teacher = elem.get("UeLe")
-            cur_subject = elem.get("UeFa")
-            cur_subject = cur_subject if cur_subject not in ["KL", "AnSt", "FÖ"] else ""
-            if not cur_teacher: continue
+        excluded_subjects = ["KL", "AnSt", "FÖ"]
 
-            if cur_teacher not in teachers:
-                teachers[cur_teacher] = []
+        all_teachers = set()
+        for form in self.form_plan.forms:
+            for lesson in form.lessons:
+                if lesson.teacher():
+                    all_teachers.add(lesson.teacher())
 
-            if cur_subject and cur_subject not in teachers[cur_teacher]:
-                teachers[cur_teacher].append(cur_subject)
-
-        for elem in self.element_tree.findall(".//KKz"):
-            cur_teacher = elem.get("KLe")
-            if cur_teacher and cur_teacher not in teachers:
-                teachers[cur_teacher] = []
+        teachers = defaultdict(list, {teacher: [] for teacher in all_teachers})
+        for form in self.form_plan.forms:
+            for class_ in form.classes.values():
+                if class_.teacher and class_.subject not in excluded_subjects:
+                    teachers[class_.teacher].append(class_.subject)
 
         return teachers
 
@@ -273,20 +267,27 @@ class DailyMetaExtractor:
         return [form.short_name for form in self.form_plan.forms]
 
     def rooms(self) -> set[str]:
-        return set(room for elem in self.element_tree.findall(".//Ra") if elem.text for room in elem.text.split())
+        return set(
+            room
+            for form in self.form_plan.forms
+            for lesson in form.lessons if lesson.room()
+            for room in lesson.room().split()
+        )
 
-    def form_groups(self, form: str):
-        kl = [elem for elem in self.element_tree.findall(".//Kl") if
-              "" != elem.find("Kurz").text.strip() == form]
-        if not kl:
-            return []
+    def form_groups(self, form_name: str) -> dict[str, dict]:
+        classes: dict[str, dict] = {}
 
-        kl = kl[0]
+        for form in self.form_plan.forms:
+            if form.short_name != form_name:
+                continue
 
-        kurse = kl.find("Kurse")
-        kurse = [elem.find("KKz") for elem in kurse.findall("Ku")]
-        kurse = [{"name": elem.text.strip(), "teacher": elem.get("KLe", "")} for elem in kurse]
-        return kurse
+            for class_ in form.classes.values():
+                if not class_.group:
+                    continue
+
+                classes[class_.group] = {"teacher": class_.teacher, "subject": class_.subject}
+
+        return classes
 
     def default_times(self) -> dict[str, DefaultTimesInfo]:
         return {
