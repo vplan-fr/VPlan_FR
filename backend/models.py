@@ -96,7 +96,8 @@ class Lessons:
                     previous_lesson is not None and
                     lesson.rooms == previous_lesson.rooms and
                     lesson.current_subject == previous_lesson.current_subject and
-                    lesson.current_teacher == previous_lesson.current_teacher
+                    lesson.current_teacher == previous_lesson.current_teacher and
+                    lesson.class_number == previous_lesson.class_number
             )
 
             if previous_lesson is not None:
@@ -104,11 +105,11 @@ class Lessons:
                     should_get_grouped &= (
                         # lesson.periods[0] - previous_lesson.periods[0] == 1 and
 
-                            list(lesson.periods)[0] % 2 == 0
+                        list(lesson.periods)[0] % 2 == 0
                     )
                 else:
                     should_get_grouped &= (
-                            list(lesson.periods)[-1] in grouped[-1].periods
+                        list(lesson.periods)[-1] in grouped[-1].periods
                     )
 
             if should_get_grouped:
