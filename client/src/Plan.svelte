@@ -68,7 +68,7 @@
                 <span class="lesson-period">{periods_to_block_label(lesson.periods)}</span>
                 <span class="lesson-time">{lesson.end}</span>
             </div>
-            <div class="grid-align-wrapper">
+            <div class="grid-align-wrapper" class:large_grid={plan_type !== "forms"}>
                 {#if lesson.current_subject !== "---"}
                 <div class="subject max-width-center wide-area" class:changed={lesson.subject_changed}>
                     {lesson.current_subject}
@@ -79,7 +79,7 @@
                         plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;
                     }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>
                 </div>
-                <div class="rooms vert-align max-width-center info-element small-area" class:changed={lesson.room_changed}>
+                <div class="rooms vert-align max-width-center info-element small-area second_of_type" class:changed={lesson.room_changed}>
                     {#each lesson.rooms as room}
                         <button on:click={() => {
                             plan_type = "rooms";
@@ -92,17 +92,17 @@
                 {:else}
                 <div class="max-width-center info-element cancelled vert-align changed">X</div>
                 {/if}
+                {#if plan_type !== "forms"}
+                <div class="forms max-width-center wide-area second_of_type info-element">
+                    {#each lesson.forms as form}
+                        <button on:click={() => {
+                            plan_type = "forms";
+                            plan_value = form;
+                        }}>{form}</button>
+                    {/each}
+                </div>
+                {/if}
             </div>
-            {#if plan_type !== "forms"}
-            <div class="forms max-width-center info-element vert-align">
-                {#each lesson.forms as form}
-                    <button on:click={() => {
-                        plan_type = "forms";
-                        plan_value = form;
-                    }}>{form}</button>
-                {/each}
-            </div>
-            {/if}
         </div>
         {#if lesson.info}
             <div class="info-element lesson-info">{lesson.info}</div>
@@ -172,22 +172,27 @@
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: min-content 1fr;
+        &.large_grid {
+            grid-template-rows: min-content repeat(2, 1fr);
+        }
         grid-column-gap: 5px;
         grid-row-gap: 10px;
         .wide-area {
             grid-area: 1 / 1 / 2 / 3;
+            &.second_of_type {
+                grid-area: 3 / 1 / 4 / 3;
+            }
         }
         .small-area {
             grid-area: 2 / 1 / 3 / 2;
-
-            &:nth-of-type(2) {
+            &.second_of_type {
                 grid-area: 2 / 2 / 3 / 3;
             }
         }
     }
     .responsive-heading {
-        font-size: clamp(17px, 4vw, 2.28rem);
-        line-height: clamp(22.5px, 4.5vmax, 45px);
+        font-size: clamp(1.063rem, 4vw, 2.28rem);
+        line-height: clamp(1.406rem, 4.5vmax, 2.813rem);
         margin-bottom: 15px;
     }
 
@@ -200,24 +205,24 @@
 
     .last-updated {
         margin-top: 16px;
-        font-size: clamp(14px, 2.8vmin, 28px);
+        font-size: clamp(0.875rem, 2.8vmin, 1.75rem);
     }
 
     .additional-info {
         margin-top: 20px;
-        font-size: clamp(15px, 3vmin, 30px);
+        font-size: clamp(0.938rem, 3vmin, 1.875rem);
         line-height: 1.5;
     }
 
     .forms {
-        font-size: 14px;
+        font-size: 0.875rem;
     }
     .lesson-info {
-        margin-top: 12px;
+        margin-top: 10px;
         padding: 8px !important;
-        font-size: 14px;
+        font-size: 0.875rem;
         font-weight: 300;
-        line-height: 21px;
+        line-height: 1.313rem;
     }
     .info-element {
         background: rgba(255, 255, 255, 0.08);
@@ -231,7 +236,7 @@
             width: 100%;
             padding: 5px;
             margin: -5px;
-            line-height: 21px;
+            line-height: 1.313rem;
 
             &:hover, &:focus-visible {
                 background: rgba(0, 0, 0, 0.2) !important;
@@ -273,15 +278,15 @@
             display: block;
         }
         .lesson-period {
-            font-size: 14px;
+            font-size: 0.875rem;
             font-weight: 400;
         }
         .lesson-time {
-            font-size: 12px;
+            font-size: 0.75rem;
             font-weight: 400;
         }
         .subject, .teachers button, .rooms button, .forms button {
-            font-size: 14px;
+            font-size: 0.875rem;
         }
         .cancelled {
             width: 400% !important;
@@ -296,6 +301,9 @@
             gap: 0;
             justify-content: space-between;
         }
+        .lesson-time-info {
+            padding: 0px 20px 0px 10px;
+        }
     }
     .horizontal-align {
         display: flex;
@@ -303,6 +311,9 @@
         justify-content: space-between;
         align-items: center;
         gap: 8vw;
+        @media only screen and (max-width: 380px) {
+            gap: 5px;
+        }
     }
     .vert-align {
         display: flex;
