@@ -32,11 +32,11 @@
     }
 
     function periods_to_block_label(periods) {
-        periods.sort();
+        periods.sort(function (a, b) {  return a - b;  });
 
         const rests = {
-            0: " - 2",
-            1: " - 1",
+            0: " 2/2",
+            1: " 1/2",
         };
 
         if (periods.length === 1) {
@@ -63,7 +63,7 @@
     {#each lessons as lesson}
     <div class="card desktop-view">
         <div class="horizontal-align">
-            <div class="vert-align max-width-center lesson-time-info">
+            <div class="vert-align lesson-time-info">
                 <span class="lesson-time">{lesson.begin}</span>
                 <span class="lesson-period">{periods_to_block_label(lesson.periods)}</span>
                 <span class="lesson-time">{lesson.end}</span>
@@ -90,7 +90,7 @@
                     {/each}
                 </div>
                 {:else}
-                <div class="max-width-center info-element mobile-cancelled vert-align changed">X</div>
+                <div class="max-width-center info-element cancelled vert-align changed">X</div>
                 {/if}
             </div>
             {#if plan_type !== "forms"}
@@ -135,7 +135,7 @@
                 {/each}
             </div>
             {:else}
-            <div class="max-width-center info-element mobile-cancelled vert-align changed">X</div>
+            <div class="max-width-center info-element cancelled vert-align changed">X</div>
             {/if}
             {#if plan_type !== "forms"}
             <div class="forms max-width-center info-element vert-align">
@@ -167,16 +167,8 @@
 </div>
 
 <style lang="scss">
-    .desktop-view {
-        .lesson-time-info {
-            width: 16%;
-        }
-        .horizontal-align {
-            gap: 0;
-        }
-    }
     .grid-align-wrapper {
-        width: 83%;
+        width: 100%;
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: min-content 1fr;
@@ -217,9 +209,6 @@
         line-height: 1.5;
     }
 
-    .mobile-cancelled {
-        width: 400% !important;
-    }
     .forms {
         font-size: 14px;
     }
@@ -268,6 +257,16 @@
         gap: 10px;
     }
 
+    .subject, .teachers button, .rooms button, .forms button {
+        color: var(--text-color);
+        font-weight: 400;
+        border: none;
+        background: none;
+    }
+    .teachers button {
+        font-weight: 600;
+    }
+
     .mobile-view {
         display: none;
         @media only screen and (max-width: 600px) {
@@ -282,20 +281,20 @@
             font-weight: 400;
         }
         .subject, .teachers button, .rooms button, .forms button {
-            color: var(--text-color);
             font-size: 14px;
-            font-weight: 400;
-            border: none;
-            background: none;
         }
-        .teachers button {
-            font-weight: 600;
+        .cancelled {
+            width: 400% !important;
         }
     }
     .desktop-view {
         display: none;
         @media only screen and (min-width: 601px) {
             display: block;
+        }
+        .horizontal-align {
+            gap: 0;
+            justify-content: space-between;
         }
     }
     .horizontal-align {

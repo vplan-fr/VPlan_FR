@@ -6,7 +6,7 @@
     let school_num = "10001329";
     let date = null;
     let plan_type = "forms";
-    let plan_value = "VK/1";
+    let plan_value = "JG11";
     let teacher_list = [];
     let room_list = [];
     let grouped_forms = [];
@@ -29,7 +29,6 @@
                 teacher_list = Object.keys(data.teachers);
                 grouped_forms = data.forms.grouped_forms;
                 date = data.date;
-                console.log(data);
             })
             .catch(error => {
                 console.error(error);
