@@ -8,6 +8,8 @@ from collections import defaultdict
 
 from stundenplan24_py import indiware_mobil
 
+from .additional_info import parse_info, ToJsonMixin
+
 
 @dataclasses.dataclass
 class Lesson:
@@ -21,6 +23,7 @@ class Lesson:
     rooms: set[str]
     periods: set[int]
     info: str
+    parsed_info: list[list[tuple[str, ToJsonMixin | None]]]
 
     subject_changed: bool
     teacher_changed: bool
@@ -45,7 +48,9 @@ class Lesson:
             "teacher_changed": self.teacher_changed,
             "room_changed": self.room_changed,
             "begin": self.begin.strftime("%H:%M") if self.begin else None,
-            "end": self.end.strftime("%H:%M") if self.end else None
+            "end": self.end.strftime("%H:%M") if self.end else None,
+            "parsed_info": [[(info_str, info.to_json() if info is not None else None) for info_str, info in infos]
+                            for infos in self.parsed_info]
         }
 
 
@@ -146,6 +151,11 @@ class Plan:
         lessons = []
         for form in form_plan.forms:
             for lesson in form.lessons:
+                parsed_info = (
+                    parse_info(lesson.information, form_plan.timestamp.year)
+                    if lesson.information is not None else []
+                )
+
                 lessons.append(Lesson(
                     forms={form.short_name},
                     class_subject=(
@@ -163,6 +173,7 @@ class Plan:
                     rooms=lesson.room().split(" ") if lesson.room() else [],
                     periods={lesson.period} if lesson.period is not None else [],
                     info=lesson.information if lesson.information is not None else "",
+                    parsed_info=parsed_info,
                     subject_changed=lesson.subject.was_changed,
                     teacher_changed=lesson.teacher.was_changed,
                     room_changed=lesson.room.was_changed,

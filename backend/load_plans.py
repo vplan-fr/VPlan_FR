@@ -22,7 +22,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "13"
+    VERSION = "14"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -163,7 +163,7 @@ class PlanCrawler:
         self._logger.info("=> Updating teachers...")
 
         if self.client.school_number not in schools.teacher_scrapers:
-            self._logger.error(" * No teacher scraper available for this school.")
+            self._logger.warning(" * No teacher scraper available for this school.")
             scraped_teachers = {}
         else:
             self._logger.info(" * Scraping teachers...")
@@ -226,7 +226,7 @@ class PlanCrawler:
                     self._logger.error(f" -> Error while parsing room {room!r}: {e}")
 
         except KeyError:
-            self._logger.error(" * No room parser available for this school.")
+            self._logger.warning(" * No room parser available for this school.")
 
             parsed_rooms = {room: None for room in all_rooms}
 
