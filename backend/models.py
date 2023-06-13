@@ -97,7 +97,7 @@ class Lessons:
             if previous_lesson is not None:
                 if list(lesson.forms)[0] in grouped[-1].forms:
                     should_get_grouped &= (
-                            # lesson.periods[0] - previous_lesson.periods[0] == 1 and
+                        # lesson.periods[0] - previous_lesson.periods[0] == 1 and
 
                             list(lesson.periods)[0] % 2 == 0
                     )
@@ -182,3 +182,82 @@ class Plan:
             1: "A",
             2: "B"
         }.get(self.form_plan.week, "?")
+
+
+@dataclasses.dataclass
+class Teacher:
+    abbreviation: str | None
+    full_name: str | None = None
+    surname: str | None = None
+    info: str | None = None
+    subjects: list[str] = dataclasses.field(default_factory=list)
+
+    def to_json(self) -> dict:
+        return {
+            "abbreviation": self.abbreviation,
+            "full_name": self.full_name,
+            "surname": self.surname,
+            "info": self.info,
+            "subjects": self.subjects
+        }
+
+    def merge(self, other: Teacher) -> Teacher:
+        return Teacher(
+            full_name=self.full_name or other.full_name,
+            surname=self.surname or other.surname,
+            info=self.info or other.info,
+            abbreviation=self.abbreviation or other.abbreviation,
+            subjects=list(set(self.subjects + other.subjects))
+        )
+
+
+@dataclasses.dataclass
+class Room:
+    house: int | str
+    floor: int | None
+    room_nr: int | None
+    appendix: str = ""
+
+    def to_short(self) -> str:
+        if isinstance(self.house, str):
+            assert self.floor is None
+            return self.house + (str(self.room_nr) if self.room_nr else "") + self.appendix
+
+        if self.floor < 0:
+            return f"-{self.house}{abs(self.floor)}{self.room_nr:02}{self.appendix}"
+        elif self.floor == 0:
+            return f"{self.house}{self.room_nr:02}{self.appendix}"
+        else:
+            return f"{self.house}{self.floor}{self.room_nr:02}{self.appendix}"
+
+    def to_json(self) -> dict:
+        return {
+            "house": self.house,
+            "floor": self.floor,
+            "room_nr": self.room_nr,
+            "appendix": self.appendix
+        }
+
+
+@dataclasses.dataclass
+class DefaultTimesInfo:
+    data: dict[int, tuple[datetime.time, datetime.time]]
+
+    def to_json(self) -> dict:
+        return {
+            period: (start.isoformat(), end.isoformat()) for period, (start, end) in self.data.items()
+        }
+
+    def current_period(self) -> int:
+        """Return the current period based on the current time.
+
+        If we are in the break between two periods, the next period is returned."""
+
+        now = datetime.datetime.now().time()
+
+        for period, (start, end) in self.data.items():
+            if now < start:
+                return period - 1
+
+            if start <= now < end:
+                return period
