@@ -94,5 +94,13 @@ def plan(school_num: str):
     }
 
 
+
+@app.route(f"{API_BASE_URL}/authorize", methods=["GET", "POST"])
+def authorize(school_num: str):
+    with open(".cache/auth.log", "a") as f:
+        f.write(f"New auth attempt for {school_num}\nargs: {request.args}\nbody: {request.form}")
+    return {"error": "not yet implemented"}
+
+
 if __name__ == "__main__":
     app.run(debug=True)

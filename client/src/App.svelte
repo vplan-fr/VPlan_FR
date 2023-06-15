@@ -114,8 +114,7 @@
     </div>
     <br>
     <br>
-    <Plan bind:api_base bind:date bind:plan_type bind:plan_value show_title=true extra_height=true />
-	<!-- <span class="material-symbols-outlined">settings</span> -->
+    <Plan bind:api_base bind:date bind:plan_type bind:plan_value show_title="true" extra_height="true" />
 </main>
 
 <style lang="scss">
