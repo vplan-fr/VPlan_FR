@@ -5,16 +5,18 @@ import datetime
 import re
 import typing
 
+from backend.vplan_utils import periods_to_block_label
+
 
 # Nicht verfügbare Räume:	1302 (1-2,7-10), 1306 (1-2,4,6)
 
 
-class MessageParseRegexes:
+class _InfoParsers:
     _teacher = r"[A-ZÄÖÜ][a-zäöüß]+(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)+"
     # teacher a,teacher b
     _teachers = fr"{_teacher}(?:,{_teacher})*"
     _course = r"[A-Za-z0-9ÄÖÜäöüß-]{2,7}"  # maybe be more strict?
-    _period = r"St\.(?P<period_begin>\d{1,2})(?:-(?P<period_end>\d{1,2}))?"
+    _period = r"St\.(?P<periods>(?P<period_begin>\d{1,2})(?:-(?P<period_end>\d{1,2}))?)"
     _periods = fr""
 
     _weekday = r"(?:Mo|Di|Mi|Do|Fr|Sa|So)"
@@ -76,6 +78,18 @@ class MessageParseRegexes:
 
     # Aufsicht Vorbereitungsraum mündliche Prüfung
 
+    @classmethod
+    def _parse_periods(cls, period_str: str) -> list[int]:
+        if "-" not in period_str:
+            return [int(period_str)]
+        else:
+            begin, end = period_str.split("-")
+            return list(range(int(begin), int(end) + 1))
+
+    @classmethod
+    def parse_periods(cls, period_str: str) -> list[int]:
+        return sum([cls._parse_periods(p) for p in period_str.split(",")], [])
+
 
 class ToJsonMixin:
     def to_json(self: dataclasses.dataclass) -> dict[str, typing.Any]:
@@ -93,7 +107,14 @@ class ToJsonMixin:
 
 @dataclasses.dataclass
 class MovedFromPeriod(ToJsonMixin):
-    period: int
+    periods: list[int]
+
+    def to_blocked_str(self):
+        return f"verlegt von Block {periods_to_block_label(self.periods)}"
+
+    @staticmethod
+    def is_groupable(other: MovedFromPeriod):
+        return True
 
 
 @dataclasses.dataclass
@@ -105,7 +126,13 @@ class InsteadOfCourse(ToJsonMixin):
 @dataclasses.dataclass
 class InsteadOfPeriod(ToJsonMixin):
     date: datetime.date
-    period: int
+    periods: list[int]
+
+    def to_blocked_str(self):
+        return f"statt {self.date.strftime('%a')} ({self.date.strftime('%d.%m.')}) Block {periods_to_block_label(self.periods)}"
+
+    def is_groupable(self, other: InsteadOfPeriod):
+        return self.date == other.date
 
 
 @dataclasses.dataclass
@@ -113,8 +140,18 @@ class CourseHeldAt(ToJsonMixin):
     course: str
     teachers: list[str]
     date: datetime.date
-    period_begin: int
-    period_end: int
+    periods: list[int]
+
+    def to_blocked_str(self):
+        return f"{self.course} {', '.join(self.teachers)} gehalten am {self.date.strftime('%a')} " \
+               f"({self.date.strftime('%d.%m.')}) Block {periods_to_block_label(self.periods)}"
+
+    def is_groupable(self, other: CourseHeldAt):
+        return (
+                self.course == other.course
+                and set(self.teachers) == set(other.teachers)
+                and self.date == other.date
+        )
 
 
 @dataclasses.dataclass
@@ -122,8 +159,21 @@ class MovedTo(ToJsonMixin):
     course: str
     teachers: list[str]
     date: datetime.date | None
-    period_begin: int
-    period_end: int
+    periods: list[int]
+
+    def to_blocked_str(self):
+        if self.date is None:
+            return f"{self.course} {', '.join(self.teachers)} verlegt nach Block {periods_to_block_label(self.periods)}"
+        else:
+            return f"{self.course} {', '.join(self.teachers)} verlegt nach {self.date.strftime('%a')} " \
+                   f"({self.date.strftime('%d.%m.')}) Block {periods_to_block_label(self.periods)}"
+
+    def is_groupable(self, other: MovedTo):
+        return (
+                self.course == other.course
+                and set(self.teachers) == set(other.teachers)
+                and self.date == other.date
+        )
 
 
 @dataclasses.dataclass
@@ -161,59 +211,67 @@ class IndividualRevision(ToJsonMixin):
 class Exam(ToJsonMixin):
     last_name: str
 
+
 def _parse_info(info: str, plan_year: int) -> ToJsonMixin | None:
-    if match := MessageParseRegexes.moved_from.search(info):
-        return MovedFromPeriod(int(match.group("period_begin")))
-    elif match := MessageParseRegexes.substitution.search(info):
+    if match := _InfoParsers.moved_from.search(info):
+        return MovedFromPeriod([int(match.group("period_begin"))])
+    elif match := _InfoParsers.substitution.search(info):
         return InsteadOfCourse(match.group("course"), match.group("teachers").split(","))
-    elif match := MessageParseRegexes.instead_of.search(info):
+    elif match := _InfoParsers.instead_of.search(info):
         return InsteadOfPeriod(
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
-            int(match.group("period_begin"))
+            _InfoParsers.parse_periods(match.group("periods"))
         )
-    elif match := MessageParseRegexes.held_at.search(info):
+    elif match := _InfoParsers.held_at.search(info):
         return CourseHeldAt(
             match.group("course"),
             match.group("teachers").split(","),
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
-            int(match.group("period_begin")),
-            int(match.group("period_end")) if match.group("period_end") else int(match.group("period_begin"))
+            _InfoParsers.parse_periods(match.group("periods"))
         )
-    elif match := MessageParseRegexes.moved_to.search(info):
+    elif match := _InfoParsers.moved_to.search(info):
         return MovedTo(
             match.group("course"),
             match.group("teachers").split(","),
             None,
-            int(match.group("period_begin")),
-            int(match.group("period_end")) if match.group("period_end") else int(match.group("period_begin"))
+            _InfoParsers.parse_periods(match.group("periods"))
         )
-    elif match := MessageParseRegexes.moved_to_date.search(info):
+    elif match := _InfoParsers.moved_to_date.search(info):
         return MovedTo(
             match.group("course"),
             match.group("teachers").split(","),
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
-            int(match.group("period_begin")),
-            int(match.group("period_end")) if match.group("period_end") else int(match.group("period_begin"))
+            _InfoParsers.parse_periods(match.group("periods"))
         )
-    elif match := MessageParseRegexes.cancelled.search(info):
+    elif match := _InfoParsers.cancelled.search(info):
         return Cancelled(match.group("course"), match.group("teachers").split(","))
-    elif match := MessageParseRegexes.exam.search(info):
+    elif match := _InfoParsers.exam.search(info):
         return Exam(match.group("last_name"))
-    elif match := MessageParseRegexes.do_where.search(info):
+    elif match := _InfoParsers.do_where.search(info):
         return DoWhere(match.group(1).strip())
-    elif match := MessageParseRegexes.individual_revision.search(info):
+    elif match := _InfoParsers.individual_revision.search(info):
         return IndividualRevision(match.groupdict(None)["location"])
-    elif MessageParseRegexes.independent.search(info):
+    elif _InfoParsers.independent.search(info):
         return DoIndependent()
-    elif MessageParseRegexes.tasks_in_lernsax.search(info):
+    elif _InfoParsers.tasks_in_lernsax.search(info):
         return TasksInLernsax()
-    elif MessageParseRegexes.tasks_were_given.search(info):
+    elif _InfoParsers.tasks_were_given.search(info):
         return TasksWereGiven()
     else:
         return None
 
 
-def parse_info(info: str, plan_year: int) -> list[list[tuple[str, ToJsonMixin | None]]]:
+ParsedLessonInfo = list[list[tuple[str, typing.Optional[ToJsonMixin]]]]
+
+
+def sort_info(info: ParsedLessonInfo) -> ParsedLessonInfo:
+    return sorted([
+        sorted(part_info, key=lambda x: x[0])
+        for part_info in info
+    ], key=lambda part_info: [part_part_info[0] for part_part_info in part_info])
+
+
+def parse_info(info: str, plan_year: int) -> ParsedLessonInfo:
     return [
         [(part_part_info.strip(), _parse_info(part_part_info, plan_year)) for part_part_info in part_info.split(", ")]
         for part_info in info.split(";")

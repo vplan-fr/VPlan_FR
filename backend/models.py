@@ -8,7 +8,8 @@ from collections import defaultdict
 
 from stundenplan24_py import indiware_mobil
 
-from .additional_info import parse_info, ToJsonMixin
+from .lesson_info import parse_info, ParsedLessonInfo, sort_info, MovedFromPeriod, InsteadOfPeriod, CourseHeldAt, \
+    MovedTo
 
 
 @dataclasses.dataclass
@@ -23,7 +24,7 @@ class Lesson:
     rooms: set[str]
     periods: set[int]
     info: str
-    parsed_info: list[list[tuple[str, ToJsonMixin | None]]]
+    parsed_info: ParsedLessonInfo
 
     subject_changed: bool
     teacher_changed: bool
@@ -34,7 +35,7 @@ class Lesson:
 
     def to_json(self) -> dict:
         return {
-            "forms": list(self.forms),
+            "forms": sorted(self.forms),
             "periods": list(self.periods),
             "rooms": list(self.rooms),
             "current_subject": self.current_subject,
@@ -79,6 +80,44 @@ class Lessons:
         return {attribute: sorted(lessons, key=lambda x: list(x.periods)[0])
                 for attribute, lessons in grouped.items()}
 
+    @staticmethod
+    def _group_lesson_info(
+            parsed_info1: ParsedLessonInfo,
+            parsed_info2: ParsedLessonInfo
+    ) -> ParsedLessonInfo | None:
+        info1 = sort_info(parsed_info1)
+        info2 = sort_info(parsed_info2)
+
+        new_info = []
+
+        for info1_part, info2_part in zip(info1, info2):
+            new_part_info = []
+            for (info_str1, info1), (info_str2, info2) in zip(info1_part, info2_part):
+                if type(info1) != type(info2):
+                    # both infos are definitely not the same
+                    return None
+
+                # info string not the same, but groupable
+                if isinstance(info1, (MovedFromPeriod, InsteadOfPeriod, CourseHeldAt, MovedTo)):
+                    if info1.is_groupable(info2):
+                        new_part_part_info = copy.deepcopy(info1)
+                        new_part_part_info.periods += info2.periods
+                        new_info_str = new_part_part_info.to_blocked_str()
+                        new_part_info.append((new_info_str, new_part_part_info))
+                    else:
+                        return None
+
+                # not groupable, so info string must be the same
+                elif info_str1 == info_str2:
+                    new_part_info.append((info_str1, info1))
+
+                else:
+                    return None
+
+            new_info.append(new_part_info)
+
+        return new_info
+
     def blocks_grouped(self) -> Lessons:
         assert all(len(x.periods) <= 1 and len(x.forms) for x in self.lessons), \
             "Lessons must be ungrouped. (Must only have one period.)"
@@ -101,6 +140,13 @@ class Lessons:
             )
 
             if previous_lesson is not None:
+                grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info)
+
+                should_get_grouped &= grouped_additional_info is not None
+            else:
+                grouped_additional_info = None
+
+            if previous_lesson is not None:
                 if list(lesson.forms)[0] in grouped[-1].forms:
                     should_get_grouped &= (
                         # lesson.periods[0] - previous_lesson.periods[0] == 1 and
@@ -116,8 +162,7 @@ class Lessons:
                 grouped[-1].periods |= lesson.periods
                 grouped[-1].forms |= lesson.forms
                 grouped[-1].info = "\n".join(filter(lambda x: x, [grouped[-1].info, lesson.info]))
-                if grouped[-1].class_number != lesson.class_number:
-                    grouped[-1].class_number = None
+                grouped[-1].parsed_info = grouped_additional_info
                 grouped[-1].end = lesson.end
             else:
                 grouped.append(copy.deepcopy(lesson))
