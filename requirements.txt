@@ -1,4 +1,2 @@
 Flask~=2.3.2
-stundenplan24-wrapper @ git+https://github.com/Belissimo-T/stundenplan24-wrapper
-requests
-bs4
+stundenplan24-wrapper@ git+https://github.com/Belissimo-T/stundenplan24-wrapper
