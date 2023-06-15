@@ -22,7 +22,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "16"
+    VERSION = "17"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client

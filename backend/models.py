@@ -124,7 +124,10 @@ class Lessons:
 
         sorted_lessons = sorted(
             self.lessons,
-            key=lambda x: (x.current_subject if x.current_subject is not None else "", x.forms, x.periods)
+            key=lambda x: (x.current_subject if x.current_subject is not None else "",
+                           x.class_group if x.class_group is not None else "",
+                           x.forms,
+                           x.periods)
         )
 
         grouped: list[Lesson] = []
