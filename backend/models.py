@@ -9,8 +9,7 @@ from collections import defaultdict
 from stundenplan24_py import indiware_mobil
 import stundenplan24_py
 
-from .lesson_info import parse_info, ParsedLessonInfo, sort_info, MovedFromPeriod, InsteadOfPeriod, CourseHeldAt, \
-    MovedTo
+from .lesson_info import parse_info, ParsedLessonInfo, sort_info, MovedFrom, MovedTo
 
 
 @dataclasses.dataclass
@@ -59,6 +58,7 @@ class Lesson:
 @dataclasses.dataclass
 class Lessons:
     lessons: list[Lesson]
+    date: datetime.date
 
     def group_by(self, *attributes: str, include_none: bool = False) -> dict[str, list[Lesson]]:
         grouped_i = defaultdict(set)
@@ -84,7 +84,8 @@ class Lessons:
     @staticmethod
     def _group_lesson_info(
             parsed_info1: ParsedLessonInfo,
-            parsed_info2: ParsedLessonInfo
+            parsed_info2: ParsedLessonInfo,
+            lesson_date: datetime.date
     ) -> ParsedLessonInfo | None:
         info1 = sort_info(parsed_info1)
         info2 = sort_info(parsed_info2)
@@ -99,11 +100,11 @@ class Lessons:
                     return None
 
                 # info string not the same, but groupable
-                if isinstance(info1, (MovedFromPeriod, InsteadOfPeriod, CourseHeldAt, MovedTo)):
+                if isinstance(info1, (MovedFrom, MovedTo)):
                     if info1.is_groupable(info2):
                         new_part_part_info = copy.deepcopy(info1)
                         new_part_part_info.periods += info2.periods
-                        new_info_str = new_part_part_info.to_blocked_str()
+                        new_info_str = new_part_part_info.to_blocked_str(lesson_date)
                         new_part_info.append((new_info_str, new_part_part_info))
                     else:
                         return None
@@ -144,7 +145,8 @@ class Lessons:
             )
 
             if previous_lesson is not None:
-                grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info)
+                grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info,
+                                                                  self.date)
 
                 should_get_grouped &= grouped_additional_info is not None
             else:
@@ -152,15 +154,9 @@ class Lessons:
 
             if previous_lesson is not None:
                 if list(lesson.forms)[0] in grouped[-1].forms:
-                    should_get_grouped &= (
-                        # lesson.periods[0] - previous_lesson.periods[0] == 1 and
-
-                        list(lesson.periods)[0] % 2 == 0
-                    )
+                    should_get_grouped &= list(lesson.periods)[0] % 2 == 0
                 else:
-                    should_get_grouped &= (
-                        list(lesson.periods)[-1] in grouped[-1].periods
-                    )
+                    should_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
 
             if should_get_grouped:
                 grouped[-1].periods |= lesson.periods
@@ -173,7 +169,7 @@ class Lessons:
 
             previous_lesson = lesson
 
-        return Lessons(sorted(grouped, key=lambda x: x.periods))
+        return Lessons(sorted(grouped, key=lambda x: x.periods), self.date)
 
     def __iter__(self):
         return iter(self.lessons)
@@ -243,7 +239,7 @@ class Plan:
                 exams[form.short_name].append(exam)
 
         return cls(
-            lessons=Lessons(lessons),
+            lessons=Lessons(lessons, form_plan.date),
             additional_info=form_plan.additional_info,
 
             form_plan=form_plan,

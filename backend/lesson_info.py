@@ -55,8 +55,7 @@ class _InfoParsers:
     # 11spo3 Frau Musterfrau fällt aus
     # GRW Frau Musterfrau fällt aus
     # 10Et12 Frau Musterfrau fällt aus
-    cancelled = re.compile(
-        rf'(?P<course>{_course}) (?P<teachers>{_teachers}) fällt aus')  # 1. group: subject, 2. group: teacher name
+    cancelled = re.compile(rf'(?P<course>{_course}) (?P<teachers>{_teachers}) fällt aus')
 
     # Not Quite Cancelled
     # selbst. (v), Aufgaben stehen im LernSax, bitte in der Bibo bearbeiten
@@ -80,6 +79,17 @@ class _InfoParsers:
     exam = re.compile(rf'Prüfung (?P<last_name>[A-ZÄÖÜ][a-zäöüß]+)')
 
     # Aufsicht Vorbereitungsraum mündliche Prüfung
+
+    """
+    eigentliche Stunde findet wann anders statt:
+    "verlegt in die Vergangenheit"          =: "gehalten am"
+    "verlegt in die Zukunft"                =: "verlegt nach"
+    
+    aktuelle Stunde findet nicht statt, weil andere Stunde auf diese verlegt wurde 
+    "verlegt aus der Zukunft/Vergangenheit" =: "statt"
+    "verlegt aus der Zukunft/Vergangenheit" =: "verlegt von" (gleicher Tag)
+
+"""
 
     @classmethod
     def _parse_periods(cls, period_str: str) -> list[int]:
@@ -109,69 +119,33 @@ class ToJsonMixin:
 
 
 def de_weekday_to_str(weekday: int) -> str:
-    return {
-        0: "Mo",
-        1: "Di",
-        2: "Mi",
-        3: "Do",
-        4: "Fr",
-        5: "Sa",
-        6: "So"
-    }[weekday]
+    return [
+        "Mo",
+        "Di",
+        "Mi",
+        "Do",
+        "Fr",
+        "Sa",
+        "So"
+    ][weekday]
 
 
 @dataclasses.dataclass
-class MovedFromPeriod(ToJsonMixin):
+class MovedFrom(ToJsonMixin):
     periods: list[int]
+    date: datetime.date | None
 
-    def to_blocked_str(self):
-        return f"verlegt von Block {periods_to_block_label(self.periods)}"
+    def to_blocked_str(self, lesson_date: datetime.date):
+        if self.date is None:
+            return f"verlegt von Block {periods_to_block_label(self.periods)}"
+        else:
+            return (
+                f"statt {de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
+                f"{periods_to_block_label(self.periods)}. Block"
+            )
 
-    @staticmethod
-    def is_groupable(other: MovedFromPeriod):
-        return True
-
-
-@dataclasses.dataclass
-class InsteadOfCourse(ToJsonMixin):
-    course: str
-    teachers: list[str]
-
-
-@dataclasses.dataclass
-class InsteadOfPeriod(ToJsonMixin):
-    date: datetime.date
-    periods: list[int]
-
-    def to_blocked_str(self):
-        return (
-            f"statt {de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
-            f"Block {periods_to_block_label(self.periods)}"
-        )
-
-    def is_groupable(self, other: InsteadOfPeriod):
+    def is_groupable(self, other: MovedFrom):
         return self.date == other.date
-
-
-@dataclasses.dataclass
-class CourseHeldAt(ToJsonMixin):
-    course: str
-    teachers: list[str]
-    date: datetime.date
-    periods: list[int]
-
-    def to_blocked_str(self):
-        return (
-            f"{self.course} {', '.join(self.teachers)} gehalten am {de_weekday_to_str(self.date.weekday())} "
-            f"({self.date.strftime('%d.%m.%Y')}) Block {periods_to_block_label(self.periods)}"
-        )
-
-    def is_groupable(self, other: CourseHeldAt):
-        return (
-                self.course == other.course
-                and set(self.teachers) == set(other.teachers)
-                and self.date == other.date
-        )
 
 
 @dataclasses.dataclass
@@ -181,13 +155,18 @@ class MovedTo(ToJsonMixin):
     date: datetime.date | None
     periods: list[int]
 
-    def to_blocked_str(self):
+    def to_blocked_str(self, lesson_date: datetime.date):
         if self.date is None:
             return f"{self.course} {', '.join(self.teachers)} verlegt nach Block {periods_to_block_label(self.periods)}"
+        elif self.date < lesson_date:
+            return (
+                f"{self.course} {', '.join(self.teachers)} gehalten am {de_weekday_to_str(self.date.weekday())} "
+                f"({self.date.strftime('%d.%m.%Y')}) {periods_to_block_label(self.periods)}. Block"
+            )
         else:
             return (
                 f"{self.course} {', '.join(self.teachers)} verlegt nach {de_weekday_to_str(self.date.weekday())} "
-                f"({self.date.strftime('%d.%m.%Y')}) Block {periods_to_block_label(self.periods)}"
+                f"({self.date.strftime('%d.%m.%Y')}) {periods_to_block_label(self.periods)}. Block"
             )
 
     def is_groupable(self, other: MovedTo):
@@ -196,6 +175,12 @@ class MovedTo(ToJsonMixin):
                 and set(self.teachers) == set(other.teachers)
                 and self.date == other.date
         )
+
+
+@dataclasses.dataclass
+class InsteadOfCourse(ToJsonMixin):
+    course: str
+    teachers: list[str]
 
 
 @dataclasses.dataclass
@@ -235,17 +220,17 @@ class Exam(ToJsonMixin):
 
 
 def _parse_info(info: str, plan_year: int) -> ToJsonMixin | None:
-    if match := _InfoParsers.moved_from.search(info):
-        return MovedFromPeriod([int(match.group("period_begin"))])
-    elif match := _InfoParsers.substitution.search(info):
+    if match := _InfoParsers.substitution.search(info):
         return InsteadOfCourse(match.group("course"), match.group("teachers").split(","))
+    elif match := _InfoParsers.moved_from.search(info):
+        return MovedFrom([int(match.group("period_begin"))], None)
     elif match := _InfoParsers.instead_of.search(info):
-        return InsteadOfPeriod(
-            datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
-            _InfoParsers.parse_periods(match.group("periods"))
+        return MovedFrom(
+            _InfoParsers.parse_periods(match.group("periods")),
+            datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date()
         )
     elif match := _InfoParsers.held_at.search(info):
-        return CourseHeldAt(
+        return MovedTo(
             match.group("course"),
             match.group("teachers").split(","),
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
