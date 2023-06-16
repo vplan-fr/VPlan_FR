@@ -12,7 +12,10 @@ from backend.vplan_utils import periods_to_block_label
 
 
 class _InfoParsers:
-    _teacher = r"[A-ZÄÖÜ][a-zäöüß]+(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)+"
+    _teacher_name = r"[A-ZÄÖÜ][a-zäöüß]+(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)+"
+    _teacher_abbreviation = r"[A-ZÄÖÜ][A-ZÄÖÜa-zäöüß]*"
+    _teacher = fr"(?:{_teacher_name})|(?:{_teacher_abbreviation})"
+
     # teacher a,teacher b
     _teachers = fr"{_teacher}(?:,{_teacher})*"
     _course = r"[A-Za-z0-9ÄÖÜäöüß-]{2,7}"  # maybe be more strict?
