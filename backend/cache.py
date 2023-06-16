@@ -71,10 +71,10 @@ class Cache:
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
 
-    def is_cached(self,
-                  day: datetime.date,
-                  timestamp: datetime.datetime | typing.Literal[".newest"],
-                  filename: str) -> bool:
+    def contains(self,
+                 day: datetime.date,
+                 timestamp: datetime.datetime | typing.Literal[".newest"],
+                 filename: str) -> bool:
         return (self.get_plan_path(day, timestamp) / filename).exists()
 
     def store_meta_file(self, content: str, filename: str):
