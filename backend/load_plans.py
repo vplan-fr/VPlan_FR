@@ -22,7 +22,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "17"
+    VERSION = "18"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -383,9 +383,43 @@ class MetaExtractor:
 
 class PlanExtractor:
     def __init__(self, plan_kl: str):
+        self._logger = logging.getLogger(self.__class__.__name__)
+
         form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = Plan.from_form_plan(form_plan)
         self.lessons_grouped = self.plan.lessons.blocks_grouped()
+
+        # extrapolate lesson times (sketchy)
+        for lesson in self.lessons_grouped:
+            if lesson.begin is None:
+                # can't do anything about that
+                continue
+
+            if lesson.end is None:
+                prev_block = [
+                    l for l in self.lessons_grouped
+                    if (sorted(lesson.periods)[0] - sorted(l.periods)[-1] == 1
+                        and len(l.periods) == len(lesson.periods)
+                        and l.end is not None is not l.begin)
+                ]
+
+                if prev_block:
+                    block_duration = (
+                            datetime.datetime.combine(datetime.datetime.min, prev_block[-1].end)
+                            - datetime.datetime.combine(datetime.datetime.min, prev_block[-1].begin)
+                    )
+                    lesson.end = (
+                            datetime.datetime.combine(datetime.datetime.min, lesson.begin) + block_duration
+                    ).time()
+
+                    self._logger.debug(
+                        f" -> Extrapolated end time for a lesson. "
+                        f"Period: {lesson.periods!r}, subject: {lesson.current_subject!r}, form: {lesson.forms!r}, "
+                        f"duration: {block_duration.seconds/60:.2f} min."
+                    )
+                else:
+                    pass
+                    # self._logger.debug(f" -> Could not extrapolate end time for a lesson, no previous block found.")
 
     def room_plan(self):
         return self.lessons_grouped.group_by("rooms")
