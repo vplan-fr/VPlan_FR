@@ -60,7 +60,7 @@ class _InfoParsers:
     # selbst. (v), Aufgaben stehen im LernSax, bitte zu Hause bearbeiten
     # selbst. (v), Aufgaben stehen im LernSax
     # selbst. (v), Aufgaben wurden erteilt, bitte zu Hause erledigen
-    independent = re.compile(rf'selbst\. \(v\)')
+    independent = re.compile(rf'selbst\. \(.\)')
 
     tasks_in_lernsax = re.compile(rf'Aufgaben stehen im LernSax')
     tasks_were_given = re.compile(rf'Aufgaben wurden erteilt')
@@ -105,6 +105,18 @@ class ToJsonMixin:
         }
 
 
+def de_weekday_to_str(weekday: int) -> str:
+    return {
+        0: "Mo",
+        1: "Di",
+        2: "Mi",
+        3: "Do",
+        4: "Fr",
+        5: "Sa",
+        6: "So"
+    }[weekday]
+
+
 @dataclasses.dataclass
 class MovedFromPeriod(ToJsonMixin):
     periods: list[int]
@@ -129,7 +141,10 @@ class InsteadOfPeriod(ToJsonMixin):
     periods: list[int]
 
     def to_blocked_str(self):
-        return f"statt {self.date.strftime('%a')} ({self.date.strftime('%d.%m.')}) Block {periods_to_block_label(self.periods)}"
+        return (
+            f"statt {de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
+            f"Block {periods_to_block_label(self.periods)}"
+        )
 
     def is_groupable(self, other: InsteadOfPeriod):
         return self.date == other.date
@@ -143,8 +158,10 @@ class CourseHeldAt(ToJsonMixin):
     periods: list[int]
 
     def to_blocked_str(self):
-        return f"{self.course} {', '.join(self.teachers)} gehalten am {self.date.strftime('%a')} " \
-               f"({self.date.strftime('%d.%m.')}) Block {periods_to_block_label(self.periods)}"
+        return (
+            f"{self.course} {', '.join(self.teachers)} gehalten am {de_weekday_to_str(self.date.weekday())} "
+            f"({self.date.strftime('%d.%m.%Y')}) Block {periods_to_block_label(self.periods)}"
+        )
 
     def is_groupable(self, other: CourseHeldAt):
         return (
@@ -165,8 +182,10 @@ class MovedTo(ToJsonMixin):
         if self.date is None:
             return f"{self.course} {', '.join(self.teachers)} verlegt nach Block {periods_to_block_label(self.periods)}"
         else:
-            return f"{self.course} {', '.join(self.teachers)} verlegt nach {self.date.strftime('%a')} " \
-                   f"({self.date.strftime('%d.%m.')}) Block {periods_to_block_label(self.periods)}"
+            return (
+                f"{self.course} {', '.join(self.teachers)} verlegt nach {de_weekday_to_str(self.date.weekday())} "
+                f"({self.date.strftime('%d.%m.%Y')}) Block {periods_to_block_label(self.periods)}"
+            )
 
     def is_groupable(self, other: MovedTo):
         return (
@@ -198,13 +217,13 @@ class TasksWereGiven(ToJsonMixin):
 
 
 @dataclasses.dataclass
-class DoWhere(ToJsonMixin):
-    where: str
+class DoAtLocation(ToJsonMixin):
+    location: str
 
 
 @dataclasses.dataclass
 class IndividualRevision(ToJsonMixin):
-    where: str
+    location: str | None
 
 
 @dataclasses.dataclass
@@ -248,7 +267,7 @@ def _parse_info(info: str, plan_year: int) -> ToJsonMixin | None:
     elif match := _InfoParsers.exam.search(info):
         return Exam(match.group("last_name"))
     elif match := _InfoParsers.do_where.search(info):
-        return DoWhere(match.group(1).strip())
+        return DoAtLocation(match.group(1).strip())
     elif match := _InfoParsers.individual_revision.search(info):
         return IndividualRevision(match.groupdict(None)["location"])
     elif _InfoParsers.independent.search(info):
