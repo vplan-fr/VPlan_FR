@@ -252,7 +252,7 @@ class DailyMetaExtractor:
         self.form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plankl_file))
 
     def teachers(self) -> dict[str, list[str]]:
-        excluded_subjects = ["KL", "AnSt", "FÖ"]
+        excluded_subjects = ["KL", "AnSt", "FÖ", "WB", "GTA"]
 
         all_teachers = set()
         for form in self.form_plan.forms:
