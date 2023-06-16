@@ -305,7 +305,7 @@ class DefaultTimesInfo:
 
     def to_json(self) -> dict:
         return {
-            period: (start.isoformat(), end.isoformat()) for period, (start, end) in self.data.items()
+            period: (start.strftime("%H:%M"), end.strftime("%H:%M")) for period, (start, end) in self.data.items()
         }
 
     def current_period(self) -> int:
