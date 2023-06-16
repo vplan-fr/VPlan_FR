@@ -41,7 +41,6 @@ def meta(school_num):
     teachers_data = json.loads(cache.get_meta_file("teachers.json"))["teachers"]
     forms_data = json.loads(cache.get_meta_file("forms.json"))
     rooms_data = json.loads(cache.get_meta_file("rooms.json"))
-    exams_data = json.loads(cache.get_meta_file("exams.json"))
     dates_data = json.loads(cache.get_meta_file("dates.json"))
 
     dates = sorted([datetime.datetime.strptime(elem, "%Y-%m-%d").date() for elem in list(dates_data.keys())])
@@ -53,7 +52,6 @@ def meta(school_num):
         "teachers": teachers_data,
         "forms": forms_data,
         "rooms": rooms_data,
-        "exams": exams_data,
         "date": date.strftime("%Y-%m-%d")
     }), mimetype='application/json')
 
@@ -85,16 +83,16 @@ def plan(school_num: str):
         plan_data = cache.get_plan_file(date, revision, "plans.json")
         rooms_data = cache.get_plan_file(date, revision, "rooms.json")
         info_data = cache.get_plan_file(date, revision, "info.json")
-
+        exams_data = cache.get_plan_file(date, revision, "exams.json")
     except FileNotFoundError:
         return {"error": "Invalid revision."}
 
     return {
         "plans": json.loads(plan_data),
         "rooms": json.loads(rooms_data),
+        "exams": json.loads(exams_data),
         "info": json.loads(info_data)
     }
-
 
 
 @app.route(f"{API_BASE_URL}/authorize", methods=["GET", "POST"])
