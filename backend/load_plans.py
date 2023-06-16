@@ -10,7 +10,7 @@ from pathlib import Path
 import json
 import xml.etree.ElementTree as ET
 
-from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil
+from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil, NoPlanForDateError
 
 from .cache import Cache
 from .vplan_utils import group_forms
@@ -48,10 +48,15 @@ class PlanCrawler:
             date = datetime.datetime.strptime(filename, "PlanKl%Y%m%d.xml").date()
 
             # check if plan is already cached
-            if not self.cache.is_cached(date, timestamp, "PlanKl.xml"):
+            if not self.cache.contains(date, timestamp, "PlanKl.xml"):
                 self._logger.info(f" -> Downloading plan for {date}...")
 
                 plan = await self.client.fetch_indiware_mobil(filename)
+                try:
+                    vplan = await self.client.fetch_substitution_plan(date)
+                    self.cache.store_plan_file(date, timestamp, vplan, "VPlanKl.xml")
+                except NoPlanForDateError:
+                    self._logger.debug(f"   -> No substitution plan available.")
 
                 self.cache.store_plan_file(date, timestamp, plan, "PlanKl.xml")
             else:
@@ -78,7 +83,7 @@ class PlanCrawler:
                 self.update_plans(day, revision)
 
     def update_plans(self, day: datetime.date, revision: datetime.datetime, plan: str | None = None) -> bool:
-        if self.cache.is_cached(day, revision, ".processed"):
+        if self.cache.contains(day, revision, ".processed"):
             if self.cache.get_plan_file(day, revision, ".processed") == self.VERSION:
                 return False
 
