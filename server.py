@@ -41,6 +41,7 @@ def meta(school_num):
     teachers_data = json.loads(cache.get_meta_file("teachers.json"))["teachers"]
     forms_data = json.loads(cache.get_meta_file("forms.json"))
     rooms_data = json.loads(cache.get_meta_file("rooms.json"))
+    exams_data = json.loads(cache.get_meta_file("exams.json"))
     dates_data = json.loads(cache.get_meta_file("dates.json"))
 
     dates = sorted([datetime.datetime.strptime(elem, "%Y-%m-%d").date() for elem in list(dates_data.keys())])
@@ -52,6 +53,7 @@ def meta(school_num):
         "teachers": teachers_data,
         "forms": forms_data,
         "rooms": rooms_data,
+        "exams": exams_data,
         "date": date.strftime("%Y-%m-%d")
     }), mimetype='application/json')
 

@@ -7,6 +7,7 @@ import datetime
 from collections import defaultdict
 
 from stundenplan24_py import indiware_mobil
+import stundenplan24_py
 
 from .lesson_info import parse_info, ParsedLessonInfo, sort_info, MovedFromPeriod, InsteadOfPeriod, CourseHeldAt, \
     MovedTo
@@ -33,7 +34,7 @@ class Lesson:
     begin: datetime.time
     end: datetime.time
 
-    def to_json(self) -> dict:
+    def to_dict(self) -> dict:
         return {
             "forms": sorted(self.forms),
             "periods": list(self.periods),
@@ -178,26 +179,31 @@ class Lessons:
         return iter(self.lessons)
 
 
+class Exam(stundenplan24_py.Exam):
+    def to_dict(self) -> dict:
+        return {
+            "year": self.year,
+            "course": self.course,
+            "course_teacher": self.course_teacher,
+            "period": self.period,
+            "begin": self.begin.isoformat(),
+            "duration": self.duration,
+            "info": self.info
+        }
+
+
 @dataclasses.dataclass
 class Plan:
     lessons: Lessons
     additional_info: list[str]
+    exams: dict[str, list[Exam]]
 
     form_plan: indiware_mobil.FormPlan
 
-    # exams: list[Exam]
-    # TODO: reimplement exams
-
-    def to_json(self) -> dict:
-        return {
-            "lessons": sorted([lesson.to_json() for lesson in self.lessons], key=lambda x: x["period"]),
-            "additional_info": self.additional_info,
-            # "exams": self.exams
-        }
-
     @classmethod
     def from_form_plan(cls, form_plan: indiware_mobil.FormPlan) -> Plan:
-        lessons = []
+        lessons: list[Lesson] = []
+        exams: dict[str, list[Exam]] = defaultdict(list)
         for form in form_plan.forms:
             for lesson in form.lessons:
                 parsed_info = (
@@ -230,11 +236,18 @@ class Plan:
                     end=lesson.end
                 ))
 
+            for exam in form.exams:
+                exam = copy.deepcopy(exam)
+                exam.__class__ = Exam
+
+                exams[form.short_name].append(exam)
+
         return cls(
             lessons=Lessons(lessons),
             additional_info=form_plan.additional_info,
 
-            form_plan=form_plan
+            form_plan=form_plan,
+            exams=exams
         )
 
     def week_letter(self):
@@ -252,7 +265,7 @@ class Teacher:
     info: str | None = None
     subjects: list[str] = dataclasses.field(default_factory=list)
 
-    def to_json(self) -> dict:
+    def to_dict(self) -> dict:
         return {
             "abbreviation": self.abbreviation,
             "full_name": self.full_name,
@@ -290,7 +303,7 @@ class Room:
         else:
             return f"{self.house}{self.floor}{self.room_nr:02}{self.appendix}"
 
-    def to_json(self) -> dict:
+    def to_dict(self) -> dict:
         return {
             "house": self.house,
             "floor": self.floor,
@@ -303,7 +316,7 @@ class Room:
 class DefaultTimesInfo:
     data: dict[int, tuple[datetime.time, datetime.time]]
 
-    def to_json(self) -> dict:
+    def to_dict(self) -> dict:
         return {
             period: (start.strftime("%H:%M"), end.strftime("%H:%M")) for period, (start, end) in self.data.items()
         }

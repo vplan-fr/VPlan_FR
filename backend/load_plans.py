@@ -14,7 +14,7 @@ from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indi
 
 from .cache import Cache
 from .vplan_utils import group_forms
-from .models import Lesson, Plan, Teacher, DefaultTimesInfo
+from .models import Lesson, Plan, Teacher, DefaultTimesInfo, Exam
 from . import schools
 
 
@@ -22,7 +22,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "19"
+    VERSION = "20"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -111,7 +111,7 @@ class PlanCrawler:
         data = {
             "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
         }
-        self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_json), "meta.json")
+        self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_dict), "meta.json")
         self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
         self.update_teachers()
@@ -126,8 +126,14 @@ class PlanCrawler:
             json.dumps({
                 "rooms": plan_extractor.room_plan(),
                 "teachers": plan_extractor.teacher_plan(),
-                "forms": plan_extractor.form_plan()}, default=Lesson.to_json),
+                "forms": plan_extractor.form_plan()}, default=Lesson.to_dict),
             "plans.json"
+        )
+
+        self.cache.store_plan_file(
+            date, timestamp,
+            json.dumps(plan_extractor.plan.exams, default=Exam.to_dict),
+            "exams.json"
         )
 
         all_rooms = set(self.meta_extractor.rooms())
@@ -199,7 +205,7 @@ class PlanCrawler:
         }
 
         self.cache.store_meta_file(
-            json.dumps(teachers_data, default=Teacher.to_json),
+            json.dumps(teachers_data, default=Teacher.to_dict),
             "teachers.json"
         )
 
@@ -226,7 +232,7 @@ class PlanCrawler:
 
             for room in all_rooms:
                 try:
-                    parsed_rooms[room] = room_parser(room).to_json()
+                    parsed_rooms[room] = room_parser(room).to_dict()
                 except Exception as e:
                     self._logger.error(f" -> Error while parsing room {room!r}: {e}")
 
@@ -379,7 +385,7 @@ class MetaExtractor:
 
         return {
             form: {
-                "default_times": default_times[form].to_json(),
+                "default_times": default_times[form].to_dict(),
                 "class_groups": courses[form],
             }
             for form in courses.keys()
