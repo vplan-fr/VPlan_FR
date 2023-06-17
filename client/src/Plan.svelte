@@ -28,7 +28,6 @@
                 } catch {
                     lessons = []
                 }
-                console.log(lessons);
             })
             .catch(error => {
                 console.error(error);
@@ -235,7 +234,7 @@
     }
 
     .last-updated {
-        margin-top: 16px;
+        margin: 16px 0px;
         font-size: clamp(0.875rem, 2.8vmin, 1.75rem);
     }
 

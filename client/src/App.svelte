@@ -20,6 +20,7 @@
     let selected_form;
     let meta = {};
     let disabledDates = [];
+    let enabled_dates = [];
     function get_meta(api_base) {
         fetch(`${api_base}/meta`)
             .then(response => response.json())
@@ -28,16 +29,15 @@
                 room_list = Object.keys(data.rooms);
                 teacher_list = Object.keys(data.teachers);
                 grouped_forms = data.forms.grouped_forms;
+                enabled_dates = Object.keys(data.dates);
                 date = data.date;
+                console.log(data);
             })
             .catch(error => {
                 console.error(error);
         });
     }
-    function update_disabled_dates(meta) {
-        if(meta.dates === undefined)
-            return;
-        let enabled_dates = Object.keys(meta.dates);
+    function update_disabled_dates(enabled_dates) {
         let tmp_start = new Date(enabled_dates[enabled_dates.length-1]);
         let tmp_end = new Date(enabled_dates[0]);
         tmp_start.setDate(tmp_start.getDate() + 1);
@@ -63,7 +63,7 @@
     });
 
     $: get_meta(api_base);
-    $: update_disabled_dates(meta);
+    $: update_disabled_dates(enabled_dates);
 </script>
 
 <main>
