@@ -30,6 +30,23 @@ def group_forms(forms: list[str]) -> dict[str, list[str]]:
     return {k: v for k, v in sorted(groups.items(), key=lambda x: sort_key(x[0]))}
 
 
+def periods_to_block_label(periods: list[int]) -> str:
+    periods.sort()
+
+    rests = {
+        0: "²⁄₂",
+        1: "¹⁄₂",  # ½
+    }
+    if len(periods) == 1:
+        return f"{(periods[0] - 1) // 2 + 1}{rests[periods[0] % 2]}"
+
+    elif len(periods) == 2 and periods[0] % 2 == 1 and periods[1] - periods[0] == 1:
+        return f"{periods[-1] // 2}"
+
+    else:
+        return ", ".join([periods_to_block_label([p]) for p in periods])
+
+
 def find_closest_date(dates):
     now = datetime.datetime.now()
     today = now.date()

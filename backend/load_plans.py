@@ -10,11 +10,11 @@ from pathlib import Path
 import json
 import xml.etree.ElementTree as ET
 
-from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil
+from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil, NoPlanForDateError
 
 from .cache import Cache
 from .vplan_utils import group_forms
-from .models import Lesson, Plan, Teacher, DefaultTimesInfo
+from .models import Lesson, Plan, Teacher, DefaultTimesInfo, Exam
 from . import schools
 
 
@@ -22,7 +22,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "14"
+    VERSION = "22"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self.client = client
@@ -48,10 +48,15 @@ class PlanCrawler:
             date = datetime.datetime.strptime(filename, "PlanKl%Y%m%d.xml").date()
 
             # check if plan is already cached
-            if not self.cache.is_cached(date, timestamp, "PlanKl.xml"):
+            if not self.cache.contains(date, timestamp, "PlanKl.xml"):
                 self._logger.info(f" -> Downloading plan for {date}...")
 
                 plan = await self.client.fetch_indiware_mobil(filename)
+                try:
+                    vplan = await self.client.fetch_substitution_plan(date)
+                    self.cache.store_plan_file(date, timestamp, vplan, "VPlanKl.xml")
+                except NoPlanForDateError:
+                    self._logger.debug(f"   -> No substitution plan available.")
 
                 self.cache.store_plan_file(date, timestamp, plan, "PlanKl.xml")
             else:
@@ -78,7 +83,7 @@ class PlanCrawler:
                 self.update_plans(day, revision)
 
     def update_plans(self, day: datetime.date, revision: datetime.datetime, plan: str | None = None) -> bool:
-        if self.cache.is_cached(day, revision, ".processed"):
+        if self.cache.contains(day, revision, ".processed"):
             if self.cache.get_plan_file(day, revision, ".processed") == self.VERSION:
                 return False
 
@@ -106,7 +111,7 @@ class PlanCrawler:
         data = {
             "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
         }
-        self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_json), "meta.json")
+        self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_dict), "meta.json")
         self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
         self.update_teachers()
@@ -121,8 +126,14 @@ class PlanCrawler:
             json.dumps({
                 "rooms": plan_extractor.room_plan(),
                 "teachers": plan_extractor.teacher_plan(),
-                "forms": plan_extractor.form_plan()}, default=Lesson.to_json),
+                "forms": plan_extractor.form_plan()}, default=Lesson.to_dict),
             "plans.json"
+        )
+
+        self.cache.store_plan_file(
+            date, timestamp,
+            json.dumps(plan_extractor.plan.exams, default=Exam.to_dict),
+            "exams.json"
         )
 
         all_rooms = set(self.meta_extractor.rooms())
@@ -194,7 +205,7 @@ class PlanCrawler:
         }
 
         self.cache.store_meta_file(
-            json.dumps(teachers_data, default=Teacher.to_json),
+            json.dumps(teachers_data, default=Teacher.to_dict),
             "teachers.json"
         )
 
@@ -221,7 +232,7 @@ class PlanCrawler:
 
             for room in all_rooms:
                 try:
-                    parsed_rooms[room] = room_parser(room).to_json()
+                    parsed_rooms[room] = room_parser(room).to_dict()
                 except Exception as e:
                     self._logger.error(f" -> Error while parsing room {room!r}: {e}")
 
@@ -247,7 +258,7 @@ class DailyMetaExtractor:
         self.form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plankl_file))
 
     def teachers(self) -> dict[str, list[str]]:
-        excluded_subjects = ["KL", "AnSt", "FÖ"]
+        excluded_subjects = ["KL", "AnSt", "FÖ", "WB", "GTA"]
 
         all_teachers = set()
         for form in self.form_plan.forms:
@@ -374,7 +385,7 @@ class MetaExtractor:
 
         return {
             form: {
-                "default_times": default_times[form].to_json(),
+                "default_times": default_times[form].to_dict(),
                 "class_groups": courses[form],
             }
             for form in courses.keys()
@@ -383,9 +394,43 @@ class MetaExtractor:
 
 class PlanExtractor:
     def __init__(self, plan_kl: str):
+        self._logger = logging.getLogger(self.__class__.__name__)
+
         form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = Plan.from_form_plan(form_plan)
         self.lessons_grouped = self.plan.lessons.blocks_grouped()
+
+        # extrapolate lesson times (sketchy)
+        for lesson in self.lessons_grouped:
+            if lesson.begin is None:
+                # can't do anything about that
+                continue
+
+            if lesson.end is None:
+                prev_block = [
+                    l for l in self.lessons_grouped
+                    if (sorted(lesson.periods)[0] - sorted(l.periods)[-1] == 1
+                        and len(l.periods) == len(lesson.periods)
+                        and l.end is not None is not l.begin)
+                ]
+
+                if prev_block:
+                    block_duration = (
+                            datetime.datetime.combine(datetime.datetime.min, prev_block[-1].end)
+                            - datetime.datetime.combine(datetime.datetime.min, prev_block[-1].begin)
+                    )
+                    lesson.end = (
+                            datetime.datetime.combine(datetime.datetime.min, lesson.begin) + block_duration
+                    ).time()
+
+                    self._logger.debug(
+                        f" -> Extrapolated end time for a lesson. "
+                        f"Period: {lesson.periods!r}, subject: {lesson.current_subject!r}, form: {lesson.forms!r}, "
+                        f"duration: {block_duration.seconds/60:.2f} min."
+                    )
+                else:
+                    pass
+                    # self._logger.debug(f" -> Could not extrapolate end time for a lesson, no previous block found.")
 
     def room_plan(self):
         return self.lessons_grouped.group_by("rooms")

@@ -7,8 +7,9 @@ import datetime
 from collections import defaultdict
 
 from stundenplan24_py import indiware_mobil
+import stundenplan24_py
 
-from .additional_info import parse_info, ToJsonMixin
+from .lesson_info import parse_info, ParsedLessonInfo, sort_info, MovedFrom, MovedTo
 
 
 @dataclasses.dataclass
@@ -23,7 +24,7 @@ class Lesson:
     rooms: set[str]
     periods: set[int]
     info: str
-    parsed_info: list[list[tuple[str, ToJsonMixin | None]]]
+    parsed_info: ParsedLessonInfo
 
     subject_changed: bool
     teacher_changed: bool
@@ -32,9 +33,9 @@ class Lesson:
     begin: datetime.time
     end: datetime.time
 
-    def to_json(self) -> dict:
+    def to_dict(self) -> dict:
         return {
-            "forms": list(self.forms),
+            "forms": sorted(self.forms),
             "periods": list(self.periods),
             "rooms": list(self.rooms),
             "current_subject": self.current_subject,
@@ -57,6 +58,7 @@ class Lesson:
 @dataclasses.dataclass
 class Lessons:
     lessons: list[Lesson]
+    date: datetime.date
 
     def group_by(self, *attributes: str, include_none: bool = False) -> dict[str, list[Lesson]]:
         grouped_i = defaultdict(set)
@@ -79,13 +81,55 @@ class Lessons:
         return {attribute: sorted(lessons, key=lambda x: list(x.periods)[0])
                 for attribute, lessons in grouped.items()}
 
+    @staticmethod
+    def _group_lesson_info(
+            parsed_info1: ParsedLessonInfo,
+            parsed_info2: ParsedLessonInfo,
+            lesson_date: datetime.date
+    ) -> ParsedLessonInfo | None:
+        info1 = sort_info(parsed_info1)
+        info2 = sort_info(parsed_info2)
+
+        new_info = []
+
+        for info1_part, info2_part in zip(info1, info2):
+            new_part_info = []
+            for (info_str1, info1), (info_str2, info2) in zip(info1_part, info2_part):
+                if type(info1) != type(info2):
+                    # both infos are definitely not the same
+                    return None
+
+                # info string not the same, but groupable
+                if isinstance(info1, (MovedFrom, MovedTo)):
+                    if info1.is_groupable(info2):
+                        new_part_part_info = copy.deepcopy(info1)
+                        new_part_part_info.periods += info2.periods
+                        new_info_str = new_part_part_info.to_blocked_str(lesson_date)
+                        new_part_info.append((new_info_str, new_part_part_info))
+                    else:
+                        return None
+
+                # not groupable, so info string must be the same
+                elif info_str1 == info_str2:
+                    new_part_info.append((info_str1, info1))
+
+                else:
+                    return None
+
+            new_info.append(new_part_info)
+
+        return new_info
+
     def blocks_grouped(self) -> Lessons:
         assert all(len(x.periods) <= 1 and len(x.forms) for x in self.lessons), \
             "Lessons must be ungrouped. (Must only have one period.)"
 
         sorted_lessons = sorted(
             self.lessons,
-            key=lambda x: (x.current_subject if x.current_subject is not None else "", x.forms, x.periods)
+            key=lambda x: (x.current_subject if x.current_subject is not None else "",
+                           x.class_group if x.class_group is not None else "",
+                           x.forms,
+                           x.periods)
         )
 
         grouped: list[Lesson] = []
@@ -96,59 +140,66 @@ class Lessons:
                     previous_lesson is not None and
                     lesson.rooms == previous_lesson.rooms and
                     lesson.current_subject == previous_lesson.current_subject and
-                    lesson.current_teacher == previous_lesson.current_teacher
+                    lesson.current_teacher == previous_lesson.current_teacher and
+                    lesson.class_number == previous_lesson.class_number
             )
 
             if previous_lesson is not None:
-                if list(lesson.forms)[0] in grouped[-1].forms:
-                    should_get_grouped &= (
-                        # lesson.periods[0] - previous_lesson.periods[0] == 1 and
+                grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info,
+                                                                  self.date)
 
-                            list(lesson.periods)[0] % 2 == 0
-                    )
+                should_get_grouped &= grouped_additional_info is not None
+            else:
+                grouped_additional_info = None
+
+            if previous_lesson is not None:
+                if list(lesson.forms)[0] in grouped[-1].forms:
+                    should_get_grouped &= list(lesson.periods)[0] % 2 == 0
                 else:
-                    should_get_grouped &= (
-                            list(lesson.periods)[-1] in grouped[-1].periods
-                    )
+                    should_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
 
             if should_get_grouped:
                 grouped[-1].periods |= lesson.periods
                 grouped[-1].forms |= lesson.forms
                 grouped[-1].info = "\n".join(filter(lambda x: x, [grouped[-1].info, lesson.info]))
-                if grouped[-1].class_number != lesson.class_number:
-                    grouped[-1].class_number = None
+                grouped[-1].parsed_info = grouped_additional_info
                 grouped[-1].end = lesson.end
             else:
                 grouped.append(copy.deepcopy(lesson))
 
             previous_lesson = lesson
 
-        return Lessons(sorted(grouped, key=lambda x: x.periods))
+        return Lessons(sorted(grouped, key=lambda x: x.periods), self.date)
 
     def __iter__(self):
         return iter(self.lessons)
+
+
+class Exam(stundenplan24_py.Exam):
+    def to_dict(self) -> dict:
+        return {
+            "year": self.year,
+            "course": self.course,
+            "course_teacher": self.course_teacher,
+            "period": self.period,
+            "begin": self.begin.isoformat(),
+            "duration": self.duration,
+            "info": self.info
+        }
 
 
 @dataclasses.dataclass
 class Plan:
     lessons: Lessons
     additional_info: list[str]
+    exams: dict[str, list[Exam]]
 
     form_plan: indiware_mobil.FormPlan
 
-    # exams: list[Exam]
-    # TODO: reimplement exams
-
-    def to_json(self) -> dict:
-        return {
-            "lessons": sorted([lesson.to_json() for lesson in self.lessons], key=lambda x: x["period"]),
-            "additional_info": self.additional_info,
-            # "exams": self.exams
-        }
-
     @classmethod
     def from_form_plan(cls, form_plan: indiware_mobil.FormPlan) -> Plan:
-        lessons = []
+        lessons: list[Lesson] = []
+        exams: dict[str, list[Exam]] = defaultdict(list)
         for form in form_plan.forms:
             for lesson in form.lessons:
                 parsed_info = (
@@ -181,11 +232,18 @@ class Plan:
                     end=lesson.end
                 ))
 
+            for exam in form.exams:
+                exam = copy.deepcopy(exam)
+                exam.__class__ = Exam
+
+                exams[form.short_name].append(exam)
+
         return cls(
-            lessons=Lessons(lessons),
+            lessons=Lessons(lessons, form_plan.date),
             additional_info=form_plan.additional_info,
 
-            form_plan=form_plan
+            form_plan=form_plan,
+            exams=exams
         )
 
     def week_letter(self):
@@ -203,7 +261,7 @@ class Teacher:
     info: str | None = None
     subjects: list[str] = dataclasses.field(default_factory=list)
 
-    def to_json(self) -> dict:
+    def to_dict(self) -> dict:
         return {
             "abbreviation": self.abbreviation,
             "full_name": self.full_name,
@@ -241,7 +299,7 @@ class Room:
         else:
             return f"{self.house}{self.floor}{self.room_nr:02}{self.appendix}"
 
-    def to_json(self) -> dict:
+    def to_dict(self) -> dict:
         return {
             "house": self.house,
             "floor": self.floor,
@@ -254,9 +312,9 @@ class Room:
 class DefaultTimesInfo:
     data: dict[int, tuple[datetime.time, datetime.time]]
 
-    def to_json(self) -> dict:
+    def to_dict(self) -> dict:
         return {
-            period: (start.isoformat(), end.isoformat()) for period, (start, end) in self.data.items()
+            period: (start.strftime("%H:%M"), end.strftime("%H:%M")) for period, (start, end) in self.data.items()
         }
 
     def current_period(self) -> int:
