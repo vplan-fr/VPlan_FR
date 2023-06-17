@@ -17,10 +17,14 @@ class _InfoParsers:
     _teacher = fr"(?:{_teacher_name})|(?:{_teacher_abbreviation})"
 
     # teacher a,teacher b
-    _teachers = fr"{_teacher}(?:,{_teacher})*"
+    _teachers = fr"{_teacher}(?:, ?{_teacher})*"
     _course = r"[A-Za-z0-9ÄÖÜäöüß-]{2,7}"  # maybe be more strict?
     _period = r"St\.(?P<periods>(?P<period_begin>\d{1,2})(?:-(?P<period_end>\d{1,2}))?)"
     _periods = fr""
+    _form = (
+        r"(((?P<major>(\d+)|([A-Za-zÄÖÜäöüß]+))(?P<sep>[^A-Za-zÄÖÜäöüß0-9]?) ?(?P<minor>(\d+)|([A-Za-zÄÖÜäöüß]+?)))|"
+        r"(?P<alpha>([A-Za-zÄÖÜäöüß]+)|(\d+)))"
+    )
 
     _weekday = r"(?:Mo|Di|Mi|Do|Fr|Sa|So)"
     _date = r"(?:\d{2}\.\d{2}\.)"
@@ -70,6 +74,7 @@ class _InfoParsers:
     do_where = re.compile(rf'bitte(( \w+)+) bearbeiten')  # 1. group: where
 
     # gesamte Klasse 6/2
+    whole_form = re.compile(rf'gesamte Klasse (?P<form>{_form})')
 
     # individuelle Nachbearbeitung des aktuellen Stoffes in der Bibo bzw. 10/1 zu Hause
     individual_revision = re.compile(rf'individuelle Nachbearbeitung des aktuellen Stoffes (?P<location>in der Bibo)?')
@@ -219,6 +224,11 @@ class Exam(ToJsonMixin):
     last_name: str
 
 
+@dataclasses.dataclass
+class WholeForm(ToJsonMixin):
+    form: str
+
+
 def _parse_info(info: str, plan_year: int) -> ToJsonMixin | None:
     if match := _InfoParsers.substitution.search(info):
         return InsteadOfCourse(match.group("course"), match.group("teachers").split(","))
@@ -258,6 +268,8 @@ def _parse_info(info: str, plan_year: int) -> ToJsonMixin | None:
         return DoAtLocation(match.group(1).strip())
     elif match := _InfoParsers.individual_revision.search(info):
         return IndividualRevision(match.groupdict(None)["location"])
+    elif match := _InfoParsers.whole_form.search(info):
+        return WholeForm(match.group("form").replace(" ", ""))
     elif _InfoParsers.independent.search(info):
         return DoIndependent()
     elif _InfoParsers.tasks_in_lernsax.search(info):
