@@ -14,11 +14,14 @@
         "rooms": "Raum",
         "teachers": "Lehrer"
     }
+    let controller = new AbortController();
     
     function load_lessons(date, plan_type, entity) {
+        controller.abort();
         loading = true;
-        title = `${plan_type}-plan for ${plan_type} ${entity}`
-        fetch(`${api_base}/plan?date=${date}`)
+        title = `${plan_type}-plan for ${plan_type} ${entity}`;
+        controller = new AbortController();
+        fetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
             .then(response => response.json())
             .then(data => {
                 loading = false;
