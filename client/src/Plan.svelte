@@ -61,8 +61,12 @@
                 Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> <span class="no-linebreak">({info.week}-Woche)</span>
             </div>
         {/if}
-        {#if lessons.length == 0 && !loading}
+        {#if lessons.length == 0}
+            {#if loading}
+            Loading...
+            {:else}
             No Lessons
+            {/if}
         {/if}
         {#each lessons as lesson}
         <div class="card desktop-view">
