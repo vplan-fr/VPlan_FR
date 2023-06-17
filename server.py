@@ -52,6 +52,7 @@ def meta(school_num):
         "teachers": teachers_data,
         "forms": forms_data,
         "rooms": rooms_data,
+        "dates": dates_data,
         "date": date.strftime("%Y-%m-%d")
     }), mimetype='application/json')
 
