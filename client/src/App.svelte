@@ -6,7 +6,7 @@
     let school_num = "10001329";
     let date = null;
     let plan_type = "forms";
-    let plan_value = "JG11";
+    let plan_value = "VK/1";
     let teacher_list = [];
     let room_list = [];
     let grouped_forms = [];
@@ -130,6 +130,15 @@
         }
         @media only screen and (max-width: 500px) {
             width: 95%;
+        }
+    }
+    :global {
+        ul {
+            padding-left: 30px !important;
+            @media only screen and (max-width: 601px) {
+                padding-left: 22px !important;
+            }
+            list-style-type: disc !important;
         }
     }
 </style>

@@ -28,6 +28,7 @@
                 } catch {
                     lessons = []
                 }
+                console.log(lessons);
             })
             .catch(error => {
                 console.error(error);
@@ -38,8 +39,8 @@
         periods.sort(function (a, b) {  return a - b;  });
 
         const rests = {
-            0: " (2/2)",
-            1: " (1/2)",
+            0: "/Ⅱ",
+            1: "/Ⅰ",
         };
 
         if (periods.length === 1) {
@@ -74,14 +75,18 @@
                 </div>
                 <div class="grid-align-wrapper" class:large_grid={plan_type !== "forms"}>
                     {#if lesson.current_subject !== "---"}
+                    {#if lesson.current_subject !== null}
                     <div class="subject max-width-center wide-area" class:changed={lesson.subject_changed}>
                         {lesson.current_subject}
                     </div>
-                    <div class="teachers vert-align max-width-center info-element small-area" class:changed={lesson.teacher_changed} class:teacher_absent={lesson.current_teacher === null}>
-                        <button on:click={() => {
-                            plan_type = "teachers";
-                            plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;
-                        }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>
+                    {/if}
+                    <div class="small-area vert-align">
+                        <div class="teachers vert-align max-width-center info-element" class:changed={lesson.teacher_changed} class:teacher_absent={lesson.current_teacher === null}>
+                            <button on:click={() => {
+                                plan_type = "teachers";
+                                plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;
+                            }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>
+                        </div>
                     </div>
                     <div class="rooms vert-align max-width-center info-element small-area second_of_type" class:changed={lesson.room_changed}>
                         {#each lesson.rooms as room}
@@ -96,7 +101,7 @@
                     {:else}
                     <div class="max-width-center info-element cancelled vert-align changed">X</div>
                     {/if}
-                    {#if plan_type !== "forms"}
+                    {#if !(plan_type === "forms" && (lesson.forms.length === 1))}
                     <div class="forms max-width-center wide-area second_of_type info-element">
                         {#each lesson.forms as form}
                             <button on:click={() => {
@@ -108,8 +113,16 @@
                     {/if}
                 </div>
             </div>
-            {#if lesson.info}
-                <div class="info-element lesson-info">{lesson.info}</div>
+            {#if lesson.parsed_info.length > 0}
+                <div class="info-element lesson-info">
+                    {#each lesson.parsed_info as elem}
+                        <ul>
+                            {#each elem as element}
+                                <li>{element[0]}</li>
+                            {/each}
+                        </ul>
+                    {/each}
+                </div>
             {/if}
         </div>
         <div class="card mobile-view">
@@ -120,9 +133,11 @@
                 </div>
                 {#if lesson.current_subject !== "---"}
                 <div class="subject max-width-center" class:changed={lesson.subject_changed}>
+                    {#if lesson.current_subject !== null}
                     {lesson.current_subject}
+                    {/if}
                 </div>
-                <div class="teachers vert-align max-width-center info-element" class:changed={lesson.teacher_changed} class:teacher_absent={lesson.current_teacher === null}>
+                <div class="teachers vert-align max-width-center info-element first_half" class:changed={lesson.teacher_changed} class:teacher_absent={lesson.current_teacher === null}>
                     <button on:click={() => {
                         plan_type = "teachers";
                         plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;
@@ -141,7 +156,7 @@
                 {:else}
                 <div class="max-width-center info-element cancelled vert-align changed">X</div>
                 {/if}
-                {#if plan_type !== "forms"}
+                {#if !(plan_type === "forms" && (lesson.forms.length === 1))}
                 <div class="forms max-width-center info-element vert-align">
                     {#each lesson.forms as form}
                         <button on:click={() => {
@@ -152,8 +167,16 @@
                 </div>
                 {/if}
             </div>
-            {#if lesson.info}
-                <div class="info-element lesson-info">{lesson.info}</div>
+            {#if lesson.parsed_info.length > 0}
+                <div class="info-element lesson-info">
+                    {#each lesson.parsed_info as elem}
+                        <ul>
+                            {#each elem as element}
+                                <li>{element[0]}</li>
+                            {/each}
+                        </ul>
+                    {/each}
+                </div>
             {/if}
         </div>
         {/each}
@@ -179,9 +202,9 @@
         width: 100%;
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: min-content 1fr;
+        grid-template-rows: min-content min-content;
         &.large_grid {
-            grid-template-rows: min-content 1fr min-content;
+            grid-template-rows: min-content min-content min-content;
         }
         grid-column-gap: 10px;
         grid-row-gap: 10px;
@@ -233,13 +256,17 @@
         font-weight: 300;
         line-height: 1.313rem;
         background: rgba(255, 255, 255, 0.05) !important;
+
+        ul:nth-of-type(even) {
+            margin-top: 20px;
+        }
     }
 
     .info-element {
         background: rgba(255, 255, 255, 0.08);
         border-radius: 5px;
         padding: 5px 0px;
-        min-height: 21px;
+        min-height: 1.313rem;
         overflow: hidden;
         
         button {
@@ -323,9 +350,11 @@
         }
         .info-element {
             padding: 1rem 0;
+            line-height: 1;
             button {
-                padding: 2rem;
-                margin: -2rem;
+                padding: 1rem;
+                margin: -1rem;
+                line-height: 1;
             }
             border-radius: 8px;
         }
@@ -385,6 +414,10 @@
             gap: 10px;
             outline: solid 3px transparent;
             outline-offset: 5px;
+            @media only screen and (max-width: 601px) {
+                outline-width: 2px;
+                outline-offset: 1px;
+            }
             border-radius: 1px;
             transition: all .2s ease;
             transition-delay: .1s;
@@ -399,6 +432,9 @@
             &.loading {
                 outline-offset: 10px;
                 outline-color: rgba(255, 255, 255, 0.4);
+                @media only screen and (max-width: 601px) {
+                    outline-offset: 4px;
+                }
             }
         }
         &.extra-height {
