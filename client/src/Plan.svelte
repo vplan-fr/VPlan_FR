@@ -33,6 +33,7 @@
                 } catch {
                     lessons = []
                 }
+                console.log(lessons);
             })
             .catch(error => {
                 console.error(error);
@@ -84,7 +85,7 @@
                 <div class="grid-align-wrapper" class:large_grid={plan_type !== "forms"}>
                     {#if lesson.current_subject !== "---"}
                     {#if lesson.current_subject !== null}
-                    <div class="subject max-width-center wide-area" class:changed={lesson.subject_changed}>
+                    <div class="subject max-width-center wide-area extra_padding" class:changed={lesson.subject_changed}>
                         {lesson.current_subject}
                     </div>
                     {/if}
@@ -158,7 +159,7 @@
                     <span class="lesson-time">{lesson.begin}</span>
                 </div>
                 {#if lesson.current_subject !== "---"}
-                <div class="subject max-width-center" class:changed={lesson.subject_changed}>
+                <div class="subject max-width-center extra_padding" class:changed={lesson.subject_changed}>
                     {#if lesson.current_subject !== null}
                     {lesson.current_subject}
                     {/if}
@@ -263,6 +264,7 @@
             font-size: 1.875rem;
             padding: 1rem;
             line-height: 1;
+            border-radius: 8px;
         }
     }
     :global(.mobile-view .info-element .dropdown-shell > button) {
@@ -275,16 +277,20 @@
         margin-top: 0 !important;
         box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.14), 0 10px 10px 0 rgba(0, 0, 0, 0.12) !important;
         background-color: var(--background-color) !important;
+        overflow: hidden;
         .lighten_background {
             display: flex;
             flex-direction: column;
-            overflow: hidden;
             background: rgba(255, 255, 255, 0.06);
     
             button {
                 transition: background-color .2s ease;
                 width: 100%;
                 padding: 5px;
+                &:nth-last-of-type(1) {
+                    border-bottom-left-radius: 5px;
+                    border-bottom-right-radius: 5px;
+                }
                 line-height: 1.313rem;
                 &:hover, &:focus-visible {
                     background: rgba(0, 0, 0, 0.2) !important;
@@ -300,10 +306,15 @@
         }
     }
     :global(.desktop-view .info-element .dropdown) {
+        border-radius: 0px 0px 8px 8px !important;
         button {
             font-size: 1.875rem;
             padding: 1rem;
             line-height: 1;
+            &:nth-last-of-type(1) {
+                border-bottom-left-radius: 8px;
+                border-bottom-right-radius: 8px;
+            }
         }
     }
 
@@ -377,7 +388,7 @@
     .info-element {
         background: rgba(255, 255, 255, 0.08);
         border-radius: 5px;
-        min-height: 1.313rem;
+        min-height: 2rem;
         
         & > button {
             &:nth-of-type(1) {
@@ -397,25 +408,32 @@
                 background: rgba(0, 0, 0, 0.2) !important;
             }
         }
-        & > .extra_padding {
-            padding: 5px;
-            line-height: 1.313rem;
-        }
-        
-        &.changed {
-            background: var(--accent-color);
-
-            &:not(.teacher_absent) {
-                & > button:hover, & > button:focus-visible {
-                    background: rgba(0, 0, 0, 0.3) !important;
-                }
-            }
-        }
+    
         &.teacher_absent {
             background: rgba(255, 255, 255, 0.08);
             outline: 3px solid var(--accent-color);
             outline-offset: -3px;
         }
+    }
+
+    .extra_padding {
+        padding: 5px 0px;
+        line-height: 1.313rem;
+        min-height: 1.313rem;
+    }
+    
+    .changed {
+        background: var(--accent-color) !important;
+
+        &:not(.teacher_absent) {
+            & > button:hover, & > button:focus-visible {
+                background: rgba(0, 0, 0, 0.3) !important;
+            }
+        }
+    }
+
+    .subject {
+        border-radius: 5px;
     }
 
     .subject, .teachers button, .rooms button, .forms button {
@@ -443,7 +461,7 @@
             font-size: 0.75rem;
             font-weight: 400;
         }
-        .subject, .info-element, .info-element > button, .info-element .extra_padding {
+        .subject, .info-element, .info-element > button, .extra_padding {
             font-size: 0.875rem;
         }
         .cancelled {
@@ -470,12 +488,20 @@
             & > button {
                 padding: 1rem;
                 line-height: 1;
-            }
-            & > .extra_padding {
-                padding: 1rem;
-                line-height: 1;
+                &:nth-of-type(1) {
+                    border-top-left-radius: 8px;
+                    border-top-right-radius: 8px;
+                }
+                &:nth-last-of-type(1) {
+                    border-bottom-left-radius: 8px;
+                    border-bottom-right-radius: 8px;
+                }
             }
             border-radius: 8px;
+        }
+        .extra_padding {
+            padding: 1rem 0rem;
+            line-height: 1;
         }
         .lesson-period {
             font-size: 1.625rem;
