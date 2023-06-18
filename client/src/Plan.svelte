@@ -1,4 +1,6 @@
 <script>
+    import { DropdownShell, Dropdown } from 'attractions';
+
     export let api_base;
     export let date;
     export let plan_type;
@@ -101,20 +103,38 @@
                                 plan_value = room;
                             }}>{room}</button>
                         {:else}
-                            X
+                            <span class="extra_padding">X</span>
                         {/each}
                     </div>
                     {:else}
-                    <div class="max-width-center info-element cancelled vert-align changed">X</div>
+                    <div class="max-width-center info-element cancelled vert-align changed">
+                        <span class="extra_padding">X</span>
+                    </div>
                     {/if}
                     {#if !(plan_type === "forms" && (lesson.forms.length === 1))}
                     <div class="forms max-width-center wide-area second_of_type info-element">
-                        {#each lesson.forms as form}
+                        {#if lesson.forms.length === 1}
                             <button on:click={() => {
                                 plan_type = "forms";
-                                plan_value = form;
-                            }}>{form}</button>
-                        {/each}
+                                plan_value = lesson.forms[0];
+                            }}>{lesson.forms[0]}</button>
+                        {:else}
+                            <DropdownShell let:toggle class="dropdown-shell">
+                                <button on:click={toggle}>
+                                    {lesson.forms_str}
+                                </button>
+                                <Dropdown>
+                                    <div class="lighten_background">
+                                        {#each lesson.forms as form}
+                                            <button on:click={() => {
+                                                plan_type = "forms";
+                                                plan_value = form;
+                                            }}>{form}</button>
+                                        {/each}
+                                    </div>
+                                </Dropdown>
+                            </DropdownShell>
+                        {/if}
                     </div>
                     {/if}
                 </div>
@@ -156,20 +176,38 @@
                             plan_value = room;
                         }}>{room}</button>
                     {:else}
-                        X
+                        <span class="extra_padding">X</span>
                     {/each}
                 </div>
                 {:else}
-                <div class="max-width-center info-element cancelled vert-align changed">X</div>
+                <div class="max-width-center info-element cancelled vert-align changed">
+                    <span class="extra_padding">X</span>
+                </div>
                 {/if}
                 {#if !(plan_type === "forms" && (lesson.forms.length === 1))}
                 <div class="forms max-width-center info-element vert-align">
-                    {#each lesson.forms as form}
+                    {#if lesson.forms.length === 1}
                         <button on:click={() => {
                             plan_type = "forms";
-                            plan_value = form;
-                        }}>{form}</button>
-                    {/each}
+                            plan_value = lesson.forms[0];
+                        }}>{lesson.forms[0]}</button>
+                    {:else}
+                        <DropdownShell let:toggle class="dropdown-shell">
+                            <button on:click={toggle}>
+                                {lesson.forms_str}
+                            </button>
+                            <Dropdown>
+                                <div class="lighten_background">
+                                    {#each lesson.forms as form}
+                                        <button on:click={() => {
+                                            plan_type = "forms";
+                                            plan_value = form;
+                                        }}>{form}</button>
+                                    {/each}
+                                </div>
+                            </Dropdown>
+                        </DropdownShell>
+                    {/if}
                 </div>
                 {/if}
             </div>
@@ -201,6 +239,74 @@
 </div>
 
 <style lang="scss">
+    :global(.info-element .dropdown-shell) { 
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        & > button {
+            transition: background-color .2s ease;
+            width: 100%;
+            padding: 5px;
+            border-radius: 5px;
+            width: 100%;
+            line-height: 1.313rem;
+
+            &:hover, &:focus-visible {
+                background: rgba(0, 0, 0, 0.2) !important;
+            }
+        }
+    }
+    :global(.desktop-view .info-element .dropdown-shell) {
+        & > button {
+            font-size: 1.875rem;
+            padding: 1rem;
+            line-height: 1;
+        }
+    }
+    :global(.mobile-view .info-element .dropdown-shell > button) {
+        font-size: 0.875rem;
+    }
+    :global(.dropdown) {
+        width: 100%;
+        top: calc(100% - 5px);
+        border-radius: 0px 0px 5px 5px !important;
+        margin-top: 0 !important;
+        box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.14), 0 10px 10px 0 rgba(0, 0, 0, 0.12) !important;
+        background-color: var(--background-color) !important;
+        .lighten_background {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.06);
+    
+            button {
+                transition: background-color .2s ease;
+                width: 100%;
+                padding: 5px;
+                line-height: 1.313rem;
+                &:hover, &:focus-visible {
+                    background: rgba(0, 0, 0, 0.2) !important;
+                }
+            }
+        }
+    }
+    :global(.mobile-view .dropdown) {
+        button {
+            font-size: 0.875rem;
+            padding: 5px;
+            line-height: normal;
+        }
+    }
+    :global(.desktop-view .dropdown) {
+        button {
+            font-size: 1.875rem;
+            padding: 1rem;
+            line-height: 1;
+        }
+    }
+
     .no-linebreak {
         white-space: nowrap;
     }
@@ -271,27 +377,36 @@
     .info-element {
         background: rgba(255, 255, 255, 0.08);
         border-radius: 5px;
-        padding: 5px 0px;
         min-height: 1.313rem;
-        overflow: hidden;
         
-        button {
+        & > button {
+            &:nth-of-type(1) {
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+            }
+            &:nth-last-of-type(1) {
+                border-bottom-left-radius: 5px;
+                border-bottom-right-radius: 5px;
+            }
             transition: background-color .2s ease;
             width: 100%;
             padding: 5px;
-            margin: -5px;
             line-height: 1.313rem;
 
             &:hover, &:focus-visible {
                 background: rgba(0, 0, 0, 0.2) !important;
             }
         }
+        & > .extra_padding {
+            padding: 5px;
+            line-height: 1.313rem;
+        }
         
         &.changed {
             background: var(--accent-color);
 
             &:not(.teacher_absent) {
-                button:hover, button:focus-visible {
+                & > button:hover, & > button:focus-visible {
                     background: rgba(0, 0, 0, 0.3) !important;
                 }
             }
@@ -301,10 +416,6 @@
             outline: 3px solid var(--accent-color);
             outline-offset: -3px;
         }
-    }
-
-    .rooms, .forms {
-        gap: 10px;
     }
 
     .subject, .teachers button, .rooms button, .forms button {
@@ -332,7 +443,7 @@
             font-size: 0.75rem;
             font-weight: 400;
         }
-        .subject, .info-element, .info-element button {
+        .subject, .info-element, .info-element > button, .info-element .extra_padding {
             font-size: 0.875rem;
         }
         .cancelled {
@@ -355,11 +466,13 @@
             padding: .6rem 0;
         }
         .info-element {
-            padding: 1rem 0;
             line-height: 1;
-            button {
+            & > button {
                 padding: 1rem;
-                margin: -1rem;
+                line-height: 1;
+            }
+            & > .extra_padding {
+                padding: 1rem;
                 line-height: 1;
             }
             border-radius: 8px;
@@ -372,7 +485,7 @@
             font-size: 1.25rem;
             font-weight: 400;
         }
-        .subject, .info-element, .info-element button {
+        .subject, .info-element, .info-element > button {
             font-size: 1.875rem;
         }
         .lesson-info {
@@ -386,7 +499,6 @@
         .forms, .rooms {
             flex-direction: column;
             align-items: center;
-            gap: 2rem;
         }
     }
     .horizontal-align {
