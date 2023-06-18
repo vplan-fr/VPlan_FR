@@ -502,6 +502,7 @@
         .extra_padding {
             padding: 1rem 0rem;
             line-height: 1;
+            border-radius: 8px;
         }
         .lesson-period {
             font-size: 1.625rem;
