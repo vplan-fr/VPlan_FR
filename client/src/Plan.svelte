@@ -268,7 +268,7 @@
     :global(.mobile-view .info-element .dropdown-shell > button) {
         font-size: 0.875rem;
     }
-    :global(.dropdown) {
+    :global(.info-element .dropdown) {
         width: 100%;
         top: calc(100% - 5px);
         border-radius: 0px 0px 5px 5px !important;
@@ -292,14 +292,14 @@
             }
         }
     }
-    :global(.mobile-view .dropdown) {
+    :global(.mobile-view .info-element .dropdown) {
         button {
             font-size: 0.875rem;
             padding: 5px;
             line-height: normal;
         }
     }
-    :global(.desktop-view .dropdown) {
+    :global(.desktop-view .info-element .dropdown) {
         button {
             font-size: 1.875rem;
             padding: 1rem;
