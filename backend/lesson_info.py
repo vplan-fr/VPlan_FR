@@ -22,8 +22,8 @@ class _InfoParsers:
     _period = r"St\.(?P<periods>(?P<period_begin>\d{1,2})(?:-(?P<period_end>\d{1,2}))?)"
     _periods = fr""
     _form = (
-        r"(((?P<major>(\d+)|([A-Za-zÄÖÜäöüß]+))(?P<sep>[^A-Za-zÄÖÜäöüß0-9]?) ?(?P<minor>(\d+)|([A-Za-zÄÖÜäöüß]+?)))|"
-        r"(?P<alpha>([A-Za-zÄÖÜäöüß]+)|(\d+)))"
+        r"(?:(?P<major>\d+|[A-Za-zÄÖÜäöüß]+)(?P<sep>[^A-Za-zÄÖÜäöüß0-9]?) ?(?P<minor>\d+|[A-Za-zÄÖÜäöüß]+?)|"
+        r"(?P<alpha>[A-Za-zÄÖÜäöüß]+|\d+))"
     )
 
     _weekday = r"(?:Mo|Di|Mi|Do|Fr|Sa|So)"

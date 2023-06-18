@@ -10,6 +10,7 @@ from stundenplan24_py import indiware_mobil
 import stundenplan24_py
 
 from .lesson_info import parse_info, ParsedLessonInfo, sort_info, MovedFrom, MovedTo
+from . import vplan_utils
 
 
 @dataclasses.dataclass
@@ -36,6 +37,7 @@ class Lesson:
     def to_dict(self) -> dict:
         return {
             "forms": sorted(self.forms),
+            "forms_str": vplan_utils.forms_to_str(self.forms),
             "periods": list(self.periods),
             "rooms": list(self.rooms),
             "current_subject": self.current_subject,
