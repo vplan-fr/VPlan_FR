@@ -379,10 +379,9 @@
         font-weight: 300;
         line-height: 1.313rem;
         background: rgba(255, 255, 255, 0.05) !important;
-
-        ul:nth-of-type(even) {
-            margin-top: 20px;
-        }
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
 
     .info-element {
