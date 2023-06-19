@@ -4,20 +4,58 @@ import json
 from pathlib import Path
 
 from flask import Flask, send_from_directory, request, Response
+from flask_login import LoginManager, login_required, current_user
+from flask_compress import Compress
+from flask_wtf.csrf import CSRFProtect
 
 import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
+from authorization import authorization
+
+from utils import User, AddStaticFileHashFlask, get_user
 
 VALID_SCHOOLS = os.listdir(".cache")
 API_BASE_URL = "/api/v69.420/<school_num>"
 
-app = Flask(__name__)
+app = AddStaticFileHashFlask(__name__)
+
+
+SECRET_KEY = os.getenv("SECRET_KEY") if os.getenv("SECRET_KEY") else "DEBUG_KEY"
+app.secret_key = SECRET_KEY
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = 32140800
+
+compress = Compress()
+compress.init_app(app)
+
+#csrf = CSRFProtect(app)
+#csrf.init_app(app)
+
+
+# Authorization:
+login_manager = LoginManager()
+login_manager.login_view = 'login'
+login_manager.init_app(app)
+app.register_blueprint(authorization)
+
+
+# authorization endpoints: (/login, /signup, /logout, /account)
+@login_manager.user_loader
+def user_loader(user_id):
+    tmp_user = get_user(user_id)
+    if tmp_user is None:
+        return
+    tmp_user = User(user_id)
+    return tmp_user
+
+
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    return {"error": "request without authorization"}
 
 
 # COMPILED SVELTE FILES
-
-
 @app.route("/")
 def base():
     return send_from_directory('client/public', 'index.html')
@@ -29,10 +67,10 @@ def home(path):
 
 
 # PLAN JSON API
-
-
 @app.route(f"{API_BASE_URL}/meta")
+#@login_required
 def meta(school_num):
+    print(current_user)
     if school_num not in VALID_SCHOOLS:
         return {"error": "Invalid school."}
 
