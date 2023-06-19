@@ -108,6 +108,10 @@ class PlanCrawler:
     def update_meta(self):
         self._logger.info("=> Updating meta data...")
 
+        if not self.cache.get_days():
+            self._logger.error(" * No plans cached yet.")
+            return
+
         data = {
             "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
         }
