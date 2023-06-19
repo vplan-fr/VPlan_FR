@@ -185,7 +185,7 @@
                     <span class="extra_padding">X</span>
                 </div>
                 {/if}
-                {#if !(plan_type === "forms" && (lesson.forms.length === 1))}
+                {#if plan_type !== "forms"}
                 <div class="forms max-width-center info-element vert-align">
                     {#if lesson.forms.length === 1}
                         <button on:click={() => {
@@ -221,6 +221,32 @@
                             {/each}
                         </ul>
                     {/each}
+                    {#if plan_type === "forms" && (lesson.forms.length > 1)}
+                        <ul class="extra_forms">
+                            <li>
+                                <div class="horizontal_wrapper">
+                                    Findet statt für Klassen:
+                                    <div class="info-element">
+                                        <DropdownShell let:toggle class="dropdown-shell">
+                                            <button on:click={toggle}>
+                                                {lesson.forms_str}
+                                            </button>
+                                            <Dropdown>
+                                                <div class="lighten_background">
+                                                    {#each lesson.forms as form}
+                                                        <button on:click={() => {
+                                                            plan_type = "forms";
+                                                            plan_value = form;
+                                                        }}>{form}</button>
+                                                    {/each}
+                                                </div>
+                                            </Dropdown>
+                                        </DropdownShell>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    {/if}
                 </div>
             {/if}
         </div>
@@ -317,6 +343,18 @@
             }
         }
     }
+    :global(.extra_forms .dropdown-shell button) {
+        border: none;
+        background: transparent;
+        color: var(--text-color);
+    }
+
+    .extra_forms .horizontal_wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
 
     .no-linebreak {
         white-space: nowrap;
@@ -382,6 +420,7 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
+        min-height: unset !important;
     }
 
     .info-element {

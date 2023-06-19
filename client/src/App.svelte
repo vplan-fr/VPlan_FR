@@ -6,7 +6,7 @@
     let school_num = "10001329";
     let date = null;
     let plan_type = "forms";
-    let plan_value = "9/4";
+    let plan_value = "10/3";
     let teacher_list = [];
     let room_list = [];
     let grouped_forms = [];
