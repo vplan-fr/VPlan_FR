@@ -9,15 +9,21 @@ from collections import defaultdict
 ParsedForm = typing.Union[typing.Tuple[str], typing.Tuple[str, str, str]]
 
 _parse_form_pattern = re.compile(
-    r"^(?:"
+    r"(?P<major>"
+    r"(?P<_major_only_digits>11|12|13)"
+    r"|\d+"
+    r"|[A-Za-zÄÖÜäöüß]+(?![A-Za-zÄÖÜäöüß]))"
 
-    r"(?P<major>\d+|[A-Za-zÄÖÜäöüß]+)"
-    r"(?P<sep>[^A-Za-zÄÖÜäöüß0-9]?) ?"
-    r"(?P<minor>\d+|[A-Za-zÄÖÜäöüß]+?)|"
+    r"(?P<sep>(?P<_contains_sep>[^A-Za-zÄÖÜäöüß0-9 \n])?)"
 
-    r"(?P<alpha>[A-Za-zÄÖÜäöüß]+|\d+)"
+    r"(?(_contains_sep)(?P<_contains_whitespace> )?|)"
 
-    r")$"
+    r"(?P<minor>"
+    r"\d+"
+    r"|[A-Za-zÄÖÜäöüß]+?"
+    r"|(?(_major_only_digits)(?(_contains_sep)yes(?!.)|(?(_contains_whitespace)yes(?!.)|))|no(?!.)))"
+    
+    r"|(?P<alpha>[A-ZÄÖÜ]+|\d+)"
 )
 
 
@@ -29,13 +35,13 @@ def parse_form(form: str) -> ParsedForm:
         return match.group("major"), match.group("sep"), match.group("minor")
 
 
-def form_sort_key(form: str | None):
-    if form is None:
+def form_sort_key(major: str | None):
+    if major is None:
         return float("inf"), 1, ""
     try:
-        return int(form), 0, ""
+        return int(major), 0, ""
     except ValueError:
-        return float("inf"), 0, form
+        return float("inf"), 0, major
 
 
 def group_forms(forms: list[str]) -> dict[str, list[str]]:
