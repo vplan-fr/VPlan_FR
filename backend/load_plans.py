@@ -23,7 +23,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "24"
+    VERSION = "25"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
@@ -500,6 +500,7 @@ class PlanExtractor:
                     room_changed=False,
                     begin=None,
                     end=None,
+                    is_internal=True
                 )
                 self.plan.lessons.lessons.append(lesson)
 
@@ -510,7 +511,7 @@ class PlanExtractor:
                 info = f"Raum {room}{' den ganzen Tag' if not periods else ''} nicht verfügbar laut Vertretungsplan"
                 lesson = Lesson(
                     forms=set(),
-                    current_subject=None,
+                    current_subject="Belegt",
                     current_teacher=None,
                     class_subject=None,
                     class_group=None,
@@ -525,6 +526,7 @@ class PlanExtractor:
                     room_changed=False,
                     begin=None,
                     end=None,
+                    is_internal=True
                 )
                 self.plan.lessons.lessons.append(lesson)
 
@@ -550,6 +552,7 @@ class PlanExtractor:
                     room_changed=False,
                     begin=None,
                     end=None,
+                    is_internal=True
                 )
                 self.plan.lessons.lessons.append(lesson)
 
@@ -557,10 +560,10 @@ class PlanExtractor:
         return self.lessons_grouped.group_by("rooms")
 
     def teacher_plan(self):
-        return self.lessons_grouped.group_by("class_teacher", "current_teacher")
+        return self.lessons_grouped.filter(lambda l: not l.is_internal).group_by("class_teacher", "current_teacher")
 
     def form_plan(self):
-        return self.lessons_grouped.group_by("forms")
+        return self.lessons_grouped.filter(lambda l: not l.is_internal).group_by("forms")
 
     def used_rooms_by_lesson(self) -> dict[int, set[str]]:
         out: dict[int, set[str]] = defaultdict(set)
