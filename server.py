@@ -20,7 +20,6 @@ API_BASE_URL = "/api/v69.420/<school_num>"
 
 app = AddStaticFileHashFlask(__name__)
 
-
 SECRET_KEY = os.getenv("SECRET_KEY") if os.getenv("SECRET_KEY") else "DEBUG_KEY"
 app.secret_key = SECRET_KEY
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -29,8 +28,8 @@ app.config["PERMANENT_SESSION_LIFETIME"] = 32140800
 compress = Compress()
 compress.init_app(app)
 
-#csrf = CSRFProtect(app)
-#csrf.init_app(app)
+# csrf = CSRFProtect(app)
+# csrf.init_app(app)
 
 
 # Authorization:
@@ -68,7 +67,7 @@ def home(path):
 
 # PLAN JSON API
 @app.route(f"{API_BASE_URL}/meta")
-#@login_required
+# @login_required
 def meta(school_num):
     print(current_user)
     if school_num not in VALID_SCHOOLS:
@@ -119,19 +118,11 @@ def plan(school_num: str):
         return {"error": "Invalid revision timestamp format. Must be in ISO format."}
 
     try:
-        plan_data = cache.get_plan_file(date, revision, "plans.json")
-        rooms_data = cache.get_plan_file(date, revision, "rooms.json")
-        info_data = cache.get_plan_file(date, revision, "info.json")
-        exams_data = cache.get_plan_file(date, revision, "exams.json")
+        data = cache.get_all_json_plan_files(date, revision)
     except FileNotFoundError:
         return {"error": "Invalid revision."}
 
-    return {
-        "plans": json.loads(plan_data),
-        "rooms": json.loads(rooms_data),
-        "exams": json.loads(exams_data),
-        "info": json.loads(info_data)
-    }
+    return data
 
 
 @app.route(f"{API_BASE_URL}/authorize", methods=["GET", "POST"])
