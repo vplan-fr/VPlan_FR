@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import json
 import typing
 from pathlib import Path
 
@@ -70,6 +71,18 @@ class Cache:
 
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
+
+    def get_all_json_plan_files(self,
+                                day: datetime.date,
+                                timestamp: datetime.datetime | typing.Literal[".newest"]) -> dict[str, typing.Any]:
+        out = {}
+
+        for file in self.get_plan_path(day, timestamp).iterdir():
+            if file.suffix == ".json" and not file.name.startswith("."):
+                with open(file, "r", encoding="utf-8") as f:
+                    out[file.stem] = json.load(f)
+
+        return out
 
     def contains(self,
                  day: datetime.date,
