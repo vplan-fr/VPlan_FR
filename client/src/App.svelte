@@ -1,5 +1,6 @@
 <script>
     import Plan from "./Plan.svelte";
+    import Weekplan from "./Weekplan.svelte";
     import Authentication from "./Authentication.svelte";
     import { onMount } from 'svelte';
     import { DatePicker } from 'attractions';
@@ -115,8 +116,9 @@
     </div>
     <br>
     <br>
-    <Authentication></Authentication>
-    <Plan bind:api_base bind:date bind:plan_type bind:plan_value show_title="true" extra_height="true" />
+    <Plan bind:api_base bind:date bind:plan_type bind:plan_value show_title={true} extra_height={true} />
+    <!-- <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value /> -->
+    <!-- <Authentication></Authentication> -->
 </main>
 
 <style lang="scss">

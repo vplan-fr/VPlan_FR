@@ -7,6 +7,7 @@
     export let plan_value;
     export let show_title;
     export let extra_height;
+    export let week_letter;
     let lessons = [];
     let info;
     let title = "";
@@ -15,7 +16,7 @@
         "forms": "Klasse",
         "rooms": "Raum",
         "teachers": "Lehrer"
-    }
+    };
     let controller = new AbortController();
     
     function load_lessons(date, plan_type, entity) {
@@ -30,6 +31,7 @@
                 try {
                     lessons = data["plans"][plan_type][entity] || [];
                     info = data["info"];
+                    week_letter = info.week;
                 } catch {
                     lessons = []
                 }
@@ -324,6 +326,14 @@
             }
         }
     }
+    :global(.info-element .dropdown.top) {
+        border-radius: 5px 5px 0px 0px !important;    
+        box-shadow: 0 -4px 4px -1px rgba(0, 0, 0, 0.2), 0 -5px 5px 0 rgba(0, 0, 0, 0.14), 0 -10px 10px 0 rgba(0, 0, 0, 0.12) !important;
+    }
+    :global(.desktop-view .info-element .dropdown.top) {
+        border-radius: 8px 8px 0px 0px !important;
+        box-shadow: 0 -4px 4px -1px rgba(0, 0, 0, 0.2), 0 -5px 5px 0 rgba(0, 0, 0, 0.14), 0 -10px 10px 0 rgba(0, 0, 0, 0.12) !important;
+    }
     :global(.mobile-view .info-element .dropdown) {
         button {
             font-size: 0.875rem;
@@ -398,6 +408,7 @@
     .last-updated {
         margin: 16px 0px;
         font-size: clamp(0.875rem, 2.8vmin, 1.75rem);
+        line-height: 1.5;
     }
 
     .additional-info {
