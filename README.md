@@ -5,6 +5,7 @@
   - ```bash
     python -m pip install -r requirements.txt
     ```
+- MongoDB
 - [creds.json](#credsjson) in repository root directory
 - Installing npm packages
   - `cd client`
@@ -28,6 +29,14 @@ Example:
 # Backend (Plan Crawler)
 ```bash
 python -m backend.load_plans
+```
+
+# Server
+## Environment variables
+- `MONGO_URL`
+
+```bash
+python server.py
 ```
 
 ## Importing plan files
