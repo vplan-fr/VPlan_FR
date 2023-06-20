@@ -3,7 +3,7 @@ from flask import Blueprint, request, session
 from flask_login import login_required, current_user, login_user, logout_user
 
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import User, users, update_settings, get_user
+from utils import User, users, get_user
 import time
 
 authorization = Blueprint('authorization', __name__, template_folder='templates')
@@ -51,7 +51,7 @@ def signup():
     tmp_user = User(str(tmp_id.inserted_id))
     login_user(tmp_user)
     session.permanent = True
-    update_settings({})
+    current_user.update_settings({})
     return "Success!!"
 
 
@@ -65,7 +65,7 @@ def logout():
 @login_required
 def account():
     if request.method == "GET":
-        tmp_user = get_user(current_user.get_id())
+        tmp_user = current_user.get_user()
         return {
                 'nickname': tmp_user['nickname'], 
                 'authorized_schools': tmp_user['authorized_schools'], 
@@ -74,5 +74,5 @@ def account():
                 'time_joined': tmp_user['time_joined']
             }
     else:
-        x = users.delete_one({'_id': ObjectId(current_user.get_id())})
+        x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
         return {"success": True} if x.deleted_count == 1 else {"success": False}

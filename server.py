@@ -3,7 +3,7 @@ import os
 import json
 from pathlib import Path
 
-from flask import Flask, send_from_directory, request, Response
+from flask import send_from_directory, request, Response
 from flask_login import LoginManager, login_required, current_user
 from flask_compress import Compress
 from flask_wtf.csrf import CSRFProtect
@@ -13,7 +13,7 @@ import backend.load_plans
 from backend.vplan_utils import find_closest_date
 from authorization import authorization
 
-from utils import User, AddStaticFileHashFlask, get_user
+from utils import User, AddStaticFileHashFlask, get_user, authorize_user
 
 VALID_SCHOOLS = os.listdir(".cache")
 API_BASE_URL = "/api/v69.420/<school_num>"
@@ -32,16 +32,15 @@ compress.init_app(app)
 # csrf.init_app(app)
 
 
-# Authorization:
+# authorization (+ endpoints)
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 app.register_blueprint(authorization)
 
 
-# authorization endpoints: (/login, /signup, /logout, /account)
 @login_manager.user_loader
-def user_loader(user_id):
+def user_loader(user_id: str) -> User | None:
     tmp_user = get_user(user_id)
     if tmp_user is None:
         return
@@ -65,7 +64,19 @@ def home(path):
     return send_from_directory('client/public', path)
 
 
-# PLAN JSON API
+# API endpoints
+
+@app.route(f"{API_BASE_URL}/schools")
+def schools():
+    with open("creds.json", "r") as f:
+        creds: dict = json.load(f)
+    return [
+        {
+            k: v for k, v in elem.items() if k in ["school_number", "school_name", "display_name"]
+        } for elem in creds.values()
+    ]
+
+
 @app.route(f"{API_BASE_URL}/meta")
 # @login_required
 def meta(school_num):
@@ -95,6 +106,7 @@ def meta(school_num):
 
 
 @app.route(f"{API_BASE_URL}/plan")
+#@login_required
 def plan(school_num: str):
     if school_num not in VALID_SCHOOLS:
         return {"error": "Invalid school."}
@@ -130,6 +142,25 @@ def authorize(school_num: str):
     with open(".cache/auth.log", "a") as f:
         f.write(f"New auth attempt for {school_num}\nargs: {request.args}\nbody: {request.form}")
     return {"error": "not yet implemented"}
+
+
+@app.route(f"{API_BASE_URL}/instant_authorization")
+#@login_required
+def instant_authorize(school_num: str):
+    if "username" not in request.args:
+        return {"error": "username required"}
+    if "pw" not in request.args:
+        return {"error": "password required"}
+    with open("creds.json", "r") as f:
+        creds = json.load(f)
+    if school_num not in creds:
+        return {"error": "school number not found"}
+    username = request.args.get("username")
+    pw = request.args.get("username")
+    if username != creds[school_num]["username"] or pw != creds[school_num]["password"]:
+        return {"error": "username or password wrong"}
+    current_user.authorize_school(school_num)
+    return "User authorized"
 
 
 if __name__ == "__main__":

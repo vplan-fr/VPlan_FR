@@ -116,7 +116,7 @@
     </div>
     <br>
     <br>
-    <Plan bind:api_base bind:date bind:plan_type bind:plan_value show_title={true} extra_height={true} />
+    <Plan bind:api_base bind:date bind:plan_type bind:plan_value />
     <!-- <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value /> -->
     <!-- <Authentication></Authentication> -->
 </main>
