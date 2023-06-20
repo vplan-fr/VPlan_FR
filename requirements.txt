@@ -1,2 +1,8 @@
 Flask~=2.3.2
+Flask-Login~=0.6.2
+Flask-WTF~=1.1.1
+Flask-Compress~=1.13
+bson~=0.5.10
+pymongo~=4.3.3
+python-dotenv~=1.0.0
 stundenplan24-wrapper@ git+https://github.com/Belissimo-T/stundenplan24-wrapper
