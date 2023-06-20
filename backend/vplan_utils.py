@@ -22,7 +22,7 @@ _parse_form_pattern = re.compile(
     r"\d+"
     r"|[A-Za-zÄÖÜäöüß]+?"
     r"|(?(_major_only_digits)(?(_contains_sep)yes(?!.)|(?(_contains_whitespace)yes(?!.)|))|no(?!.)))"
-    
+
     r"|(?P<alpha>[A-ZÄÖÜ]+|\d+)"
 )
 
@@ -162,6 +162,33 @@ def periods_to_block_label(periods: list[int]) -> str:
 
     else:
         return ", ".join([periods_to_block_label([p]) for p in periods])
+
+
+def _parse_periods(period_str: str) -> list[int]:
+    if "-" not in period_str:
+        return [int(period_str)]
+    else:
+        begin, end = period_str.split("-")
+        return list(range(int(begin), int(end) + 1))
+
+
+def parse_periods(period_str: str) -> list[int]:
+    return sum([_parse_periods(p) for p in period_str.split(",")], [])
+
+
+def parse_absent_element(element: str) -> tuple[str, list[int]]:
+    """Parse a string like the following: "label (1-2,4)" into label and periods."""
+
+    segments = element.rsplit("(", 1)
+
+    label = segments[0].strip()
+
+    if len(segments) == 1:
+        periods = []
+    else:
+        periods = parse_periods(segments[1][:-1])
+
+    return label, periods
 
 
 def find_closest_date(dates):

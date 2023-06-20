@@ -14,8 +14,8 @@ from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indi
     indiware_substitution_plan
 
 from .cache import Cache
-from .vplan_utils import group_forms
-from .models import Lesson, Plan, Teacher, DefaultTimesInfo, Exam
+from .vplan_utils import group_forms, parse_absent_element
+from .models import Lesson, Plan, Teachers, DefaultTimesInfo, Exam, Teacher
 from . import schools
 
 
@@ -23,14 +23,17 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "23"
+    VERSION = "24"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
+        self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
+
         self.client = client
         self.cache = cache
         self.meta_extractor = MetaExtractor(self.cache)
+        self.teachers: Teachers = Teachers()
 
-        self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
+        self.load_teachers()
 
     async def update_fetch(self):
         self._logger.debug("=> Checking for new plans...")
@@ -57,13 +60,16 @@ class PlanCrawler:
                     vplan = await self.client.fetch_substitution_plan(date)
                     self.cache.store_plan_file(date, timestamp, vplan, "VPlanKl.xml")
                 except NoPlanForDateError:
+                    vplan = None
                     self._logger.debug(f"   -> No substitution plan available.")
 
                 self.cache.store_plan_file(date, timestamp, plan, "PlanKl.xml")
             else:
+                # self.update_plans() will fetch plan files from cache
+                vplan = None
                 plan = None
 
-            needs_meta_update |= self.update_plans(date, timestamp, plan)
+            needs_meta_update |= self.update_plans(date, timestamp, plan, vplan)
 
         if needs_meta_update and not no_meta_update:
             self.update_meta()
@@ -83,7 +89,8 @@ class PlanCrawler:
             for revision in self.cache.get_timestamps(day):
                 self.update_plans(day, revision)
 
-    def update_plans(self, day: datetime.date, revision: datetime.datetime, plan: str | None = None) -> bool:
+    def update_plans(self, day: datetime.date, revision: datetime.datetime, plan: str | None = None,
+                     vplan: str | None = None) -> bool:
         if self.cache.contains(day, revision, ".processed"):
             if self.cache.get_plan_file(day, revision, ".processed") == self.VERSION:
                 return False
@@ -92,8 +99,15 @@ class PlanCrawler:
         else:
             self._logger.info(f" * Processing plan for {day}...")
 
-        plan = self.cache.get_plan_file(day, revision, "PlanKl.xml") if plan is None else plan
-        self.compute_plans(day, revision, plan)
+        if plan is None:
+            plan = self.cache.get_plan_file(day, revision, "PlanKl.xml")
+            try:
+                vplan = self.cache.get_plan_file(day, revision, "VPlanKl.xml")
+            except FileNotFoundError:
+                self._logger.debug(f"   -> No substitution plan available.")
+                vplan = None
+
+        self.compute_plans(day, revision, plan, vplan)
 
         return True
 
@@ -123,15 +137,17 @@ class PlanCrawler:
         self.update_forms()
         self.update_rooms()
 
-    def compute_plans(self, date: datetime.date, timestamp: datetime.datetime, plan: str) -> None:
-        plan_extractor = PlanExtractor(plan)
+    def compute_plans(self, date: datetime.date, timestamp: datetime.datetime, plan: str,
+                      vplan: str | None = None) -> None:
+        plan_extractor = PlanExtractor(plan, vplan, self.teachers.abbreviation_by_surname())
 
         self.cache.store_plan_file(
             date, timestamp,
             json.dumps({
                 "rooms": plan_extractor.room_plan(),
                 "teachers": plan_extractor.teacher_plan(),
-                "forms": plan_extractor.form_plan()}, default=Lesson.to_dict),
+                "forms": plan_extractor.form_plan()
+            }, default=Lesson.to_dict),
             "plans.json"
         )
 
@@ -164,15 +180,20 @@ class PlanCrawler:
 
         self.cache.update_newest(date)
 
-    def update_teachers(self):
+    def load_teachers(self):
+        self._logger.info("=> Loading cached teachers...")
         try:
-            last_update_timestamp = datetime.datetime.fromisoformat(
-                json.loads(self.cache.get_meta_file("teachers.json"))["timestamp"]
-            )
+            data = json.loads(self.cache.get_meta_file("teachers.json"))
         except FileNotFoundError:
-            last_update_timestamp = datetime.datetime.min
+            self._logger.warning(" * Could not load any cached teachers.")
+            return
 
-        if datetime.datetime.now() - last_update_timestamp < datetime.timedelta(hours=6):
+        self.teachers = Teachers.from_dict(data)
+
+        self._logger.info(f" * Loaded {len(self.teachers.teachers)} cached teachers.")
+
+    def update_teachers(self):
+        if datetime.datetime.now() - self.teachers.timestamp < datetime.timedelta(hours=6):
             self._logger.info("=> Skipping teacher update. Last update was less than 6 hours ago.")
             return
 
@@ -195,22 +216,22 @@ class PlanCrawler:
 
         all_abbreviations = set(extracted_teachers.keys()) | set(scraped_teachers.keys())
 
-        merged_teachers = {}
+        merged_teachers = []
         for abbreviation in all_abbreviations:
             scraped_teacher = scraped_teachers.get(abbreviation, Teacher(abbreviation))
             extracted_teacher = extracted_teachers.get(abbreviation, Teacher(abbreviation))
 
-            merged_teachers[abbreviation] = Teacher.merge(
-                scraped_teacher, extracted_teacher
+            merged_teachers.append(
+                Teacher.merge(scraped_teacher, extracted_teacher)
             )
 
-        teachers_data = {
-            "teachers": merged_teachers,
-            "timestamp": datetime.datetime.now().isoformat()
-        }
+        self.teachers = Teachers(
+            teachers=merged_teachers,
+            timestamp=datetime.datetime.now()
+        )
 
         self.cache.store_meta_file(
-            json.dumps(teachers_data, default=Teacher.to_dict),
+            json.dumps(self.teachers.to_dict()),
             "teachers.json"
         )
 
@@ -398,7 +419,7 @@ class MetaExtractor:
 
 
 class PlanExtractor:
-    def __init__(self, plan_kl: str, vplan_kl: str | None):
+    def __init__(self, plan_kl: str, vplan_kl: str | None, teacher_abbreviation_by_surname: dict[str, str]):
         self._logger = logging.getLogger(self.__class__.__name__)
 
         form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
@@ -408,6 +429,7 @@ class PlanExtractor:
             self.substitution_plan = None
         else:
             self.substitution_plan = indiware_substitution_plan.SubstitutionPlan.from_xml(ET.fromstring(vplan_kl))
+            self.add_lessons_for_unavailable_from_subst_plan(teacher_abbreviation_by_surname)
 
         self.lessons_grouped = self.plan.lessons.blocks_grouped()
 
@@ -446,6 +468,91 @@ class PlanExtractor:
                     pass
                     # self._logger.debug(f" -> Could not extrapolate end time for a lesson, no previous block found.")
 
+    def add_lessons_for_unavailable_from_subst_plan(self, teacher_abbreviation_by_surname: dict[str, str]):
+        for teacher_str in self.substitution_plan.absent_teachers:
+            teacher_name, periods = parse_absent_element(teacher_str)
+
+            try:
+                teacher_abbreviation = teacher_abbreviation_by_surname[teacher_name]
+            except KeyError:
+                self._logger.warning(f"Could not resolve teacher abbreviation for {teacher_name!r}.")
+                if " " not in teacher_name:
+                    teacher_abbreviation = teacher_name
+                else:
+                    continue
+
+            for period in periods or range(1, 11):
+                info = f"{teacher_name}{' den ganzen Tag' if not periods else ''} abwesend laut Vertretungsplan"
+                lesson = Lesson(
+                    forms=set(),
+                    current_subject=None,
+                    current_teacher=teacher_abbreviation,
+                    class_subject=None,
+                    class_group=None,
+                    class_teacher=None,
+                    class_number=None,
+                    rooms=set(),
+                    periods={period},
+                    info=info,
+                    parsed_info=[[(info, None)]],
+                    subject_changed=False,
+                    teacher_changed=False,
+                    room_changed=False,
+                    begin=None,
+                    end=None,
+                )
+                self.plan.lessons.lessons.append(lesson)
+
+        for room_str in self.substitution_plan.absent_rooms:
+            room, periods = parse_absent_element(room_str)
+
+            for period in periods or range(1, 11):
+                info = f"Raum {room}{' den ganzen Tag' if not periods else ''} nicht verfügbar laut Vertretungsplan"
+                lesson = Lesson(
+                    forms=set(),
+                    current_subject=None,
+                    current_teacher=None,
+                    class_subject=None,
+                    class_group=None,
+                    class_teacher=None,
+                    class_number=None,
+                    rooms={room},
+                    periods={period},
+                    info=info,
+                    parsed_info=[[(info, None)]],
+                    subject_changed=False,
+                    teacher_changed=False,
+                    room_changed=False,
+                    begin=None,
+                    end=None,
+                )
+                self.plan.lessons.lessons.append(lesson)
+
+        for form_str in self.substitution_plan.absent_forms:
+            form, periods = parse_absent_element(form_str)
+
+            for period in periods or range(1, 11):
+                info = f"Klasse {form}{' den ganzen Tag' if not periods else ''} abwesend laut Vertretungsplan"
+                lesson = Lesson(
+                    forms={form},
+                    current_subject=None,
+                    current_teacher=None,
+                    class_subject=None,
+                    class_group=None,
+                    class_teacher=None,
+                    class_number=None,
+                    rooms=set(),
+                    periods={period},
+                    info=info,
+                    parsed_info=[[(info, None)]],
+                    subject_changed=False,
+                    teacher_changed=False,
+                    room_changed=False,
+                    begin=None,
+                    end=None,
+                )
+                self.plan.lessons.lessons.append(lesson)
+
     def room_plan(self):
         return self.lessons_grouped.group_by("rooms")
 
@@ -454,15 +561,6 @@ class PlanExtractor:
 
     def form_plan(self):
         return self.lessons_grouped.group_by("forms")
-
-    # def next_day(self, forward=True):
-    #     year, month, day = int(self.date[:4]), int(self.date[4:6]), int(self.date[6:])
-    #     d = datetime(year, month, day)
-    #     delta = 1 if forward else -1
-    #     d += timedelta(days=delta)
-    #     while d.strftime("%Y%m%d") in self.freie_tage or d.weekday() > 4:
-    #         d += timedelta(days=delta)
-    #     return d.strftime("%Y%m%d")
 
     def used_rooms_by_lesson(self) -> dict[int, set[str]]:
         out: dict[int, set[str]] = defaultdict(set)

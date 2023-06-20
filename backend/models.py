@@ -123,7 +123,7 @@ class Lessons:
         return new_info
 
     def blocks_grouped(self) -> Lessons:
-        assert all(len(x.periods) <= 1 and len(x.forms) for x in self.lessons), \
+        assert all(len(x.periods) <= 1 for x in self.lessons), \
             "Lessons must be ungrouped. (Must only have one period.)"
 
         sorted_lessons = sorted(
@@ -155,7 +155,7 @@ class Lessons:
                 grouped_additional_info = None
 
             if previous_lesson is not None:
-                if list(lesson.forms)[0] in grouped[-1].forms:
+                if (not lesson.forms and not grouped[-1].forms) or list(lesson.forms)[0] in grouped[-1].forms:
                     should_get_grouped &= list(lesson.periods)[0] % 2 == 0
                 else:
                     should_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
@@ -272,6 +272,16 @@ class Teacher:
             "subjects": self.subjects
         }
 
+    @classmethod
+    def from_dict(cls, data: dict) -> Teacher:
+        return cls(
+            abbreviation=data["abbreviation"],
+            full_name=data["full_name"],
+            surname=data["surname"],
+            info=data["info"],
+            subjects=data["subjects"]
+        )
+
     def merge(self, other: Teacher) -> Teacher:
         return Teacher(
             full_name=self.full_name or other.full_name,
@@ -280,6 +290,37 @@ class Teacher:
             abbreviation=self.abbreviation or other.abbreviation,
             subjects=list(set(self.subjects + other.subjects))
         )
+
+    def surname_no_titles(self):
+        """Strip parts of self.surname like "Dr." and return it."""
+        if self.surname is not None:
+            return " ".join(filter(lambda x: "." not in x, self.surname.split(" ")))
+        else:
+            return None
+
+
+@dataclasses.dataclass
+class Teachers:
+    teachers: list[Teacher] = dataclasses.field(default_factory=list)
+    timestamp: datetime.datetime = datetime.datetime.min
+
+    def to_dict(self) -> dict:
+        return {
+            "teachers": {teacher.abbreviation: teacher.to_dict() for teacher in self.teachers},
+            "timestamp": self.timestamp.isoformat()
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Teachers:
+        return cls(
+            teachers=[Teacher.from_dict(teacher) for teacher in data["teachers"].values()],
+            timestamp=datetime.datetime.fromisoformat(data["timestamp"])
+        )
+
+    def abbreviation_by_surname(self) -> dict[str, str]:
+        return {teacher.surname_no_titles(): teacher.abbreviation
+                for teacher in self.teachers
+                if teacher.surname is not None}
 
 
 @dataclasses.dataclass

@@ -5,7 +5,7 @@ import datetime
 import re
 import typing
 
-from backend.vplan_utils import periods_to_block_label
+from backend.vplan_utils import periods_to_block_label, parse_periods
 
 
 # Nicht verfügbare Räume:	1302 (1-2,7-10), 1306 (1-2,4,6)
@@ -86,27 +86,15 @@ class _InfoParsers:
     # Aufsicht Vorbereitungsraum mündliche Prüfung
 
     """
-    eigentliche Stunde findet wann anders statt:
+    eigentliche Stunde findet nicht statt, weil sie auf andere Stunde verlegt wurde
     "verlegt in die Vergangenheit"          =: "gehalten am"
     "verlegt in die Zukunft"                =: "verlegt nach"
     
-    aktuelle Stunde findet nicht statt, weil andere Stunde auf diese verlegt wurde 
+    eigentliche Stunde findet nicht statt, weil andere Stunde auf diese verlegt wurde 
     "verlegt aus der Zukunft/Vergangenheit" =: "statt"
     "verlegt aus der Zukunft/Vergangenheit" =: "verlegt von" (gleicher Tag)
 
 """
-
-    @classmethod
-    def _parse_periods(cls, period_str: str) -> list[int]:
-        if "-" not in period_str:
-            return [int(period_str)]
-        else:
-            begin, end = period_str.split("-")
-            return list(range(int(begin), int(end) + 1))
-
-    @classmethod
-    def parse_periods(cls, period_str: str) -> list[int]:
-        return sum([cls._parse_periods(p) for p in period_str.split(",")], [])
 
 
 class ToJsonMixin:
@@ -236,7 +224,7 @@ def _parse_info(info: str, plan_year: int) -> ToJsonMixin | None:
         return MovedFrom([int(match.group("period_begin"))], None)
     elif match := _InfoParsers.instead_of.search(info):
         return MovedFrom(
-            _InfoParsers.parse_periods(match.group("periods")),
+            parse_periods(match.group("periods")),
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date()
         )
     elif match := _InfoParsers.held_at.search(info):
@@ -244,21 +232,21 @@ def _parse_info(info: str, plan_year: int) -> ToJsonMixin | None:
             match.group("course"),
             match.group("teachers").split(","),
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
-            _InfoParsers.parse_periods(match.group("periods"))
+            parse_periods(match.group("periods"))
         )
     elif match := _InfoParsers.moved_to.search(info):
         return MovedTo(
             match.group("course"),
             match.group("teachers").split(","),
             None,
-            _InfoParsers.parse_periods(match.group("periods"))
+            parse_periods(match.group("periods"))
         )
     elif match := _InfoParsers.moved_to_date.search(info):
         return MovedTo(
             match.group("course"),
             match.group("teachers").split(","),
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
-            _InfoParsers.parse_periods(match.group("periods"))
+            parse_periods(match.group("periods"))
         )
     elif match := _InfoParsers.cancelled.search(info):
         return Cancelled(match.group("course"), match.group("teachers").split(","))
