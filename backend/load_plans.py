@@ -10,7 +10,8 @@ from pathlib import Path
 import json
 import xml.etree.ElementTree as ET
 
-from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil, NoPlanForDateError
+from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil, NoPlanForDateError, \
+    indiware_substitution_plan
 
 from .cache import Cache
 from .vplan_utils import group_forms
@@ -397,14 +398,23 @@ class MetaExtractor:
 
 
 class PlanExtractor:
-    def __init__(self, plan_kl: str):
+    def __init__(self, plan_kl: str, vplan_kl: str | None):
         self._logger = logging.getLogger(self.__class__.__name__)
 
         form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = Plan.from_form_plan(form_plan)
+
+        if vplan_kl is None:
+            self.substitution_plan = None
+        else:
+            self.substitution_plan = indiware_substitution_plan.SubstitutionPlan.from_xml(ET.fromstring(vplan_kl))
+
         self.lessons_grouped = self.plan.lessons.blocks_grouped()
 
-        # extrapolate lesson times (sketchy)
+        self.extrapolate_lesson_times()
+
+    def extrapolate_lesson_times(self):
+        # very sketchy
         for lesson in self.lessons_grouped:
             if lesson.begin is None:
                 # can't do anything about that
@@ -430,7 +440,7 @@ class PlanExtractor:
                     self._logger.debug(
                         f" -> Extrapolated end time for a lesson. "
                         f"Period: {lesson.periods!r}, subject: {lesson.current_subject!r}, form: {lesson.forms!r}, "
-                        f"duration: {block_duration.seconds/60:.2f} min."
+                        f"duration: {block_duration.seconds / 60:.2f} min."
                     )
                 else:
                     pass
