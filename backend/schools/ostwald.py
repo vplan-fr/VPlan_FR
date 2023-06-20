@@ -26,7 +26,7 @@ def scrape_teachers():
                 full_name=None,
                 surname=name,
                 abbreviation=kuerzel,
-                subjects=faecher.split(" "),
+                subjects=faecher.replace("G/R/W", "GRW").split(" "),
                 info=additional_info,
             )
         )
