@@ -13,7 +13,7 @@ import backend.load_plans
 from backend.vplan_utils import find_closest_date
 from authorization import authorization
 
-from utils import User, AddStaticFileHashFlask, get_user, authorize_user
+from utils import User, AddStaticFileHashFlask, get_user
 
 VALID_SCHOOLS = os.listdir(".cache")
 API_BASE_URL = "/api/v69.420/<school_num>"
