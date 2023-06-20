@@ -6,6 +6,7 @@ import dataclasses
 import datetime
 from collections import defaultdict
 
+import typing
 from stundenplan24_py import indiware_mobil
 import stundenplan24_py
 
@@ -33,6 +34,8 @@ class Lesson:
 
     begin: datetime.time
     end: datetime.time
+
+    is_internal: bool = False
 
     def to_dict(self) -> dict:
         return {
@@ -155,7 +158,10 @@ class Lessons:
                 grouped_additional_info = None
 
             if previous_lesson is not None:
-                if (not lesson.forms and not grouped[-1].forms) or list(lesson.forms)[0] in grouped[-1].forms:
+                if (
+                        (not lesson.forms and not grouped[-1].forms)
+                        or (lesson.forms and list(lesson.forms)[0] in grouped[-1].forms)
+                ):
                     should_get_grouped &= list(lesson.periods)[0] % 2 == 0
                 else:
                     should_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
@@ -172,6 +178,9 @@ class Lessons:
             previous_lesson = lesson
 
         return Lessons(sorted(grouped, key=lambda x: x.periods), self.date)
+
+    def filter(self, function: typing.Callable[[Lesson], bool]) -> Lessons:
+        return Lessons(list(filter(function, self.lessons)), self.date)
 
     def __iter__(self):
         return iter(self.lessons)

@@ -17,44 +17,54 @@ db = pymongo.MongoClient(os.getenv("MONGO_URL") if os.getenv("MONGO_URL") else "
 users = db.user
 
 
-def update_settings(user_settings):
-    tmp_user = users.find_one({"_id": ObjectId(current_user.get_id())})
-    authorized_schools = tmp_user.get("authorized_schools", [])
-
-    new_settings = {}
-    try:
-        new_settings["show_plan_toasts"] = bool(user_settings.get("show_plan_toasts", False))
-    except Exception:
-        return make_response('Invalid value for show_plan_toasts', 400)
-    try:
-        new_settings["day_switch_keys"] = bool(user_settings.get("day_switch_keys", True))
-    except Exception:
-        return make_response('Invalid value for day_switch_keys', 400)
-    new_settings["background_color"] = user_settings.get("background_color", "#121212")
-    if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["background_color"]):
-        return make_response('Invalid Color for background_color', 400)
-    new_settings["accent_color"] = user_settings.get("accent_color", "#BB86FC")
-    if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["accent_color"]):
-        return make_response('Invalid Color for accent_color', 400)
-    
-    new_settings["favorite"] = user_settings.get("favorite", [])
-    if new_settings["favorite"]:
-        if new_settings["favorite"][0] not in authorized_schools:
-            return make_response('Schoolnumber not authorized for user', 400)
-        #if new_settings["favorite"][1] not in MetaExtractor(new_settings["favorite"][0]).course_list():
-        #    return make_response('Course not recognized', 400)
-
-    users.update_one({'_id': ObjectId(current_user.get_id())}, {"$set": {'settings': new_settings}})
-    return make_response('success', 200)
-
-
 class User(UserMixin):
-    def __init__(self, mongo_id):
+    def __init__(self, mongo_id: str):
         self.mongo_id = mongo_id
+        self.user = None
 
     def get_id(self):
         return self.mongo_id
-    
+
+    def get_user(self):
+        self.user = users.find_one({'_id': ObjectId(self.mongo_id)})
+
+    def authorize_school(self, school_num: str):
+        self.get_user()
+        tmp_authorized_schools = self.user.get("authorized_schools", [])
+        if school_num not in tmp_authorized_schools:
+            tmp_authorized_schools.append(school_num)
+            users.update_one({'_id': ObjectId(self.mongo_id)},
+                             {"$set": {'authorized_schools': tmp_authorized_schools}})
+
+    def update_settings(self, user_settings):
+        self.get_user()
+        authorized_schools = self.user.get("authorized_schools", [])
+
+        new_settings = {}
+        try:
+            new_settings["show_plan_toasts"] = bool(user_settings.get("show_plan_toasts", False))
+        except Exception:
+            return make_response('Invalid value for show_plan_toasts', 400)
+        try:
+            new_settings["day_switch_keys"] = bool(user_settings.get("day_switch_keys", True))
+        except Exception:
+            return make_response('Invalid value for day_switch_keys', 400)
+        new_settings["background_color"] = user_settings.get("background_color", "#121212")
+        if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["background_color"]):
+            return make_response('Invalid Color for background_color', 400)
+        new_settings["accent_color"] = user_settings.get("accent_color", "#BB86FC")
+        if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["accent_color"]):
+            return make_response('Invalid Color for accent_color', 400)
+
+        new_settings["favorite"] = user_settings.get("favorite", [])
+        if new_settings["favorite"]:
+            if new_settings["favorite"][0] not in authorized_schools:
+                return make_response('Schoolnumber not authorized for user', 400)
+            # if new_settings["favorite"][1] not in MetaExtractor(new_settings["favorite"][0]).course_list():
+            #    return make_response('Course not recognized', 400)
+
+        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'settings': new_settings}})
+
 
 class AddStaticFileHashFlask(Flask):
     def __init__(self, *args, **kwargs):
