@@ -23,7 +23,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "25"
+    VERSION = "26"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
@@ -159,8 +159,8 @@ class PlanCrawler:
 
         all_rooms = set(self.meta_extractor.rooms())
         rooms_data = {
-            "used_rooms": plan_extractor.used_rooms_by_lesson(),
-            "free_rooms": plan_extractor.free_rooms_by_lesson(all_rooms),
+            "used_rooms_by_period": plan_extractor.used_rooms_by_period(),
+            "free_rooms_by_period": plan_extractor.free_rooms_by_period(all_rooms),
             "free_rooms_by_block": plan_extractor.free_rooms_by_block(all_rooms)
         }
 
@@ -565,7 +565,7 @@ class PlanExtractor:
     def form_plan(self):
         return self.lessons_grouped.filter(lambda l: not l.is_internal).group_by("forms")
 
-    def used_rooms_by_lesson(self) -> dict[int, set[str]]:
+    def used_rooms_by_period(self) -> dict[int, set[str]]:
         out: dict[int, set[str]] = defaultdict(set)
 
         for lesson in self.plan.lessons:
@@ -574,16 +574,16 @@ class PlanExtractor:
 
         return out
 
-    def free_rooms_by_lesson(self, all_rooms: set[str]) -> dict[int, set[str]]:
+    def free_rooms_by_period(self, all_rooms: set[str]) -> dict[int, set[str]]:
         return {
             period: list(all_rooms - used_rooms)
-            for period, used_rooms in self.used_rooms_by_lesson().items()
+            for period, used_rooms in self.used_rooms_by_period().items()
         }
 
     def free_rooms_by_block(self, all_rooms: set[str]) -> dict[int, set[str]]:
         out: dict[int, set[str]] = {}
 
-        for period, free_rooms in self.free_rooms_by_lesson(all_rooms).items():
+        for period, free_rooms in self.free_rooms_by_period(all_rooms).items():
             block = period // 2
 
             if block not in out:
