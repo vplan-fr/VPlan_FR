@@ -1,12 +1,13 @@
 <script>
     import Plan from "./Plan.svelte";
+    import Authentication from "./Authentication.svelte";
     import { onMount } from 'svelte';
     import { DatePicker } from 'attractions';
 
     let school_num = "10001329";
     let date = null;
     let plan_type = "forms";
-    let plan_value = "9/4";
+    let plan_value = "10/3";
     let teacher_list = [];
     let room_list = [];
     let grouped_forms = [];
@@ -114,6 +115,7 @@
     </div>
     <br>
     <br>
+    <Authentication></Authentication>
     <Plan bind:api_base bind:date bind:plan_type bind:plan_value show_title="true" extra_height="true" />
 </main>
 
