@@ -241,7 +241,7 @@
             height: 100%;
             width: var(--bar-width);
     
-            border-radius: 5px 0px 5px 5px;
+            border-radius: var(--bar-width) 0px var(--bar-width) var(--bar-width);
     
             @media only screen and (max-width: 601px) {
                 display: none;
