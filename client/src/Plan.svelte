@@ -211,12 +211,11 @@
                 position: absolute;
                 top: calc(-1 * var(--bar-width));
                 left: calc(-1 * var(--bar-width));
-                transform: translate(0%, -50%);
 
                 width: var(--bar-width);
-                aspect-ratio: .5;
+                aspect-ratio: 1;
 
-                background: radial-gradient(circle at 50% 0% , transparent calc(.5 * var(--bar-width)), var(--background-color) calc(.5 * var(--bar-width) + .5px));
+                background: radial-gradient(circle at 50% -15% , transparent calc(.5 * var(--bar-width)), var(--background-color) calc(.5 * var(--bar-width) + .5px));
             }
             
             &.gap::after {
