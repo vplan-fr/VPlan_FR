@@ -7,7 +7,7 @@
     export let plan_value;
     export let show_title = true;
     export let extra_height = true;
-    export let week_letter;
+    export let week_letter = "";
     export let external_times = true;
 
     let lessons = [];
@@ -70,10 +70,13 @@
         b.sort(function (a, b) {  return a - b;  });
 
         for (var i = 0; i < a.length; ++i) {
-            console.log(a[i], b[i]);
             if (a[i] !== b[i]) return false;
         }
         return true;
+    }
+
+    function sameBlock(a, b) {
+        return a.includes(b[0]) || a.includes(b[1])
     }
 
     $: load_lessons(date, plan_type, plan_value);
@@ -93,15 +96,19 @@
                 No Lessons
             {/if}
         {/if}
-        {#each lessons as lesson, i}
-        {#if external_times}    
-            {#if !lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
-                <span class="lesson-time">{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
+        <div class="lessons-wrapper">
+            {#if external_times}
+                <div class="deco-bar"></div>
             {/if}
-            <!-- TODO: Bar on the left -->
-        {/if}
-            <Lesson lesson={lesson} bind:plan_type bind:plan_value display_time={!external_times} />
-        {/each}
+            {#each lessons as lesson, i}
+                {#if external_times}    
+                    {#if !lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
+                        <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
+                    {/if}
+                {/if}
+                <Lesson lesson={lesson} bind:plan_type bind:plan_value display_time={!external_times} />
+            {/each}
+        </div>
         {#if info}
             <p class="additional-info">
                 {#each info.additional_info as cur_info}
@@ -118,10 +125,11 @@
 
 <style lang="scss">
     .plan {
-        & > div {
+        & > div, & .lessons-wrapper {
             &:empty {
                 outline-color: transparent !important;
             }
+            position: relative;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -176,23 +184,68 @@
         white-space: nowrap;
     }
 
-    .lesson-time {
-        margin-left: -20px;
-        background: rgba(255, 255, 255, 0.1);
-        width: max-content;
-        border-radius: 8px;
-
-        font-size: 1.875rem;
-        padding: 1rem;
-        line-height: 1;
+    .lessons-wrapper {
+        --bar-width: 15px;
+        .lesson-time {
+            position: relative;
+            margin-left: -10px;
+            background: rgba(255, 255, 255, 0.1);
+            width: max-content;
+            border-radius: 0px 8px 8px 0px;
         
-        @media only screen and (max-width: 601px) {
-            margin-left: 0px;
-            border-radius: 5px;
+            font-size: 1.875rem;
+            padding: 1rem;
+            line-height: 1;
+            
+            @media only screen and (max-width: 601px) {
+                margin-left: 0px;
+                border-radius: 5px;
+        
+                font-size: 0.875rem;
+                padding: 5px;
+                line-height: normal;
+            }
 
-            font-size: 0.875rem;
-            padding: 5px;
-            line-height: normal;
+            &.gap::before {
+                content: "";
+                position: absolute;
+                top: calc(-1 * var(--bar-width));
+                left: calc(-1 * var(--bar-width));
+                transform: translate(0%, -50%);
+
+                width: var(--bar-width);
+                aspect-ratio: .5;
+
+                background: radial-gradient(circle at 50% 0% , transparent calc(.5 * var(--bar-width)), var(--background-color) calc(.5 * var(--bar-width) + .5px));
+            }
+            
+            &.gap::after {
+                content: "";
+                position: absolute;
+                top: 0px;
+                left: calc(-1 * var(--bar-width));
+
+                width: var(--bar-width);
+                aspect-ratio: 1;
+
+                background: radial-gradient(circle at 100% 100% , transparent var(--bar-width), var(--background-color) calc(var(--bar-width) + .5px));
+            }
+        }
+
+        .deco-bar {
+            position: absolute;
+            top: 0;
+            left: calc(-1 * var(--bar-width) - 10px);
+    
+            background: rgba(255, 255, 255, 0.1);
+            height: 100%;
+            width: var(--bar-width);
+    
+            border-radius: 5px 0px 5px 5px;
+    
+            @media only screen and (max-width: 601px) {
+                display: none;
+            }
         }
     }
 </style>
