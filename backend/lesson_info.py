@@ -274,7 +274,7 @@ class InsteadOfCourse(SerializeMixin, ParsedLessonInfoMessage):
 
     def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         return [
-            LessonInfoTextSegment(f"statt {self.course} "),
+            LessonInfoTextSegment(f"für {self.course} "),
             LessonInfoTextSegment(
                 f"{', '.join(self._teachers)}",
                 link=LessonInfoTextSegmentLink(
