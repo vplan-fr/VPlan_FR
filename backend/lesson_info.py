@@ -539,7 +539,7 @@ class ParsedLessonInfo:
     def sort(self, key: typing.Callable[[LessonInfoParagraph], typing.Any]):
         self.paragraphs.sort(key=key)
 
-    def sorted_original(self):
+    def sort_original(self):
         self.sort(key=lambda p: p.index)
 
         for paragraph in self.paragraphs:

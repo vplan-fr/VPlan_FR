@@ -133,7 +133,9 @@ class Lessons:
 
             new_info.append(LessonInfoParagraph(new_paragraph, paragraph1.index))
 
-        return ParsedLessonInfo(new_info).sorted_original()
+        out = ParsedLessonInfo(new_info)
+        out.sort_original()
+        return out
 
     def blocks_grouped(self) -> Lessons:
         assert all(len(x.periods) <= 1 for x in self.lessons), \
@@ -171,8 +173,11 @@ class Lessons:
                         (not lesson.forms and not grouped[-1].forms)
                         or (lesson.forms and list(lesson.forms)[0] in grouped[-1].forms)
                 ):
+                    # "block" grouping, since lesson is duplicated for each period of block,
+                    # period must be even to get grouped
                     should_get_grouped &= list(lesson.periods)[0] % 2 == 0
                 else:
+                    # lesson is duplicated for each form, periods must be the same ("spacial" grouping)
                     should_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
 
             if should_get_grouped:

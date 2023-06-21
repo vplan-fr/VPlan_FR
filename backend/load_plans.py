@@ -24,7 +24,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "27"
+    VERSION = "28"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
