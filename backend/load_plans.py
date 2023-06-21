@@ -15,15 +15,16 @@ from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indi
 
 from .cache import Cache
 from .vplan_utils import group_forms, parse_absent_element
-from .models import Lesson, Plan, Teachers, DefaultTimesInfo, Exam, Teacher
+from .models import Lesson, Plan, Teachers, DefaultTimesInfo, Exam, Teacher, Lessons
 from . import schools
+from . import lesson_info
 
 
 class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "26"
+    VERSION = "27"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
@@ -147,7 +148,7 @@ class PlanCrawler:
                 "rooms": plan_extractor.room_plan(),
                 "teachers": plan_extractor.teacher_plan(),
                 "forms": plan_extractor.form_plan()
-            }, default=Lesson.to_dict),
+            }, default=Lessons.serialize),
             "plans.json"
         )
 
@@ -423,7 +424,7 @@ class PlanExtractor:
         self._logger = logging.getLogger(self.__class__.__name__)
 
         form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
-        self.plan = Plan.from_form_plan(form_plan)
+        self.plan = Plan.from_form_plan(form_plan, teacher_abbreviation_by_surname)
 
         if vplan_kl is None:
             self.substitution_plan = None
@@ -494,7 +495,7 @@ class PlanExtractor:
                     rooms=set(),
                     periods={period},
                     info=info,
-                    parsed_info=[[(info, None)]],
+                    parsed_info=lesson_info.create_literal_parsed_info(info),
                     subject_changed=False,
                     teacher_changed=False,
                     room_changed=False,
@@ -520,7 +521,7 @@ class PlanExtractor:
                     rooms={room},
                     periods={period},
                     info=info,
-                    parsed_info=[[(info, None)]],
+                    parsed_info=lesson_info.create_literal_parsed_info(info),
                     subject_changed=False,
                     teacher_changed=False,
                     room_changed=False,
@@ -546,7 +547,7 @@ class PlanExtractor:
                     rooms=set(),
                     periods={period},
                     info=info,
-                    parsed_info=[[(info, None)]],
+                    parsed_info=lesson_info.create_literal_parsed_info(info),
                     subject_changed=False,
                     teacher_changed=False,
                     room_changed=False,

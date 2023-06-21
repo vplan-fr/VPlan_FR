@@ -10,7 +10,7 @@ import typing
 from stundenplan24_py import indiware_mobil
 import stundenplan24_py
 
-from .lesson_info import parse_info, ParsedLessonInfo, sort_info, MovedFrom, MovedTo
+from .lesson_info import ParsedLessonInfo, MovedFrom, MovedTo, LessonInfoParagraph, LessonInfoMessage
 from . import vplan_utils
 
 
@@ -37,7 +37,7 @@ class Lesson:
 
     is_internal: bool = False
 
-    def to_dict(self) -> dict:
+    def to_dict(self, lesson_date: datetime.date) -> dict:
         return {
             "forms": sorted(self.forms),
             "forms_str": vplan_utils.forms_to_str(self.forms),
@@ -55,8 +55,7 @@ class Lesson:
             "room_changed": self.room_changed,
             "begin": self.begin.strftime("%H:%M") if self.begin else None,
             "end": self.end.strftime("%H:%M") if self.end else None,
-            "parsed_info": [[(info_str, info.to_json() if info is not None else None) for info_str, info in infos]
-                            for infos in self.parsed_info]
+            "parsed_info": self.parsed_info.serialize(lesson_date, self)
         }
 
 
@@ -65,7 +64,7 @@ class Lessons:
     lessons: list[Lesson]
     date: datetime.date
 
-    def group_by(self, *attributes: str, include_none: bool = False) -> dict[str, list[Lesson]]:
+    def group_by(self, *attributes: str, include_none: bool = False) -> dict[str, Lessons]:
         grouped_i = defaultdict(set)
 
         for lesson_i, lesson in enumerate(self.lessons):
@@ -83,47 +82,58 @@ class Lessons:
 
         grouped = {attribute: [self.lessons[i] for i in indices] for attribute, indices in grouped_i.items()}
 
-        return {attribute: sorted(lessons, key=lambda x: list(x.periods)[0])
+        return {attribute: Lessons(sorted(lessons, key=lambda x: list(x.periods)[0]), self.date)
                 for attribute, lessons in grouped.items()}
+
+    def serialize(self) -> list[dict]:
+        return [lesson.to_dict(self.date) for lesson in self.lessons]
 
     @staticmethod
     def _group_lesson_info(
             parsed_info1: ParsedLessonInfo,
-            parsed_info2: ParsedLessonInfo,
-            lesson_date: datetime.date
+            parsed_info2: ParsedLessonInfo
     ) -> ParsedLessonInfo | None:
-        info1 = sort_info(parsed_info1)
-        info2 = sort_info(parsed_info2)
+        info1: ParsedLessonInfo = parsed_info1.sorted_canonical()
+        info2: ParsedLessonInfo = parsed_info2.sorted_canonical()
 
         new_info = []
 
-        for info1_part, info2_part in zip(info1, info2):
-            new_part_info = []
-            for (info_str1, info1), (info_str2, info2) in zip(info1_part, info2_part):
-                if type(info1) != type(info2):
+        for paragraph1, paragraph2 in zip(info1.paragraphs, info2.paragraphs):
+            new_paragraph = []
+            for message1, message2 in zip(paragraph1.messages, paragraph2.messages):
+                message1: LessonInfoMessage
+                message2: LessonInfoMessage
+
+                if type(message1.parsed) != type(message2.parsed):
                     # both infos are definitely not the same
                     return None
 
-                # info string not the same, but groupable
-                if isinstance(info1, (MovedFrom, MovedTo)):
-                    if info1.is_groupable(info2):
-                        new_part_part_info = copy.deepcopy(info1)
-                        new_part_part_info.periods += info2.periods
-                        new_info_str = new_part_part_info.to_blocked_str(lesson_date)
-                        new_part_info.append((new_info_str, new_part_part_info))
+                # info string not the same but periods may be groupable
+                # noinspection PyTypeChecker
+                parsed1, parsed2 = message1.parsed, message2.parsed
+                if isinstance(parsed1, (MovedFrom, MovedTo)):
+                    parsed2: MovedFrom | MovedTo
+
+                    if parsed1.is_groupable(parsed2):
+                        new_message = copy.deepcopy(message1)
+                        # noinspection PyTypeHints
+                        new_message.parsed: MovedFrom | MovedTo
+                        new_message.parsed.periods += parsed2.periods
+                        new_message.parsed.original_messages += parsed2.original_messages
+                        new_paragraph.append(new_message)
                     else:
                         return None
 
-                # not groupable, so info string must be the same
-                elif info_str1 == info_str2:
-                    new_part_info.append((info_str1, info1))
+                # not groupable, so, to group, info string must be the same
+                elif message1.parsed.original_messages == message2.parsed.original_messages:
+                    new_paragraph.append(message1)
 
                 else:
                     return None
 
-            new_info.append(new_part_info)
+            new_info.append(LessonInfoParagraph(new_paragraph, paragraph1.index))
 
-        return new_info
+        return ParsedLessonInfo(new_info).sorted_original()
 
     def blocks_grouped(self) -> Lessons:
         assert all(len(x.periods) <= 1 for x in self.lessons), \
@@ -150,8 +160,7 @@ class Lessons:
             )
 
             if previous_lesson is not None:
-                grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info,
-                                                                  self.date)
+                grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info)
 
                 should_get_grouped &= grouped_additional_info is not None
             else:
@@ -208,15 +217,16 @@ class Plan:
     form_plan: indiware_mobil.FormPlan
 
     @classmethod
-    def from_form_plan(cls, form_plan: indiware_mobil.FormPlan) -> Plan:
+    def from_form_plan(cls, form_plan: indiware_mobil.FormPlan,
+                       teacher_abbreviation_by_surname: dict[str, str]) -> Plan:
         lessons: list[Lesson] = []
         exams: dict[str, list[Exam]] = defaultdict(list)
         for form in form_plan.forms:
             for lesson in form.lessons:
-                parsed_info = (
-                    parse_info(lesson.information, form_plan.timestamp.year)
-                    if lesson.information is not None else []
-                )
+                parsed_info = ParsedLessonInfo.from_str(
+                    lesson.information, form_plan.timestamp.year,
+                    teacher_abbreviation_by_surname
+                ) if lesson.information is not None else ParsedLessonInfo([])
 
                 lessons.append(Lesson(
                     forms={form.short_name},
