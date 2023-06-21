@@ -8,6 +8,8 @@
     export let show_title = true;
     export let extra_height = true;
     export let week_letter;
+    export let external_times = true;
+
     let lessons = [];
     let info;
     let title = "";
@@ -35,10 +37,43 @@
                 } catch {
                     lessons = []
                 }
+                console.log(lessons);
             })
             .catch(error => {
                 console.error(error);
         });
+    }
+
+    function periods_to_block_label(periods) {
+        periods.sort(function (a, b) {  return a - b;  });
+
+        const rests = {
+            0: "/Ⅱ",
+            1: "/Ⅰ",
+        };
+
+        if (periods.length === 1) {
+            return `${Math.floor((periods[0] - 1) / 2) + 1}${rests[periods[0] % 2]}`;
+        } else if (periods.length === 2 && periods[0] % 2 === 1) {
+            return `${Math.floor(periods[periods.length - 1] / 2)}`;
+        } else {
+            return periods.map(p => periods_to_block_label([p])).join(", ");
+        }
+    }
+
+    function arraysEqual(a, b) {
+        if (a === b) return true;
+        if (a == null || b == null) return false;
+        if (a.length !== b.length) return false;
+
+        a.sort(function (a, b) {  return a - b;  });
+        b.sort(function (a, b) {  return a - b;  });
+
+        for (var i = 0; i < a.length; ++i) {
+            console.log(a[i], b[i]);
+            if (a[i] !== b[i]) return false;
+        }
+        return true;
     }
 
     $: load_lessons(date, plan_type, plan_value);
@@ -58,8 +93,14 @@
                 No Lessons
             {/if}
         {/if}
-        {#each lessons as lesson}
-            <Lesson lesson={lesson} bind:plan_type bind:plan_value display_time={false} />
+        {#each lessons as lesson, i}
+        {#if external_times}    
+            {#if !lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
+                <span class="lesson-time">{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
+            {/if}
+            <!-- TODO: Bar on the left -->
+        {/if}
+            <Lesson lesson={lesson} bind:plan_type bind:plan_value display_time={!external_times} />
         {/each}
         {#if info}
             <p class="additional-info">
@@ -133,5 +174,25 @@
 
     .no-linebreak {
         white-space: nowrap;
+    }
+
+    .lesson-time {
+        margin-left: -20px;
+        background: rgba(255, 255, 255, 0.1);
+        width: max-content;
+        border-radius: 8px;
+
+        font-size: 1.875rem;
+        padding: 1rem;
+        line-height: 1;
+        
+        @media only screen and (max-width: 601px) {
+            margin-left: 0px;
+            border-radius: 5px;
+
+            font-size: 0.875rem;
+            padding: 5px;
+            line-height: normal;
+        }
     }
 </style>
