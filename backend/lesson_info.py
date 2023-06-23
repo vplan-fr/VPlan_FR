@@ -491,7 +491,10 @@ class LessonInfoMessage:
 
     def serialize(self, lesson_date: datetime.date, lesson: models.Lesson) -> dict:
         return {
-            "parsed": self.parsed.serialize() if self.parsed is not None else None,
+            "parsed": (
+                self.parsed.serialize()
+                if not isinstance(self.parsed, FailedToParse) else None
+            ),
             "text_segments": [segment.serialize() for segment in self.parsed.to_text_segments(lesson_date, lesson)]
         }
 
