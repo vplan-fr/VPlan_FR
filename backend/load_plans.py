@@ -24,7 +24,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "29"
+    VERSION = "30"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
@@ -432,9 +432,26 @@ class PlanExtractor:
             self.substitution_plan = indiware_substitution_plan.SubstitutionPlan.from_xml(ET.fromstring(vplan_kl))
             self.add_lessons_for_unavailable_from_subst_plan(teacher_abbreviation_by_surname)
 
+        self.fill_in_lesson_times()
+
         self.lessons_grouped = self.plan.lessons.blocks_grouped()
 
         self.extrapolate_lesson_times()
+
+    def fill_in_lesson_times(self):
+        forms: dict[str, indiware_mobil.Form] = {form.short_name: form for form in self.plan.form_plan.forms}
+
+        for lesson in self.plan.lessons:
+            if not lesson.forms:
+                continue
+
+            lesson_form = forms[list(lesson.forms)[0]]
+
+            if lesson.begin is None:
+                lesson.begin = lesson_form.periods.get(sorted(lesson.periods)[0], (None, None))[0]
+
+            if lesson.end is None:
+                lesson.end = lesson_form.periods.get(sorted(lesson.periods)[-1], (None, None))[1]
 
     def extrapolate_lesson_times(self):
         # very sketchy
