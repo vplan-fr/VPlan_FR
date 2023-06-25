@@ -366,8 +366,9 @@ class MetaExtractor:
         teachers: dict[str, list[str]] = defaultdict(list)
 
         for extractor in self.iterate_daily_extractors():
-            for teacher, subjects in extractor.teachers().items():
-                teachers[teacher].extend(subjects)
+            for _teacher, subjects in extractor.teachers().items():
+                for teacher in _teacher.split(" "):
+                    teachers[teacher].extend(subjects)
 
         for teacher, subjects in teachers.items():
             teachers[teacher] = sorted(set(subjects))
