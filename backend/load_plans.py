@@ -65,6 +65,7 @@ class PlanCrawler:
                     self._logger.debug(f"   -> No substitution plan available.")
 
                 self.cache.store_plan_file(date, timestamp, plan, "PlanKl.xml")
+                self.meta_extractor.invalidate_cache()
             else:
                 # self.update_plans() will fetch plan files from cache
                 vplan = None
@@ -158,7 +159,7 @@ class PlanCrawler:
             "exams.json"
         )
 
-        all_rooms = set(self.meta_extractor.rooms())
+        all_rooms = self.meta_extractor.rooms()
         rooms_data = {
             "used_rooms_by_period": plan_extractor.used_rooms_by_period(),
             "free_rooms_by_period": plan_extractor.free_rooms_by_period(all_rooms),
@@ -338,24 +339,28 @@ class DailyMetaExtractor:
 
 
 class MetaExtractor:
-    # TODO: implement memory cache of rooms, teachers, etc.
-
     def __init__(self, cache: Cache, num_last_days: int = 10):
         self.cache = cache
         self.num_last_days = num_last_days
+
+        self._rooms: set[str] | None = None
 
     def iterate_daily_extractors(self) -> typing.Generator[DailyMetaExtractor, None, None]:
         for day in self.cache.get_days()[:self.num_last_days]:
             for timestamp in self.cache.get_timestamps(day):
                 yield DailyMetaExtractor(self.cache.get_plan_file(day, timestamp, "PlanKl.xml"))
 
-    def rooms(self):
+    def rooms(self) -> set[str]:
+        if self._rooms is not None:
+            return self._rooms
+
         rooms: set[str] = set()
 
         for extractor in self.iterate_daily_extractors():
             rooms.update(extractor.rooms())
 
-        return sorted(rooms)
+        self._rooms = rooms
+        return rooms
 
     def teachers(self) -> list[Teacher]:
         teachers: dict[str, list[str]] = defaultdict(list)
@@ -417,6 +422,9 @@ class MetaExtractor:
             }
             for form in courses.keys()
         }
+
+    def invalidate_cache(self):
+        self._rooms = None
 
 
 class PlanExtractor:
