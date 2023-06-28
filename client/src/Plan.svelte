@@ -95,7 +95,7 @@
             {:else}
                 No Lessons
             {/if}
-        {/if}
+        {:else}
         <div class="lessons-wrapper">
             {#if external_times}
                 <div class="deco-bar"></div>
@@ -106,9 +106,10 @@
                         <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
                     {/if}
                 {/if}
-                <Lesson lesson={lesson} bind:plan_type bind:plan_value display_time={!external_times} />
+                <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
             {/each}
         </div>
+        {/if}
         {#if info}
             <p class="additional-info">
                 {#each info.additional_info as cur_info}
@@ -157,7 +158,7 @@
 
     .responsive-heading {
         font-size: clamp(1.063rem, 4vw, 2.28rem);
-        line-height: clamp(1.406rem, 4.5vmax, 2.813rem);
+        line-height: 1.6;
         margin-bottom: 15px;
     }
 

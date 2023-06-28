@@ -52,7 +52,7 @@
     }
     .responsive-heading {
         font-size: clamp(1.063rem, 4vw, 2.28rem);
-        line-height: clamp(1.406rem, 4.5vmax, 2.813rem);
+        line-height: 1.6;
         margin-bottom: 15px;
     }
 </style>

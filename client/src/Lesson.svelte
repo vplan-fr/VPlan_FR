@@ -1,5 +1,6 @@
 <script>
     export let lesson;
+    export let date;
     export let plan_type;
     export let plan_value;
     export let display_time = true;
@@ -94,7 +95,18 @@
             {#each lesson.parsed_info as elem}
                 <ul>
                     {#each elem as element}
-                        <li>{element[0]}</li>
+                        <li>
+                            {#each element.text_segments as text_segment}
+                                <button class="no-btn-visuals" on:click={() => {
+                                    if(text_segment.link !== null) {
+                                        date = text_segment.link.date;
+                                        plan_type = text_segment.link.type;
+                                        plan_value = text_segment.link.value;
+                                    }
+                                }
+                                }>{text_segment["text"]}</button>
+                            {/each}
+                        </li>
                     {/each}
                 </ul>
             {/each}
@@ -168,7 +180,18 @@
             {#each lesson.parsed_info as elem}
                 <ul>
                     {#each elem as element}
-                        <li>{element[0]}</li>
+                        <li>
+                            {#each element.text_segments as text_segment}
+                                <button class="no-btn-visuals" on:click={() => {
+                                    if(text_segment.link !== null) {
+                                        date = text_segment.link.date;
+                                        plan_type = text_segment.link.type;
+                                        plan_value = text_segment.link.value;
+                                    }
+                                }
+                                }>{text_segment["text"]}</button>
+                            {/each}
+                        </li>
                     {/each}
                 </ul>
             {/each}
@@ -292,6 +315,14 @@
         background: transparent;
         color: var(--text-color);
     }
+    
+    .no-btn-visuals {
+        border: 0;
+        background: none;
+        padding: 0;
+        margin: 0;
+        margin-right: .3rem;
+    }
 
     .extra_forms .horizontal_wrapper {
         display: flex;
@@ -333,14 +364,18 @@
     .lesson-info {
         margin-top: 10px;
         padding: 8px !important;
-        font-size: 0.875rem;
-        font-weight: 300;
-        line-height: 1.313rem;
         background: rgba(255, 255, 255, 0.05) !important;
         display: flex;
         flex-direction: column;
         gap: 10px;
         min-height: unset !important;
+        
+        button {
+            font-size: 0.875rem;
+            font-weight: 300;
+            line-height: 1.313rem;
+            color: var(--text-color);
+        }
     }
 
     .info-element {
@@ -474,9 +509,11 @@
             font-size: 1.875rem;
         }
         .lesson-info {
-            font-size: 1.3rem;
-            line-height: 1.5;
             margin-top: 20px;
+            button {
+                font-size: 1.3rem;
+                line-height: 1.5;
+            }
         }
         .cancelled {
             grid-area: 1 / 1 / 3 / 3;
