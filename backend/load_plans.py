@@ -24,7 +24,7 @@ class PlanCrawler:
     """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
     (meta)data."""
 
-    VERSION = "30"
+    VERSION = "31"
 
     def __init__(self, client: Stundenplan24Client, cache: Cache):
         self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
@@ -513,10 +513,10 @@ class PlanExtractor:
                 lesson = Lesson(
                     forms=set(),
                     current_subject=None,
-                    current_teacher=teacher_abbreviation,
+                    current_teachers={teacher_abbreviation},
                     class_subject=None,
                     class_group=None,
-                    class_teacher=None,
+                    class_teachers=None,
                     class_number=None,
                     rooms=set(),
                     periods={period},
@@ -539,10 +539,10 @@ class PlanExtractor:
                 lesson = Lesson(
                     forms=set(),
                     current_subject="Belegt",
-                    current_teacher=None,
+                    current_teachers=None,
                     class_subject=None,
                     class_group=None,
-                    class_teacher=None,
+                    class_teachers=None,
                     class_number=None,
                     rooms={room},
                     periods={period},
@@ -565,10 +565,10 @@ class PlanExtractor:
                 lesson = Lesson(
                     forms={form},
                     current_subject=None,
-                    current_teacher=None,
+                    current_teachers=None,
                     class_subject=None,
                     class_group=None,
-                    class_teacher=None,
+                    class_teachers=None,
                     class_number=None,
                     rooms=set(),
                     periods={period},
@@ -587,7 +587,7 @@ class PlanExtractor:
         return self.lessons_grouped.group_by("rooms")
 
     def teacher_plan(self):
-        return self.lessons_grouped.filter(lambda l: not l.is_internal).group_by("class_teacher", "current_teacher")
+        return self.lessons_grouped.filter(lambda l: not l.is_internal).group_by("class_teachers", "current_teachers")
 
     def form_plan(self):
         return self.lessons_grouped.filter(lambda l: not l.is_internal).group_by("forms")

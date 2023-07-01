@@ -18,10 +18,10 @@ from . import vplan_utils
 class Lesson:
     forms: set[str]
     current_subject: str | None
-    current_teacher: str | None
+    current_teachers: set[str] | None
     class_subject: str | None
     class_group: str | None
-    class_teacher: str | None
+    class_teachers: set[str] | None
     class_number: str | None
     rooms: set[str]
     periods: set[int]
@@ -44,10 +44,10 @@ class Lesson:
             "periods": list(self.periods),
             "rooms": list(self.rooms),
             "current_subject": self.current_subject,
-            "current_teacher": self.current_teacher,
+            "current_teachers": sorted(self.current_teachers) if self.current_teachers else None,
             "class_subject": self.class_subject,
             "class_group": self.class_group,
-            "class_teacher": self.class_teacher,
+            "class_teachers": sorted(self.class_teachers) if self.class_teachers else None,
             # "class_number": self.class_number,
             "info": self.info,
             "subject_changed": self.subject_changed,
@@ -157,7 +157,7 @@ class Lessons:
                     previous_lesson is not None and
                     lesson.rooms == previous_lesson.rooms and
                     lesson.current_subject == previous_lesson.current_subject and
-                    lesson.current_teacher == previous_lesson.current_teacher and
+                    lesson.current_teachers == previous_lesson.current_teachers and
                     lesson.class_number == previous_lesson.class_number
             )
 
@@ -241,12 +241,13 @@ class Plan:
                     class_group=(
                         form.classes[lesson.class_number].group if lesson.class_number in form.classes else None
                     ),
-                    class_teacher=(
-                        form.classes[lesson.class_number].teacher if lesson.class_number in form.classes else None
+                    class_teachers=(
+                        set(form.classes[lesson.class_number].teacher.split())
+                        if lesson.class_number in form.classes else None
                     ),
                     class_number=lesson.class_number,
                     current_subject=lesson.subject(),
-                    current_teacher=lesson.teacher(),
+                    current_teachers=set(lesson.teacher().split()) if lesson.teacher() else None,
                     rooms=lesson.room().split(" ") if lesson.room() else [],
                     periods={lesson.period} if lesson.period is not None else [],
                     info=lesson.information if lesson.information is not None else "",
