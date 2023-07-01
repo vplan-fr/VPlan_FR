@@ -14,6 +14,7 @@
     let info;
     let title = "";
     let loading = true;
+    let error = "";
     let plan_type_map = {
         "forms": "Klasse",
         "rooms": "Raum",
@@ -36,6 +37,11 @@
                     week_letter = info.week;
                 } catch {
                     lessons = []
+                    try {
+                        error = data["error"];
+                    } catch {
+
+                    }
                 }
                 console.log(lessons);
             })
@@ -92,6 +98,8 @@
         {#if lessons.length == 0}
             {#if loading}
                 Loading...
+            {:else if error}
+                An error occured: {error}
             {:else}
                 No Lessons
             {/if}

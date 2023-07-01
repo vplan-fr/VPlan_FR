@@ -116,9 +116,9 @@
     </div>
     <br>
     <br>
+    <Authentication></Authentication>
     <Plan bind:api_base bind:date bind:plan_type bind:plan_value />
     <!-- <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value /> -->
-    <!-- <Authentication></Authentication> -->
 </main>
 
 <style lang="scss">
