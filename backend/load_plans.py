@@ -37,7 +37,7 @@ class PlanCrawler:
         self.load_teachers()
 
     async def update_fetch(self):
-        self._logger.debug("=> Checking for new plans...")
+        self._logger.debug("* Checking for new plans...")
         plan_files = await self.client.fetch_dates_indiware_mobil()  # requests vpdir.php
 
         await self.update(plan_files)
@@ -83,7 +83,7 @@ class PlanCrawler:
             return False
 
     def migrate_all(self):
-        self._logger.info("=> Migrating cache...")
+        self._logger.info("* Migrating cache...")
 
         for day in self.cache.get_days():
             self.cache.update_newest(day)
@@ -97,9 +97,9 @@ class PlanCrawler:
             if self.cache.get_plan_file(day, revision, ".processed") == self.VERSION:
                 return False
 
-            self._logger.info(f" * Migrating plan for {day} to current version...")
+            self._logger.info(f"=> Migrating plan for {day} to current version...")
         else:
-            self._logger.info(f" * Processing plan for {day}...")
+            self._logger.info(f"=> Processing plan for {day}...")
 
         if plan is None:
             plan = self.cache.get_plan_file(day, revision, "PlanKl.xml")
@@ -123,10 +123,10 @@ class PlanCrawler:
             await asyncio.sleep(interval)
 
     def update_meta(self):
-        self._logger.info("=> Updating meta data...")
+        self._logger.info("* Updating meta data...")
 
         if not self.cache.get_days():
-            self._logger.error(" * No plans cached yet.")
+            self._logger.error("=> No plans cached yet.")
             return
 
         data = {
@@ -183,35 +183,35 @@ class PlanCrawler:
         self.cache.update_newest(date)
 
     def load_teachers(self):
-        self._logger.info("=> Loading cached teachers...")
+        self._logger.info("* Loading cached teachers...")
         try:
             data = json.loads(self.cache.get_meta_file("teachers.json"))
         except FileNotFoundError:
-            self._logger.warning(" * Could not load any cached teachers.")
+            self._logger.warning("=> Could not load any cached teachers.")
             return
 
         self.teachers = Teachers.from_dict(data)
 
-        self._logger.info(f" * Loaded {len(self.teachers.teachers)} cached teachers.")
+        self._logger.info(f"=> Loaded {len(self.teachers.teachers)} cached teachers.")
 
     def update_teachers(self):
         if datetime.datetime.now() - self.teachers.timestamp < datetime.timedelta(hours=6):
-            self._logger.info("=> Skipping teacher update. Last update was less than 6 hours ago.")
+            self._logger.info("* Skipping teacher update. Last update was less than 6 hours ago.")
             return
 
-        self._logger.info("=> Updating teachers...")
+        self._logger.info("* Updating teachers...")
 
         if self.client.school_number not in schools.teacher_scrapers:
-            self._logger.warning(" * No teacher scraper available for this school.")
+            self._logger.warning("=> No teacher scraper available for this school.")
             scraped_teachers = {}
         else:
-            self._logger.info(" * Scraping teachers...")
+            self._logger.info("=> Scraping teachers...")
             _scraped_teachers = schools.teacher_scrapers[str(self.client.school_number)]()
             scraped_teachers = {teacher.abbreviation: teacher for teacher in _scraped_teachers}
 
             self._logger.debug(f" -> Found {len(scraped_teachers)} teachers.")
 
-        self._logger.info(" * Merging with extracted data...")
+        self._logger.info("=> Merging with extracted data...")
 
         _extracted_teachers = self.meta_extractor.teachers()
         extracted_teachers = {teacher.abbreviation: teacher for teacher in _extracted_teachers}
@@ -238,7 +238,7 @@ class PlanCrawler:
         )
 
     def update_forms(self):
-        self._logger.info("=> Updating forms...")
+        self._logger.info("* Updating forms...")
 
         data = {
             "grouped_forms": group_forms(self.meta_extractor.forms()),
@@ -251,7 +251,7 @@ class PlanCrawler:
         )
 
     def update_rooms(self):
-        self._logger.info("=> Updating rooms...")
+        self._logger.info("* Updating rooms...")
 
         all_rooms = self.meta_extractor.rooms()
         parsed_rooms: dict[str, dict] = {}
@@ -265,7 +265,7 @@ class PlanCrawler:
                     self._logger.error(f" -> Error while parsing room {room!r}: {e}")
 
         except KeyError:
-            self._logger.warning(" * No room parser available for this school.")
+            self._logger.warning("=> No room parser available for this school.")
 
             parsed_rooms = {room: None for room in all_rooms}
 
@@ -661,7 +661,7 @@ async def get_clients() -> dict[str, PlanCrawler]:
 
 
 async def main():
-    logging.basicConfig(level=logging.DEBUG, format="[%(levelname)8s] %(name)s: %(message)s")
+    logging.basicConfig(level=logging.INFO, format="[%(levelname)8s] %(name)s: %(message)s")
 
     clients = await get_clients()
 
