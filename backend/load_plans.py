@@ -454,7 +454,11 @@ class PlanExtractor:
             if not lesson.forms:
                 continue
 
-            lesson_form = forms[list(lesson.forms)[0]]
+            try:
+                lesson_form = forms[list(lesson.forms)[0]]
+            except KeyError:
+                self._logger.warning(f" -> Lesson has unknown form: {lesson.forms!r}")
+                continue
 
             if lesson.begin is None:
                 lesson.begin = lesson_form.periods.get(sorted(lesson.periods)[0], (None, None))[0]

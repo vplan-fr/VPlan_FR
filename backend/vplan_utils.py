@@ -165,7 +165,9 @@ def periods_to_block_label(periods: list[int]) -> str:
 
 
 def _parse_periods(period_str: str) -> list[int]:
-    if "-" not in period_str:
+    if not period_str:
+        return []
+    elif "-" not in period_str:
         return [int(period_str)]
     else:
         begin, end = period_str.split("-")
