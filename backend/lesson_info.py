@@ -144,6 +144,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
     date: datetime.date | None
 
     def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+        # TODO: Fallback when len(periods) == 1
         if self.date is None:
             return [
                 LessonInfoTextSegment("verlegt von "),
