@@ -26,12 +26,12 @@ class PlanCrawler:
 
     VERSION = "32"
 
-    def __init__(self, client: Stundenplan24Client, cache: Cache):
-        self._logger = logging.getLogger(f"{self.__class__.__name__}-{client.school_number}")
+    def __init__(self, client: Stundenplan24Client, cache: Cache, *, school_name: str):
+        self._logger = logging.getLogger(school_name)
 
         self.client = client
         self.cache = cache
-        self.meta_extractor = MetaExtractor(self.cache)
+        self.meta_extractor = MetaExtractor(self.cache, logger=self._logger)
         self.teachers: Teachers = Teachers()
 
         self.load_teachers()
@@ -141,7 +141,7 @@ class PlanCrawler:
 
     def compute_plans(self, date: datetime.date, timestamp: datetime.datetime, plan: str,
                       vplan: str | None = None) -> None:
-        plan_extractor = PlanExtractor(plan, vplan, self.teachers.abbreviation_by_surname())
+        plan_extractor = PlanExtractor(plan, vplan, self.teachers.abbreviation_by_surname(), logger=self._logger)
 
         self.cache.store_plan_file(
             date, timestamp,
@@ -339,8 +339,8 @@ class DailyMetaExtractor:
 
 
 class MetaExtractor:
-    def __init__(self, cache: Cache, num_last_days: int = 10):
-        self._logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self, cache: Cache, num_last_days: int = 10, *, logger: logging.Logger):
+        self._logger = logger
 
         self.cache = cache
         self.num_last_days = num_last_days
@@ -443,8 +443,9 @@ class MetaExtractor:
 
 
 class PlanExtractor:
-    def __init__(self, plan_kl: str, vplan_kl: str | None, teacher_abbreviation_by_surname: dict[str, str]):
-        self._logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self, plan_kl: str, vplan_kl: str | None, teacher_abbreviation_by_surname: dict[str, str], *,
+                 logger: logging.Logger):
+        self._logger = logger
 
         form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = Plan.from_form_plan(form_plan, teacher_abbreviation_by_surname)
@@ -671,7 +672,10 @@ async def get_clients() -> dict[str, PlanCrawler]:
         cache = Cache(Path(f".cache/{school_number}").absolute())
 
         # create crawler
-        p = PlanCrawler(client, cache)
+        p = PlanCrawler(
+            client, cache,
+            school_name=creds_data["school_number"] if creds_data["school_number"] else creds_data["school_name"]
+        )
 
         clients |= {school_number: p}
 
@@ -679,7 +683,8 @@ async def get_clients() -> dict[str, PlanCrawler]:
 
 
 async def main():
-    logging.basicConfig(level=logging.INFO, format="[%(levelname)8s] %(name)s: %(message)s")
+    logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
+                        datefmt="%Y-%m-%d %H:%M:%S")
 
     clients = await get_clients()
 
