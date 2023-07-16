@@ -93,6 +93,8 @@ class Lessons:
             parsed_info1: ParsedLessonInfo,
             parsed_info2: ParsedLessonInfo
     ) -> ParsedLessonInfo | None:
+        """Group two parsed lesson infos if possible."""
+
         info1: ParsedLessonInfo = parsed_info1.sorted_canonical()
         info2: ParsedLessonInfo = parsed_info2.sorted_canonical()
 
@@ -105,7 +107,7 @@ class Lessons:
                 message2: LessonInfoMessage
 
                 if type(message1.parsed) != type(message2.parsed):
-                    # both infos are definitely not the same
+                    # only infos of same type could possibly be grouped -> not groupable
                     return None
 
                 # info string not the same but periods may be groupable
@@ -124,7 +126,7 @@ class Lessons:
                     else:
                         return None
 
-                # not groupable, so, to group, info string must be the same
+                # periods not groupable, so, to group, info string must be the same
                 elif message1.parsed.original_messages == message2.parsed.original_messages:
                     new_paragraph.append(message1)
 
@@ -173,11 +175,11 @@ class Lessons:
                         (not lesson.forms and not grouped[-1].forms)
                         or (lesson.forms and list(lesson.forms)[0] in grouped[-1].forms)
                 ):
-                    # "block" grouping, since lesson is duplicated for each period of block,
-                    # period must be even to get grouped
+                    # "temporal" grouping, since lesson is duplicated for each period of block,
+                    # period must be even to get grouped onto first lesson of block
                     should_get_grouped &= list(lesson.periods)[0] % 2 == 0
                 else:
-                    # lesson is duplicated for each form, periods must be the same ("spacial" grouping)
+                    # lesson is duplicated for each form -> periods must be the same ("spacial" grouping)
                     should_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
 
             if should_get_grouped:
