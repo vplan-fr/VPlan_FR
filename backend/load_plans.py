@@ -346,11 +346,17 @@ class MetaExtractor:
         self.num_last_days = num_last_days
 
         self._rooms: set[str] | None = None
+        self._daily_extractors: dict[tuple[datetime.date, datetime.datetime], DailyMetaExtractor] = {}
 
     def iterate_daily_extractors(self) -> typing.Generator[DailyMetaExtractor, None, None]:
         for day in self.cache.get_days()[:self.num_last_days]:
             for timestamp in self.cache.get_timestamps(day):
-                yield DailyMetaExtractor(self.cache.get_plan_file(day, timestamp, "PlanKl.xml"))
+                if (day, timestamp) in self._daily_extractors:
+                    yield self._daily_extractors[(day, timestamp)]
+                else:
+                    extractor = DailyMetaExtractor(self.cache.get_plan_file(day, timestamp, "PlanKl.xml"))
+                    self._daily_extractors[(day, timestamp)] = extractor
+                    yield extractor
 
     def rooms(self) -> set[str]:
         if self._rooms is not None:
