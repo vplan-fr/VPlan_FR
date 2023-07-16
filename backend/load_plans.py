@@ -340,6 +340,8 @@ class DailyMetaExtractor:
 
 class MetaExtractor:
     def __init__(self, cache: Cache, num_last_days: int = 10):
+        self._logger = logging.getLogger(self.__class__.__name__)
+
         self.cache = cache
         self.num_last_days = num_last_days
 
@@ -387,12 +389,18 @@ class MetaExtractor:
         return sorted(forms)
 
     def default_times(self) -> dict[str, DefaultTimesInfo]:
-        for extractor in self.iterate_daily_extractors():
-            default_times = extractor.default_times()
-            if default_times:
-                return default_times
+        all_forms = set(self.forms())
+        out = {}
 
-        return {}
+        for extractor in self.iterate_daily_extractors():
+            out |= extractor.default_times()
+
+            if set(out.keys()) == all_forms:
+                break
+        else:
+            self._logger.warning(f"No default times info for forms {all_forms - set(out.keys())!r}.")
+
+        return out
 
     def dates_data(self) -> dict[str, list[str]]:
         # noinspection PyTypeChecker
@@ -418,7 +426,7 @@ class MetaExtractor:
 
         return {
             form: {
-                "default_times": default_times[form].to_dict(),
+                "default_times": default_times[form].to_dict() if form in default_times else None,
                 "class_groups": courses[form],
             }
             for form in courses.keys()
