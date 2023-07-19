@@ -12,7 +12,7 @@ import json
 import xml.etree.ElementTree as ET
 
 from stundenplan24_py import IndiwareStundenplanerClient, indiware_mobil, NoPlanForDateError, \
-    substitution_plan, Hosting, IndiwareMobilClient, SubstitutionPlanClient, UnauthorizedError
+    substitution_plan, Hosting, IndiwareMobilClient, SubstitutionPlanClient, UnauthorizedError, PlanClientError
 
 from .cache import Cache
 from .vplan_utils import group_forms, parse_absent_element
@@ -55,10 +55,13 @@ class PlanDownloader:
     ) -> set[tuple[datetime.date, datetime.datetime]]:
         try:
             plan_files = await indiware_client.fetch_dates()
-        except UnauthorizedError as e:
-            self._logger.debug(f"-> Insufficient credentials to fetch Indiware Mobil endpoint "
-                               f"{indiware_client.endpoint.url!r}")
-            return set()
+        except PlanClientError as e:
+            if e.args[1] in (404, 401):
+                self._logger.debug(f"-> Insufficient credentials (or invalid URL) to fetch Indiware Mobil endpoint "
+                                   f"{indiware_client.endpoint.url!r}")
+                return set()
+            else:
+                raise
         else:
             return await self.download_indiware_mobil(indiware_client, plan_files)
 
@@ -81,7 +84,10 @@ class PlanDownloader:
 
             try:
                 timestamp = self.find_corresponding_existing_timestamp(date, real_timestamp)
-                self._logger.debug(f" -> Coerced timestamp {real_timestamp!r} to {timestamp!r} on date {date!r}.")
+                self._logger.debug(
+                    f" -> Coerced timestamp {real_timestamp.isoformat()} to {timestamp.isoformat()} on date "
+                    f"{date.isoformat()}."
+                )
 
             except RuntimeError:
                 timestamp = real_timestamp
@@ -139,14 +145,14 @@ class PlanDownloader:
             try:
                 out |= await self.download_substitution_plan(plan_client, plan_date)
             except NoPlanForDateError:
-                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date!r}.")
+                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date.isoformat()}.")
                 break
 
         for plan_date in valid_date_iterator(datetime.date.today() + datetime.timedelta(days=1), step=1):
             try:
                 out |= await self.download_substitution_plan(plan_client, plan_date)
             except NoPlanForDateError:
-                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date!r}.")
+                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date.isoformat()}.")
                 break
 
         return out
@@ -158,15 +164,15 @@ class PlanDownloader:
     ) -> datetime.datetime:
         timestamp = timestamp + datetime.timedelta(minutes=5)
 
-        for vpdir_timestamp in self.cache.get_timestamps(date):
-            if vpdir_timestamp <= timestamp:
-                return vpdir_timestamp
+        for other_timestamp in self.cache.get_timestamps(date):
+            if other_timestamp <= timestamp:
+                return other_timestamp
 
-            if abs(vpdir_timestamp - timestamp) > datetime.timedelta(minutes=5):
+            if abs(other_timestamp - timestamp) > datetime.timedelta(minutes=5):
                 break
 
         raise RuntimeError(
-            f"Could not find an appropriate Indiware Mobil timestamp to store the substitution plan. "
+            f"Could not find a corresponding existing timestamp. "
             f"Date: {date.isoformat()} Timestamp: {timestamp.isoformat()}."
         )
 
