@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import annotations
 
+import argparse
 import asyncio
 import datetime
 import logging
@@ -10,8 +11,8 @@ from pathlib import Path
 import json
 import xml.etree.ElementTree as ET
 
-from stundenplan24_py import Stundenplan24Client, Stundenplan24Credentials, indiware_mobil, NoPlanForDateError, \
-    indiware_substitution_plan
+from stundenplan24_py import IndiwareStundenplanerClient, indiware_mobil, NoPlanForDateError, \
+    substitution_plan, Hosting, IndiwareMobilClient, SubstitutionPlanClient, UnauthorizedError
 
 from .cache import Cache
 from .vplan_utils import group_forms, parse_absent_element
@@ -20,67 +21,201 @@ from . import schools
 from . import lesson_info
 
 
-class PlanCrawler:
-    """Check for new indiware plans in regular intervals and cache them along with their extracted and parsed
-    (meta)data."""
+class PlanDownloader:
+    """Check for new indiware plans in regular intervals store them in cache."""
 
-    VERSION = "32"
-
-    def __init__(self, client: Stundenplan24Client, cache: Cache, *, school_name: str):
-        self._logger = logging.getLogger(school_name)
+    def __init__(self, client: IndiwareStundenplanerClient, cache: Cache, *, logger: logging.Logger):
+        self._logger = logger
 
         self.client = client
         self.cache = cache
-        self.meta_extractor = MetaExtractor(self.cache, logger=self._logger)
-        self.teachers: Teachers = Teachers()
 
-        self.load_teachers()
+    async def check_infinite(self, interval: int = 60):
+        while True:
+            await self.update_fetch()
 
-    async def update_fetch(self):
+            await asyncio.sleep(interval)
+
+    async def update_fetch(self) -> set[tuple[datetime.date, datetime.datetime]]:
         self._logger.debug("* Checking for new plans...")
-        plan_files = await self.client.fetch_dates_indiware_mobil()  # requests vpdir.php
 
-        await self.update(plan_files)
+        new = set()
 
-    async def update(self, downloadable_plan_files: dict[str, datetime.datetime], no_meta_update: bool = False) -> bool:
-        needs_meta_update = False
+        # not using asyncio.gather because the logs would be confusing
+        for indiware_client in self.client.indiware_mobil_clients:
+            new |= await self.fetch_indiware_mobil(indiware_client)
 
-        for filename, timestamp in downloadable_plan_files.items():
-            if filename == "Klassen.xml":
+        new |= await self.fetch_substitution_plans()
+
+        return new
+
+    async def fetch_indiware_mobil(
+            self,
+            indiware_client: IndiwareMobilClient
+    ) -> set[tuple[datetime.date, datetime.datetime]]:
+        try:
+            plan_files = await indiware_client.fetch_dates()
+        except UnauthorizedError as e:
+            self._logger.debug(f"-> Insufficient credentials to fetch Indiware Mobil endpoint "
+                               f"{indiware_client.endpoint.url!r}")
+            return set()
+        else:
+            return await self.download_indiware_mobil(indiware_client, plan_files)
+
+    async def download_indiware_mobil(
+            self,
+            client: IndiwareMobilClient,
+            downloadable_plan_files: dict[str, datetime.datetime]
+    ) -> set[tuple[datetime.date, datetime.datetime]]:
+        new: set[tuple[datetime.date, datetime.datetime]] = set()
+
+        for filename, real_timestamp in downloadable_plan_files.items():
+            if "Plan" not in filename:
                 # this is always the latest day planned
                 continue
 
-            date = datetime.datetime.strptime(filename, "PlanKl%Y%m%d.xml").date()
+            date = datetime.datetime.strptime(filename[6:], "%Y%m%d.xml").date()
+            cache_filename = filename[:6] + ".xml"
 
-            # check if plan is already cached
-            if not self.cache.contains(date, timestamp, "PlanKl.xml"):
-                self._logger.info(f" -> Downloading plan for {date}...")
+            assert cache_filename in {"PlanKl.xml", "PlanRa.xml", "PlanLe.xml"}, f"Invalid filename {cache_filename!r}"
 
-                plan = await self.client.fetch_indiware_mobil(filename)
-                try:
-                    vplan = await self.client.fetch_substitution_plan(date)
-                    self.cache.store_plan_file(date, timestamp, vplan, "VPlanKl.xml")
-                except NoPlanForDateError:
-                    vplan = None
-                    self._logger.debug(f"   -> No substitution plan available.")
+            try:
+                timestamp = self.find_corresponding_existing_timestamp(date, real_timestamp)
+                self._logger.debug(f" -> Coerced timestamp {real_timestamp!r} to {timestamp!r} on date {date!r}.")
 
-                self.cache.store_plan_file(date, timestamp, plan, "PlanKl.xml")
-                self.meta_extractor.invalidate_cache()
+            except RuntimeError:
+                timestamp = real_timestamp
+
+            if not self.cache.contains(date, timestamp, cache_filename):
+                self._logger.info(f" -> Downloading indiware {filename!r}... (date: {date!r})")
+
+                plan = await client.fetch_plan(filename)
+
+                self.cache.store_plan_file(date, timestamp, plan, cache_filename)
+                new.add((date, timestamp))
             else:
-                # self.update_plans() will fetch plan files from cache
-                vplan = None
-                plan = None
+                self._logger.debug(f" -> Skipping indiware {filename!r}... (date: {date.isoformat()})")
 
-            needs_meta_update |= self.update_plans(date, timestamp, plan, vplan)
+        return new
 
-        if needs_meta_update and not no_meta_update:
-            self.update_meta()
+    async def fetch_substitution_plans(self) -> set[tuple[datetime.date, datetime.datetime]]:
+        out = set()
+        for substitution_plan_client in self.client.substitution_plan_clients:
+            out |= await self.fetch_substitution_plan(substitution_plan_client)
 
-            self._logger.info("...Done.")
-            return True
+        return out
+
+    async def fetch_substitution_plan(
+            self,
+            plan_client: SubstitutionPlanClient
+    ) -> set[tuple[datetime.date, datetime.datetime]]:
+        self._logger.info("* Checking for new substitution plans...")
+
+        try:
+            base_plan = await plan_client.fetch_plan()
+        except NoPlanForDateError:
+            self._logger.debug(f"=> No substitution plan available for {plan_client.base_url!r}.")
+            return set()
+        except UnauthorizedError:
+            self._logger.debug(f"=> Insufficient credentials to fetch substitution plan from "
+                               f"{plan_client.base_url!r}.")
+            return set()
+        free_days = set(substitution_plan.SubstitutionPlan.from_xml(ET.fromstring(base_plan)).free_days)
+        out = set()
+
+        def is_date_valid(date: datetime.date):
+            return date not in free_days and date.weekday() not in (5, 6)
+
+        def valid_date_iterator(start: datetime.date, step: int = 1):
+            while True:
+                while not is_date_valid(start):
+                    start += datetime.timedelta(days=step)
+
+                yield start
+
+                start += datetime.timedelta(days=step)
+
+        for plan_date in valid_date_iterator(datetime.date.today(), step=-1):
+            try:
+                out |= await self.download_substitution_plan(plan_client, plan_date)
+            except NoPlanForDateError:
+                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date!r}.")
+                break
+
+        for plan_date in valid_date_iterator(datetime.date.today() + datetime.timedelta(days=1), step=1):
+            try:
+                out |= await self.download_substitution_plan(plan_client, plan_date)
+            except NoPlanForDateError:
+                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date!r}.")
+                break
+
+        return out
+
+    def find_corresponding_existing_timestamp(
+            self,
+            date: datetime.date,
+            timestamp: datetime.datetime
+    ) -> datetime.datetime:
+        timestamp = timestamp + datetime.timedelta(minutes=5)
+
+        for vpdir_timestamp in self.cache.get_timestamps(date):
+            if vpdir_timestamp <= timestamp:
+                return vpdir_timestamp
+
+            if abs(vpdir_timestamp - timestamp) > datetime.timedelta(minutes=5):
+                break
+
+        raise RuntimeError(
+            f"Could not find an appropriate Indiware Mobil timestamp to store the substitution plan. "
+            f"Date: {date.isoformat()} Timestamp: {timestamp.isoformat()}."
+        )
+
+    async def download_substitution_plan(
+            self,
+            plan_client: SubstitutionPlanClient,
+            date: datetime.date
+    ) -> set[tuple[datetime.date, datetime.datetime]]:
+        plan_str = await plan_client.fetch_plan(date)
+        plan = substitution_plan.SubstitutionPlan.from_xml(ET.fromstring(plan_str))
+
+        timestamp = self.find_corresponding_existing_timestamp(date, plan.timestamp)
+
+        cache_filename = plan.filename[:7] + ".xml"
+        assert cache_filename in {"VplanKl.xml", "VplanLe.xml"}, f"Invalid cache filename {cache_filename!r}."
+
+        if self.cache.contains(date, timestamp, cache_filename):
+            self._logger.debug(f"=> Substitution plan was already cached with timestamp {timestamp.isoformat()}.")
+            return set()
         else:
-            self._logger.debug("...Done.")
-            return False
+            self.cache.store_plan_file(date, timestamp, plan_str, cache_filename)
+            self._logger.info(f"=> Downloaded substitution plan for date {date.isoformat()}.")
+            return {(date, timestamp)}
+
+
+class PlanProcessor:
+    VERSION = "32"
+
+    def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
+        self._logger = logger
+
+        self.cache = cache
+        self.school_number = school_number
+        self.meta_extractor = MetaExtractor(self.cache, logger=self._logger)
+        self.teachers = Teachers()
+
+        self.load_teachers()
+
+    def load_teachers(self):
+        self._logger.info("* Loading cached teachers...")
+        try:
+            data = json.loads(self.cache.get_meta_file("teachers.json"))
+        except FileNotFoundError:
+            self._logger.warning("=> Could not load any cached teachers.")
+            return
+
+        self.teachers = Teachers.from_dict(data)
+
+        self._logger.info(f"=> Loaded {len(self.teachers.teachers)} cached teachers.")
 
     def migrate_all(self):
         self._logger.info("* Migrating cache...")
@@ -91,57 +226,23 @@ class PlanCrawler:
             for revision in self.cache.get_timestamps(day):
                 self.update_plans(day, revision)
 
-    def update_plans(self, day: datetime.date, revision: datetime.datetime, plan: str | None = None,
-                     vplan: str | None = None) -> bool:
-        if self.cache.contains(day, revision, ".processed"):
-            if self.cache.get_plan_file(day, revision, ".processed") == self.VERSION:
+    def update_plans(self, day: datetime.date, timestamp: datetime.datetime) -> bool:
+        if self.cache.contains(day, timestamp, ".processed"):
+            if self.cache.get_plan_file(day, timestamp, ".processed") == self.VERSION:
                 return False
 
             self._logger.info(f"=> Migrating plan for {day} to current version...")
         else:
             self._logger.info(f"=> Processing plan for {day}...")
 
-        if plan is None:
-            plan = self.cache.get_plan_file(day, revision, "PlanKl.xml")
-            try:
-                vplan = self.cache.get_plan_file(day, revision, "VPlanKl.xml")
-            except FileNotFoundError:
-                self._logger.debug(f"   -> No substitution plan available.")
-                vplan = None
-
-        self.compute_plans(day, revision, plan, vplan)
+        self.compute_plans(day, timestamp)
 
         return True
 
-    async def check_infinite(self, interval: int = 30):
-        self.update_meta()
-        self.migrate_all()
-
-        while True:
-            await self.update_fetch()
-
-            await asyncio.sleep(interval)
-
-    def update_meta(self):
-        self._logger.info("* Updating meta data...")
-
-        if not self.cache.get_days():
-            self._logger.error("=> No plans cached yet.")
-            return
-
-        data = {
-            "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
-        }
-        self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_dict), "meta.json")
-        self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
-
-        self.update_teachers()
-        self.update_forms()
-        self.update_rooms()
-
-    def compute_plans(self, date: datetime.date, timestamp: datetime.datetime, plan: str,
-                      vplan: str | None = None) -> None:
-        plan_extractor = PlanExtractor(plan, vplan, self.teachers.abbreviation_by_surname(), logger=self._logger)
+    def compute_plans(self, date: datetime.date, timestamp: datetime.datetime) -> None:
+        plan_kl = self.cache.get_plan_file(date, timestamp, "PlanKl.xml")
+        vplan_kl = self.cache.get_plan_file(date, timestamp, "VPlanKl.xml")
+        plan_extractor = PlanExtractor(plan_kl, vplan_kl, self.teachers.abbreviation_by_surname(), logger=self._logger)
 
         self.cache.store_plan_file(
             date, timestamp,
@@ -182,17 +283,22 @@ class PlanCrawler:
 
         self.cache.update_newest(date)
 
-    def load_teachers(self):
-        self._logger.info("* Loading cached teachers...")
-        try:
-            data = json.loads(self.cache.get_meta_file("teachers.json"))
-        except FileNotFoundError:
-            self._logger.warning("=> Could not load any cached teachers.")
+    def update_meta(self):
+        self._logger.info("* Updating meta data...")
+
+        if not self.cache.get_days():
+            self._logger.error("=> No plans cached yet.")
             return
 
-        self.teachers = Teachers.from_dict(data)
+        data = {
+            "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
+        }
+        self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_dict), "meta.json")
+        self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
-        self._logger.info(f"=> Loaded {len(self.teachers.teachers)} cached teachers.")
+        self.update_teachers()
+        self.update_forms()
+        self.update_rooms()
 
     def update_teachers(self):
         if datetime.datetime.now() - self.teachers.timestamp < datetime.timedelta(hours=6):
@@ -201,12 +307,12 @@ class PlanCrawler:
 
         self._logger.info("* Updating teachers...")
 
-        if self.client.school_number not in schools.teacher_scrapers:
+        if self.school_number not in schools.teacher_scrapers:
             self._logger.warning("=> No teacher scraper available for this school.")
             scraped_teachers = {}
         else:
             self._logger.info("=> Scraping teachers...")
-            _scraped_teachers = schools.teacher_scrapers[str(self.client.school_number)]()
+            _scraped_teachers = schools.teacher_scrapers[str(self.school_number)]()
             scraped_teachers = {teacher.abbreviation: teacher for teacher in _scraped_teachers}
 
             self._logger.debug(f" -> Found {len(scraped_teachers)} teachers.")
@@ -256,7 +362,7 @@ class PlanCrawler:
         all_rooms = self.meta_extractor.rooms()
         parsed_rooms: dict[str, dict] = {}
         try:
-            room_parser = schools.room_parsers[str(self.client.school_number)]
+            room_parser = schools.room_parsers[str(self.school_number)]
 
             for room in all_rooms:
                 try:
@@ -265,7 +371,7 @@ class PlanCrawler:
                     self._logger.error(f" -> Error while parsing room {room!r}: {e}")
 
         except KeyError:
-            self._logger.warning("=> No room parser available for this school.")
+            self._logger.debug("=> No room parser available for this school.")
 
             parsed_rooms = {room: None for room in all_rooms}
 
@@ -277,6 +383,36 @@ class PlanCrawler:
             json.dumps(data),
             "rooms.json"
         )
+
+
+class PlanCrawler:
+    def __init__(self, plan_downloader: PlanDownloader, plan_processor: PlanProcessor):
+        self.plan_downloader = plan_downloader
+        self.plan_processor = plan_processor
+
+    async def check_infinite(self, interval: int = 60):
+        self.plan_processor.update_meta()
+        self.plan_processor.update_rooms()
+        self.plan_processor.update_teachers()
+        self.plan_processor.update_rooms()
+        self.plan_processor.migrate_all()
+
+        while True:
+            new_timestamps = await self.plan_downloader.update_fetch()
+
+            if new_timestamps:
+                self.plan_processor.meta_extractor.invalidate_cache()
+
+            for date, timestamp in new_timestamps:
+                self.plan_processor.update_plans(date, timestamp)
+
+            if new_timestamps:
+                self.plan_processor.update_meta()
+                self.plan_processor.update_rooms()
+                self.plan_processor.update_teachers()
+                self.plan_processor.update_rooms()
+
+            await asyncio.sleep(interval)
 
 
 class DailyMetaExtractor:
@@ -354,7 +490,15 @@ class MetaExtractor:
                 if (day, timestamp) in self._daily_extractors:
                     yield self._daily_extractors[(day, timestamp)]
                 else:
-                    extractor = DailyMetaExtractor(self.cache.get_plan_file(day, timestamp, "PlanKl.xml"))
+                    try:
+                        plan_kl = self.cache.get_plan_file(day, timestamp, "PlanKl.xml")
+                    except FileNotFoundError:
+                        self._logger.warning(
+                            f"Timestamp {timestamp.isoformat()} for day {day.isoformat()} has no PlanKl.xml file."
+                        )
+                        continue
+
+                    extractor = DailyMetaExtractor(plan_kl)
                     self._daily_extractors[(day, timestamp)] = extractor
                     yield extractor
 
@@ -453,7 +597,7 @@ class PlanExtractor:
         if vplan_kl is None:
             self.substitution_plan = None
         else:
-            self.substitution_plan = indiware_substitution_plan.SubstitutionPlan.from_xml(ET.fromstring(vplan_kl))
+            self.substitution_plan = substitution_plan.SubstitutionPlan.from_xml(ET.fromstring(vplan_kl))
             self.add_lessons_for_unavailable_from_subst_plan(teacher_abbreviation_by_surname)
 
         self.fill_in_lesson_times()
@@ -648,49 +792,54 @@ class PlanExtractor:
 
 
 async def get_clients() -> dict[str, PlanCrawler]:
-    logging.basicConfig(level=logging.DEBUG)
-
     # parse credentials
     with open("creds.json", "r", encoding="utf-8") as f:
         _creds = json.load(f)
 
     clients = {}
 
-    for school_number, creds_data in _creds.items():
-        creds = Stundenplan24Credentials(
-            creds_data["username"],
-            creds_data["password"]
-        )
+    for school_name, data in _creds.items():
+        specifier = data['school_number'] if 'school_number' in data else school_name
+        logger = logging.getLogger(specifier)
+        cache = Cache(Path(f".cache/{specifier}").absolute())
 
-        # create client
-        client = Stundenplan24Client(
-            school_number=creds_data["school_number"],
-            credentials=creds,
-            base_url=creds_data["api_server"]
-        )
+        hosting = Hosting.deserialize(data["hosting"])
+        client = IndiwareStundenplanerClient(hosting)
 
-        cache = Cache(Path(f".cache/{school_number}").absolute())
+        plan_downloader = PlanDownloader(client, cache, logger=logger)
+        plan_processor = PlanProcessor(cache, specifier, logger=logger)
 
         # create crawler
-        p = PlanCrawler(
-            client, cache,
-            school_name=creds_data["school_number"] if creds_data["school_number"] else creds_data["school_name"]
-        )
+        p = PlanCrawler(plan_downloader, plan_processor)
 
-        clients |= {school_number: p}
+        clients |= {school_name: p}
 
     return clients
 
 
 async def main():
-    logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
+    argument_parser = argparse.ArgumentParser()
+
+    argument_parser.add_argument("--only-download", "--d", action="store_true",
+                                 help="Only download the plans, do not parse it.")
+    argument_parser.add_argument("-loglevel", "-l", default="INFO",
+                                 help="Set the log level.")
+
+    args = argument_parser.parse_args()
+
+    logging.basicConfig(level=args.loglevel, format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S")
 
     clients = await get_clients()
 
-    await asyncio.gather(
-        *[client.check_infinite() for client in clients.values()]
-    )
+    if not args.only_download:
+        await asyncio.gather(
+            *[client.check_infinite() for client in clients.values()]
+        )
+    else:
+        await asyncio.gather(
+            *[client.plan_downloader.check_infinite() for client in clients.values()]
+        )
 
 
 if __name__ == "__main__":

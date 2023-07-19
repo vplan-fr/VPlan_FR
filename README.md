@@ -15,13 +15,12 @@
 Example:
 ```json
 {
-  "10000000": {
+  "example_school": {
     "school_number": "10000000",
-    "school_name": "example_school",
-    "display_name": "Example School",
-    "username": "",
-    "password": "",
-    "api_server": "https://stundenplan24.de/"
+    "hosting": {
+      "creds": {},
+      "endpoints": "https://www.stundenplan24.de/10000000/"
+    }
   }
 }
 ```
