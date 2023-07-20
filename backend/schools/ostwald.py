@@ -24,7 +24,7 @@ def scrape_teachers():
         teacher_data.append(
             Teacher(
                 full_name=None,
-                surname=name,
+                surname=name.replace("Madame", "Frau").replace("Monsieur", "Herr"),
                 abbreviation=kuerzel,
                 subjects=faecher.replace("G/R/W", "GRW").split(" "),
                 info=additional_info,
