@@ -85,8 +85,8 @@ class PlanDownloader:
             try:
                 timestamp = self.find_corresponding_existing_timestamp(date, real_timestamp)
                 self._logger.debug(
-                    f" -> Coerced timestamp {real_timestamp.isoformat()} to {timestamp.isoformat()} on date "
-                    f"{date.isoformat()}."
+                    f" -> Coerced timestamp {real_timestamp!s} to {timestamp!s} on date "
+                    f"{date!s}."
                 )
 
             except RuntimeError:
@@ -100,7 +100,7 @@ class PlanDownloader:
                 self.cache.store_plan_file(date, timestamp, plan, cache_filename)
                 new.add((date, timestamp))
             else:
-                self._logger.debug(f" -> Skipping indiware {filename!r}... (date: {date.isoformat()})")
+                self._logger.debug(f" -> Skipping indiware {filename!r}... (date: {date!s})")
 
         return new
 
@@ -145,14 +145,14 @@ class PlanDownloader:
             try:
                 out |= await self.download_substitution_plan(plan_client, plan_date)
             except NoPlanForDateError:
-                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date.isoformat()}.")
+                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date!s}.")
                 break
 
         for plan_date in valid_date_iterator(datetime.date.today() + datetime.timedelta(days=1), step=1):
             try:
                 out |= await self.download_substitution_plan(plan_client, plan_date)
             except NoPlanForDateError:
-                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date.isoformat()}.")
+                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date!s}.")
                 break
 
         return out
@@ -173,7 +173,7 @@ class PlanDownloader:
 
         raise RuntimeError(
             f"Could not find a corresponding existing timestamp. "
-            f"Date: {date.isoformat()} Timestamp: {timestamp.isoformat()}."
+            f"Date: {date!s} Timestamp: {timestamp!s}."
         )
 
     async def download_substitution_plan(
@@ -190,11 +190,11 @@ class PlanDownloader:
         assert cache_filename in {"VplanKl.xml", "VplanLe.xml"}, f"Invalid cache filename {cache_filename!r}."
 
         if self.cache.contains(date, timestamp, cache_filename):
-            self._logger.debug(f"=> Substitution plan was already cached with timestamp {timestamp.isoformat()}.")
+            self._logger.debug(f"=> Substitution plan was already cached with timestamp {timestamp!s}.")
             return set()
         else:
             self.cache.store_plan_file(date, timestamp, plan_str, cache_filename)
-            self._logger.info(f"=> Downloaded substitution plan for date {date.isoformat()}.")
+            self._logger.info(f"=> Downloaded substitution plan for date {date!s}.")
             return {(date, timestamp)}
 
 
@@ -234,12 +234,12 @@ class PlanProcessor:
 
     def update_plans(self, day: datetime.date, timestamp: datetime.datetime) -> bool:
         if self.cache.contains(day, timestamp, ".processed"):
-            if self.cache.get_plan_file(day, timestamp, ".processed") == self.VERSION:
+            if (cur_ver := self.cache.get_plan_file(day, timestamp, ".processed")) == self.VERSION:
                 return False
 
-            self._logger.info(f"=> Migrating plan for {day} to current version...")
+            self._logger.info(f"=> Migrating plan for {day!s} to current version... ({cur_ver!r} -> {self.VERSION!r})")
         else:
-            self._logger.info(f"=> Processing plan for {day}...")
+            self._logger.info(f"=> Processing plan for {day!s}...")
 
         self.compute_plans(day, timestamp)
 
@@ -293,7 +293,7 @@ class PlanProcessor:
         self._logger.info("* Updating meta data...")
 
         if not self.cache.get_days():
-            self._logger.error("=> No plans cached yet.")
+            self._logger.info("=> No plans cached yet.")
             return
 
         data = {
@@ -500,7 +500,7 @@ class MetaExtractor:
                         plan_kl = self.cache.get_plan_file(day, timestamp, "PlanKl.xml")
                     except FileNotFoundError:
                         self._logger.warning(
-                            f"Timestamp {timestamp.isoformat()} for day {day.isoformat()} has no PlanKl.xml file."
+                            f"Timestamp {timestamp!s} for day {day!s} has no PlanKl.xml file."
                         )
                         continue
 
