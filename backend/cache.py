@@ -75,6 +75,10 @@ class Cache:
         """Return all stored timestamps for a given day."""
 
         path = self.get_plan_path(day, None)
+
+        if not path.exists():
+            return []
+
         return sorted([
             datetime.datetime.strptime(elem.stem, "%Y-%m-%dT%H-%M-%S").replace(tzinfo=datetime.timezone.utc)
             for elem in path.iterdir() if elem.is_dir() and not elem.stem.startswith(".")
