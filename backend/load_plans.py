@@ -11,8 +11,10 @@ from pathlib import Path
 import json
 import xml.etree.ElementTree as ET
 
-from stundenplan24_py import IndiwareStundenplanerClient, indiware_mobil, NoPlanForDateError, \
-    substitution_plan, Hosting, IndiwareMobilClient, SubstitutionPlanClient, UnauthorizedError, PlanClientError
+from stundenplan24_py import (
+    IndiwareStundenplanerClient, indiware_mobil, NoPlanForDateError, substitution_plan, Hosting, IndiwareMobilClient,
+    SubstitutionPlanClient, UnauthorizedError, PlanClientError
+)
 
 from .cache import Cache
 from .vplan_utils import group_forms, parse_absent_element
@@ -245,9 +247,12 @@ class PlanProcessor:
 
         return True
 
-    def compute_plans(self, date: datetime.date, timestamp: datetime.datetime) -> None:
+    def compute_plans(self, date: datetime.date, timestamp: datetime.datetime):
         plan_kl = self.cache.get_plan_file(date, timestamp, "PlanKl.xml")
-        vplan_kl = self.cache.get_plan_file(date, timestamp, "VPlanKl.xml")
+        try:
+            vplan_kl = self.cache.get_plan_file(date, timestamp, "VPlanKl.xml")
+        except FileNotFoundError:
+            vplan_kl = None
         plan_extractor = PlanExtractor(plan_kl, vplan_kl, self.teachers.abbreviation_by_surname(), logger=self._logger)
 
         self.cache.store_plan_file(
@@ -390,6 +395,10 @@ class PlanProcessor:
             "rooms.json"
         )
 
+    def update_all(self):
+        self.update_meta()
+        self.migrate_all()
+
 
 class PlanCrawler:
     def __init__(self, plan_downloader: PlanDownloader, plan_processor: PlanProcessor):
@@ -397,11 +406,7 @@ class PlanCrawler:
         self.plan_processor = plan_processor
 
     async def check_infinite(self, interval: int = 60):
-        self.plan_processor.update_meta()
-        self.plan_processor.update_rooms()
-        self.plan_processor.update_teachers()
-        self.plan_processor.update_rooms()
-        self.plan_processor.migrate_all()
+        self.plan_processor.update_all()
 
         while True:
             new_timestamps = await self.plan_downloader.update_fetch()
@@ -414,9 +419,6 @@ class PlanCrawler:
 
             if new_timestamps:
                 self.plan_processor.update_meta()
-                self.plan_processor.update_rooms()
-                self.plan_processor.update_teachers()
-                self.plan_processor.update_rooms()
 
             await asyncio.sleep(interval)
 
@@ -425,7 +427,7 @@ class DailyMetaExtractor:
     """Extracts meta information for a single day's plan."""
 
     def __init__(self, plankl_file: str):
-        self.form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plankl_file))
+        self.form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plankl_file))
 
     def teachers(self) -> dict[str, list[str]]:
         excluded_subjects = ["KL", "AnSt", "FÖ", "WB", "GTA"]
@@ -597,7 +599,7 @@ class PlanExtractor:
                  logger: logging.Logger):
         self._logger = logger
 
-        form_plan = indiware_mobil.FormPlan.from_xml(ET.fromstring(plan_kl))
+        form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = Plan.from_form_plan(form_plan, teacher_abbreviation_by_surname)
 
         if vplan_kl is None:
@@ -826,10 +828,11 @@ async def get_clients() -> dict[str, PlanCrawler]:
 async def main():
     argument_parser = argparse.ArgumentParser()
 
-    argument_parser.add_argument("--only-download", "--d", action="store_true",
-                                 help="Only download the plans, do not parse it.")
-    argument_parser.add_argument("-loglevel", "-l", default="INFO",
-                                 help="Set the log level.")
+    argument_parser.add_argument("--only-download", action="store_true",
+                                 help="Only download plans, do not parse them.")
+    argument_parser.add_argument("--only-process", action="store_true",
+                                 help="Do not download plans, only parse existing.")
+    argument_parser.add_argument("-loglevel", "-l", default="INFO")
 
     args = argument_parser.parse_args()
 
@@ -838,7 +841,10 @@ async def main():
 
     clients = await get_clients()
 
-    if not args.only_download:
+    if args.only_process:
+        for client in clients.values():
+            client.plan_processor.update_all()
+    elif not args.only_download:
         await asyncio.gather(
             *[client.check_infinite() for client in clients.values()]
         )
