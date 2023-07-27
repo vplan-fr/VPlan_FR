@@ -32,8 +32,8 @@ class Lesson:
     teacher_changed: bool
     room_changed: bool
 
-    begin: datetime.time
-    end: datetime.time
+    begin: datetime.time | None
+    end: datetime.time | None
 
     is_internal: bool = False
 

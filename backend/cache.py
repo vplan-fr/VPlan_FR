@@ -10,7 +10,7 @@ class Cache:
     def __init__(self, path: Path):
         self.path = path
 
-    def get_plan_path(self, day: datetime.date, timestamp: datetime.datetime | str | None):
+    def get_plan_path(self, day: datetime.date, timestamp: datetime.datetime | str | None) -> Path:
         if timestamp is None:
             return self.path / "plans" / day.isoformat()
         elif isinstance(timestamp, datetime.datetime):
@@ -21,7 +21,7 @@ class Cache:
         else:
             return self.path / "plans" / day.isoformat() / timestamp
 
-    def store_plan_file(self, day: datetime.date, timestamp: datetime.datetime, content: str, filename: str):
+    def store_plan_file(self, day: datetime.date, timestamp: datetime.datetime | str, content: str, filename: str):
         """Store a plan file in the cache such as "PlanKl.xml" or "rooms.json"."""
 
         path = self.get_plan_path(day, timestamp) / filename
@@ -32,7 +32,7 @@ class Cache:
 
     def get_plan_file(self,
                       day: datetime.date,
-                      timestamp: datetime.datetime | typing.Literal[".newest"],
+                      timestamp: datetime.datetime | str,
                       filename: str) -> str:
         """Return the contents of a plan file from the cache."""
         # self._logger.debug(f"get_plan_file({day!r}, {timestamp!r}, {filename!r})")
@@ -99,7 +99,7 @@ class Cache:
 
     def get_all_json_plan_files(self,
                                 day: datetime.date,
-                                timestamp: datetime.datetime | typing.Literal[".newest"]) -> dict[str, typing.Any]:
+                                timestamp: datetime.datetime | str) -> dict[str, typing.Any]:
         out = {}
 
         for file in self.get_plan_path(day, timestamp).iterdir():
@@ -109,8 +109,8 @@ class Cache:
 
         return out
 
-    def contains(self,
-                 day: datetime.date,
-                 timestamp: datetime.datetime | typing.Literal[".newest"],
-                 filename: str) -> bool:
+    def plan_file_exists(self,
+                         day: datetime.date,
+                         timestamp: datetime.datetime | str,
+                         filename: str) -> bool:
         return (self.get_plan_path(day, timestamp) / filename).exists()
