@@ -16,22 +16,21 @@ async def main():
 
         timestamp = datetime.datetime.fromtimestamp(int(_timestamp))
 
-        clients[school_nr].cache.store_plan_file(
+        clients[school_nr].plan_downloader.cache.store_plan_file(
             datetime.datetime.strptime(_date, "%Y%m%d").date(),
             timestamp,
             file.read_text("utf-8"),
             "PlanKl.xml"
         )
-        clients[school_nr].cache.store_plan_file(
+        clients[school_nr].plan_downloader.cache.store_plan_file(
             datetime.datetime.strptime(_date, "%Y%m%d").date(),
             timestamp,
             "",
             ".processed"
         )
-        await clients[school_nr].update({f"PlanKl{_date}.xml": timestamp}, no_meta_update=True)
 
     await asyncio.gather(
-        *[client.update_fetch() for client in clients.values()]
+        *[client.plan_processor.update_all() for client in clients.values()]
     )
 
 
