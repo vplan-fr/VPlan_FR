@@ -203,13 +203,13 @@ class Lessons:
 
 
 class Exam(stundenplan24_py.Exam):
-    def to_dict(self) -> dict:
+    def serialize(self) -> dict:
         return {
             "year": self.year,
             "course": self.course,
             "course_teacher": self.course_teacher,
             "period": self.period,
-            "begin": self.begin.isoformat(),
+            "begin": self.begin.strftime("%H:%M"),
             "duration": self.duration,
             "info": self.info
         }

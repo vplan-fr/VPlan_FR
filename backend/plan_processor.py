@@ -13,7 +13,7 @@ from .vplan_utils import group_forms
 
 
 class PlanProcessor:
-    VERSION = "32"
+    VERSION = "33"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -79,7 +79,7 @@ class PlanProcessor:
 
         self.cache.store_plan_file(
             date, timestamp,
-            json.dumps(plan_extractor.plan.exams, default=Exam.to_dict),
+            json.dumps(plan_extractor.plan.exams, default=Exam.serialize),
             "exams.json"
         )
 
