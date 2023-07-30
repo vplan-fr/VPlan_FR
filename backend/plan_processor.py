@@ -60,51 +60,56 @@ class PlanProcessor:
         return True
 
     def compute_plans(self, date: datetime.date, timestamp: datetime.datetime):
-        plan_kl = self.cache.get_plan_file(date, timestamp, "PlanKl.xml")
         try:
-            vplan_kl = self.cache.get_plan_file(date, timestamp, "VPlanKl.xml")
+            plan_kl = self.cache.get_plan_file(date, timestamp, "PlanKl.xml")
         except FileNotFoundError:
-            vplan_kl = None
-        plan_extractor = PlanExtractor(plan_kl, vplan_kl, self.teachers.abbreviation_by_surname(), logger=self._logger)
+            self._logger.warning(f"=> Could not find Indiware form plan for date {date!s} and timestamp {timestamp!s}.")
+        else:
+            try:
+                vplan_kl = self.cache.get_plan_file(date, timestamp, "VPlanKl.xml")
+            except FileNotFoundError:
+                vplan_kl = None
+            plan_extractor = PlanExtractor(plan_kl, vplan_kl, self.teachers.abbreviation_by_surname(),
+                                           logger=self._logger)
 
-        self.cache.store_plan_file(
-            date, timestamp,
-            json.dumps({
-                "rooms": plan_extractor.room_plan(),
-                "teachers": plan_extractor.teacher_plan(),
-                "forms": plan_extractor.form_plan()
-            }, default=Lessons.serialize),
-            "plans.json"
-        )
+            self.cache.store_plan_file(
+                date, timestamp,
+                json.dumps({
+                    "rooms": plan_extractor.room_plan(),
+                    "teachers": plan_extractor.teacher_plan(),
+                    "forms": plan_extractor.form_plan()
+                }, default=Lessons.serialize),
+                "plans.json"
+            )
 
-        self.cache.store_plan_file(
-            date, timestamp,
-            json.dumps(plan_extractor.plan.exams, default=Exam.serialize),
-            "exams.json"
-        )
+            self.cache.store_plan_file(
+                date, timestamp,
+                json.dumps(plan_extractor.plan.exams, default=Exam.serialize),
+                "exams.json"
+            )
 
-        all_rooms = self.meta_extractor.rooms()
-        rooms_data = {
-            "used_rooms_by_period": plan_extractor.used_rooms_by_period(),
-            "free_rooms_by_period": plan_extractor.free_rooms_by_period(all_rooms),
-            "free_rooms_by_block": plan_extractor.free_rooms_by_block(all_rooms)
-        }
+            all_rooms = self.meta_extractor.rooms()
+            rooms_data = {
+                "used_rooms_by_period": plan_extractor.used_rooms_by_period(),
+                "free_rooms_by_period": plan_extractor.free_rooms_by_period(all_rooms),
+                "free_rooms_by_block": plan_extractor.free_rooms_by_block(all_rooms)
+            }
 
-        self.cache.store_plan_file(
-            date, timestamp,
-            json.dumps(rooms_data, default=list),
-            "rooms.json"
-        )
+            self.cache.store_plan_file(
+                date, timestamp,
+                json.dumps(rooms_data, default=list),
+                "rooms.json"
+            )
 
-        self.cache.store_plan_file(
-            date, timestamp,
-            json.dumps(plan_extractor.info_data()),
-            "info.json"
-        )
+            self.cache.store_plan_file(
+                date, timestamp,
+                json.dumps(plan_extractor.info_data()),
+                "info.json"
+            )
+
+            self.cache.update_newest(date)
 
         self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")
-
-        self.cache.update_newest(date)
 
     def update_meta(self):
         self._logger.info("* Updating meta data...")
