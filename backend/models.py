@@ -32,8 +32,8 @@ class Lesson:
     teacher_changed: bool
     room_changed: bool
 
-    begin: datetime.time
-    end: datetime.time
+    begin: datetime.time | None
+    end: datetime.time | None
 
     is_internal: bool = False
 
@@ -203,13 +203,13 @@ class Lessons:
 
 
 class Exam(stundenplan24_py.Exam):
-    def to_dict(self) -> dict:
+    def serialize(self) -> dict:
         return {
             "year": self.year,
             "course": self.course,
             "course_teacher": self.course_teacher,
             "period": self.period,
-            "begin": self.begin.isoformat(),
+            "begin": self.begin.strftime("%H:%M"),
             "duration": self.duration,
             "info": self.info
         }
