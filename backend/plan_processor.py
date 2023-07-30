@@ -121,7 +121,7 @@ class PlanProcessor:
         data = {
             "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
         }
-        self.cache.store_meta_file(json.dumps(data, default=DefaultTimesInfo.to_dict), "meta.json")
+        self.cache.store_meta_file(json.dumps(data), "meta.json")
         self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
         self.update_teachers()
