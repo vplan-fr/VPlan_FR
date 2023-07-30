@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 
 from stundenplan24_py import (
-    IndiwareStundenplanerClient, Hosting
+    IndiwareStundenplanerClient, Hosting, proxies
 )
 import aiohttp
 
@@ -40,7 +40,8 @@ class PlanCrawler:
             await asyncio.sleep(interval)
 
 
-async def get_clients(session: aiohttp.ClientSession | None = None) -> dict[str, PlanCrawler]:
+async def get_clients(session: aiohttp.ClientSession | None = None,
+                      proxy_provider: proxies.ProxyProvider | None = None) -> dict[str, PlanCrawler]:
     # parse credentials
     with open("creds.json", "r", encoding="utf-8") as f:
         _creds = json.load(f)
@@ -54,6 +55,14 @@ async def get_clients(session: aiohttp.ClientSession | None = None) -> dict[str,
 
         hosting = Hosting.deserialize(data["hosting"])
         client = IndiwareStundenplanerClient(hosting, session)
+
+        for plan_client in client.substitution_plan_clients:
+            plan_client.proxy_provider = proxy_provider
+            plan_client.no_delay = True
+
+        for plan_client in client.indiware_mobil_clients:
+            plan_client.proxy_provider = proxy_provider
+            plan_client.no_delay = True
 
         plan_downloader = PlanDownloader(client, cache, logger=logger)
         plan_processor = PlanProcessor(cache, specifier, logger=logger)
@@ -80,7 +89,9 @@ async def main():
     logging.basicConfig(level=args.loglevel, format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S")
 
-    clients = await get_clients()
+    proxy_provider = proxies.ProxyProvider(Path("proxies.json").absolute())
+
+    clients = await get_clients(proxy_provider=proxy_provider)
     try:
         if args.only_process:
             for client in clients.values():
@@ -97,6 +108,7 @@ async def main():
         logging.debug("Closing clients...")
         await asyncio.gather(*(client.plan_downloader.client.close() for client in clients.values()),
                              return_exceptions=True)
+        proxy_provider.store_proxies()
 
 if __name__ == "__main__":
     asyncio.run(main())

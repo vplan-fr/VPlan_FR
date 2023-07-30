@@ -12,8 +12,11 @@ from stundenplan24_py import (
     IndiwareStundenplanerClient, IndiwareMobilClient, PlanClientError, SubstitutionPlanClient, UnauthorizedError,
     substitution_plan, PlanNotFoundError, StudentsSubstitutionPlanEndpoint, TeachersSubstitutionPlanEndpoint
 )
+# import stundenplan24_py.client
 
 from .cache import Cache
+
+# stundenplan24_py.client.set_min_delay_between_requests(0.1)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -64,7 +67,7 @@ class PlanDownloader:
         for indiware_client in self.client.indiware_mobil_clients:
             new |= await self.fetch_indiware_mobil(indiware_client)
 
-        # new |= await self.fetch_substitution_plans()
+        new |= await self.fetch_substitution_plans()
 
         out: dict[tuple[datetime.date, datetime.datetime], list[PlanFileMetadata]] = defaultdict(list)
         for date, revision, file_metadata in new:
@@ -77,10 +80,11 @@ class PlanDownloader:
             indiware_client: IndiwareMobilClient
     ) -> set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]]:
         try:
+            self._logger.debug(f"=> Fetching Indiware Mobil available files.")
             plan_files = await indiware_client.fetch_dates()
         except PlanClientError as e:
             if e.status_code in (401, 404):
-                self._logger.debug(f"-> Insufficient credentials (or invalid URL) to fetch Indiware Mobil endpoint "
+                self._logger.debug(f"=> Insufficient credentials (or invalid URL) to fetch Indiware Mobil endpoint "
                                    f"{indiware_client.endpoint.url!r}. Error: {e.args[0]!r}.")
                 return set()
             else:
@@ -139,7 +143,7 @@ class PlanDownloader:
             self,
             plan_client: SubstitutionPlanClient
     ) -> set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]]:
-        self._logger.info("* Checking for new substitution plans...")
+        self._logger.debug("* Checking for new substitution plans...")
 
         try:
             base_plan = await plan_client.fetch_plan()
@@ -220,10 +224,10 @@ class PlanDownloader:
         revision = self.get_revision_from_last_modified(date, last_modified)
 
         if self.cache.plan_file_exists(date, revision, plan_filename):
-            self._logger.debug(f" -> Skipping substitution plan for date {date!s}.")
+            self._logger.debug(f"=> Skipping substitution plan for date {date!s}.")
             return set()
         else:
-            self._logger.info(f" -> Downloading substitution plan for date {date!s}.")
+            self._logger.info(f"=> Downloading substitution plan for date {date!s}.")
 
             plan_response = await plan_client.fetch_plan(date)
 
