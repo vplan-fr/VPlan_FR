@@ -16,6 +16,7 @@ from stundenplan24_py import (
 
 from .cache import Cache
 
+
 # stundenplan24_py.client.set_min_delay_between_requests(0.1)
 
 
@@ -51,6 +52,7 @@ class PlanDownloader:
         self.cache = cache
 
     async def check_infinite(self, interval: int = 60):
+        self.migrate_all()
         # await asyncio.sleep(random.randint(0, 5))
 
         while True:
@@ -109,12 +111,12 @@ class PlanDownloader:
 
             assert plan_filename in {"PlanKl.xml", "PlanRa.xml", "PlanLe.xml"}, f"Invalid filename {plan_filename!r}"
 
-            revision = self.get_revision_from_last_modified(date, last_modified)
+            revision = last_modified
 
             if self.cache.plan_file_exists(date, revision, plan_filename):
                 self._logger.debug(f" -> Skipping indiware {filename!r}. (date: {date!s})")
             else:
-                self._logger.info(f" -> Downloading indiware {filename!r}. (date: {date!r})")
+                self._logger.info(f" -> Downloading indiware {filename!r}. (date: {date!s})")
 
                 plan_response = await client.fetch_plan(filename)
 
@@ -128,6 +130,7 @@ class PlanDownloader:
                 self.cache.store_plan_file(date, revision, plan_response.content, plan_filename)
                 self.cache.store_plan_file(date, revision, json.dumps(downloaded_file.serialize()),
                                            plan_filename + ".json")
+                self.complete_revision(date, revision)
 
                 new.add((date, revision, downloaded_file))
         return new
@@ -187,21 +190,6 @@ class PlanDownloader:
 
         return out
 
-    def get_revision_from_last_modified(self, date: datetime.date,
-                                        last_modified: datetime.datetime) -> datetime.datetime:
-        timestamp = last_modified + datetime.timedelta(minutes=5)
-
-        for other_timestamp in self.cache.get_timestamps(date):
-            if other_timestamp <= timestamp:
-                return other_timestamp
-
-            if abs(timestamp - other_timestamp) > datetime.timedelta(minutes=5):
-                # other_timestamp revision too old
-                break
-
-        # no corresponding existing revision was found
-        return last_modified
-
     async def download_substitution_plan(
             self,
             plan_client: SubstitutionPlanClient,
@@ -221,7 +209,7 @@ class PlanDownloader:
         # alternative to first doing a HEAD request: pass newest downloaded last_modified or etag to fetch_plan method
         # via get_latest_downloaded_file_timestamp() or get_downloaded_file_metadata(last_modified=None)
 
-        revision = self.get_revision_from_last_modified(date, last_modified)
+        revision = last_modified
 
         if self.cache.plan_file_exists(date, revision, plan_filename):
             self._logger.debug(f"=> Skipping substitution plan for date {date!s}.")
@@ -240,5 +228,47 @@ class PlanDownloader:
 
             self.cache.store_plan_file(date, revision, plan_response.content, plan_filename)
             self.cache.store_plan_file(date, revision, json.dumps(downloaded_file.serialize()), plan_filename + ".json")
+            self.complete_revision(date, revision)
 
             return {(date, revision, downloaded_file)}
+
+    def complete_revision(self, date: datetime.date, revision: datetime.datetime):
+        if self.cache.plan_file_exists(date, revision, ".complete"):
+            self._logger.debug(f" -> Revision {revision!s} for date {date!s} already completed.")
+            return
+
+        self._logger.debug(f" -> Completing revision {revision!s} for date {date!s}.")
+
+        try:
+            latest_revision = list(reversed(self.cache.get_timestamps(date)))[-2]
+        except IndexError:
+            self._logger.debug(f" -> No previous revision found for date {date!s}.")
+            self.cache.store_plan_file(date, revision, "", ".complete")
+            return
+
+        for file in self.cache.get_plan_path(date, latest_revision).iterdir():
+            if not (file.name.endswith(".xml") or file.name.endswith(".xml.json")):
+                continue
+
+            if self.cache.plan_file_exists(date, revision, file.name):
+                self._logger.debug(f" -> Skipping file {file.name!r}. Already exists.")
+                continue
+
+            self._logger.debug(f" -> Creating symlink for file {file.name!r}.")
+            self.cache.store_plan_file_link(
+                date,
+                revision, file.name,
+                latest_revision, file.name
+            )
+
+        self.cache.store_plan_file(date, revision, "", ".complete")
+
+    def migrate_all(self):
+        self._logger.info(f"* Migrating cache ({self.__class__.__name__})...")
+
+        for day in self.cache.get_days():
+            self.cache.update_newest(day)
+
+            for revision in reversed(self.cache.get_timestamps(day)):
+                self._logger.debug(f"=> Date: {day!s}, Revision: {revision!s}.")
+                self.complete_revision(day, revision)

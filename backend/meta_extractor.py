@@ -99,6 +99,13 @@ class MetaExtractor:
                     self._daily_extractors[(day, timestamp)] = extractor
                     yield extractor
 
+    def is_available(self) -> bool:
+        try:
+            next(self.iterate_daily_extractors())
+            return True
+        except StopIteration:
+            return False
+
     def rooms(self) -> set[str]:
         if self._rooms is not None:
             return self._rooms
@@ -163,9 +170,13 @@ class MetaExtractor:
                 for form in self.forms()
             }
 
+        return {}
+
     def free_days(self) -> list[datetime.date]:
         for extractor in self.iterate_daily_extractors():
             return extractor.free_days()
+
+        return []
 
     def forms_data(self):
         default_times = self.default_times()

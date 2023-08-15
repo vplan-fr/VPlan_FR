@@ -114,7 +114,7 @@ class PlanProcessor:
     def update_meta(self):
         self._logger.info("* Updating meta data...")
 
-        if not self.cache.get_days():
+        if not self.meta_extractor.is_available():
             self._logger.info("=> No plans cached yet.")
             return
 

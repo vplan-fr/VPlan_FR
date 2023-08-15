@@ -23,6 +23,7 @@ class PlanCrawler:
         self.plan_processor = plan_processor
 
     async def check_infinite(self, interval: int = 60):
+        self.plan_downloader.migrate_all()
         self.plan_processor.update_all()
 
         while True:
@@ -95,6 +96,7 @@ async def main():
     try:
         if args.only_process:
             for client in clients.values():
+                client.plan_downloader.migrate_all()
                 client.plan_processor.update_all()
         elif not args.only_download:
             await asyncio.gather(
