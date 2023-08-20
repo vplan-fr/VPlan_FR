@@ -205,20 +205,25 @@ class PlanDownloader:
         # alternative to first doing a HEAD request: pass newest downloaded last_modified or etag to fetch_plan method
         # via get_latest_downloaded_file_timestamp() or get_downloaded_file_metadata(last_modified=None)
         for rev in self.cache.get_timestamps(date):
-            if self.cache.plan_file_exists(date, rev, plan_filename):
-                last_modified = rev
+            if self.cache.plan_file_exists(date, rev, plan_filename + ".json"):
+                metadata = PlanFileMetadata.deserialize(
+                    json.loads(self.cache.get_plan_file(date, rev, plan_filename + ".json"))
+                )
+                last_modified = metadata.last_modified
+                etag = metadata.etag
                 break
         else:
             last_modified = None
+            etag = None
         try:
-            plan_response = await plan_client.fetch_plan(date, if_modified_since=last_modified)
+            plan_response = await plan_client.fetch_plan(date, if_modified_since=last_modified, if_none_match=etag)
         except stundenplan24_py.NotModifiedError:
             self._logger.debug(f" -> Skipping substitution plan for date {date!s}.")
             return set()
         else:
-            self._logger.info(f"=> Downloaded substitution plan for date {date!s}.")
             assert plan_response.last_modified is not None
             revision = plan_response.last_modified
+            self._logger.info(f"=> Downloaded substitution plan for date {date!s}. Revision: {revision!s}.")
             downloaded_file = PlanFileMetadata(
                 plan_filename=plan_filename,
                 last_modified=plan_response.last_modified,
