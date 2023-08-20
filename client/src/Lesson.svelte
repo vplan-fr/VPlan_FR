@@ -235,7 +235,7 @@
                 <ul class="extra_forms">
                     <li>
                         <div class="horizontal_wrapper">
-                            Findet statt für Klassen:
+                            Beteiligte Klassen:
                             <div class="info-element">
                                 <DropdownShell let:toggle class="dropdown-shell">
                                     <button on:click={toggle}>
@@ -358,6 +358,7 @@
         padding: 0;
         margin: 0;
         margin-right: .3rem;
+        text-align: start;
     }
 
     .extra_forms .horizontal_wrapper {
