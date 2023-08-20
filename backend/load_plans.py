@@ -29,6 +29,8 @@ class PlanCrawler:
         while True:
             downloaded_files = await self.plan_downloader.update_fetch()
 
+            self.plan_processor._logger.debug("* Processing plans...")
+
             if downloaded_files:
                 self.plan_processor.meta_extractor.invalidate_cache()
 
@@ -54,6 +56,7 @@ async def get_clients(session: aiohttp.ClientSession | None = None,
         logger = logging.getLogger(specifier)
         cache = Cache(Path(f".cache/{specifier}").absolute())
 
+        data["hosting"]["creds"] = data["hosting"]["creds"].get("teachers", data["hosting"]["creds"].get("students"))
         hosting = Hosting.deserialize(data["hosting"])
         client = IndiwareStundenplanerClient(hosting, session)
 

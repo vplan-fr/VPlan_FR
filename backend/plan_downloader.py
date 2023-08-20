@@ -114,9 +114,9 @@ class PlanDownloader:
             revision = last_modified
 
             if self.cache.plan_file_exists(date, revision, plan_filename):
-                self._logger.debug(f" -> Skipping indiware {filename!r}. (date: {date!s})")
+                self._logger.debug(f" -> Skipping indiware {filename!r}. Revision: {revision!s}.")
             else:
-                self._logger.info(f" -> Downloading indiware {filename!r}. (date: {date!s})")
+                self._logger.info(f" -> Downloading indiware {filename!r}. Revision: {revision!s}.")
 
                 plan_response = await client.fetch_plan(filename)
 
@@ -146,15 +146,15 @@ class PlanDownloader:
             self,
             plan_client: SubstitutionPlanClient
     ) -> set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]]:
-        self._logger.debug("* Checking for new substitution plans...")
+        self._logger.debug("=> Checking for new substitution plans...")
 
         try:
             base_plan = await plan_client.fetch_plan()
         except PlanNotFoundError:
-            self._logger.debug(f"=> No substitution plan available for {plan_client.endpoint.url!r}.")
+            self._logger.debug(f" -> No substitution plan available for {plan_client.endpoint.url!r}.")
             return set()
         except UnauthorizedError:
-            self._logger.debug(f"=> Insufficient credentials to fetch substitution plan from "
+            self._logger.debug(f" -> Insufficient credentials to fetch substitution plan from "
                                f"{plan_client.endpoint.url!r}.")
             return set()
         else:
@@ -178,14 +178,14 @@ class PlanDownloader:
             try:
                 out |= await self.download_substitution_plan(plan_client, plan_date)
             except PlanNotFoundError:
-                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date!s}.")
+                self._logger.debug(f" -> Stopping substitution plan download at date {plan_date!s}.")
                 break
 
         for plan_date in valid_date_iterator(datetime.date.today() + datetime.timedelta(days=1), step=1):
             try:
                 out |= await self.download_substitution_plan(plan_client, plan_date)
             except PlanNotFoundError:
-                self._logger.debug(f"=> Stopping substitution plan download at date {plan_date!s}.")
+                self._logger.debug(f" -> Stopping substitution plan download at date {plan_date!s}.")
                 break
 
         return out
@@ -218,12 +218,12 @@ class PlanDownloader:
         try:
             plan_response = await plan_client.fetch_plan(date, if_modified_since=last_modified, if_none_match=etag)
         except stundenplan24_py.NotModifiedError:
-            self._logger.debug(f" -> Skipping substitution plan for date {date!s}.")
+            self._logger.debug(f" -> Newest revision of substitution plan of {date!s} already downloaded.")
             return set()
         else:
             assert plan_response.last_modified is not None
             revision = plan_response.last_modified
-            self._logger.info(f"=> Downloaded substitution plan for date {date!s}. Revision: {revision!s}.")
+            self._logger.info(f" -> Downloaded substitution plan for date {date!s}. Revision: {revision!s}.")
             downloaded_file = PlanFileMetadata(
                 plan_filename=plan_filename,
                 last_modified=plan_response.last_modified,
@@ -238,10 +238,10 @@ class PlanDownloader:
 
     def complete_revision(self, date: datetime.date, revision: datetime.datetime):
         if self.cache.plan_file_exists(date, revision, ".complete"):
-            self._logger.debug(f" -> Revision {revision!s} for date {date!s} already completed.")
+            self._logger.debug(f"=> Revision {revision!s} for date {date!s} already completed.")
             return
 
-        self._logger.debug(f" -> Completing revision {revision!s} for date {date!s}.")
+        self._logger.debug(f"=> Completing revision {revision!s} for date {date!s}.")
 
         try:
             timestamps = [t for t in self.cache.get_timestamps(date) if t < revision]
