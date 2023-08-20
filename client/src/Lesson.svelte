@@ -16,7 +16,7 @@
 
     $: subject = (lesson.current_subject !== "---" && lesson.current_subject !== null) ? lesson.current_subject : lesson.class_subject
     $: subject = subject === lesson.class_subject && lesson.class_group !== null ? lesson.class_group : subject
-    $: subject = (subject === null && lesson.current_subject === "---") ? "-" : subject
+    $: subject = subject === null ? "-" : subject
     $: teachers = (lesson.current_teachers !== null ? lesson.current_teachers : lesson.class_teachers) || []
     $: subject_changed = lesson.subject_changed && !is_cancelled
     $: teacher_changed = lesson.teacher_changed && !is_cancelled
