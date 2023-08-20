@@ -15,7 +15,8 @@
     }
 
     $: subject = (lesson.current_subject !== "---" && lesson.current_subject !== null) ? lesson.current_subject : lesson.class_subject
-    $: subject = subject === lesson.class_subject ? lesson.class_group : subject
+    $: subject = subject === lesson.class_subject && lesson.class_group !== null ? lesson.class_group : subject
+    $: subject = (subject === null && lesson.current_subject === "---") ? "-" : subject
     $: teachers = (lesson.current_teachers !== null ? lesson.current_teachers : lesson.class_teachers) || []
     $: subject_changed = lesson.subject_changed && !is_cancelled
     $: teacher_changed = lesson.teacher_changed && !is_cancelled
@@ -144,7 +145,9 @@
 <!--                plan_type = "teachers";-->
 <!--                plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;-->
 <!--            }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>-->
-            {#if teachers.length === 1}
+            {#if teachers.length === 0}
+                <span class="extra_padding">-</span>
+            {:else if teachers.length === 1}
                 <button on:click={() => {
                     plan_type = "teachers";
                     plan_value = teachers[0];
@@ -180,7 +183,9 @@
 
         {#if plan_type !== "forms"}
         <div class="forms max-width-center info-element vert-align">
-            {#if lesson.forms.length === 1}
+            {#if lesson.forms.length === 0}
+                <span class="extra_padding">-</span>
+            {:else if lesson.forms.length === 1}
                 <button on:click={() => {
                     plan_type = "forms";
                     plan_value = lesson.forms[0];
