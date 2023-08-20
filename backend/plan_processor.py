@@ -47,6 +47,10 @@ class PlanProcessor:
                 self.update_plans(day, revision)
 
     def update_plans(self, day: datetime.date, timestamp: datetime.datetime) -> bool:
+        if not self.cache.plan_file_exists(day, timestamp, ".complete"):
+            self._logger.info(f"=> Skipping plan for {day!s} because it was not completed yet. ({timestamp!s}).")
+            return False
+
         if self.cache.plan_file_exists(day, timestamp, ".processed"):
             if (cur_ver := self.cache.get_plan_file(day, timestamp, ".processed")) == self.VERSION:
                 return False

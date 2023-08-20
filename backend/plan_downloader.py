@@ -12,12 +12,12 @@ from stundenplan24_py import (
     IndiwareStundenplanerClient, IndiwareMobilClient, PlanClientError, SubstitutionPlanClient, UnauthorizedError,
     substitution_plan, PlanNotFoundError, StudentsSubstitutionPlanEndpoint, TeachersSubstitutionPlanEndpoint
 )
-# import stundenplan24_py.client
 
 from .cache import Cache
 
 
-# stundenplan24_py.client.set_min_delay_between_requests(0.1)
+import stundenplan24_py.client
+stundenplan24_py.client.set_min_delay_between_requests(0.2)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -195,10 +195,6 @@ class PlanDownloader:
             plan_client: SubstitutionPlanClient,
             date: datetime.date
     ) -> set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]]:
-        last_modified, etag = await plan_client.get_metadata()
-
-        assert last_modified is not None
-
         if isinstance(plan_client.endpoint, StudentsSubstitutionPlanEndpoint):
             plan_filename = "VplanKl.xml"
         elif isinstance(plan_client.endpoint, TeachersSubstitutionPlanEndpoint):
@@ -208,18 +204,21 @@ class PlanDownloader:
 
         # alternative to first doing a HEAD request: pass newest downloaded last_modified or etag to fetch_plan method
         # via get_latest_downloaded_file_timestamp() or get_downloaded_file_metadata(last_modified=None)
-
-        revision = last_modified
-
-        if self.cache.plan_file_exists(date, revision, plan_filename):
-            self._logger.debug(f"=> Skipping substitution plan for date {date!s}.")
+        for rev in self.cache.get_timestamps(date):
+            if self.cache.plan_file_exists(date, rev, plan_filename):
+                last_modified = rev
+                break
+        else:
+            last_modified = None
+        try:
+            plan_response = await plan_client.fetch_plan(date, if_modified_since=last_modified)
+        except stundenplan24_py.NotModifiedError:
+            self._logger.debug(f" -> Skipping substitution plan for date {date!s}.")
             return set()
         else:
-            self._logger.info(f"=> Downloading substitution plan for date {date!s}.")
-
-            plan_response = await plan_client.fetch_plan(date)
-
+            self._logger.info(f"=> Downloaded substitution plan for date {date!s}.")
             assert plan_response.last_modified is not None
+            revision = plan_response.last_modified
             downloaded_file = PlanFileMetadata(
                 plan_filename=plan_filename,
                 last_modified=plan_response.last_modified,
@@ -240,7 +239,8 @@ class PlanDownloader:
         self._logger.debug(f" -> Completing revision {revision!s} for date {date!s}.")
 
         try:
-            latest_revision = list(reversed(self.cache.get_timestamps(date)))[-2]
+            timestamps = [t for t in self.cache.get_timestamps(date) if t < revision]
+            latest_revision = timestamps[0]  # before `revision`
         except IndexError:
             self._logger.debug(f" -> No previous revision found for date {date!s}.")
             self.cache.store_plan_file(date, revision, "", ".complete")
@@ -250,7 +250,7 @@ class PlanDownloader:
             if not (file.name.endswith(".xml") or file.name.endswith(".xml.json")):
                 continue
 
-            if self.cache.plan_file_exists(date, revision, file.name):
+            if self.cache.plan_file_exists(date, revision, file.name, links_allowed=False):
                 self._logger.debug(f" -> Skipping file {file.name!r}. Already exists.")
                 continue
 
@@ -264,7 +264,7 @@ class PlanDownloader:
         self.cache.store_plan_file(date, revision, "", ".complete")
 
     def migrate_all(self):
-        self._logger.info(f"* Migrating cache ({self.__class__.__name__})...")
+        self._logger.debug(f"* Migrating cache ({self.__class__.__name__})...")
 
         for day in self.cache.get_days():
             self.cache.update_newest(day)

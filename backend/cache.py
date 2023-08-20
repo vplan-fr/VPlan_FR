@@ -130,5 +130,7 @@ class Cache:
     def plan_file_exists(self,
                          day: datetime.date,
                          timestamp: datetime.datetime | str,
-                         filename: str) -> bool:
-        return (self.get_plan_path(day, timestamp) / filename).exists()
+                         filename: str,
+                         links_allowed: bool = True) -> bool:
+        path = self.get_plan_path(day, timestamp) / filename
+        return path.exists() and (links_allowed or not path.is_symlink())

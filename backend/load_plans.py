@@ -32,7 +32,7 @@ class PlanCrawler:
             if downloaded_files:
                 self.plan_processor.meta_extractor.invalidate_cache()
 
-            for date, revision, downloaded_files_metadata in downloaded_files.items():
+            for (date, revision), downloaded_files_metadata in downloaded_files.items():
                 self.plan_processor.update_plans(date, revision)
 
             if downloaded_files:
@@ -86,6 +86,11 @@ async def main():
     argument_parser.add_argument("-loglevel", "-l", default="INFO")
 
     args = argument_parser.parse_args()
+
+    try:
+        args.loglevel = int(args.loglevel)
+    except ValueError:
+        pass
 
     logging.basicConfig(level=args.loglevel, format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S")
