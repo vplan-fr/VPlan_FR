@@ -360,7 +360,10 @@ class WholeForm(SerializeMixin, ParsedLessonInfoMessage):
 
 @dataclasses.dataclass
 class FailedToParse(SerializeMixin, ParsedLessonInfoMessage):
-    pass
+    def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+        return [
+            LessonInfoTextSegment(", ".join(self.original_messages))
+        ]
 
 
 def create_literal_parsed_info(msg: str) -> ParsedLessonInfo:
@@ -388,6 +391,7 @@ def resolve_teacher_abbreviations(surnames: list[str], abbreviation_by_surname: 
 
 def _parse_message(info: str, plan_year: int, teacher_abbreviation_by_surname: dict[str, str]
                    ) -> ParsedLessonInfoMessage:
+    info = info.strip()
     if match := _InfoParsers.substitution.search(info):
         return InsteadOfCourse(
             match.group("course"),
@@ -507,10 +511,23 @@ class LessonInfoParagraph:
     @classmethod
     def from_str(cls, paragraph: str, plan_year: int, teacher_abbreviations: dict[str, str],
                  index: int) -> LessonInfoParagraph:
-        return cls([
+        messages = [
             LessonInfoMessage.from_str(message.strip(), plan_year, teacher_abbreviations, i)
             for i, message in enumerate(paragraph.split(","))
-        ], index=index)
+        ]
+        new_messages = []
+        for message in messages:
+            can_merge = (
+                new_messages
+                and isinstance(new_messages[-1].parsed, FailedToParse)
+                and isinstance(message.parsed, FailedToParse)
+            )
+            if can_merge:
+                new_messages[-1].parsed.original_messages += message.parsed.original_messages
+            else:
+                new_messages.append(message)
+
+        return cls(new_messages, index=index)
 
     def serialize(self, lesson_date: datetime.date, lesson: models.Lesson) -> list:
         return [info.serialize(lesson_date, lesson) for info in self.messages]
