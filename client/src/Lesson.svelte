@@ -6,6 +6,21 @@
     export let display_time = true;
     import { DropdownShell, Dropdown } from 'attractions';
 
+    let is_cancelled;
+
+    $: if (plan_type === "teachers") {
+        is_cancelled = lesson.current_teachers === null || !lesson.current_teachers.includes(plan_value)
+    } else {
+        is_cancelled = lesson.current_subject === "---";
+    }
+
+    $: subject = (lesson.current_subject !== "---" && lesson.current_subject !== null) ? lesson.current_subject : lesson.class_subject
+    $: subject = subject === lesson.class_subject ? lesson.class_group : subject
+    $: teachers = (lesson.current_teachers !== null ? lesson.current_teachers : lesson.class_teachers) || []
+    $: subject_changed = lesson.subject_changed && !is_cancelled
+    $: teacher_changed = lesson.teacher_changed && !is_cancelled
+    $: room_changed = lesson.room_changed && !is_cancelled
+
     function periods_to_block_label(periods) {
         periods.sort(function (a, b) {  return a - b;  });
 
@@ -23,97 +38,97 @@
         }
     }
 </script>
-<div class="card desktop-view">
-    <div class="horizontal-align">
-        {#if display_time}
-        <div class="vert-align lesson-time-info">
-            <span class="lesson-time">{lesson.begin}</span>
-            <span class="lesson-period">{periods_to_block_label(lesson.periods)}</span>
-            <span class="lesson-time">{lesson.end}</span>
-        </div>
-        {/if}
-        <div class="grid-align-wrapper" class:large_grid={plan_type !== "forms"}>
-            {#if lesson.current_subject !== "---"}
-            {#if lesson.current_subject !== null}
-            <div class="subject max-width-center wide-area extra_padding" class:changed={lesson.subject_changed}>
-                {lesson.current_subject}
-            </div>
-            {/if}
-            <div class="small-area vert-align">
-                <div class="teachers vert-align max-width-center info-element" class:changed={lesson.teacher_changed} class:teacher_absent={lesson.current_teacher === null}>
-                    <button on:click={() => {
-                        plan_type = "teachers";
-                        plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;
-                    }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>
-                </div>
-            </div>
-            <div class="rooms vert-align max-width-center info-element small-area second_of_type" class:changed={lesson.room_changed}>
-                {#each lesson.rooms as room}
-                    <button on:click={() => {
-                        plan_type = "rooms";
-                        plan_value = room;
-                    }}>{room}</button>
-                {:else}
-                    <span class="extra_padding">X</span>
-                {/each}
-            </div>
-            {:else}
-            <div class="max-width-center info-element cancelled vert-align changed">
-                <span class="extra_padding">X</span>
-            </div>
-            {/if}
-            {#if !(plan_type === "forms" && (lesson.forms.length === 1))}
-            <div class="forms max-width-center wide-area second_of_type info-element">
-                {#if lesson.forms.length === 1}
-                    <button on:click={() => {
-                        plan_type = "forms";
-                        plan_value = lesson.forms[0];
-                    }}>{lesson.forms[0]}</button>
-                {:else}
-                    <DropdownShell let:toggle class="dropdown-shell">
-                        <button on:click={toggle}>
-                            {lesson.forms_str}
-                        </button>
-                        <Dropdown>
-                            <div class="lighten_background">
-                                {#each lesson.forms as form}
-                                    <button on:click={() => {
-                                        plan_type = "forms";
-                                        plan_value = form;
-                                    }}>{form}</button>
-                                {/each}
-                            </div>
-                        </Dropdown>
-                    </DropdownShell>
-                {/if}
-            </div>
-            {/if}
-        </div>
-    </div>
-    {#if lesson.parsed_info.length > 0}
-        <div class="info-element lesson-info">
-            {#each lesson.parsed_info as elem}
-                <ul>
-                    {#each elem as element}
-                        <li>
-                            {#each element.text_segments as text_segment}
-                                <button class="no-btn-visuals" on:click={() => {
-                                    if(text_segment.link !== null) {
-                                        date = text_segment.link.date;
-                                        plan_type = text_segment.link.type;
-                                        plan_value = text_segment.link.value;
-                                    }
-                                }
-                                }>{text_segment["text"]}</button>
-                            {/each}
-                        </li>
-                    {/each}
-                </ul>
-            {/each}
-        </div>
-    {/if}
-</div>
-<div class="card mobile-view">
+<!--<div class="card desktop-view">-->
+<!--    <div class="horizontal-align">-->
+<!--        {#if display_time}-->
+<!--        <div class="vert-align lesson-time-info">-->
+<!--            <span class="lesson-time">{lesson.begin}</span>-->
+<!--            <span class="lesson-period">{periods_to_block_label(lesson.periods)}</span>-->
+<!--            <span class="lesson-time">{lesson.end}</span>-->
+<!--        </div>-->
+<!--        {/if}-->
+<!--        <div class="grid-align-wrapper" class:large_grid={plan_type !== "forms"}>-->
+<!--            {#if lesson.current_subject !== "-&#45;&#45;"}-->
+<!--            {#if lesson.current_subject !== null}-->
+<!--            <div class="subject max-width-center wide-area extra_padding" class:changed={lesson.subject_changed}>-->
+<!--                {lesson.current_subject}-->
+<!--            </div>-->
+<!--            {/if}-->
+<!--            <div class="small-area vert-align">-->
+<!--                <div class="teachers vert-align max-width-center info-element" class:changed={lesson.teacher_changed} class:teacher_absent={lesson.current_teacher === null}>-->
+<!--                    <button on:click={() => {-->
+<!--                        plan_type = "teachers";-->
+<!--                        plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;-->
+<!--                    }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div class="rooms vert-align max-width-center info-element small-area second_of_type" class:changed={lesson.room_changed}>-->
+<!--                {#each lesson.rooms as room}-->
+<!--                    <button on:click={() => {-->
+<!--                        plan_type = "rooms";-->
+<!--                        plan_value = room;-->
+<!--                    }}>{room}</button>-->
+<!--                {:else}-->
+<!--                    <span class="extra_padding">X</span>-->
+<!--                {/each}-->
+<!--            </div>-->
+<!--            {:else}-->
+<!--            <div class="max-width-center info-element cancelled vert-align changed">-->
+<!--                <span class="extra_padding">X</span>-->
+<!--            </div>-->
+<!--            {/if}-->
+<!--            {#if !(plan_type === "forms" && (lesson.forms.length === 1))}-->
+<!--            <div class="forms max-width-center wide-area second_of_type info-element">-->
+<!--                {#if lesson.forms.length === 1}-->
+<!--                    <button on:click={() => {-->
+<!--                        plan_type = "forms";-->
+<!--                        plan_value = lesson.forms[0];-->
+<!--                    }}>{lesson.forms[0]}</button>-->
+<!--                {:else}-->
+<!--                    <DropdownShell let:toggle class="dropdown-shell">-->
+<!--                        <button on:click={toggle}>-->
+<!--                            {lesson.forms_str}-->
+<!--                        </button>-->
+<!--                        <Dropdown>-->
+<!--                            <div class="lighten_background">-->
+<!--                                {#each lesson.forms as form}-->
+<!--                                    <button on:click={() => {-->
+<!--                                        plan_type = "forms";-->
+<!--                                        plan_value = form;-->
+<!--                                    }}>{form}</button>-->
+<!--                                {/each}-->
+<!--                            </div>-->
+<!--                        </Dropdown>-->
+<!--                    </DropdownShell>-->
+<!--                {/if}-->
+<!--            </div>-->
+<!--            {/if}-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    {#if lesson.parsed_info.length > 0}-->
+<!--        <div class="info-element lesson-info">-->
+<!--            {#each lesson.parsed_info as elem}-->
+<!--                <ul>-->
+<!--                    {#each elem as element}-->
+<!--                        <li>-->
+<!--                            {#each element.text_segments as text_segment}-->
+<!--                                <button class="no-btn-visuals" on:click={() => {-->
+<!--                                    if(text_segment.link !== null) {-->
+<!--                                        date = text_segment.link.date;-->
+<!--                                        plan_type = text_segment.link.type;-->
+<!--                                        plan_value = text_segment.link.value;-->
+<!--                                    }-->
+<!--                                }-->
+<!--                                }>{text_segment["text"]}</button>-->
+<!--                            {/each}-->
+<!--                        </li>-->
+<!--                    {/each}-->
+<!--                </ul>-->
+<!--            {/each}-->
+<!--        </div>-->
+<!--    {/if}-->
+<!--</div>-->
+<div class="card mobile-view" class:cancelled={is_cancelled}>
     <div class="horizontal-align">
         {#if display_time}
         <div class="vert-align max-width-center lesson-time-info">
@@ -121,33 +136,48 @@
             <span class="lesson-time">{lesson.begin}</span>
         </div>
         {/if}
-        {#if lesson.current_subject !== "---"}
-        <div class="subject max-width-center extra_padding" class:changed={lesson.subject_changed}>
-            {#if lesson.current_subject !== null}
-            {lesson.current_subject}
+        <div class="subject info-element max-width-center extra_padding" class:changed={subject_changed}>
+            {subject}
+        </div>
+        <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed} class:teacher_absent={lesson.current_teachers === null && !is_cancelled}>
+<!--            <button on:click={() => {-->
+<!--                plan_type = "teachers";-->
+<!--                plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;-->
+<!--            }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>-->
+            {#if teachers.length === 1}
+                <button on:click={() => {
+                    plan_type = "teachers";
+                    plan_value = teachers[0];
+                }}>{teachers[0]}</button>
+            {:else}
+                <DropdownShell let:toggle class="dropdown-shell">
+                    <button on:click={toggle}>
+                        {teachers.join(" ")}
+                    </button>
+                    <Dropdown>
+                        <div class="lighten_background">
+                            {#each teachers as teacher}
+                                <button on:click={() => {
+                                    plan_type = "teachers";
+                                    plan_value = teacher;
+                                }}>{teacher}</button>
+                            {/each}
+                        </div>
+                    </Dropdown>
+                </DropdownShell>
             {/if}
         </div>
-        <div class="teachers vert-align max-width-center info-element first_half" class:changed={lesson.teacher_changed} class:teacher_absent={lesson.current_teacher === null}>
-            <button on:click={() => {
-                plan_type = "teachers";
-                plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;
-            }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>
-        </div>
-        <div class="rooms vert-align max-width-center info-element" class:changed={lesson.room_changed}>
+        <div class="rooms vert-align max-width-center info-element" class:changed={room_changed}>
             {#each lesson.rooms as room}
                 <button on:click={() => {
                     plan_type = "rooms";
                     plan_value = room;
                 }}>{room}</button>
             {:else}
-                <span class="extra_padding">X</span>
+                <span class="extra_padding">-</span>
             {/each}
         </div>
-        {:else}
-        <div class="max-width-center info-element cancelled vert-align changed">
-            <span class="extra_padding">X</span>
-        </div>
-        {/if}
+
         {#if plan_type !== "forms"}
         <div class="forms max-width-center info-element vert-align">
             {#if lesson.forms.length === 1}
@@ -182,14 +212,15 @@
                     {#each elem as element}
                         <li>
                             {#each element.text_segments as text_segment}
-                                <button class="no-btn-visuals" on:click={() => {
-                                    if(text_segment.link !== null) {
+                                {#if text_segment.link !== null}
+                                    <button class="no-btn-visuals" on:click={() => {
                                         date = text_segment.link.date;
                                         plan_type = text_segment.link.type;
                                         plan_value = text_segment.link.value;
-                                    }
-                                }
-                                }>{text_segment["text"]}</button>
+                                    }}><u style="text-decoration: underline dotted var(--accent-color)">{text_segment["text"]}</u></button>
+                                {:else}
+                                    <button class="no-btn-visuals">{text_segment["text"]}</button>
+                                {/if}
                             {/each}
                         </li>
                     {/each}
@@ -244,14 +275,14 @@
             }
         }
     }
-    :global(.desktop-view .info-element .dropdown-shell) {
-        & > button {
-            font-size: 1.875rem;
-            padding: 1rem;
-            line-height: 1;
-            border-radius: 8px;
-        }
-    }
+    //:global(.desktop-view .info-element .dropdown-shell) {
+    //    & > button {
+    //        font-size: 1.875rem;
+    //        padding: 1rem;
+    //        line-height: 1;
+    //        border-radius: 8px;
+    //    }
+    //}
     :global(.mobile-view .info-element .dropdown-shell > button) {
         font-size: 0.875rem;
     }
@@ -355,11 +386,6 @@
             }
         }
     }
-    
-
-    .forms {
-        font-size: 0.875rem;
-    }
 
     .lesson-info {
         margin-top: 10px;
@@ -404,7 +430,7 @@
     
         &.teacher_absent {
             background: rgba(255, 255, 255, 0.08);
-            outline: 3px solid var(--accent-color);
+            outline: 3px solid var(--cancelled-color);
             outline-offset: -3px;
         }
     }
@@ -416,7 +442,10 @@
     }
     
     .changed {
-        background: var(--accent-color) !important;
+        // background: var(--accent-color) !important;
+
+        outline: solid 3px var(--accent-color);
+        outline-offset: -3px;
 
         &:not(.teacher_absent) {
             & > button:hover, & > button:focus-visible {
@@ -425,9 +454,9 @@
         }
     }
 
-    .subject {
-        border-radius: 5px;
-    }
+    //.subject {
+    //    border-radius: 5px;
+    //}
 
     .subject, .teachers button, .rooms button, .forms button {
         color: var(--text-color);
@@ -442,10 +471,11 @@
         white-space: nowrap;
     }
     .mobile-view {
-        display: none;
-        @media only screen and (max-width: 600px) {
-            display: block;
-        }
+        //display: none;
+        //@media only screen and (max-width: 600px) {
+        //    display: block;
+        //}
+        display: block;
         .lesson-period {
             font-size: 0.875rem;
             font-weight: 400;
@@ -457,72 +487,74 @@
         .subject, .info-element, .info-element > button, .extra_padding {
             font-size: 0.875rem;
         }
-        .cancelled {
-            width: 400% !important;
-        }
+
     }
-    .desktop-view {
-        display: none;
-        @media only screen and (min-width: 601px) {
-            display: block;
-        }
-        .horizontal-align {
-            gap: 0;
-            justify-content: space-between;
-        }
-        .lesson-time-info {
-            padding: 0px 40px 0px 30px;
-        }
-        .subject {
-            padding: .6rem 0;
-        }
-        .info-element {
-            line-height: 1;
-            & > button {
-                padding: 1rem;
-                line-height: 1;
-                &:nth-of-type(1) {
-                    border-top-left-radius: 8px;
-                    border-top-right-radius: 8px;
-                }
-                &:nth-last-of-type(1) {
-                    border-bottom-left-radius: 8px;
-                    border-bottom-right-radius: 8px;
-                }
-            }
-            border-radius: 8px;
-        }
-        .extra_padding {
-            padding: 1rem 0rem;
-            line-height: 1;
-            border-radius: 8px;
-        }
-        .lesson-period {
-            font-size: 1.625rem;
-            font-weight: 400;
-        }
-        .lesson-time {
-            font-size: 1.25rem;
-            font-weight: 400;
-        }
-        .subject, .info-element, .info-element > button {
-            font-size: 1.875rem;
-        }
-        .lesson-info {
-            margin-top: 20px;
-            button {
-                font-size: 1.3rem;
-                line-height: 1.5;
-            }
-        }
-        .cancelled {
-            grid-area: 1 / 1 / 3 / 3;
-        }
-        .forms, .rooms {
-            flex-direction: column;
-            align-items: center;
-        }
+    .cancelled {
+          outline: var(--cancelled-color) solid 3px;
+          outline-offset: -3px;
     }
+    //.desktop-view {
+    //    display: none;
+    //    @media only screen and (min-width: 601px) {
+    //        display: block;
+    //    }
+    //    .horizontal-align {
+    //        gap: 0;
+    //        justify-content: space-between;
+    //    }
+    //    .lesson-time-info {
+    //        padding: 0px 40px 0px 30px;
+    //    }
+    //    .subject {
+    //        padding: .6rem 0;
+    //    }
+    //    .info-element {
+    //        line-height: 1;
+    //        & > button {
+    //            padding: 1rem;
+    //            line-height: 1;
+    //            &:nth-of-type(1) {
+    //                border-top-left-radius: 8px;
+    //                border-top-right-radius: 8px;
+    //            }
+    //            &:nth-last-of-type(1) {
+    //                border-bottom-left-radius: 8px;
+    //                border-bottom-right-radius: 8px;
+    //            }
+    //        }
+    //        border-radius: 8px;
+    //    }
+    //    .extra_padding {
+    //        padding: 1rem 0rem;
+    //        line-height: 1;
+    //        border-radius: 8px;
+    //    }
+    //    .lesson-period {
+    //        font-size: 1.625rem;
+    //        font-weight: 400;
+    //    }
+    //    .lesson-time {
+    //        font-size: 1.25rem;
+    //        font-weight: 400;
+    //    }
+    //    .subject, .info-element, .info-element > button {
+    //        font-size: 1.875rem;
+    //    }
+    //    .lesson-info {
+    //        margin-top: 20px;
+    //        button {
+    //            font-size: 1.3rem;
+    //            line-height: 1.5;
+    //        }
+    //    }
+    //    .cancelled {
+    //        grid-area: 1 / 1 / 3 / 3;
+    //    }
+    //    .forms, .rooms {
+    //        flex-direction: column;
+    //        align-items: center;
+    //    }
+    //}
     .horizontal-align {
         display: flex;
         flex-direction: row;

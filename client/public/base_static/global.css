@@ -2,6 +2,7 @@
     --text-color: white;
     --background-color: #121212;
     --accent-color: #BB86FC;
+    --cancelled-color: #FF1744;
 }
 
 .unselectable, label, .prefix, .material-symbols-outlined {
