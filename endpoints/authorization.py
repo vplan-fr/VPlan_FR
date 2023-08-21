@@ -89,3 +89,13 @@ def school_authorized(func):
                 return {"error": "user not authorized for specified school"}
         return func(*args, **kwargs)
     return wrapper_thing
+
+
+@authorization.route("/check_login", methods=["GET"])
+def check_login():
+    if current_user.is_authenticated:
+        response_data = {'logged_in': True}
+    else:
+        response_data = {'logged_in': False}
+    return jsonify(response_data)
+
