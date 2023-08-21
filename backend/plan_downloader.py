@@ -252,7 +252,7 @@ class PlanDownloader:
             return
 
         for file in self.cache.get_plan_path(date, latest_revision).iterdir():
-            if not (file.name.endswith(".xml") or file.name.endswith(".xml.json")):
+            if not (file.name.endswith(".xml") or file.name.endswith(".xml.json")) or file.name.startswith(("_", ".")):
                 continue
 
             if self.cache.plan_file_exists(date, revision, file.name, links_allowed=False):

@@ -16,47 +16,97 @@ from . import vplan_utils
 
 @dataclasses.dataclass
 class Lesson:
-    forms: set[str]
-    current_subject: str | None
-    current_teachers: set[str] | None
+    periods: set[int]
+
+    # None means we don't know
+    scheduled_forms: set[str]
+    scheduled_teachers: set[str] | None
+    scheduled_rooms: set[str] | None
+    scheduled_class: str | None
+
+    current_forms: set[str]
+    current_teachers: set[str]
+    current_rooms: set[str]
+    current_class: str | None  # is class group if available, then subject
+
+    # taken directly from plan xml
     class_subject: str | None
     class_group: str | None
     class_teachers: set[str] | None
     class_number: str | None
-    rooms: set[str]
-    periods: set[int]
-    info: str
-    parsed_info: ParsedLessonInfo
 
+    # taken directly from plan xml
     subject_changed: bool
     teacher_changed: bool
     room_changed: bool
 
+    info: str
+    parsed_info: ParsedLessonInfo
+
     begin: datetime.time | None
     end: datetime.time | None
+
+    # different for different plan types
+    takes_place: bool | None = None
 
     is_internal: bool = False
 
     def to_dict(self, lesson_date: datetime.date) -> dict:
         return {
-            "forms": sorted(self.forms),
-            "forms_str": vplan_utils.forms_to_str(self.forms),
-            "periods": list(self.periods),
-            "rooms": list(self.rooms),
-            "current_subject": self.current_subject,
-            "current_teachers": sorted(self.current_teachers) if self.current_teachers else None,
+            "periods": sorted(self.periods),
+            "scheduled_forms": sorted(self.scheduled_forms),
+            "scheduled_forms_str": vplan_utils.forms_to_str(self.scheduled_forms),
+            "scheduled_teachers": sorted(self.scheduled_teachers) if self.scheduled_teachers else None,
+            "scheduled_rooms": sorted(self.current_rooms) if self.scheduled_rooms else None,
+            "scheduled_class": self.scheduled_class,
+            "current_forms": sorted(self.current_forms),
+            "current_forms_str": vplan_utils.forms_to_str(self.current_forms),
+            "current_rooms": sorted(self.current_rooms),
+            "current_teachers": sorted(self.current_teachers),
+            "current_class": self.current_class,
             "class_subject": self.class_subject,
             "class_group": self.class_group,
             "class_teachers": sorted(self.class_teachers) if self.class_teachers else None,
             "class_number": self.class_number,
-            "info": self.info,
             "subject_changed": self.subject_changed,
             "teacher_changed": self.teacher_changed,
             "room_changed": self.room_changed,
+            # "info": self.info,
+            "info": self.parsed_info.serialize(lesson_date, self),
             "begin": self.begin.strftime("%H:%M") if self.begin else None,
+            "takes_place": self.takes_place,
             "end": self.end.strftime("%H:%M") if self.end else None,
-            "parsed_info": self.parsed_info.serialize(lesson_date, self)
         }
+
+    @classmethod
+    def create_internal(cls):
+        return cls(
+            periods=set(),
+            scheduled_forms=set(),
+            scheduled_teachers=None,
+            scheduled_rooms=None,
+            scheduled_class=None,
+            current_forms=set(),
+            current_teachers=set(),
+            current_rooms=set(),
+            current_class=None,
+            info="",
+            parsed_info=ParsedLessonInfo([]),
+            class_subject=None,
+            class_group=None,
+            class_teachers=None,
+            class_number=None,
+            subject_changed=False,
+            teacher_changed=False,
+            room_changed=False,
+            begin=None,
+            end=None,
+            is_internal=True
+        )
+
+    def with_takes_place(self, plan_type: typing.Literal["rooms", "forms", "teachers"], value: str) -> Lesson:
+        takes_place = value in getattr(self, f"current_{plan_type}")
+        return dataclasses.replace(self, takes_place=takes_place)
 
 
 @dataclasses.dataclass
@@ -84,6 +134,21 @@ class Lessons:
 
         return {attribute: Lessons(sorted(lessons, key=lambda x: list(x.periods)[0]), self.date)
                 for attribute, lessons in grouped.items()}
+
+    def with_takes_place(self, plan_type: typing.Literal["rooms", "forms", "teachers"], value: str) -> Lessons:
+        return Lessons(
+            [lesson.with_takes_place(plan_type, value) for lesson in self.lessons],
+            self.date
+        )
+
+    def make_plan(self, attributes: tuple[str, ...],
+                  plan_type: typing.Literal["rooms", "forms", "teachers"]) -> dict[str, Lessons]:
+        grouped = self.group_by(*attributes)
+
+        return {
+            attribute: lessons.with_takes_place(plan_type, attribute)
+            for attribute, lessons in grouped.items()
+        }
 
     def serialize(self) -> list[dict]:
         return [lesson.to_dict(self.date) for lesson in self.lessons]
@@ -145,9 +210,9 @@ class Lessons:
 
         sorted_lessons = sorted(
             self.lessons,
-            key=lambda x: (x.current_subject if x.current_subject is not None else "",
+            key=lambda x: (x.current_class if x.current_class is not None else "",
                            x.class_group if x.class_group is not None else "",
-                           x.forms,
+                           x.scheduled_forms,
                            x.periods)
         )
 
@@ -155,10 +220,10 @@ class Lessons:
 
         previous_lesson: Lesson | None = None
         for lesson in sorted_lessons:
-            should_get_grouped = (
+            can_get_grouped = (
                     previous_lesson is not None and
-                    lesson.rooms == previous_lesson.rooms and
-                    lesson.current_subject == previous_lesson.current_subject and
+                    lesson.current_rooms == previous_lesson.current_rooms and
+                    lesson.current_class == previous_lesson.current_class and
                     lesson.current_teachers == previous_lesson.current_teachers and
                     lesson.class_number == previous_lesson.class_number
             )
@@ -166,25 +231,29 @@ class Lessons:
             if previous_lesson is not None:
                 grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info)
 
-                should_get_grouped &= grouped_additional_info is not None
+                can_get_grouped &= grouped_additional_info is not None
             else:
                 grouped_additional_info = None
 
             if previous_lesson is not None:
                 if (
-                        (not lesson.forms and not grouped[-1].forms)
-                        or (lesson.forms and list(lesson.forms)[0] in grouped[-1].forms)
+                        # both lessons have no form
+                        (not lesson.scheduled_forms and not grouped[-1].scheduled_forms)
+                        # or lesson form is the same as previous lesson form
+                        # when this method is called, lessons should only have one form
+                        or (lesson.scheduled_forms and list(lesson.scheduled_forms)[0] in grouped[-1].scheduled_forms)
                 ):
                     # "temporal" grouping, since lesson is duplicated for each period of block,
                     # period must be even to get grouped onto first lesson of block
-                    should_get_grouped &= list(lesson.periods)[0] % 2 == 0
+                    can_get_grouped &= list(lesson.periods)[0] % 2 == 0
                 else:
                     # lesson is duplicated for each form -> periods must be the same ("spacial" grouping)
-                    should_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
+                    can_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
 
-            if should_get_grouped:
+            if can_get_grouped:
                 grouped[-1].periods |= lesson.periods
-                grouped[-1].forms |= lesson.forms
+                grouped[-1].scheduled_forms |= lesson.scheduled_forms
+                grouped[-1].current_forms |= lesson.current_forms
                 grouped[-1].info = "\n".join(filter(lambda x: x, [grouped[-1].info, lesson.info]))
                 grouped[-1].parsed_info = grouped_additional_info
                 grouped[-1].end = lesson.end
@@ -221,10 +290,10 @@ class Plan:
     additional_info: list[str]
     exams: dict[str, list[Exam]]
 
-    form_plan: indiware_mobil.FormPlan
+    form_plan: indiware_mobil.IndiwareMobilPlan
 
     @classmethod
-    def from_form_plan(cls, form_plan: indiware_mobil.FormPlan,
+    def from_form_plan(cls, form_plan: indiware_mobil.IndiwareMobilPlan,
                        teacher_abbreviation_by_surname: dict[str, str]) -> Plan:
         lessons: list[Lesson] = []
         exams: dict[str, list[Exam]] = defaultdict(list)
@@ -235,8 +304,22 @@ class Plan:
                     teacher_abbreviation_by_surname
                 ) if lesson.information is not None else ParsedLessonInfo([])
 
-                lessons.append(Lesson(
-                    forms={form.short_name},
+                new_lesson = Lesson(
+                    periods={lesson.period} if lesson.period is not None else [],
+
+                    scheduled_forms={form.short_name},
+                    scheduled_teachers=None,
+                    scheduled_rooms=None,
+                    scheduled_class=lesson.course2,
+
+                    current_forms={form.short_name},
+                    current_teachers=set(lesson.teacher().split()) if lesson.teacher() else set(),
+                    current_rooms=lesson.room().split(" ") if lesson.room() else [],
+                    current_class=lesson.subject(),
+
+                    info=lesson.information if lesson.information is not None else "",
+                    parsed_info=parsed_info,
+
                     class_subject=(
                         form.classes[lesson.class_number].subject if lesson.class_number in form.classes else None
                     ),
@@ -248,18 +331,27 @@ class Plan:
                         if lesson.class_number in form.classes else None
                     ),
                     class_number=lesson.class_number,
-                    current_subject=lesson.subject(),
-                    current_teachers=set(lesson.teacher().split()) if lesson.teacher() else None,
-                    rooms=lesson.room().split(" ") if lesson.room() else [],
-                    periods={lesson.period} if lesson.period is not None else [],
-                    info=lesson.information if lesson.information is not None else "",
-                    parsed_info=parsed_info,
                     subject_changed=lesson.subject.was_changed,
                     teacher_changed=lesson.teacher.was_changed,
                     room_changed=lesson.room.was_changed,
+
                     begin=lesson.start,
                     end=lesson.end
-                ))
+                )
+                if new_lesson.current_class == "---" and new_lesson.subject_changed:
+                    # Indiware Stundenplaner's way of telling us that the lesson is cancelled
+                    new_lesson.current_forms = set()
+                    new_lesson.current_class = None
+                    # the following should be empty already
+                    # new_lesson.current_teachers = set()
+                    # new_lesson.current_rooms = set()
+
+                new_lesson.scheduled_class = (
+                        new_lesson.scheduled_class or new_lesson.class_group or new_lesson.class_subject
+                )
+                new_lesson.scheduled_teachers = new_lesson.class_teachers
+
+                lessons.append(new_lesson)
 
             for exam in form.exams:
                 exam = copy.deepcopy(exam)

@@ -37,6 +37,7 @@ class _InfoParsers:
     # verlegt von St.7
     moved_from = re.compile(rf'verlegt von {_period}')
 
+    # course is always a subject
     substitution = re.compile(rf'für (?P<course>{_course}) (?P<teachers>{_teachers})')
 
     # What Happens With The Substituted Lesson
@@ -152,7 +153,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                     f"Block {periods_to_block_label(self.periods)}",
                     link=LessonInfoTextSegmentLink(
                         type="form",
-                        value=sorted(lesson.forms),
+                        value=sorted(lesson.scheduled_forms),
                         date=lesson_date,
                         periods=self.periods
                     )
@@ -166,7 +167,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
                         type="form",
-                        value=sorted(lesson.forms),
+                        value=sorted(lesson.scheduled_forms),
                         date=self.date,
                         periods=self.periods
                     )
@@ -203,7 +204,7 @@ class MovedTo(SerializeMixin, ParsedLessonInfoMessage):
                     f"Block {periods_to_block_label(self.periods)}",
                     link=LessonInfoTextSegmentLink(
                         type="form",
-                        value=sorted(lesson.forms),
+                        value=sorted(lesson.scheduled_forms),
                         date=lesson_date,
                         periods=self.periods
                     )
@@ -227,7 +228,7 @@ class MovedTo(SerializeMixin, ParsedLessonInfoMessage):
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
                         type="form",
-                        value=sorted(lesson.forms),
+                        value=sorted(lesson.scheduled_forms),
                         date=self.date,
                         periods=self.periods
                     )
@@ -251,7 +252,7 @@ class MovedTo(SerializeMixin, ParsedLessonInfoMessage):
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
                         type="form",
-                        value=sorted(lesson.forms),
+                        value=sorted(lesson.scheduled_forms),
                         date=self.date,
                         periods=self.periods
                     )

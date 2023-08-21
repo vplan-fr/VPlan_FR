@@ -8,12 +8,12 @@ from . import schools
 from .cache import Cache
 from .plan_extractor import PlanExtractor
 from .meta_extractor import MetaExtractor
-from .models import Teachers, Lessons, Exam, DefaultTimesInfo, Teacher
+from .models import Teachers, Lessons, Exam, Teacher
 from .vplan_utils import group_forms
 
 
 class PlanProcessor:
-    VERSION = "34"
+    VERSION = "35"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger

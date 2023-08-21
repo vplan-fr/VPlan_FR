@@ -6,21 +6,15 @@
     export let display_time = true;
     import { DropdownShell, Dropdown } from 'attractions';
 
-    let is_cancelled;
-
-    $: if (plan_type === "teachers") {
-        is_cancelled = lesson.current_teachers === null || !lesson.current_teachers.includes(plan_value)
-    } else {
-        is_cancelled = lesson.current_subject === "---";
-    }
-
-    $: subject = (lesson.current_subject !== "---" && lesson.current_subject !== null) ? lesson.current_subject : lesson.class_subject
-    $: subject = subject === lesson.class_subject && lesson.class_group !== null ? lesson.class_group : subject
-    $: subject = subject === null ? "-" : subject
-    $: teachers = (lesson.current_teachers !== null ? lesson.current_teachers : lesson.class_teachers) || []
-    $: subject_changed = lesson.subject_changed && !is_cancelled
-    $: teacher_changed = lesson.teacher_changed && !is_cancelled
-    $: room_changed = lesson.room_changed && !is_cancelled
+    $: teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers.length === 0 && lesson.takes_place
+    $: subject = (lesson.takes_place ? lesson.current_class : lesson.scheduled_class)
+    $: teachers = (lesson.takes_place && !teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers) || []
+    $: forms = (lesson.takes_place ? lesson.current_forms : lesson.scheduled_forms) || []
+    $: forms_str = lesson.takes_place ? lesson.current_forms_str : lesson.scheduled_forms_str
+    $: rooms = (lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms) || []
+    $: subject_changed = lesson.subject_changed && lesson.takes_place
+    $: teacher_changed = lesson.teacher_changed && lesson.takes_place
+    $: room_changed = lesson.room_changed && lesson.takes_place
 
     function periods_to_block_label(periods) {
         periods.sort(function (a, b) {  return a - b;  });
@@ -129,7 +123,7 @@
 <!--        </div>-->
 <!--    {/if}-->
 <!--</div>-->
-<div class="card mobile-view" class:cancelled={is_cancelled}>
+<div class="card mobile-view" class:cancelled={!lesson.takes_place}>
     <div class="horizontal-align">
         {#if display_time}
         <div class="vert-align max-width-center lesson-time-info">
@@ -138,9 +132,10 @@
         </div>
         {/if}
         <div class="subject info-element max-width-center extra_padding" class:changed={subject_changed}>
-            {subject}
+            {subject ? subject : "-"}
         </div>
-        <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed} class:teacher_absent={lesson.current_teachers === null && !is_cancelled}>
+        {#if plan_type !== "teachers"}
+        <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed} class:teacher_absent={teacher_absent}>
 <!--            <button on:click={() => {-->
 <!--                plan_type = "teachers";-->
 <!--                plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;-->
@@ -170,8 +165,9 @@
                 </DropdownShell>
             {/if}
         </div>
+        {/if}
         <div class="rooms vert-align max-width-center info-element" class:changed={room_changed}>
-            {#each lesson.rooms as room}
+            {#each rooms as room}
                 <button on:click={() => {
                     plan_type = "rooms";
                     plan_value = room;
@@ -183,21 +179,21 @@
 
         {#if plan_type !== "forms"}
         <div class="forms max-width-center info-element vert-align">
-            {#if lesson.forms.length === 0}
+            {#if forms.length === 0}
                 <span class="extra_padding">-</span>
-            {:else if lesson.forms.length === 1}
+            {:else if forms.length === 1}
                 <button on:click={() => {
                     plan_type = "forms";
-                    plan_value = lesson.forms[0];
-                }}>{lesson.forms[0]}</button>
+                    plan_value = forms[0];
+                }}>{forms[0]}</button>
             {:else}
                 <DropdownShell let:toggle class="dropdown-shell">
                     <button on:click={toggle}>
-                        {lesson.forms_str}
+                        {forms_str}
                     </button>
                     <Dropdown>
                         <div class="lighten_background">
-                            {#each lesson.forms as form}
+                            {#each forms as form}
                                 <button on:click={() => {
                                     plan_type = "forms";
                                     plan_value = form;
@@ -210,9 +206,9 @@
         </div>
         {/if}
     </div>
-    {#if lesson.parsed_info.length > 0}
+    {#if lesson.info.length > 0}
         <div class="info-element lesson-info">
-            {#each lesson.parsed_info as elem}
+            {#each lesson.info as elem}
                 <ul>
                     {#each elem as element}
                         <li>
@@ -231,7 +227,7 @@
                     {/each}
                 </ul>
             {/each}
-            {#if plan_type === "forms" && (lesson.forms.length > 1)}
+            {#if plan_type === "forms" && (forms.length > 1)}
                 <ul class="extra_forms">
                     <li>
                         <div class="horizontal_wrapper">
@@ -239,11 +235,11 @@
                             <div class="info-element">
                                 <DropdownShell let:toggle class="dropdown-shell">
                                     <button on:click={toggle}>
-                                        {lesson.forms_str}
+                                        {forms_str}
                                     </button>
                                     <Dropdown>
                                         <div class="lighten_background">
-                                            {#each lesson.forms as form}
+                                            {#each forms as form}
                                                 <button on:click={() => {
                                                     plan_type = "forms";
                                                     plan_value = form;
