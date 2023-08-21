@@ -20,9 +20,8 @@ def login() -> Response:
         tmp_user = User(str(user["_id"]))
         login_user(tmp_user)
         session.permanent = True
-        print("logged in!!!")
-        return Response("Success!!")
-    return jsonify({"error": "Wrong username or password"})
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Benutzername oder Passwort waren falsch! Bitte versuch es erneut."})
 
 
 @authorization.route('/signup', methods=['POST'])

@@ -163,3 +163,4 @@ cython_debug/
 
 client/node_modules
 creds.json
+proxies.json

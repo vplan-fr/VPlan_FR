@@ -14,6 +14,8 @@
     let grouped_forms = [];
     let api_base;
     $: api_base = `./api/v69.420/${school_num}`;
+    let logged_in = localStorage.getItem('logged_in') === 'true';
+    check_login_status();
 
     const pad = (n,s=2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
 
@@ -23,7 +25,11 @@
     let meta = {};
     let disabledDates = [];
     let enabled_dates = [];
+    
     function get_meta(api_base) {
+        if (!logged_in) {
+            return;
+        }
         fetch(`${api_base}/meta`)
             .then(response => response.json())
             .then(data => {
@@ -37,9 +43,13 @@
             })
             .catch(error => {
                 console.error(error);
-        });
+            }
+        );
     }
     function update_disabled_dates(enabled_dates) {
+        if (!logged_in) {
+            return;
+        }
         let tmp_start = new Date(enabled_dates[enabled_dates.length-1]);
         let tmp_end = new Date(enabled_dates[0]);
         tmp_start.setDate(tmp_start.getDate() + 1);
@@ -60,65 +70,81 @@
         }
     }
 
-    onMount(() => {
-        document.querySelector('.date-picker .handle input').setAttribute("readonly", "true");
-    });
+    function check_login_status() {
+        fetch('/check_login')
+            .then(response => response.json())
+            .then(data => {
+                logged_in = data["logged_in"];
+                localStorage.setItem('logged_in', `${logged_in}`);
+            })
+            .catch(error => {
+                console.error(error);
+            }
+        );
+    }
 
-    $: get_meta(api_base);
-    $: update_disabled_dates(enabled_dates);
+    // onMount(() => {
+    //     document.querySelector('.date-picker .handle input').setAttribute("readonly", "true");
+    // });
+
+    $: logged_in, get_meta(api_base);
+    $: logged_in, update_disabled_dates(enabled_dates);
 </script>
 
 <main>
-    <DatePicker 
-        format="%Y-%m-%d" 
-        locale="de-DE" 
-        closeOnSelection 
-        bind:disabledDates 
-        value={(date === null) ? null : new Date(date)}
-        on:change={(evt) => {
-            let tmp_dat = evt.detail.value;
-            date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
-        }}
-    />
-    <input id="inp_school_num" type="text" bind:value={school_num}>
-    {date}
-    <br>
-    <div class="input-field" id="room-select">
-        <label for="rooms">Wähle einen Raum aus:</label>
-        <select name="rooms" id="rooms" bind:value={selected_room}
-            on:change="{() => {plan_type = "rooms"; plan_value = selected_room}}">
-            {#each room_list || [] as room}
-                <option value="{room}">{room}</option>
-            {/each}
-        </select>
-    </div>
-    <div class="input-field" id="teacher-select">
-        <label for="teachers">Wähle einen Lehrer aus:</label>
-        <select name="teachers" id="teachers" bind:value={selected_teacher}
-            on:change="{() => {plan_type = "teachers"; plan_value = selected_teacher}}">
-            {#each teacher_list as teacher}
-                <option value="{teacher}">{teacher}</option>
-            {/each}
-        </select>
-    </div>
-    <div class="input-field" id="form-select">
-        <label for="forms">Wähle eine Klasse aus:</label>
-        <select name="forms" id="forms" bind:value={selected_form}
-            on:change="{() => {plan_type = "forms"; plan_value = selected_form}}">
-            {#each Object.entries(grouped_forms) as [form_group, forms]}
-                <optgroup label="{form_group}">
-                {#each forms as form}
-                    <option value="{form}">{form}</option>
+    {#if logged_in}
+        <DatePicker 
+            format="%Y-%m-%d" 
+            locale="de-DE" 
+            closeOnSelection 
+            bind:disabledDates 
+            value={(date === null) ? null : new Date(date)}
+            on:change={(evt) => {
+                let tmp_dat = evt.detail.value;
+                date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
+            }}
+        />
+        <input id="inp_school_num" type="text" bind:value={school_num}>
+        {date}
+        <br>
+        <div class="input-field" id="room-select">
+            <label for="rooms">Wähle einen Raum aus:</label>
+            <select name="rooms" id="rooms" bind:value={selected_room}
+                on:change="{() => {plan_type = "rooms"; plan_value = selected_room}}">
+                {#each room_list || [] as room}
+                    <option value="{room}">{room}</option>
                 {/each}
-                </optgroup>
-            {/each}
-        </select>
-    </div>
-    <br>
-    <br>
-    <Authentication></Authentication>
-    <Plan bind:api_base bind:date bind:plan_type bind:plan_value />
-    <!-- <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value /> -->
+            </select>
+        </div>
+        <div class="input-field" id="teacher-select">
+            <label for="teachers">Wähle einen Lehrer aus:</label>
+            <select name="teachers" id="teachers" bind:value={selected_teacher}
+                on:change="{() => {plan_type = "teachers"; plan_value = selected_teacher}}">
+                {#each teacher_list as teacher}
+                    <option value="{teacher}">{teacher}</option>
+                {/each}
+            </select>
+        </div>
+        <div class="input-field" id="form-select">
+            <label for="forms">Wähle eine Klasse aus:</label>
+            <select name="forms" id="forms" bind:value={selected_form}
+                on:change="{() => {plan_type = "forms"; plan_value = selected_form}}">
+                {#each Object.entries(grouped_forms) as [form_group, forms]}
+                    <optgroup label="{form_group}">
+                    {#each forms as form}
+                        <option value="{form}">{form}</option>
+                    {/each}
+                    </optgroup>
+                {/each}
+            </select>
+        </div>
+        <br>
+        <br>
+        <Plan bind:api_base bind:date bind:plan_type bind:plan_value />
+        <!-- <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value /> -->
+    {:else}
+        <Authentication bind:logged_in></Authentication>
+    {/if}
 </main>
 
 <style lang="scss">

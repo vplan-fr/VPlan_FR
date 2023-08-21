@@ -194,7 +194,7 @@
     }
 
     .lessons-wrapper {
-        --bar-width: 15px;
+        --bar-width: 10px;
         .lesson-time {
             position: relative;
             margin-left: -10px;
@@ -202,7 +202,7 @@
             width: max-content;
             border-radius: 0px 8px 8px 0px;
         
-            font-size: 1.875rem;
+            font-size: 1.3rem;
             padding: 1rem;
             line-height: 1;
             
