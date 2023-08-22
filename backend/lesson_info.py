@@ -127,6 +127,8 @@ def de_weekday_to_str(weekday: int) -> str:
 
 
 class ParsedLessonInfoMessage(abc.ABC):
+    before: str
+    after: str
     original_messages: list[str]
 
     @abc.abstractmethod
@@ -134,6 +136,13 @@ class ParsedLessonInfoMessage(abc.ABC):
         ...
 
     def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+        return [
+            *([LessonInfoTextSegment(self.before)] if self.before else []),
+            *self._to_text_segments(lesson_date, lesson),
+            *([LessonInfoTextSegment(self.after)] if self.after else [])
+        ]
+
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment("\n".join(self.original_messages))
         ]
@@ -144,7 +153,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
     periods: list[int]
     date: datetime.date | None
 
-    def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         # TODO: Fallback when len(periods) == 1
         if self.date is None:
             return [
@@ -186,7 +195,7 @@ class MovedTo(SerializeMixin, ParsedLessonInfoMessage):
     date: datetime.date | None
     periods: list[int]
 
-    def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         if self.date is None:
             return [
                 LessonInfoTextSegment(f"{self.course} "),
@@ -273,7 +282,7 @@ class InsteadOfCourse(SerializeMixin, ParsedLessonInfoMessage):
     _teachers: list[str]
     teachers: list[str]
 
-    def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(f"für {self.course} "),
             LessonInfoTextSegment(
@@ -294,7 +303,7 @@ class Cancelled(SerializeMixin, ParsedLessonInfoMessage):
     _teachers: list[str]
     teachers: list[str]
 
-    def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(f"{self.course} "),
             LessonInfoTextSegment(
@@ -344,7 +353,7 @@ class Exam(SerializeMixin, ParsedLessonInfoMessage):
 class WholeForm(SerializeMixin, ParsedLessonInfoMessage):
     form: str
 
-    def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(f"gesamte "),
             LessonInfoTextSegment(
@@ -361,7 +370,7 @@ class WholeForm(SerializeMixin, ParsedLessonInfoMessage):
 
 @dataclasses.dataclass
 class FailedToParse(SerializeMixin, ParsedLessonInfoMessage):
-    def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(", ".join(self.original_messages))
         ]
@@ -370,6 +379,8 @@ class FailedToParse(SerializeMixin, ParsedLessonInfoMessage):
 def create_literal_parsed_info(msg: str) -> ParsedLessonInfo:
     obj = FailedToParse()
     obj.original_messages = [msg]
+    obj.before = ""
+    obj.after = ""
 
     return ParsedLessonInfo(
         paragraphs=[
@@ -390,22 +401,22 @@ def resolve_teacher_abbreviations(surnames: list[str], abbreviation_by_surname: 
     return [abbreviation_by_surname.get(surname, surname) for surname in surnames]
 
 
-def _parse_message(info: str, plan_year: int, teacher_abbreviation_by_surname: dict[str, str]
-                   ) -> ParsedLessonInfoMessage:
+def __parse_message(info: str, plan_year: int, teacher_abbreviation_by_surname: dict[str, str]
+                    ) -> tuple[ParsedLessonInfoMessage, re.Match | None]:
     info = info.strip()
     if match := _InfoParsers.substitution.search(info):
         return InsteadOfCourse(
             match.group("course"),
             teachers := match.group("teachers").split(","),
             resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname)
-        )
+        ), match
     elif match := _InfoParsers.moved_from.search(info):
-        return MovedFrom([int(match.group("period_begin"))], None)
+        return MovedFrom([int(match.group("period_begin"))], None), match
     elif match := _InfoParsers.instead_of.search(info):
         return MovedFrom(
             parse_periods(match.group("periods")),
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date()
-        )
+        ), match
     elif match := _InfoParsers.held_at.search(info):
         return MovedTo(
             match.group("course"),
@@ -413,7 +424,7 @@ def _parse_message(info: str, plan_year: int, teacher_abbreviation_by_surname: d
             resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname),
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
             parse_periods(match.group("periods"))
-        )
+        ), match
     elif match := _InfoParsers.moved_to.search(info):
         return MovedTo(
             match.group("course"),
@@ -421,7 +432,7 @@ def _parse_message(info: str, plan_year: int, teacher_abbreviation_by_surname: d
             resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname),
             None,
             parse_periods(match.group("periods"))
-        )
+        ), match
     elif match := _InfoParsers.moved_to_date.search(info):
         return MovedTo(
             match.group("course"),
@@ -429,29 +440,44 @@ def _parse_message(info: str, plan_year: int, teacher_abbreviation_by_surname: d
             resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname),
             datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
             parse_periods(match.group("periods"))
-        )
+        ), match
     elif match := _InfoParsers.cancelled.search(info):
         return Cancelled(
             match.group("course"),
             teachers := match.group("teachers").split(","),
             resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname)
-        )
+        ), match
     elif match := _InfoParsers.exam.search(info):
-        return Exam(match.group("last_name"))
+        return Exam(match.group("last_name")), match
     elif match := _InfoParsers.do_where.search(info):
-        return DoAtLocation(match.group(1).strip())
+        return DoAtLocation(match.group(1).strip()), match
     elif match := _InfoParsers.individual_revision.search(info):
-        return IndividualRevision(match.groupdict(None)["location"])
+        return IndividualRevision(match.groupdict(None)["location"]), match
     elif match := _InfoParsers.whole_form.search(info):
-        return WholeForm(match.group("form").replace(" ", ""))
-    elif _InfoParsers.independent.search(info):
-        return DoIndependently()
-    elif _InfoParsers.tasks_in_lernsax.search(info):
-        return TasksInLernsax()
-    elif _InfoParsers.tasks_were_given.search(info):
-        return TasksWereGiven()
+        return WholeForm(match.group("form").replace(" ", "")), match
+    elif match := _InfoParsers.independent.search(info):
+        return DoIndependently(), match
+    elif match := _InfoParsers.tasks_in_lernsax.search(info):
+        return TasksInLernsax(), match
+    elif match := _InfoParsers.tasks_were_given.search(info):
+        return TasksWereGiven(), match
     else:
-        return FailedToParse()
+        return FailedToParse(), None
+
+
+def _parse_message(info: str, plan_year: int, teacher_abbreviation_by_surname: dict[str, str]
+                   ) -> ParsedLessonInfoMessage:
+    parsed_info, match = __parse_message(info, plan_year, teacher_abbreviation_by_surname)
+    parsed_info.original_messages = [info]
+
+    if match:
+        parsed_info.before = info[:match.start()]
+        parsed_info.after = info[match.end():]
+    else:
+        parsed_info.before = ""
+        parsed_info.after = ""
+
+    return parsed_info
 
 
 @dataclasses.dataclass
@@ -487,7 +513,6 @@ class LessonInfoMessage:
     def from_str(cls, message: str, plan_year: int, teacher_abbreviations: dict[str, str],
                  index: int) -> LessonInfoMessage:
         parsed = _parse_message(message, plan_year, teacher_abbreviations)
-        parsed.original_messages = [message]
 
         return cls(
             parsed=parsed,
