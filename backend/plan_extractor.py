@@ -9,7 +9,7 @@ from xml.etree import ElementTree as ET
 from stundenplan24_py import indiware_mobil, substitution_plan
 
 from . import lesson_info
-from .models import Plan, Lesson
+from .models import Plan, Lesson, Teacher, Teachers
 from .vplan_utils import parse_absent_element
 
 
@@ -19,7 +19,14 @@ class PlanExtractor:
         self._logger = logger
 
         form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_kl))
-        self.plan = Plan.from_form_plan(form_plan, teacher_abbreviation_by_surname)
+        self.plan = Plan.from_form_plan(form_plan)
+
+        self.extracted_teachers = self._extract_teachers()
+
+        teacher_abbreviation_by_surname = (
+                teacher_abbreviation_by_surname.copy()
+                | Teachers(list(self.extracted_teachers.values())).abbreviation_by_surname()
+        )
 
         if vplan_kl is None:
             self.substitution_plan = None
@@ -32,6 +39,8 @@ class PlanExtractor:
         self.lessons_grouped = self.plan.lessons.blocks_grouped()
 
         self.extrapolate_lesson_times()
+
+        self.resolve_teachers_in_lesson_info(teacher_abbreviation_by_surname)
 
     def fill_in_lesson_times(self):
         forms: dict[str, indiware_mobil.Form] = {form.short_name: form for form in self.plan.form_plan.forms}
@@ -180,3 +189,16 @@ class PlanExtractor:
             "timestamp": self.plan.form_plan.timestamp.isoformat(),
             "week": self.plan.week_letter()
         }
+
+    def _extract_teachers(self) -> dict[str, Teacher]:
+        all_classes = self.plan.get_all_classes()
+        out: dict[str, Teacher] = {}
+
+        for lesson in self.plan.lessons:
+            out |= lesson_info.extract_teachers(lesson, all_classes, logger=self._logger)
+
+        return out
+
+    def resolve_teachers_in_lesson_info(self, teacher_abbreviation_by_surname: dict[str, str]):
+        for lesson in self.lessons_grouped:
+            lesson.parsed_info.resolve_teachers(teacher_abbreviation_by_surname)

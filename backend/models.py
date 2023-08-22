@@ -293,15 +293,13 @@ class Plan:
     form_plan: indiware_mobil.IndiwareMobilPlan
 
     @classmethod
-    def from_form_plan(cls, form_plan: indiware_mobil.IndiwareMobilPlan,
-                       teacher_abbreviation_by_surname: dict[str, str]) -> Plan:
+    def from_form_plan(cls, form_plan: indiware_mobil.IndiwareMobilPlan) -> Plan:
         lessons: list[Lesson] = []
         exams: dict[str, list[Exam]] = defaultdict(list)
         for form in form_plan.forms:
             for lesson in form.lessons:
                 parsed_info = ParsedLessonInfo.from_str(
-                    lesson.information, form_plan.timestamp.year,
-                    teacher_abbreviation_by_surname
+                    lesson.information, form_plan.timestamp.year
                 ) if lesson.information is not None else ParsedLessonInfo([])
 
                 new_lesson = Lesson(
@@ -373,6 +371,28 @@ class Plan:
             2: "B"
         }.get(self.form_plan.week, "?")
 
+    def get_all_classes(self) -> dict[str, Class]:
+        out: dict[str, Class] = {}
+
+        for form in self.form_plan.forms:
+            for class_nr, class_ in form.classes.items():
+                if class_nr in out:
+                    out[class_nr].forms.add(form.short_name)
+                else:
+                    out[class_nr] = Class(
+                        teacher=class_.teacher,
+                        subject=class_.subject,
+                        group=class_.group,
+                        forms={form.short_name}
+                    )
+
+        return out
+
+
+@dataclasses.dataclass
+class Class(indiware_mobil.Class):
+    forms: set[str]
+
 
 @dataclasses.dataclass
 class Teacher:
@@ -382,7 +402,7 @@ class Teacher:
     info: str | None = None
     subjects: list[str] = dataclasses.field(default_factory=list)
 
-    def to_dict(self) -> dict:
+    def serialize(self) -> dict:
         return {
             "abbreviation": self.abbreviation,
             "full_name": self.full_name,
@@ -392,7 +412,7 @@ class Teacher:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> Teacher:
+    def deserialize(cls, data: dict) -> Teacher:
         return cls(
             abbreviation=data["abbreviation"],
             full_name=data["full_name"],
@@ -421,20 +441,23 @@ class Teacher:
 @dataclasses.dataclass
 class Teachers:
     teachers: list[Teacher] = dataclasses.field(default_factory=list)
-    timestamp: datetime.datetime = datetime.datetime.min
+    scrape_timestamp: datetime.datetime = datetime.datetime.min
 
-    def to_dict(self) -> dict:
+    def serialize(self) -> dict:
         return {
-            "teachers": {teacher.abbreviation: teacher.to_dict() for teacher in self.teachers},
-            "timestamp": self.timestamp.isoformat()
+            "teachers": {teacher.abbreviation: teacher.serialize() for teacher in self.teachers},
+            "timestamp": self.scrape_timestamp.isoformat()
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> Teachers:
+    def deserialize(cls, data: dict) -> Teachers:
         return cls(
-            teachers=[Teacher.from_dict(teacher) for teacher in data["teachers"].values()],
-            timestamp=datetime.datetime.fromisoformat(data["timestamp"])
+            teachers=[Teacher.deserialize(teacher) for teacher in data["teachers"].values()],
+            scrape_timestamp=datetime.datetime.fromisoformat(data["timestamp"])
         )
+
+    def to_dict(self) -> dict[str, Teacher]:
+        return {teacher.abbreviation: teacher for teacher in self.teachers}
 
     def abbreviation_by_surname(self) -> dict[str, str]:
         return {teacher.surname_no_titles(): teacher.abbreviation

@@ -38,6 +38,7 @@ class PlanCrawler:
                 self.plan_processor.update_plans(date, revision)
 
             if downloaded_files:
+                self.plan_processor.store_teachers()
                 self.plan_processor.update_meta()
 
             if once:
