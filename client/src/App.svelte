@@ -110,7 +110,7 @@
         <div class="input-field" id="room-select">
             <label for="rooms">Wähle einen Raum aus:</label>
             <select name="rooms" id="rooms" bind:value={selected_room}
-                on:change="{() => {plan_type = "rooms"; plan_value = selected_room}}">
+                on:change="{() => {plan_type = 'rooms'; plan_value = selected_room}}">
                 {#each room_list || [] as room}
                     <option value="{room}">{room}</option>
                 {/each}
@@ -119,7 +119,7 @@
         <div class="input-field" id="teacher-select">
             <label for="teachers">Wähle einen Lehrer aus:</label>
             <select name="teachers" id="teachers" bind:value={selected_teacher}
-                on:change="{() => {plan_type = "teachers"; plan_value = selected_teacher}}">
+                on:change="{() => {plan_type = 'teachers'; plan_value = selected_teacher}}">
                 {#each teacher_list as teacher}
                     <option value="{teacher}">{teacher}</option>
                 {/each}
@@ -128,7 +128,7 @@
         <div class="input-field" id="form-select">
             <label for="forms">Wähle eine Klasse aus:</label>
             <select name="forms" id="forms" bind:value={selected_form}
-                on:change="{() => {plan_type = "forms"; plan_value = selected_form}}">
+                on:change="{() => {plan_type = 'forms'; plan_value = selected_form}}">
                 {#each Object.entries(grouped_forms) as [form_group, forms]}
                     <optgroup label="{form_group}">
                     {#each forms as form}
