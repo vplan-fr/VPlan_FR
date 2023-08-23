@@ -132,6 +132,9 @@ async def main():
         await asyncio.gather(*(client.plan_downloader.client.close() for client in clients.values()),
                              return_exceptions=True)
         proxy_provider.store_proxies()
+        for client in clients.values():
+            client.plan_processor.store_teachers()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -51,7 +51,7 @@ class Lesson:
 
     is_internal: bool = False
 
-    def to_dict(self, lesson_date: datetime.date) -> dict:
+    def serialize(self, lesson_date: datetime.date) -> dict:
         return {
             "periods": sorted(self.periods),
             "scheduled_forms": sorted(self.scheduled_forms),
@@ -151,7 +151,7 @@ class Lessons:
         }
 
     def serialize(self) -> list[dict]:
-        return [lesson.to_dict(self.date) for lesson in self.lessons]
+        return [lesson.serialize(self.date) for lesson in self.lessons]
 
     @staticmethod
     def _group_lesson_info(

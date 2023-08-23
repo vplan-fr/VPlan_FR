@@ -21,7 +21,7 @@ class _InfoParsers:
 
     # teacher a,teacher b
     _teachers = fr"{_teacher}(?:, ?{_teacher})*"
-    _course = r"([A-Za-z0-9ÄÖÜäöüß-]{2,7})|(?:G\/R\/W)"  # maybe be more strict?
+    _course = r"([A-Za-z0-9ÄÖÜäöüß-]{2,8})|(?:G\/R\/W)"  # maybe be more strict?
     _period = r"St\.(?P<periods>(?P<period_begin>\d{1,2})(?:-(?P<period_end>\d{1,2}))?)"
     _periods = fr""
     _form = (
@@ -624,23 +624,28 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                     logger.debug(f"Skipping teacher \"surname\" {surname!r}.")
                     continue
 
-                _class = [
-                    class_ for class_ in classes.values()
+                _class: dict[str, models.Class] = {
+                    class_nr: class_ for class_nr, class_ in classes.items()
                     if course in (class_.subject, class_.group) and lesson.scheduled_forms.issubset(class_.forms)
-                ]
+                }
 
                 _name = surname.split()[1]
-                if len(_class) > 1:
-                    _class = [c for c in _class if c.teacher and _name.startswith(c.teacher[0])]
+                if len({c.teacher for c in _class.values()}) > 1 and lesson.class_number:
+                    new_classes = {c_id: c for c_id, c in _class.items() if c_id == lesson.class_number}
+                    if new_classes:
+                        _class = new_classes
 
-                if not _class or len(_class) != 1:
+                if len({c.teacher for c in _class.values()}) > 1:
+                    _class = {c_id: c for c_id, c in _class.items() if c.teacher and _name.startswith(c.teacher[0])}
+
+                if len({c.teacher for c in _class.values()}) != 1:
                     logger.debug(
                         f"Could not find class {course!r} in form {lesson.scheduled_forms!r}. "
                         f"Message: {message.parsed.original_messages!r}"
                     )
                     continue
 
-                abbreviation = _class[0].teacher
+                abbreviation = list(_class.values())[0].teacher
                 teacher = models.Teacher(abbreviation, None, surname, None, [])
 
                 out[teacher.abbreviation] = teacher
