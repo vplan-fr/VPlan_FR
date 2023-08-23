@@ -408,8 +408,6 @@ def resolve_teacher_abbreviations(surnames: list[str], abbreviation_by_surname: 
 
 
 def __parse_message(info: str, plan_year: int) -> tuple[ParsedLessonInfoMessage, re.Match | None]:
-    info = info.strip()
-    info = re.sub(r"(?<=\w)\/\s", "/", info)  # remove spaces after slashes like in G/ R/ W
     if match := _InfoParsers.substitution.search(info):
         return InsteadOfCourse(
             match.group("course"),
@@ -472,6 +470,8 @@ def __parse_message(info: str, plan_year: int) -> tuple[ParsedLessonInfoMessage,
 
 
 def _parse_message(info: str, plan_year: int) -> ParsedLessonInfoMessage:
+    info = info.strip()
+    info = re.sub(r"(?<=\w)\/\s", "/", info)  # remove spaces after slashes like in G/ R/ W
     parsed_info, match = __parse_message(info, plan_year)
     parsed_info.original_messages = [info]
 
