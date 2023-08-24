@@ -162,7 +162,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                 LessonInfoTextSegment(
                     f"Block {periods_to_block_label(self.periods)}",
                     link=LessonInfoTextSegmentLink(
-                        type="form",
+                        type="forms",
                         value=sorted(lesson.scheduled_forms),
                         date=lesson_date,
                         periods=self.periods
@@ -176,7 +176,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
-                        type="form",
+                        type="forms",
                         value=sorted(lesson.scheduled_forms),
                         date=self.date,
                         periods=self.periods
@@ -208,7 +208,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                 LessonInfoTextSegment(
                     f"{', '.join(self._teachers)}",
                     link=LessonInfoTextSegmentLink(
-                        type="teacher",
+                        type="teachers",
                         value=self.teachers,
                         date=lesson_date,
                         periods=self.periods
@@ -218,7 +218,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                 LessonInfoTextSegment(
                     f"Block {periods_to_block_label(self.periods)}",
                     link=LessonInfoTextSegmentLink(
-                        type="form",
+                        type="forms",
                         value=sorted(lesson.scheduled_forms),
                         date=lesson_date,
                         periods=self.periods
@@ -231,7 +231,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                 LessonInfoTextSegment(
                     f"{', '.join(self._teachers)}",
                     link=LessonInfoTextSegmentLink(
-                        type="teacher",
+                        type="teachers",
                         value=self.teachers,
                         date=self.date,
                         periods=self.periods
@@ -242,7 +242,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
-                        type="form",
+                        type="forms",
                         value=sorted(lesson.scheduled_forms),
                         date=self.date,
                         periods=self.periods
@@ -255,7 +255,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                 LessonInfoTextSegment(
                     f"{', '.join(self._teachers)}",
                     link=LessonInfoTextSegmentLink(
-                        type="teacher",
+                        type="teachers",
                         value=self.teachers,
                         date=self.date,
                         periods=self.periods
@@ -266,7 +266,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
-                        type="form",
+                        type="forms",
                         value=sorted(lesson.scheduled_forms),
                         date=self.date,
                         periods=self.periods
@@ -294,7 +294,7 @@ class InsteadOfCourse(SerializeMixin, _HasTeachersAndCourse):
             LessonInfoTextSegment(
                 f"{', '.join(self._teachers)}",
                 link=LessonInfoTextSegmentLink(
-                    type="teacher",
+                    type="teachers",
                     value=self.teachers,
                     date=lesson_date,
                     periods=sorted(lesson.periods)
@@ -315,7 +315,7 @@ class Cancelled(SerializeMixin, _HasTeachersAndCourse):
             LessonInfoTextSegment(
                 f"{', '.join(self._teachers)}",
                 link=LessonInfoTextSegmentLink(
-                    type="teacher",
+                    type="teachers",
                     value=self.teachers,
                     date=lesson_date,
                     periods=sorted(lesson.periods)
@@ -365,7 +365,7 @@ class WholeForm(SerializeMixin, ParsedLessonInfoMessage):
             LessonInfoTextSegment(
                 f"Klasse {self.form}",
                 link=LessonInfoTextSegmentLink(
-                    type="form",
+                    type="forms",
                     value=[self.form],
                     date=lesson_date,
                     periods=sorted(lesson.periods)
@@ -487,7 +487,7 @@ def _parse_message(info: str, plan_year: int) -> ParsedLessonInfoMessage:
 
 @dataclasses.dataclass
 class LessonInfoTextSegmentLink(SerializeMixin):
-    type: typing.Literal["form", "teacher", "room"]
+    type: typing.Literal["forms", "teachers", "rooms"]
     value: list[str]
     date: datetime.date | None
     periods: list[int] | None
