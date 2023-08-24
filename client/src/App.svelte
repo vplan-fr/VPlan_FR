@@ -1,16 +1,15 @@
 <script>
     import Plan from "./Plan.svelte";
-    import Weekplan from "./Weekplan.svelte";
     import Authentication from "./Authentication.svelte";
-    import { onMount } from 'svelte';
-    import { DatePicker } from 'attractions';
+    import {DatePicker} from 'attractions';
+    import {group_rooms} from "./utils.js";
 
     let school_num = "10001329";
     let date = null;
     let plan_type = "forms";
     let plan_value = "10/3";
     let teacher_list = [];
-    let rooms;
+    let all_rooms;
     let grouped_forms = [];
     let api_base;
     $: api_base = `./api/v69.420/${school_num}`;
@@ -27,55 +26,11 @@
     let enabled_dates = [];
 
     let grouped_rooms = [];
-    $: {
-        if (rooms) {
-            let _grouped_rooms = {};
-            for (let [room, data] of Object.entries(rooms)) {
-                let category = JSON.stringify([data.house, data.floor]);
 
-                if (_grouped_rooms[category] === undefined) {
-                    _grouped_rooms[category] = [];
-                }
-                _grouped_rooms[category].push(room);
-            }
-
-            grouped_rooms = Object.entries(_grouped_rooms).map(([category, rooms]) => [JSON.parse(category), rooms]);
-
-            let sort_key = (house, floor) => {
-                if (house === null) {
-                    return 1000;
-                }
-                if (typeof house === "string") {
-                    house = house.charCodeAt(0);
-                }
-                if (floor === null) {
-                    floor = 10;
-                }
-                return house*10 + floor;
-            }
-
-            grouped_rooms.sort(([[house1, floor1], _], [[house2, floor2], __]) => {
-                return sort_key(house1, floor1) - sort_key(house2, floor2);
-            });
-            grouped_rooms.map(([_, rooms]) => rooms.sort((room1, room2) => rooms[room1]?.room_nr - rooms[room2]?.room_nr));
-
-            function get_category_name([house, floor]) {
-                let out = "";
-                if (house !== null) {
-                    out += `Haus ${house}`;
-                }
-                if (floor !== null) {
-                    out += ` / Etage ${floor}`;
-                }
-                if (out.length === 0) {
-                    out = "Sonstige";
-                }
-                return out;
-            }
-
-            grouped_rooms = grouped_rooms.map(([category, rooms]) => [get_category_name(category), rooms]);
-        }
+    $: if (all_rooms) {
+        grouped_rooms = group_rooms(all_rooms);
     }
+
     
     function get_meta(api_base) {
         if (!logged_in) {
@@ -85,7 +40,7 @@
             .then(response => response.json())
             .then(data => {
                 meta = data.meta;
-                rooms = data.rooms;
+                all_rooms = data.rooms;
                 teacher_list = Object.keys(data.teachers);
                 grouped_forms = data.forms.grouped_forms;
                 enabled_dates = Object.keys(data.dates);
@@ -195,7 +150,7 @@
         </div>
         <br>
         <br>
-        <Plan bind:api_base bind:date bind:plan_type bind:plan_value />
+        <Plan bind:api_base bind:date bind:plan_type bind:plan_value bind:all_rooms/>
         <!-- <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value /> -->
     {:else}
         <Authentication bind:logged_in></Authentication>

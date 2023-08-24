@@ -1,5 +1,6 @@
 <script>
     import Lesson from './Lesson.svelte';
+    import Rooms from "./Rooms.svelte";
 
     export let api_base;
     export let date;
@@ -9,8 +10,10 @@
     export let extra_height = true;
     export let week_letter = "";
     export let external_times = true;
+    export let all_rooms;
 
     let lessons = [];
+    let rooms_data = {};
     let info;
     let title = "";
     let loading = true;
@@ -22,7 +25,7 @@
     };
     let controller = new AbortController();
     
-    function load_lessons(date, plan_type, entity) {
+    export function load_lessons(date, plan_type, entity) {
         controller.abort();
         loading = true;
         title = `${plan_type}-plan for ${plan_type} ${entity}`;
@@ -32,6 +35,7 @@
             .then(data => {
                 loading = false;
                 try {
+                    rooms_data = data["rooms"]
                     lessons = data["plans"][plan_type][entity] || [];
                     info = data["info"];
                     week_letter = info.week;
@@ -129,6 +133,7 @@
             </p>
             <span class="last-updated">Stand der Daten: <span class="custom-badge">{info.timestamp}</span></span>
         {/if}
+        <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms/>
     </div>
 </div>
 
