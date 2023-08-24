@@ -174,7 +174,7 @@ class PlanExtractor:
         out: dict[int, set[str]] = {}
 
         for period, free_rooms in self.free_rooms_by_period(all_rooms).items():
-            block = period // 2
+            block = (period + 1) // 2
 
             if block not in out:
                 out[block] = set(free_rooms)
