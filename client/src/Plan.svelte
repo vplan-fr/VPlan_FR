@@ -91,9 +91,9 @@
 <div class="plan" class:extra-height={extra_height}>
     <div class:loading>
         {#if show_title && info}
-            <div class="responsive-heading">
+            <h1 class="responsive-heading">
                 Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> <span class="no-linebreak">({info.week}-Woche)</span>
-            </div>
+            </h1>
         {/if}
         {#if lessons.length == 0}
             {#if loading}
