@@ -22,7 +22,7 @@ class PlanCrawler:
         self.plan_downloader = plan_downloader
         self.plan_processor = plan_processor
 
-    async def check_infinite(self, interval: int = 60):
+    async def check_infinite(self, interval: int = 60, once: bool = False):
         self.plan_downloader.migrate_all()
         self.plan_processor.update_all()
 
@@ -38,7 +38,11 @@ class PlanCrawler:
                 self.plan_processor.update_plans(date, revision)
 
             if downloaded_files:
+                self.plan_processor.store_teachers()
                 self.plan_processor.update_meta()
+
+            if once:
+                break
 
             await asyncio.sleep(interval)
 
@@ -84,6 +88,8 @@ async def main():
 
     argument_parser.add_argument("--only-download", action="store_true",
                                  help="Only download plans, do not parse them.")
+    argument_parser.add_argument("--once", action="store_true",
+                                 help="Only download once, then exit.")
     argument_parser.add_argument("--only-process", action="store_true",
                                  help="Do not download plans, only parse existing.")
     argument_parser.add_argument("-loglevel", "-l", default="INFO")
@@ -106,19 +112,29 @@ async def main():
             for client in clients.values():
                 client.plan_downloader.migrate_all()
                 client.plan_processor.update_all()
-        elif not args.only_download:
-            await asyncio.gather(
-                *[client.check_infinite() for client in clients.values()]
-            )
+        elif args.only_download:
+            if args.once:
+                for client in clients.values():
+                    client.plan_downloader.migrate_all()
+                await asyncio.gather(
+                    *[client.plan_downloader.update_fetch() for client in clients.values()]
+                )
+            else:
+                await asyncio.gather(
+                    *[client.plan_downloader.check_infinite() for client in clients.values()]
+                )
         else:
             await asyncio.gather(
-                *[client.plan_downloader.check_infinite() for client in clients.values()]
+                *[client.check_infinite(once=args.once) for client in clients.values()]
             )
     finally:
         logging.debug("Closing clients...")
         await asyncio.gather(*(client.plan_downloader.client.close() for client in clients.values()),
                              return_exceptions=True)
         proxy_provider.store_proxies()
+        for client in clients.values():
+            client.plan_processor.store_teachers()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

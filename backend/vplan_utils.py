@@ -28,6 +28,7 @@ _parse_form_pattern = re.compile(
 
 
 def parse_form(form: str) -> ParsedForm:
+    # TODO: make sure whole string matches
     match = _parse_form_pattern.match(form)
     if match is None or match.group("alpha"):
         return form,

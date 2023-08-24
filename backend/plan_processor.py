@@ -8,12 +8,12 @@ from . import schools
 from .cache import Cache
 from .plan_extractor import PlanExtractor
 from .meta_extractor import MetaExtractor
-from .models import Teachers, Lessons, Exam, DefaultTimesInfo, Teacher
+from .models import Teachers, Lessons, Exam, Teacher
 from .vplan_utils import group_forms
 
 
 class PlanProcessor:
-    VERSION = "34"
+    VERSION = "39"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -33,7 +33,7 @@ class PlanProcessor:
             self._logger.warning("=> Could not load any cached teachers.")
             return
 
-        self.teachers = Teachers.from_dict(data)
+        self.teachers = Teachers.deserialize(data)
 
         self._logger.info(f"=> Loaded {len(self.teachers.teachers)} cached teachers.")
 
@@ -111,6 +111,8 @@ class PlanProcessor:
                 "info.json"
             )
 
+            self.add_teachers(plan_extractor.extracted_teachers)
+
             self.cache.update_newest(date)
 
         self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")
@@ -128,16 +130,16 @@ class PlanProcessor:
         self.cache.store_meta_file(json.dumps(data), "meta.json")
         self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
-        self.update_teachers()
+        self.scrape_teachers()
         self.update_forms()
         self.update_rooms()
 
-    def update_teachers(self):
-        if datetime.datetime.now() - self.teachers.timestamp < datetime.timedelta(hours=6):
-            self._logger.info("* Skipping teacher update. Last update was less than 6 hours ago.")
+    def scrape_teachers(self):
+        if datetime.datetime.now() - self.teachers.scrape_timestamp < datetime.timedelta(hours=6):
+            self._logger.info("* Skipping teacher scrape. Last update was less than 6 hours ago.")
             return
 
-        self._logger.info("* Updating teachers...")
+        self._logger.info("* Scraping teachers...")
 
         if self.school_number not in schools.teacher_scrapers:
             self._logger.warning("=> No teacher scraper available for this school.")
@@ -149,29 +151,33 @@ class PlanProcessor:
 
             self._logger.debug(f" -> Found {len(scraped_teachers)} teachers.")
 
-        self._logger.info("=> Merging with extracted data...")
+        self.add_teachers(scraped_teachers, update_timestamp=True)
+        self.store_teachers()
 
-        _extracted_teachers = self.meta_extractor.teachers()
-        extracted_teachers = {teacher.abbreviation: teacher for teacher in _extracted_teachers}
+    def add_teachers(self, new_teachers: dict[str, Teacher], update_timestamp: bool = False):
+        self._logger.debug("=> Updating teachers...")
 
-        all_abbreviations = set(extracted_teachers.keys()) | set(scraped_teachers.keys())
+        old_teachers = self.teachers.to_dict()
+        all_abbreviations = set(old_teachers.keys()) | set(new_teachers.keys())
 
         merged_teachers = []
         for abbreviation in all_abbreviations:
-            scraped_teacher = scraped_teachers.get(abbreviation, Teacher(abbreviation))
-            extracted_teacher = extracted_teachers.get(abbreviation, Teacher(abbreviation))
+            new_teacher = new_teachers.get(abbreviation, Teacher(abbreviation))
+            old_teacher = old_teachers.get(abbreviation, Teacher(abbreviation))
 
             merged_teachers.append(
-                Teacher.merge(scraped_teacher, extracted_teacher)
+                Teacher.merge(new_teacher, old_teacher)
             )
 
         self.teachers = Teachers(
             teachers=merged_teachers,
-            timestamp=datetime.datetime.now()
+            scrape_timestamp=datetime.datetime.now() if update_timestamp else self.teachers.scrape_timestamp
         )
 
+    def store_teachers(self):
+        self._logger.info("* Storing teachers...")
         self.cache.store_meta_file(
-            json.dumps(self.teachers.to_dict()),
+            json.dumps(self.teachers.serialize()),
             "teachers.json"
         )
 
@@ -219,3 +225,4 @@ class PlanProcessor:
     def update_all(self):
         self.update_meta()
         self.migrate_all()
+        self.store_teachers()
