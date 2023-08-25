@@ -134,7 +134,11 @@
             </div>
         {/if}
         <div class="subject info-element max-width-center extra_padding" class:changed={subject_changed}>
-            {subject ? subject : "-"}
+            {#if lesson.scheduled_class !== lesson.current_class && lesson.scheduled_class != null}
+                <s>{lesson.scheduled_class}</s>&nbsp;
+            {/if}
+            {lesson.current_class != null ? lesson.current_class : ""}
+            {#if lesson.scheduled_class == null && lesson.current_class == null}-{/if}
         </div>
         {#if plan_type !== "teachers"}
             <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed}
