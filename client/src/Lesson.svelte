@@ -232,33 +232,33 @@
                     {/each}
                 </ul>
             {/each}
-            {#if plan_type === "forms" && (forms.length > 1)}
-                <ul class="extra_forms">
-                    <li>
-                        <div class="horizontal_wrapper">
-                            Beteiligte Klassen:
-                            <div class="info-element">
-                                <DropdownShell let:toggle class="dropdown-shell">
-                                    <button on:click={toggle}>
-                                        {forms_str}
-                                    </button>
-                                    <Dropdown>
-                                        <div class="lighten_background">
-                                            {#each forms as form}
-                                                <button on:click={() => {
-                                                    plan_type = "forms";
-                                                    plan_value = form;
-                                                }}>{form}</button>
-                                            {/each}
-                                        </div>
-                                    </Dropdown>
-                                </DropdownShell>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            {/if}
         </div>
+        {#if plan_type === "forms" && (forms.length > 1)}
+            <ul class="extra_forms">
+                <li>
+                    <div class="horizontal_wrapper">
+                        Beteiligte Klassen:
+                        <div class="info-element">
+                            <DropdownShell let:toggle class="dropdown-shell">
+                                <button on:click={toggle}>
+                                    {forms_str}
+                                </button>
+                                <Dropdown>
+                                    <div class="lighten_background">
+                                        {#each forms as form}
+                                            <button on:click={() => {
+                                                plan_type = "forms";
+                                                plan_value = form;
+                                            }}>{form}</button>
+                                        {/each}
+                                    </div>
+                                </Dropdown>
+                            </DropdownShell>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        {/if}
     {/if}
 </div>
 <style lang="scss">
@@ -378,6 +378,7 @@
     flex-direction: row;
     align-items: center;
     gap: 10px;
+    margin-top: 5px;
   }
 
 
