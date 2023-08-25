@@ -4,7 +4,7 @@
     export let plan_type;
     export let plan_value;
     export let display_time = true;
-    import { DropdownShell, Dropdown } from 'attractions';
+    import {DropdownShell, Dropdown} from 'attractions';
 
     $: teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers.length === 0 && lesson.takes_place
     $: subject = (lesson.takes_place ? lesson.current_class : lesson.scheduled_class)
@@ -17,7 +17,9 @@
     $: room_changed = lesson.room_changed && lesson.takes_place
 
     function periods_to_block_label(periods) {
-        periods.sort(function (a, b) {  return a - b;  });
+        periods.sort(function (a, b) {
+            return a - b;
+        });
 
         const rests = {
             0: "/Ⅱ",
@@ -126,45 +128,46 @@
 <div class="card mobile-view" class:cancelled={!lesson.takes_place}>
     <div class="horizontal-align">
         {#if display_time}
-        <div class="vert-align max-width-center lesson-time-info">
-            <span class="lesson-period">{periods_to_block_label(lesson.periods)}</span>
-            <span class="lesson-time">{lesson.begin}</span>
-        </div>
+            <div class="vert-align max-width-center lesson-time-info">
+                <span class="lesson-period">{periods_to_block_label(lesson.periods)}</span>
+                <span class="lesson-time">{lesson.begin}</span>
+            </div>
         {/if}
         <div class="subject info-element max-width-center extra_padding" class:changed={subject_changed}>
             {subject ? subject : "-"}
         </div>
         {#if plan_type !== "teachers"}
-        <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed} class:teacher_absent={teacher_absent}>
-<!--            <button on:click={() => {-->
-<!--                plan_type = "teachers";-->
-<!--                plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;-->
-<!--            }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>-->
-            {#if teachers.length === 0}
-                <span class="extra_padding">-</span>
-            {:else if teachers.length === 1}
-                <button on:click={() => {
+            <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed}
+                 class:teacher_absent={teacher_absent}>
+                <!--            <button on:click={() => {-->
+                <!--                plan_type = "teachers";-->
+                <!--                plan_value = lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher;-->
+                <!--            }}>{lesson.current_teacher === null ? lesson.class_teacher : lesson.current_teacher}</button>-->
+                {#if teachers.length === 0}
+                    <span class="extra_padding">-</span>
+                {:else if teachers.length === 1}
+                    <button on:click={() => {
                     plan_type = "teachers";
                     plan_value = teachers[0];
                 }}>{teachers[0]}</button>
-            {:else}
-                <DropdownShell let:toggle class="dropdown-shell">
-                    <button on:click={toggle}>
-                        {teachers.join(" ")}
-                    </button>
-                    <Dropdown>
-                        <div class="lighten_background">
-                            {#each teachers as teacher}
-                                <button on:click={() => {
+                {:else}
+                    <DropdownShell let:toggle class="dropdown-shell">
+                        <button on:click={toggle}>
+                            {teachers.join(" ")}
+                        </button>
+                        <Dropdown>
+                            <div class="lighten_background">
+                                {#each teachers as teacher}
+                                    <button on:click={() => {
                                     plan_type = "teachers";
                                     plan_value = teacher;
                                 }}>{teacher}</button>
-                            {/each}
-                        </div>
-                    </Dropdown>
-                </DropdownShell>
-            {/if}
-        </div>
+                                {/each}
+                            </div>
+                        </Dropdown>
+                    </DropdownShell>
+                {/if}
+            </div>
         {/if}
         <div class="rooms vert-align max-width-center info-element" class:changed={room_changed}>
             {#each rooms as room}
@@ -178,32 +181,32 @@
         </div>
 
         {#if plan_type !== "forms"}
-        <div class="forms max-width-center info-element vert-align">
-            {#if forms.length === 0}
-                <span class="extra_padding">-</span>
-            {:else if forms.length === 1}
-                <button on:click={() => {
+            <div class="forms max-width-center info-element vert-align">
+                {#if forms.length === 0}
+                    <span class="extra_padding">-</span>
+                {:else if forms.length === 1}
+                    <button on:click={() => {
                     plan_type = "forms";
                     plan_value = forms[0];
                 }}>{forms[0]}</button>
-            {:else}
-                <DropdownShell let:toggle class="dropdown-shell">
-                    <button on:click={toggle}>
-                        {forms_str}
-                    </button>
-                    <Dropdown>
-                        <div class="lighten_background">
-                            {#each forms as form}
-                                <button on:click={() => {
+                {:else}
+                    <DropdownShell let:toggle class="dropdown-shell">
+                        <button on:click={toggle}>
+                            {forms_str}
+                        </button>
+                        <Dropdown>
+                            <div class="lighten_background">
+                                {#each forms as form}
+                                    <button on:click={() => {
                                     plan_type = "forms";
                                     plan_value = form;
                                 }}>{form}</button>
-                            {/each}
-                        </div>
-                    </Dropdown>
-                </DropdownShell>
-            {/if}
-        </div>
+                                {/each}
+                            </div>
+                        </Dropdown>
+                    </DropdownShell>
+                {/if}
+            </div>
         {/if}
     </div>
     {#if lesson.info.length > 0}
@@ -218,7 +221,9 @@
                                         date = text_segment.link.date;
                                         plan_type = text_segment.link.type;
                                         plan_value = text_segment.link.value;
-                                    }}><u style="text-decoration: underline dotted var(--accent-color)">{text_segment["text"]}</u></button>
+                                    }}>
+                                        <u style="text-decoration: underline dotted var(--accent-color)">{text_segment["text"]}</u>
+                                    </button>
                                 {:else}
                                     <button class="no-btn-visuals">{text_segment["text"]}</button>
                                 {/if}
@@ -257,333 +262,358 @@
     {/if}
 </div>
 <style lang="scss">
-    :global(.info-element .dropdown-shell) { 
+  :global(.info-element .dropdown-shell) {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    & > button {
+      transition: background-color .2s ease;
+      width: 100%;
+      padding: 5px;
+      border-radius: 5px;
+      line-height: 1.313rem;
+
+      &:hover, &:focus-visible {
+        background: rgba(0, 0, 0, 0.2) !important;
+      }
+    }
+  }
+
+  //:global(.desktop-view .info-element .dropdown-shell) {
+  //    & > button {
+  //        font-size: 1.875rem;
+  //        padding: 1rem;
+  //        line-height: 1;
+  //        border-radius: 8px;
+  //    }
+  //}
+  :global(.mobile-view .info-element .dropdown-shell > button) {
+    font-size: 0.875rem;
+  }
+
+  :global(.info-element .dropdown) {
+    width: 100%;
+    top: calc(100% - 5px);
+    border-radius: 0px 0px 5px 5px !important;
+    margin-top: 0 !important;
+    box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.14), 0 10px 10px 0 rgba(0, 0, 0, 0.12) !important;
+    background-color: var(--background-color) !important;
+    overflow: hidden;
+
+    .lighten_background {
+      display: flex;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.06);
+
+      button {
+        transition: background-color .2s ease;
         width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        padding: 5px;
 
-        & > button {
-            transition: background-color .2s ease;
-            width: 100%;
-            padding: 5px;
-            border-radius: 5px;
-            width: 100%;
-            line-height: 1.313rem;
+        &:nth-last-of-type(1) {
+          border-bottom-left-radius: 5px;
+          border-bottom-right-radius: 5px;
+        }
 
-            &:hover, &:focus-visible {
-                background: rgba(0, 0, 0, 0.2) !important;
-            }
-        }
-    }
-    //:global(.desktop-view .info-element .dropdown-shell) {
-    //    & > button {
-    //        font-size: 1.875rem;
-    //        padding: 1rem;
-    //        line-height: 1;
-    //        border-radius: 8px;
-    //    }
-    //}
-    :global(.mobile-view .info-element .dropdown-shell > button) {
-        font-size: 0.875rem;
-    }
-    :global(.info-element .dropdown) {
-        width: 100%;
-        top: calc(100% - 5px);
-        border-radius: 0px 0px 5px 5px !important;
-        margin-top: 0 !important;
-        box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.14), 0 10px 10px 0 rgba(0, 0, 0, 0.12) !important;
-        background-color: var(--background-color) !important;
-        overflow: hidden;
-        .lighten_background {
-            display: flex;
-            flex-direction: column;
-            background: rgba(255, 255, 255, 0.06);
-    
-            button {
-                transition: background-color .2s ease;
-                width: 100%;
-                padding: 5px;
-                &:nth-last-of-type(1) {
-                    border-bottom-left-radius: 5px;
-                    border-bottom-right-radius: 5px;
-                }
-                line-height: 1.313rem;
-                &:hover, &:focus-visible {
-                    background: rgba(0, 0, 0, 0.2) !important;
-                }
-            }
-        }
-    }
-    :global(.info-element .dropdown.top) {
-        border-radius: 5px 5px 0px 0px !important;    
-        box-shadow: 0 -4px 4px -1px rgba(0, 0, 0, 0.2), 0 -5px 5px 0 rgba(0, 0, 0, 0.14), 0 -10px 10px 0 rgba(0, 0, 0, 0.12) !important;
-    }
-    :global(.desktop-view .info-element .dropdown.top) {
-        border-radius: 8px 8px 0px 0px !important;
-        box-shadow: 0 -4px 4px -1px rgba(0, 0, 0, 0.2), 0 -5px 5px 0 rgba(0, 0, 0, 0.14), 0 -10px 10px 0 rgba(0, 0, 0, 0.12) !important;
-    }
-    :global(.mobile-view .info-element .dropdown) {
-        button {
-            font-size: 0.875rem;
-            padding: 5px;
-            line-height: normal;
-        }
-    }
-    :global(.desktop-view .info-element .dropdown) {
-        border-radius: 0px 0px 8px 8px !important;
-        button {
-            font-size: 1.875rem;
-            padding: 1rem;
-            line-height: 1;
-            &:nth-last-of-type(1) {
-                border-bottom-left-radius: 8px;
-                border-bottom-right-radius: 8px;
-            }
-        }
-    }
-    :global(.extra_forms .dropdown-shell button) {
-        border: none;
-        background: transparent;
-        color: var(--text-color);
-    }
-    
-    .no-btn-visuals {
-        border: 0;
-        background: none;
-        padding: 0;
-        margin: 0;
-        margin-right: .3rem;
-        text-align: start;
-    }
-
-    .extra_forms .horizontal_wrapper {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 10px;
-    }
-
-    
-    .grid-align-wrapper {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: min-content min-content;
-        &.large_grid {
-            grid-template-rows: min-content min-content min-content;
-        }
-        grid-column-gap: 10px;
-        grid-row-gap: 10px;
-        .wide-area {
-            grid-area: 1 / 1 / 2 / 3;
-            &.second_of_type {
-                grid-area: 3 / 1 / 4 / 3;
-            }
-        }
-        .small-area {
-            grid-area: 2 / 1 / 3 / 2;
-            &.second_of_type {
-                grid-area: 2 / 2 / 3 / 3;
-            }
-        }
-    }
-
-    .lesson-info {
-        margin-top: 10px;
-        padding: 8px !important;
-        background: rgba(255, 255, 255, 0.05) !important;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        min-height: unset !important;
-        
-        button {
-            font-size: 0.875rem;
-            font-weight: 300;
-            line-height: 1.313rem;
-            color: var(--text-color);
-        }
-    }
-
-    .info-element {
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 5px;
-        min-height: 1.938rem;
-        
-        & > button {
-            &:nth-of-type(1) {
-                border-top-left-radius: 5px;
-                border-top-right-radius: 5px;
-            }
-            &:nth-last-of-type(1) {
-                border-bottom-left-radius: 5px;
-                border-bottom-right-radius: 5px;
-            }
-            transition: background-color .2s ease;
-            width: 100%;
-            padding: 5px;
-            line-height: 1.313rem;
-
-            &:hover, &:focus-visible {
-                background: rgba(0, 0, 0, 0.2) !important;
-            }
-        }
-    
-        &.teacher_absent {
-            background: rgba(255, 255, 255, 0.08);
-            outline: 3px solid var(--cancelled-color);
-            outline-offset: -3px;
-        }
-    }
-
-    .extra_padding {
-        padding: 5px 0px;
         line-height: 1.313rem;
-        min-height: 1.313rem;
-    }
-    
-    .changed {
-        // background: var(--accent-color) !important;
 
-        outline: solid 3px var(--accent-color);
-        outline-offset: -3px;
-
-        &:not(.teacher_absent) {
-            & > button:hover, & > button:focus-visible {
-                background: rgba(0, 0, 0, 0.3) !important;
-            }
+        &:hover, &:focus-visible {
+          background: rgba(0, 0, 0, 0.2) !important;
         }
+      }
+    }
+  }
+
+  :global(.info-element .dropdown.top) {
+    border-radius: 5px 5px 0px 0px !important;
+    box-shadow: 0 -4px 4px -1px rgba(0, 0, 0, 0.2), 0 -5px 5px 0 rgba(0, 0, 0, 0.14), 0 -10px 10px 0 rgba(0, 0, 0, 0.12) !important;
+  }
+
+  :global(.desktop-view .info-element .dropdown.top) {
+    border-radius: 8px 8px 0px 0px !important;
+    box-shadow: 0 -4px 4px -1px rgba(0, 0, 0, 0.2), 0 -5px 5px 0 rgba(0, 0, 0, 0.14), 0 -10px 10px 0 rgba(0, 0, 0, 0.12) !important;
+  }
+
+  :global(.mobile-view .info-element .dropdown) {
+    button {
+      font-size: 0.875rem;
+      padding: 5px;
+      line-height: normal;
+    }
+  }
+
+  :global(.desktop-view .info-element .dropdown) {
+    border-radius: 0px 0px 8px 8px !important;
+
+    button {
+      font-size: 1.875rem;
+      padding: 1rem;
+      line-height: 1;
+
+      &:nth-last-of-type(1) {
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+      }
+    }
+  }
+
+  :global(.extra_forms .dropdown-shell button) {
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+  }
+
+  .no-btn-visuals {
+    border: 0;
+    background: none;
+    padding: 0;
+    margin: 0 .3rem 0 0;
+    text-align: start;
+  }
+
+  .extra_forms .horizontal_wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+
+
+  //.grid-align-wrapper {
+  //    width: 100%;
+  //    display: grid;
+  //    grid-template-columns: repeat(2, 1fr);
+  //    grid-template-rows: min-content min-content;
+  //    &.large_grid {
+  //        grid-template-rows: min-content min-content min-content;
+  //    }
+  //    grid-column-gap: 10px;
+  //    grid-row-gap: 10px;
+  //    .wide-area {
+  //        grid-area: 1 / 1 / 2 / 3;
+  //        &.second_of_type {
+  //            grid-area: 3 / 1 / 4 / 3;
+  //        }
+  //    }
+  //    .small-area {
+  //        grid-area: 2 / 1 / 3 / 2;
+  //        &.second_of_type {
+  //            grid-area: 2 / 2 / 3 / 3;
+  //        }
+  //    }
+  //}
+
+  .lesson-info {
+    margin-top: 10px;
+    padding: 8px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: unset !important;
+
+    button {
+      font-size: 0.875rem;
+      font-weight: 300;
+      line-height: 1.313rem;
+      color: var(--text-color);
+    }
+  }
+
+  .info-element {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    min-height: 1.938rem;
+
+    & > button {
+      &:nth-of-type(1) {
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+      }
+
+      &:nth-last-of-type(1) {
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+      }
+
+      transition: background-color .2s ease;
+      width: 100%;
+      padding: 5px;
+      line-height: 1.313rem;
+
+      &:hover, &:focus-visible {
+        background: rgba(0, 0, 0, 0.2) !important;
+      }
     }
 
-    //.subject {
-    //    border-radius: 5px;
+    &.teacher_absent {
+      background: rgba(255, 255, 255, 0.08);
+      outline: 3px solid var(--cancelled-color);
+      outline-offset: -3px;
+    }
+  }
+
+  .extra_padding {
+    padding: 5px 0px;
+    line-height: 1.313rem;
+    min-height: 1.313rem;
+  }
+
+  .changed {
+    // background: var(--accent-color) !important;
+
+    outline: solid 3px var(--accent-color);
+    outline-offset: -3px;
+
+    &:not(.teacher_absent) {
+      & > button:hover, & > button:focus-visible {
+        background: rgba(0, 0, 0, 0.3) !important;
+      }
+    }
+  }
+
+  //.subject {
+  //    border-radius: 5px;
+  //}
+
+  .subject, .teachers button, .rooms button, .forms button {
+    color: var(--text-color);
+    font-weight: 400;
+    border: none;
+    background: none;
+  }
+
+  .teachers button {
+    font-weight: 600;
+  }
+
+  .lesson-period {
+    white-space: nowrap;
+  }
+
+  .mobile-view {
+    //display: none;
+    //@media only screen and (max-width: 600px) {
+    //    display: block;
     //}
+    display: block;
 
-    .subject, .teachers button, .rooms button, .forms button {
-        color: var(--text-color);
-        font-weight: 400;
-        border: none;
-        background: none;
-    }
-    .teachers button {
-        font-weight: 600;
-    }
     .lesson-period {
-        white-space: nowrap;
+      font-size: 0.875rem;
+      font-weight: 400;
     }
-    .mobile-view {
-        //display: none;
-        //@media only screen and (max-width: 600px) {
-        //    display: block;
-        //}
-        display: block;
-        .lesson-period {
-            font-size: 0.875rem;
-            font-weight: 400;
-        }
-        .lesson-time {
-            font-size: 0.75rem;
-            font-weight: 400;
-        }
-        .subject, .info-element, .info-element > button, .extra_padding {
-            font-size: 0.875rem;
-        }
 
+    .lesson-time {
+      font-size: 0.75rem;
+      font-weight: 400;
     }
-    .cancelled {
-          outline: var(--cancelled-color) solid 3px;
-          outline-offset: -3px;
+
+    .subject, .info-element, .info-element > button, .extra_padding {
+      font-size: 0.875rem;
     }
-    //.desktop-view {
-    //    display: none;
-    //    @media only screen and (min-width: 601px) {
-    //        display: block;
-    //    }
-    //    .horizontal-align {
-    //        gap: 0;
-    //        justify-content: space-between;
-    //    }
-    //    .lesson-time-info {
-    //        padding: 0px 40px 0px 30px;
-    //    }
-    //    .subject {
-    //        padding: .6rem 0;
-    //    }
-    //    .info-element {
-    //        line-height: 1;
-    //        & > button {
-    //            padding: 1rem;
-    //            line-height: 1;
-    //            &:nth-of-type(1) {
-    //                border-top-left-radius: 8px;
-    //                border-top-right-radius: 8px;
-    //            }
-    //            &:nth-last-of-type(1) {
-    //                border-bottom-left-radius: 8px;
-    //                border-bottom-right-radius: 8px;
-    //            }
-    //        }
-    //        border-radius: 8px;
-    //    }
-    //    .extra_padding {
-    //        padding: 1rem 0rem;
-    //        line-height: 1;
-    //        border-radius: 8px;
-    //    }
-    //    .lesson-period {
-    //        font-size: 1.625rem;
-    //        font-weight: 400;
-    //    }
-    //    .lesson-time {
-    //        font-size: 1.25rem;
-    //        font-weight: 400;
-    //    }
-    //    .subject, .info-element, .info-element > button {
-    //        font-size: 1.875rem;
-    //    }
-    //    .lesson-info {
-    //        margin-top: 20px;
-    //        button {
-    //            font-size: 1.3rem;
-    //            line-height: 1.5;
-    //        }
-    //    }
-    //    .cancelled {
-    //        grid-area: 1 / 1 / 3 / 3;
-    //    }
-    //    .forms, .rooms {
-    //        flex-direction: column;
-    //        align-items: center;
-    //    }
-    //}
-    .horizontal-align {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8vw;
-        @media only screen and (max-width: 380px) {
-            gap: 5px;
-        }
+
+  }
+
+  .cancelled {
+    outline: var(--cancelled-color) solid 3px;
+    outline-offset: -3px;
+  }
+
+  //.desktop-view {
+  //    display: none;
+  //    @media only screen and (min-width: 601px) {
+  //        display: block;
+  //    }
+  //    .horizontal-align {
+  //        gap: 0;
+  //        justify-content: space-between;
+  //    }
+  //    .lesson-time-info {
+  //        padding: 0px 40px 0px 30px;
+  //    }
+  //    .subject {
+  //        padding: .6rem 0;
+  //    }
+  //    .info-element {
+  //        line-height: 1;
+  //        & > button {
+  //            padding: 1rem;
+  //            line-height: 1;
+  //            &:nth-of-type(1) {
+  //                border-top-left-radius: 8px;
+  //                border-top-right-radius: 8px;
+  //            }
+  //            &:nth-last-of-type(1) {
+  //                border-bottom-left-radius: 8px;
+  //                border-bottom-right-radius: 8px;
+  //            }
+  //        }
+  //        border-radius: 8px;
+  //    }
+  //    .extra_padding {
+  //        padding: 1rem 0rem;
+  //        line-height: 1;
+  //        border-radius: 8px;
+  //    }
+  //    .lesson-period {
+  //        font-size: 1.625rem;
+  //        font-weight: 400;
+  //    }
+  //    .lesson-time {
+  //        font-size: 1.25rem;
+  //        font-weight: 400;
+  //    }
+  //    .subject, .info-element, .info-element > button {
+  //        font-size: 1.875rem;
+  //    }
+  //    .lesson-info {
+  //        margin-top: 20px;
+  //        button {
+  //            font-size: 1.3rem;
+  //            line-height: 1.5;
+  //        }
+  //    }
+  //    .cancelled {
+  //        grid-area: 1 / 1 / 3 / 3;
+  //    }
+  //    .forms, .rooms {
+  //        flex-direction: column;
+  //        align-items: center;
+  //    }
+  //}
+  .horizontal-align {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8vw;
+    @media only screen and (max-width: 380px) {
+      gap: 5px;
     }
-    .vert-align {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+  }
+
+  .vert-align {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .max-width-center {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+    padding: 10px;
+
+    .lesson-time-info {
+      gap: 5px;
     }
-    .max-width-center {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-    .card {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 5px;
-        padding: 10px;
-        .lesson-time-info {
-            gap: 5px;
-        }
-    }
+  }
 </style>
