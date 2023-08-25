@@ -1,7 +1,7 @@
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
     for (let [room, data] of Object.entries(rooms)) {
-        let category = JSON.stringify([data.house, data.floor]);
+        let category = JSON.stringify([data?.house, data?.floor]);
 
         if (_grouped_rooms[category] === undefined) {
             _grouped_rooms[category] = [];
@@ -31,10 +31,10 @@ export function group_rooms(rooms) {
 
     function get_category_name([house, floor]) {
         let out = "";
-        if (house !== null) {
+        if (house != null) {
             out += `Haus ${house}`;
         }
-        if (floor !== null) {
+        if (floor != null) {
             out += ` / Etage ${floor}`;
         }
         if (out.length === 0) {

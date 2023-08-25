@@ -16,18 +16,21 @@
         {#each Object.entries(rooms_data.free_rooms_by_block) as [block, free_rooms]}
             <div class="block">
                 <h2>Block {block}</h2>
-                {#each group_rooms(Object.fromEntries(free_rooms.map(r => [r, all_rooms[r]]))) as [category, rooms]}
-                    <h3>{category}</h3>
-                    {#each rooms as room}
-                        <!--{group_rooms()}-->
-                        <button class="chip" on:click={() => {
+                <ul>
+                    {#each group_rooms(Object.fromEntries(free_rooms.map(r => [r, all_rooms[r]]))) as [category, rooms]}
+                        <li>{category}:
+                        {#each rooms as room}
+                            <!--{group_rooms()}-->
+                            <button class="lighten_background chip info-element" on:click={() => {
                             plan_type = 'rooms';
                             plan_value = room;
                         }}>
-                            <span>{room}</span>
-                        </button>
+                                <span>{room}</span>
+                            </button>
+                        {/each}
+                        </li>
                     {/each}
-                {/each}
+                </ul>
             </div>
         {/each}
     {/if}
@@ -52,11 +55,12 @@
     /*font-size: 16px;*/
     //line-height: 50px;
     border-radius: 9999px;
-    background-color: $background;
+    border: none;
+    background: none;
 
     span {
       // text color
-        color: white;
+      color: white;
     }
   }
 </style>
