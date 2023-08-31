@@ -16,15 +16,16 @@ from var import *
 api = Blueprint('api', __name__)
 
 
-@api.route(f"{API_BASE_URL}/schools", methods=["GET"])
+@api.route(f"/schools", methods=["GET"])
 def schools() -> Response:
     with open("creds.json", "r") as f:
         creds: dict = json.load(f)
-    return jsonify([
+    school_list = [
         {
-            k: v for k, v in elem.items() if k in ["school_number", "school_name", "display_name"]
+            k: v for k, v in elem.items() if k in ["school_number", "display_name"]
         } for elem in creds.values()
-    ])
+    ]
+    return jsonify({elem["school_number"]: elem["display_name"] for elem in school_list})
 
 
 @api.route(f"{API_BASE_URL}/meta", methods=["GET"], endpoint="meta_api")

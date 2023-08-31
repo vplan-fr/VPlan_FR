@@ -77,6 +77,14 @@ def account() -> Response:
         return jsonify({"success": True}) if x.deleted_count == 1 else jsonify({"success": False})
 
 
+@authorization.route('/authorized_schools', methods=['GET'])
+@login_required
+def authorized_schools() -> Response:
+    return jsonify(
+        current_user.get_authorized_schools()
+    )
+
+
 def school_authorized(func):
     def wrapper_thing(*args, **kwargs):
         if not current_user.user:
