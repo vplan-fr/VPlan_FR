@@ -4,7 +4,7 @@
     import {DatePicker} from 'attractions';
     import {group_rooms} from "./utils.js";
 
-    let school_num = "10001329";
+    let school_num = localStorage.getItem('school_num');
     let date = null;
     let plan_type = "forms";
     let plan_value = "10/3";
@@ -99,8 +99,8 @@
     //$: logged_in, update_disabled_dates(enabled_dates);
 
     // Popup for school authorization
-    import SchoolAuthorization from './SchoolAuthorization.svelte';
-    let isPopupVisible = true;
+    import SchoolAuthorization from './SchoolManager.svelte';
+    let isPopupVisible = false;
     function togglePopup() {
         isPopupVisible = !isPopupVisible;
     }
@@ -117,7 +117,7 @@
 <main>
     <div id="auth-wrapper">
         {#if isPopupVisible}
-            <SchoolAuthorization bind:api_base isPopupVisible={isPopupVisible} on:close={togglePopup}/>
+            <SchoolAuthorization bind:api_base bind:school_num={school_num} isPopupVisible={isPopupVisible} on:close={togglePopup}/>
         {/if}
     </div>
 

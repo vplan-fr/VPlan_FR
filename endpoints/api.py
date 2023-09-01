@@ -88,6 +88,15 @@ def plan(school_num: str) -> Response:
     return jsonify(data)
 
 
+def get_school_by_id(school_num: str):
+    with open("creds.json", "r") as f:
+        creds: dict = json.load(f)
+    for school_data in creds.values():
+        if school_data.get("school_number") == school_num:
+            return school_data
+    return None
+
+
 @api.route(f"/authorize", methods=["POST"])
 def authorize() -> Response:
     school_num = request.form.get("school_num")
@@ -95,9 +104,8 @@ def authorize() -> Response:
         return jsonify({"error": "no school number provided"})
     with open(".cache/auth.log", "a") as f:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
-    with open("creds.json", "r") as f:
-        creds = json.load(f)
-    if school_num not in creds:
+    school_data = get_school_by_id(school_num)
+    if not school_data:
         return jsonify({"error": "school number not known, please contact us, if you want to provide additional credentials"})
     username = request.form.get("username")
     if username is None:
@@ -105,10 +113,12 @@ def authorize() -> Response:
     pw = request.form.get("pw")
     if pw is None:
         return jsonify({"error": "school password not provided"})
-    if username != creds[school_num]["username"] or pw != creds[school_num]["password"]:
+    if username != school_data["hosting"]["creds"]["students"]["username"] or pw != school_data["hosting"]["creds"]["students"]["password"]:
         return jsonify({"error": "username or password wrong"})
     current_user.authorize_school(school_num)
-    return Response("Success!")
+    return jsonify({
+        "message": "Success!!!"
+    })
 
 
 @api.route(f"{API_BASE_URL}/instant_authorization", methods=["GET"])
