@@ -29,6 +29,7 @@ class User(UserMixin):
         self.user = users.find_one({'_id': ObjectId(self.mongo_id)})
 
     def get_authorized_schools(self):
+        self.get_user()
         return self.user.get("authorized_schools")
 
     def authorize_school(self, school_num: str):

@@ -73,7 +73,7 @@ def parse_form_minor(minor: str) -> int | None:
 
     if minor_int is None:
         return None
-    elif not 1 <= minor_int <= 8:
+    elif not 1 <= minor_int <= 13:
         return None
     else:
         return minor_int
