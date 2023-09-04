@@ -31,7 +31,6 @@
         grouped_rooms = group_rooms(all_rooms);
     }
 
-
     function get_meta(api_base) {
         if (!logged_in) {
             return;
@@ -90,13 +89,8 @@
         );
     }
 
-
-    // onMount(() => {
-    //     document.querySelector('.date-picker .handle input').setAttribute("readonly", "true");
-    // });
-
-    //$: logged_in, get_meta(api_base);
-    //$: logged_in, update_disabled_dates(enabled_dates);
+    $: logged_in, get_meta(api_base);
+    $: logged_in, update_disabled_dates(enabled_dates);
 
     // Popup for school authorization
     import SchoolAuthorization from './SchoolManager.svelte';
