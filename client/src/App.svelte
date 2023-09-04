@@ -189,8 +189,7 @@
     }
 
     main {
-        margin-top: 60px;
-        //margin: 0 auto;
+        margin: 0 auto;
         max-width: 1280px;
         width: 90%;
         @media only screen and (min-width: 601px) {
