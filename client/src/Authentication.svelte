@@ -1,13 +1,13 @@
 <script>
     import { onMount } from 'svelte';
+    import {notifications} from './notifications.js';
+    import { fly, fade } from 'svelte/transition';
 
     export let logged_in = false;
     let l_nickname;
     let l_password;
     let s_nickname;
     let s_password;
-    let error_hidden = true;
-    let error_message = "";
     let register_visible = false;
 
     onMount(() => {
@@ -26,19 +26,36 @@
             .then(data => {
                 logged_in = data["success"];
                 if (!logged_in) {
-                    error_hidden = false;
-                    error_message = data["error"];
+                    notifications.danger(data["error"], 2000);
                 }
                 localStorage.setItem('logged_in', `${logged_in}`);
             })
             .catch(error => {
-                console.error(error);
+                notifications.danger(error, 2000);
             }
         );
     }
 
     function signup() {
-
+        let formData = new FormData();
+        formData.append('nickname', s_nickname);
+        formData.append('pw', s_password);
+        fetch('/signup', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                logged_in = data["success"];
+                if (!logged_in) {
+                    notifications.danger(data["error"], 2000);
+                }
+                localStorage.setItem('logged_in', `${logged_in}`);
+            })
+            .catch(error => {
+                notifications.danger(error, 2000);
+            }
+        );
     }
 
     function toggle_form() {
@@ -50,60 +67,94 @@
     });
 
     $: register_visible = !(location.hash !== "#register");
+
+    const cond_fly = (node, args) => args.cond ? fly(node, args) : fade(node, {});
 </script>
-<main class="center">
-    <span class:hidden={error_hidden}>{error_message} <button on:click={() => {error_hidden = true}}>[X]</button></span><br>
+<main transition:fade>
     {#if !register_visible}
-    <form on:submit|preventDefault={login}>
+    <form on:submit|preventDefault={login} transition:fly={{x:-500}}>
         <h1 class="unresponsive-heading">Login</h1>
-        <input autocomplete="username" bind:value={l_nickname} label="Nutzername" minlength="3" maxlength="15" required class="textfield" placeholder="Nutzername"/>
-        <input autocomplete="current-password" bind:value={l_password} label="Passwort" type="password" minlength="1" required class="textfield" placeholder="Passwort"/>
+        <label for="l_nickname">Nutzername</label>
+        <div class="input_icon">
+            <img src="/base_static/images/user-solid.svg" alt="User Icon">
+            <input disabled={register_visible} autocomplete="username" name="l_nickname" bind:value={l_nickname} minlength="3" maxlength="15" required class="textfield" placeholder="Nutzername"/>
+        </div>
+        <label for="l_password">Passwort</label>
+        <div class="input_icon">
+            <img src="/base_static/images/lock-solid.svg" alt="Lock Icon">
+            <input disabled={register_visible} autocomplete="current-password" name="l_password" bind:value={l_password} type="password" minlength="1" required class="textfield" placeholder="Passwort"/>
+        </div>
+        <button class="link-button" id="forgot_password" type="button" on:click={() => {alert('Verkackt :D Aber da wir keine E-Mails zum Registrieren benutzen ist ein Passwort-Reset nicht möglich. Aber frag uns einfach und wir helfen dir beim wiederherstellen deiner Einstellungen & Präferenzen bei einem neuen Account.')}}>Passwort vergessen?</button>
         <button class="default-button" type="submit">Login</button>
-        <button on:click={toggle_form} class="link-button" type="button">Noch kein Account?</button>
-        <button class="link-button" type="button" href="javascript:alert('Verkackt :D Aber da wir keine E-Mails zum Registrieren benutzen ist ein Passwort-Reset nicht möglich. Aber frag uns einfach und wir helfen dir beim wiederherstellen deiner Einstellungen & Präferenzen bei einem neuen Account.')">Passwort vergessen?</button>
+        <span>Noch kein Account? <button on:click={toggle_form} class="link-button" type="button">Registrieren</button></span>
     </form>
     {/if}
     {#if register_visible}
-    <form on:submit|preventDefault={signup}>
+    <form on:submit|preventDefault={signup} transition:fly={{x:500}}>
+        <button on:click={toggle_form} type="reset" id="back_button">←</button>
         <h1 class="unresponsive-heading">Registrieren</h1>
-        <input autocomplete="username" bind:value={s_nickname} label="Nutzername" minlength="3" maxlength="15" required class="textfield" placeholder="Nutzername"/>
-        <input autocomplete="new-password" bind:value={s_password} label="Passwort" type="password" minlength="1" required class="textfield" placeholder="Passwort"/>
-        <button type="submit">Registrieren</button>
+        <label for="s_nickname">Nutzername</label>
+        <div class="input_icon">
+            <img src="/base_static/images/user-solid.svg" alt="User Icon">
+            <input disabled={!register_visible} autocomplete="username" name="s_nickname" bind:value={s_nickname} minlength="3" maxlength="15" required class="textfield" placeholder="Nutzername"/>
+        </div>
+        <label for="s_nickname">Passwort</label>
+        <div class="input_icon">
+            <img src="/base_static/images/lock-solid.svg" alt="Lock Icon">
+            <input disabled={!register_visible} autocomplete="new-password" name="s_password" bind:value={s_password} type="password" minlength="10" required class="textfield" placeholder="Passwort"/>
+        </div>
+        <button class="default-button" type="submit">Registrieren</button>
     </form>
     {/if}
 </main>
 <style lang="scss">
+    label {
+        margin-bottom: 5px;
+    }
+
     main::before {
         content: "";
         top: 0;
         left: 0;
-        position: absolute;
-        width: 100vw;
-        height: 100vh;
+        position: fixed;
+        width: 100%;
+        height: 100%;
         background-image: url('/base_static/images/blurry_gradient_bg.svg');
         background-repeat: no-repeat;
         background-size: cover;
+        filter: brightness(1);
         z-index: -1;
     }
 
-    .center {
-        display: grid;
-        place-content: center;
-        height: 100vh;
-    }
-
-    .hidden {
-        display: none;
+    #forgot_password {
+        text-align: right;
+        margin-bottom: 8px;
     }
 
     form {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         display: flex;
         flex-direction: column;
         background: rgba(255, 255, 255, 0.1);
         border-radius: 5px;
         padding: 30px;
         border: 1px solid rgba(255, 255, 255, 0.3);
-        min-width: min(400px, 70vw);
+        min-width: min(400px, 75vw);
+
+        &::before {
+            content: "";
+            background-image: url('/base_static/images/logo.svg');
+            background-size: contain;
+            width: 90px;
+            aspect-ratio: 1;
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
     }
 
     .unresponsive-heading {
@@ -112,13 +163,29 @@
         margin-bottom: 15px;
     }
 
+    .input_icon {
+        position: relative;
+        .textfield {
+            padding-left: 40px;
+        }
+        img {
+            position: absolute;
+            top: 14px;
+            left: 12px;
+            width: 20px;
+            height: 20px;
+            background-size: contain;
+            z-index: 1;
+        }
+    }
+
     .textfield {
         width: 100%;
         padding: 12px 20px;
         margin-bottom: 8px;
         box-sizing: border-box;
         border: 2px solid white;
-        border-radius: 3px;
+        border-radius: 5px;
     }
 
     .default-button {
@@ -126,6 +193,12 @@
         text-align: center;
         padding: 12px 20px;
         margin-bottom: 8px;
+        margin-top: 8px;
+        border: 0;
+        border-radius: 99vw;
+        background: white;
+        font-size: 1rem;
+        font-weight: 500;
     }
 
     .link-button {
@@ -133,8 +206,19 @@
         text-align: left;
         padding: 0;
         margin: 0;
-        color: #3489E9;
+        color: #0f0fff;
         background: transparent;
         border: 0;
+        font-size: inherit;
+    }
+
+    #back_button {
+        position: absolute;
+        top: 0px;
+        left: 5px;
+        border: 0;
+        background: none;
+        color: white;
+        font-size: 1.5rem;
     }
 </style>

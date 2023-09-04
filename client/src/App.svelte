@@ -3,6 +3,7 @@
     import Authentication from "./Authentication.svelte";
     import {DatePicker} from 'attractions';
     import {group_rooms} from "./utils.js";
+	import Toast from './Toast.svelte';
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -196,6 +197,8 @@
         <Authentication bind:logged_in></Authentication>
     {/if}
 </main>
+<Toast />
+
 <style lang="scss">
     nav {
         background-color: #333;

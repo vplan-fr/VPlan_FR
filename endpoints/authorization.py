@@ -31,13 +31,13 @@ def signup() -> Response:
 
     tmp_user = users.find_one({'nickname': nickname})
     if tmp_user is not None:
-        return jsonify({"error": "username already taken"})
+        return jsonify({"success": False, "error": "Nutzername ist schon vergeben!"})
 
     if (len(nickname) < 3) or (len(nickname) > 15):
-        return jsonify({"error": "username has to have length between 3 and 15 characters"})
+        return jsonify({"success": False, "error": "Nutzername muss zwischen 3 und 15 Zeichen lang sein!"})
 
     if len(password) < 10:
-        return jsonify({"error": "password needs to have at least 10 characters"})
+        return jsonify({"success": False, "error": "Passwort muss mindestens 10 Zeichen lang sein!"})
 
     tmp_id = users.insert_one({
         'nickname': nickname,
@@ -51,7 +51,7 @@ def signup() -> Response:
     login_user(tmp_user)
     session.permanent = True
     current_user.update_settings({})
-    return Response("Success!!")
+    return jsonify({"success": True})
 
 
 @authorization.route('/logout')
