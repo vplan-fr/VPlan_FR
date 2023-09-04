@@ -89,6 +89,24 @@
         return a.includes(b[0]) || a.includes(b[1])
     }
 
+    function format_timestamp(timestamp) {
+        const date = new Date(timestamp);
+
+        const targetTimezone = 'Europe/Berlin';
+        const options = {
+            timeZone: targetTimezone,
+            weekday: 'long',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+        };
+        const formatter = new Intl.DateTimeFormat('de-DE', options);
+        const formattedDate = formatter.format(date).replace("um", "-") + " Uhr";
+
+        return `${formattedDate}`;
+    }
+
     $: load_lessons(date, plan_type, plan_value);
 </script>
 
@@ -131,7 +149,7 @@
                     <br>
                 {/each}
             </p>
-            <span class="last-updated">Stand der Daten: <span class="custom-badge">{info.timestamp}</span></span>
+            <span class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></span>
         {/if}
         <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms/>
     </div>
