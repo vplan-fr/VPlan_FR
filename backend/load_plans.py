@@ -65,11 +65,11 @@ async def get_clients(session: aiohttp.ClientSession | None = None,
         client = IndiwareStundenplanerClient(hosting, session)
 
         for plan_client in client.substitution_plan_clients:
-            plan_client.proxy_provider = proxy_provider
+            #plan_client.proxy_provider = proxy_provider
             plan_client.no_delay = True
 
         for plan_client in client.indiware_mobil_clients:
-            plan_client.proxy_provider = proxy_provider
+            #plan_client.proxy_provider = proxy_provider
             plan_client.no_delay = True
 
         plan_downloader = PlanDownloader(client, cache, logger=logger)

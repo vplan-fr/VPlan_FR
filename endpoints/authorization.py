@@ -55,9 +55,10 @@ def signup() -> Response:
 
 
 @authorization.route('/logout')
+@login_required
 def logout() -> Response:
     logout_user()
-    return Response("Success!!")
+    return jsonify({"success": True})
 
 
 @authorization.route('/account', methods=['GET', 'DELETE'])

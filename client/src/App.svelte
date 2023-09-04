@@ -27,6 +27,10 @@
 
     let grouped_rooms = [];
 
+    // logout vars
+    let error_hidden;
+    let error_message;
+
     $: if (all_rooms) {
         grouped_rooms = group_rooms(all_rooms);
     }
@@ -89,6 +93,27 @@
         );
     }
 
+    function logout() {
+        fetch('/logout')
+            .then(response => response.json())
+            .then(data => {
+                logged_in = !data["success"];
+                localStorage.setItem('logged_in', `${logged_in}`);
+                if (logged_in) {
+                    error_hidden = false;
+                    error_message = data["error"];
+                }
+            })
+            .catch(error => {
+                console.error(error);
+            })
+    }
+
+
+    // onMount(() => {
+    //     document.querySelector('.date-picker .handle input').setAttribute("readonly", "true");
+    // });
+
     $: logged_in, get_meta(api_base);
     $: logged_in, update_disabled_dates(enabled_dates);
 
@@ -102,9 +127,7 @@
 
 <nav>
     {#if logged_in}
-        <button>
-            <a href="/logout">Logout</a><br>
-        </button>
+        <button on:click={logout}>Logout</button>
         <button on:click={togglePopup}>Manage Schools</button>
     {/if}
 </nav>
