@@ -4,6 +4,7 @@
     import {DatePicker} from 'attractions';
     import {group_rooms} from "./utils.js";
 	import Toast from './Toast.svelte';
+    import {notifications} from './notifications.js';
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -25,10 +26,7 @@
     let meta = {};
     let disabledDates = [];
     let enabled_dates = [];
-
     let grouped_rooms = [];
-
-    // logout vars
     let error_hidden;
     let error_message;
 
@@ -41,20 +39,19 @@
             return;
         }
         fetch(`${api_base}/meta`)
-                .then(response => response.json())
-                .then(data => {
-                    meta = data.meta;
-                    all_rooms = data.rooms;
-                    teacher_list = Object.keys(data.teachers);
-                    grouped_forms = data.forms.grouped_forms;
-                    enabled_dates = Object.keys(data.dates);
-                    date = data.date;
-                    console.log(data);
-                })
-                .catch(error => {
-                            console.error(error);
-                        }
-                );
+            .then(response => response.json())
+            .then(data => {
+                meta = data.meta;
+                all_rooms = data.rooms;
+                teacher_list = Object.keys(data.teachers);
+                grouped_forms = data.forms.grouped_forms;
+                enabled_dates = Object.keys(data.dates);
+                date = data.date;
+                console.log(data);
+            })
+            .catch(error => {
+                notifications.danger("Metadata-fetch fehlgeschlagen, Server nicht erreichbar!", 2000);
+            });
     }
 
     function update_disabled_dates(enabled_dates) {
@@ -77,7 +74,7 @@
             disabledDates.push({
                 start: tmp_start,
                 end: tmp_end
-            })
+            });
         }
     }
 
@@ -89,7 +86,7 @@
                 localStorage.setItem('logged_in', `${logged_in}`);
             })
             .catch(error => {
-                console.error(error);
+                notifications.danger("Login-Check fehlgeschlagen, Server nicht erreichbar!", 2000);
             }
         );
     }
@@ -106,14 +103,9 @@
                 }
             })
             .catch(error => {
-                console.error(error);
-            })
+                notifications.danger("Logout fehlgeschlagen, Server nicht erreichbar!", 2000);
+            });
     }
-
-
-    // onMount(() => {
-    //     document.querySelector('.date-picker .handle input').setAttribute("readonly", "true");
-    // });
 
     $: logged_in, get_meta(api_base);
     $: logged_in, update_disabled_dates(enabled_dates);
@@ -126,12 +118,12 @@
     }
 </script>
 
+{#if logged_in}
 <nav>
-    {#if logged_in}
-        <button on:click={logout}>Logout</button>
-        <button on:click={togglePopup}>Manage Schools</button>
-    {/if}
+    <button on:click={logout}>Logout</button>
+    <button on:click={togglePopup}>Manage Schools</button>
 </nav>
+{/if}
 <main>
     <div id="auth-wrapper">
         {#if isPopupVisible}
@@ -157,9 +149,9 @@
         <div class="input-field" id="room-select">
             <label for="rooms">Wähle einen Raum aus:</label>
             <select name="rooms" id="rooms" bind:value={selected_room}
-                    on:change="{() => {plan_type = 'rooms'; plan_value = selected_room}}">
+                    on:change={() => {plan_type = 'rooms'; plan_value = selected_room}}>
                 {#each grouped_rooms as [category, rooms]}
-                    <optgroup label="{category}">
+                    <optgroup label={category}>
                         {#each rooms as room}
                             <option value="{room}">{room}</option>
                         {/each}
@@ -170,18 +162,18 @@
         <div class="input-field" id="teacher-select">
             <label for="teachers">Wähle einen Lehrer aus:</label>
             <select name="teachers" id="teachers" bind:value={selected_teacher}
-                    on:change="{() => {plan_type = 'teachers'; plan_value = selected_teacher}}">
+                    on:change={() => {plan_type = 'teachers'; plan_value = selected_teacher}}>
                 {#each teacher_list as teacher}
-                    <option value="{teacher}">{teacher}</option>
+                    <option value={teacher}>{teacher}</option>
                 {/each}
             </select>
         </div>
         <div class="input-field" id="form-select">
             <label for="forms">Wähle eine Klasse aus:</label>
             <select name="forms" id="forms" bind:value={selected_form}
-                    on:change="{() => {plan_type = 'forms'; plan_value = selected_form}}">
+                    on:change={() => {plan_type = 'forms'; plan_value = selected_form}}>
                 {#each Object.entries(grouped_forms) as [form_group, forms]}
-                    <optgroup label="{form_group}">
+                    <optgroup label={form_group}>
                         {#each forms as form}
                             <option value="{form}">{form}</option>
                         {/each}
@@ -201,7 +193,8 @@
 
 <style lang="scss">
     nav {
-        background-color: #333;
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 20px;
         overflow: hidden;
         position: fixed;
         top: 0;

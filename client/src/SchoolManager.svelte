@@ -1,5 +1,7 @@
 <script>
     import { createEventDispatcher } from "svelte";
+    import {notifications} from './notifications.js';
+
     const dispatch = createEventDispatcher();
     function closePopup() {
         dispatch("close");
@@ -23,7 +25,7 @@
                 schools = data;
             })
             .catch(error => {
-                console.error(error);
+                notifications.danger("Schulen laden fehlgeschlagen, Server nicht erreichbar!", 2000);
             })
     }
     function get_authorized_schools() {
@@ -33,7 +35,7 @@
                 authorized_school_ids = data;
             })
             .catch(error => {
-                console.error(error);
+                notifications.danger("Authorisierte Schulen laden fehlgeschlagen, Server nicht erreichbar!", 2000);
             }
         );
     }
@@ -70,7 +72,7 @@
                 authorized_school_ids = [...authorized_school_ids, authorize_school_id];
             })
             .catch(error => {
-                console.error(error);
+                notifications.danger("Schule Authorisieren fehlgeschlagen, Server nicht erreichbar!", 2000);
             }
         );
     }

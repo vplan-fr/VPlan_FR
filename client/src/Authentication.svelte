@@ -31,7 +31,7 @@
                 localStorage.setItem('logged_in', `${logged_in}`);
             })
             .catch(error => {
-                notifications.danger(error, 2000);
+                notifications.danger("Login fehlgeschlagen, Server nicht erreichbar!", 2000);
             }
         );
     }
@@ -53,7 +53,7 @@
                 localStorage.setItem('logged_in', `${logged_in}`);
             })
             .catch(error => {
-                notifications.danger(error, 2000);
+                notifications.danger("Registrieren fehlgeschlagen, Server nicht erreichbar!", 2000);
             }
         );
     }

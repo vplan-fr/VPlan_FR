@@ -1,6 +1,7 @@
 <script>
     import Lesson from './Lesson.svelte';
     import Rooms from "./Rooms.svelte";
+    import {notifications} from './notifications.js';
 
     export let api_base;
     export let date;
@@ -50,7 +51,7 @@
                 console.log(lessons);
             })
             .catch(error => {
-                console.error(error);
+                notifications.danger("Plan laden fehlgeschlagen, Server nicht erreichbar!", 2000);
         });
     }
 
