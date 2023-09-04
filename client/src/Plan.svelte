@@ -28,18 +28,34 @@
     
     export function load_lessons(date, plan_type, entity) {
         controller.abort();
+        if (date === null) {
+            return
+        }
         loading = true;
         title = `${plan_type}-plan for ${plan_type} ${entity}`;
         controller = new AbortController();
+        console.log("getting lesson plan", school_num, date);
+        let data_from_cache = false;
+        let data = localStorage.getItem(`${school_num}_${date}`);
+        if (data) {
+            data = JSON.parse(data);
+            rooms_data = data["rooms"]
+            lessons = data["plans"][plan_type][entity] || [];
+            info = data["info"];
+            week_letter = info["week"];
+            data_from_cache = true;
+        }
+
         fetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
             .then(response => response.json())
             .then(data => {
                 loading = false;
                 try {
+                    localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
                     rooms_data = data["rooms"]
                     lessons = data["plans"][plan_type][entity] || [];
                     info = data["info"];
-                    week_letter = info.week;
+                    week_letter = info["week"];
                 } catch {
                     lessons = []
                     try {
@@ -51,7 +67,11 @@
                 console.log(lessons);
             })
             .catch(error => {
-                notifications.danger("Plan laden fehlgeschlagen, Server nicht erreichbar!", 2000);
+                if (data_from_cache) {
+                    notifications.info("Plan aus Cache geladen", 2000);
+                } else {
+                    notifications.danger("Plan laden fehlgeschlagen, Server nicht erreichbar!", 2000);
+                }
         });
     }
 
