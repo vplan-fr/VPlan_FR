@@ -67,12 +67,10 @@
     });
 
     $: register_visible = !(location.hash !== "#register");
-
-    const cond_fly = (node, args) => args.cond ? fly(node, args) : fade(node, {});
 </script>
 <main transition:fade>
     {#if !register_visible}
-    <form on:submit|preventDefault={login} transition:fly={{x:-500}}>
+    <form on:submit|preventDefault={login} transition:fly|local={{x:-500}}>
         <h1 class="unresponsive-heading">Login</h1>
         <label for="l_nickname">Nutzername</label>
         <div class="input_icon">
@@ -90,7 +88,7 @@
     </form>
     {/if}
     {#if register_visible}
-    <form on:submit|preventDefault={signup} transition:fly={{x:500}}>
+    <form on:submit|preventDefault={signup} transition:fly|local={{x:500}}>
         <button on:click={toggle_form} type="reset" id="back_button">←</button>
         <h1 class="unresponsive-heading">Registrieren</h1>
         <label for="s_nickname">Nutzername</label>
@@ -122,6 +120,7 @@
         background-image: url('/base_static/images/blurry_gradient_bg.svg');
         background-repeat: no-repeat;
         background-size: cover;
+        background-position-x: 50%;
         filter: brightness(1);
         z-index: -1;
     }
