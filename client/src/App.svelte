@@ -1,10 +1,13 @@
 <script>
     import Plan from "./Plan.svelte";
     import Authentication from "./Authentication.svelte";
+	import Toast from './Toast.svelte';
+    import SchoolAuthorization from './SchoolManager.svelte';
+    import Navbar from "./Navbar.svelte";
     import {DatePicker} from 'attractions';
     import {group_rooms} from "./utils.js";
-	import Toast from './Toast.svelte';
     import {notifications} from './notifications.js';
+    import { logged_in, title } from './stores.js'
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -15,7 +18,7 @@
     let grouped_forms = [];
     let api_base;
     $: api_base = `./api/v69.420/${school_num}`;
-    let logged_in = localStorage.getItem('logged_in') === 'true';
+    $logged_in = localStorage.getItem('logged_in') === 'true';
     check_login_status();
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
@@ -27,15 +30,13 @@
     let disabledDates = [];
     let enabled_dates = [];
     let grouped_rooms = [];
-    let error_hidden;
-    let error_message;
 
     $: if (all_rooms) {
         grouped_rooms = group_rooms(all_rooms);
     }
 
     function get_meta(api_base) {
-        if (!logged_in) {
+        if (!$logged_in) {
             return;
         }
         fetch(`${api_base}/meta`)
@@ -50,12 +51,12 @@
                 console.log(data);
             })
             .catch(error => {
-                notifications.danger("Metadata-fetch fehlgeschlagen, Server nicht erreichbar!", 2000);
+                notifications.danger("Metadata-fetch fehlgeschlagen!", 2000);
             });
     }
 
     function update_disabled_dates(enabled_dates) {
-        if (!logged_in) {
+        if (!$logged_in) {
             return;
         }
         let tmp_start = new Date(enabled_dates[enabled_dates.length - 1]);
@@ -82,47 +83,31 @@
         fetch('/check_login')
             .then(response => response.json())
             .then(data => {
-                logged_in = data["logged_in"];
-                localStorage.setItem('logged_in', `${logged_in}`);
+                $logged_in = data["logged_in"];
+                localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
-                notifications.danger("Login-Check fehlgeschlagen, Server nicht erreichbar!", 2000);
+                notifications.danger("Login-Check fehlgeschlagen!", 2000);
             }
         );
     }
 
-    function logout() {
-        fetch('/logout')
-            .then(response => response.json())
-            .then(data => {
-                logged_in = !data["success"];
-                localStorage.setItem('logged_in', `${logged_in}`);
-                if (logged_in) {
-                    error_hidden = false;
-                    error_message = data["error"];
-                }
-            })
-            .catch(error => {
-                notifications.danger("Logout fehlgeschlagen, Server nicht erreichbar!", 2000);
-            });
-    }
-
-    $: logged_in, get_meta(api_base);
-    $: logged_in, update_disabled_dates(enabled_dates);
+    $: $logged_in, get_meta(api_base);
+    $: $logged_in, update_disabled_dates(enabled_dates);
 
     // Popup for school authorization
-    import SchoolAuthorization from './SchoolManager.svelte';
     let isPopupVisible = false;
     function togglePopup() {
         isPopupVisible = !isPopupVisible;
     }
 </script>
 
-{#if logged_in}
-<nav>
-    <button on:click={logout}>Logout</button>
-    <button on:click={togglePopup}>Manage Schools</button>
-</nav>
+<svelte:head>
+   <title>Better VPlan{$title ? ` - ${$title}` : ""}</title>
+</svelte:head>
+
+{#if $logged_in}
+<Navbar />
 {/if}
 <main>
     <div id="auth-wrapper">
@@ -131,7 +116,7 @@
         {/if}
     </div>
 
-    {#if logged_in}
+    {#if $logged_in}
         <DatePicker
                 format="%Y-%m-%d"
                 locale="de-DE"
@@ -186,23 +171,19 @@
         <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms/>
         <!-- <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value /> -->
     {:else}
-        <Authentication bind:logged_in></Authentication>
+        <Authentication></Authentication>
     {/if}
 </main>
 <Toast />
 
 <style lang="scss">
-    nav {
-        background-color: rgba(255, 255, 255, 0.1);
-        padding: 20px;
-        overflow: hidden;
-        position: fixed;
-        top: 0;
-        width: 100%;
-    }
-
     main {
-        margin: 0 auto;
+        padding-top: 25px;
+        margin: 64px auto;
+        @media only screen and (max-width: 601px) {
+            margin: 56px auto;
+        }
+
         max-width: 1280px;
         width: 90%;
         @media only screen and (min-width: 601px) {

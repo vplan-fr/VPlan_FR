@@ -25,7 +25,7 @@
                 schools = data;
             })
             .catch(error => {
-                notifications.danger("Schulen laden fehlgeschlagen, Server nicht erreichbar!", 2000);
+                notifications.danger("Schulen laden fehlgeschlagen!", 2000);
             })
     }
     function get_authorized_schools() {
@@ -35,7 +35,7 @@
                 authorized_school_ids = data;
             })
             .catch(error => {
-                notifications.danger("Authorisierte Schulen laden fehlgeschlagen, Server nicht erreichbar!", 2000);
+                notifications.danger("Authorisierte Schulen laden fehlgeschlagen!", 2000);
             }
         );
     }
@@ -72,7 +72,7 @@
                 authorized_school_ids = [...authorized_school_ids, authorize_school_id];
             })
             .catch(error => {
-                notifications.danger("Schule Authorisieren fehlgeschlagen, Server nicht erreichbar!", 2000);
+                notifications.danger("Schule Authorisieren fehlgeschlagen!", 2000);
             }
         );
     }

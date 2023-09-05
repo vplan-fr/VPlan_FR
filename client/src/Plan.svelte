@@ -71,7 +71,7 @@
                 if (data_from_cache) {
                     notifications.info("Plan aus Cache geladen", 2000);
                 } else {
-                    notifications.danger("Plan laden fehlgeschlagen, Server nicht erreichbar!", 2000);
+                    notifications.danger("Plan laden fehlgeschlagen!", 2000);
                 }
         });
     }

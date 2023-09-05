@@ -2,8 +2,8 @@
     import { onMount } from 'svelte';
     import {notifications} from './notifications.js';
     import { fly, fade } from 'svelte/transition';
+    import { logged_in, title } from './stores.js';
 
-    export let logged_in = false;
     let l_nickname;
     let l_password;
     let s_nickname;
@@ -12,6 +12,7 @@
 
     onMount(() => {
         location.hash = "#login";
+        title.set("Login");
     });
 
     function login() {
@@ -24,14 +25,14 @@
         })
             .then(response => response.json())
             .then(data => {
-                logged_in = data["success"];
-                if (!logged_in) {
+                $logged_in = data["success"];
+                if (!$logged_in) {
                     notifications.danger(data["error"], 2000);
                 }
-                localStorage.setItem('logged_in', `${logged_in}`);
+                localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
-                notifications.danger("Login fehlgeschlagen, Server nicht erreichbar!", 2000);
+                notifications.danger("Login fehlgeschlagen!", 2000);
             }
         );
     }
@@ -46,14 +47,14 @@
         })
             .then(response => response.json())
             .then(data => {
-                logged_in = data["success"];
-                if (!logged_in) {
+                $logged_in = data["success"];
+                if (!$logged_in) {
                     notifications.danger(data["error"], 2000);
                 }
-                localStorage.setItem('logged_in', `${logged_in}`);
+                localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
-                notifications.danger("Registrieren fehlgeschlagen, Server nicht erreichbar!", 2000);
+                notifications.danger("Registrieren fehlgeschlagen!", 2000);
             }
         );
     }
@@ -67,6 +68,7 @@
     });
 
     $: register_visible = !(location.hash !== "#register");
+    $: title.set(register_visible ? "Registrieren" : "Login");
 </script>
 <main transition:fade>
     {#if !register_visible}
