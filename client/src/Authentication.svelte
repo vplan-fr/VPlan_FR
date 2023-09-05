@@ -133,7 +133,7 @@
     form {
         position: absolute;
         top: 50%;
-        left: 50%;
+        left: calc(50% + (100vw - 100%) / 2);
         transform: translate(-50%, -50%);
         display: flex;
         flex-direction: column;
