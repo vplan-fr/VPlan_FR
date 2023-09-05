@@ -120,6 +120,7 @@
         width: 100%;
         height: 100%;
         background-image: url('/base_static/images/blurry_gradient_bg.svg');
+        background-color: #906df5;
         background-repeat: no-repeat;
         background-size: cover;
         background-position-x: 50%;
