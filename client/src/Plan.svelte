@@ -1,7 +1,9 @@
 <script>
+    import { onMount } from 'svelte';
     import Lesson from './Lesson.svelte';
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
+    import { title } from './stores.js';
 
     export let api_base;
     export let school_num;
@@ -17,7 +19,6 @@
     let lessons = [];
     let rooms_data = {};
     let info;
-    let title = "";
     let loading = true;
     let error = "";
     let plan_type_map = {
@@ -33,7 +34,6 @@
             return
         }
         loading = true;
-        title = `${plan_type}-plan for ${plan_type} ${entity}`;
         controller = new AbortController();
         console.log("getting lesson plan", school_num, date);
         let data_from_cache = false;
@@ -130,6 +130,11 @@
     }
 
     $: load_lessons(date, plan_type, plan_value);
+
+    onMount(() => {
+        location.hash = "#plan";
+        title.set("Hallöchen [NAME]");
+    });
 </script>
 
 <div class="plan" class:extra-height={extra_height}>

@@ -31,7 +31,7 @@
     nav {
         z-index: 999;
         background-color: var(--background-color);
-        box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.4);
+        box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
         height: 64px;
         @media only screen and (max-width: 601px) {
             height: 56px;
