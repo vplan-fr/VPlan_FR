@@ -25,7 +25,17 @@ def schools() -> Response:
             k: v for k, v in elem.items() if k in ["school_number", "display_name"]
         } for elem in creds.values()
     ]
-    return jsonify({elem["school_number"]: elem["display_name"] for elem in school_list})
+    school_data = {
+        elem["school_number"]: {
+            "name": elem["display_name"],
+            "icon": ""
+        } for elem in school_list
+    }
+    school_icons = os.listdir("client/public/base_static/images/school_icons")
+    for school_icon in school_icons:
+        cur_num = school_icon.split(".")[0]
+        school_data[cur_num]["icon"] = school_icon
+    return jsonify(school_data)
 
 
 @api.route(f"{API_BASE_URL}/meta", methods=["GET"], endpoint="meta_api")

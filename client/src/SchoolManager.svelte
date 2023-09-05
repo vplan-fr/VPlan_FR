@@ -87,7 +87,7 @@
 <div class="popup">
     <div id="authorized_schools">
         {#each authorized_school_ids as school_id}
-            <p>{schools[school_id]}<button on:click={() => {
+            <p>{schools[school_id]["name"]}<button on:click={() => {
                 school_num = school_id;
                 localStorage.setItem('school_num', `${school_num}`)
             }}>Choose</button></p>
@@ -97,7 +97,7 @@
         {#each Object.keys(schools) as school_id}
             {#if !isObjectInList(school_id, authorized_school_ids)}
                 <p>
-                    {schools[school_id]} ({school_id})
+                    {schools[school_id]["name"]} ({school_id})
                     <button on:click={() => authorize_school_id=school_id}>authorize</button>
                 </p>
             {/if}
