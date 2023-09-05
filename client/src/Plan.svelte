@@ -4,6 +4,7 @@
     import {notifications} from './notifications.js';
 
     export let api_base;
+    export let school_num;
     export let date;
     export let plan_type;
     export let plan_value;

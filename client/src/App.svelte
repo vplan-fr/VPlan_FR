@@ -183,7 +183,7 @@
         </div>
         <br>
         <br>
-        <Plan bind:api_base bind:date bind:plan_type bind:plan_value bind:all_rooms/>
+        <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms/>
         <!-- <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value /> -->
     {:else}
         <Authentication bind:logged_in></Authentication>
