@@ -1,11 +1,5 @@
 <script>
-    import { createEventDispatcher } from "svelte";
     import {notifications} from './notifications.js';
-
-    const dispatch = createEventDispatcher();
-    function closePopup() {
-        dispatch("close");
-    }
 
     export let school_num;
     function isObjectInList(object, list) {
@@ -84,8 +78,8 @@
 
 
 
-<div class="popup">
-    <div id="authorized_schools">
+<main>
+    <div>
         {#each authorized_school_ids as school_id}
             <p>{schools[school_id]["name"]}<button on:click={() => {
                 school_num = school_id;
@@ -93,7 +87,7 @@
             }}>Choose</button></p>
         {/each}
     </div>
-    <div id="unauthorized_schools">
+    <div>
         {#each Object.keys(schools) as school_id}
             {#if !isObjectInList(school_id, authorized_school_ids)}
                 <p>
@@ -103,48 +97,17 @@
             {/if}
         {/each}
     </div>
-    <div id="authorize_school_wrapper">
+    <div>
         <input bind:value={authorize_school_id}>
         <input bind:value={username}>
         <input type="password" bind:value={password}>
         <button on:click={authorize_school}>Authorize School</button>
-        <div id="authorization_messages">
+        <div>
             {authorization_message}
         </div>
     </div>
-    <div id="popup_close_wrapper">
-        <button on:click={closePopup}>X</button>
-    </div>
-</div>
+</main>
 
 <style lang="scss">
-    .popup {
-        position: fixed;
-        top: 5%;
-        left: 5%;
-        width: 90%;
-        height: 90%;
-        background-color: rgba(0, 0, 0, 0.98);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        #authorized_schools {
-
-        }
-        #unauthorized_schools {
-
-        }
-        #authorize_school_wrapper {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-        }
-        #popup_close_wrapper {
-            position: absolute;
-            top: 0;
-            right: 0;
-        }
-    }
 </style>
 

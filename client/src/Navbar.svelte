@@ -5,15 +5,8 @@
     import { fly } from 'svelte/transition';
 
     function navigate_page(page_id) {
-        switch (page_id) {
-            case 'about_us':
-                break;
-            case 'plan':
-                break;
-            default:
-                notifications.danger("Seite nicht gefunden!");
-                break;
-        }
+        $current_page = page_id;
+        location.hash = `#${page_id}`;
     }
 
     function logout() {
@@ -31,22 +24,35 @@
                 notifications.danger("Logout fehlgeschlagen!", 2000);
             });
     }
+
+    window.addEventListener('popstate', (e) => {
+        let new_location = location.hash.slice(1);
+        if((new_location === "login" || new_location === "register") && logged_in) {
+            e.preventDefault();
+            history.go(1);
+            return;
+        }
+        navigate_page(new_location);
+    });
 </script>
 
 <nav transition:fly={{y:-64}}>
-    <img class="logo" src="/base_static/images/better_vp_white.svg" alt="Better VPlan Logo">
+    <button class="logo-button" on:click={() => {navigate_page("plan")}}>
+        <img class="logo" src="/base_static/images/better_vp_white.svg" alt="Better VPlan Logo">
+    </button>
     <ul class="nav-element-wrapper">
-        <li><button on:click={() => {navigate_page("about_us")}}>Über uns</button></li>
+        <li><button on:click={() => {navigate_page("about_us")}} class="nav-button">Über uns</button></li>
         <li>
             <Dropdown 
                 let:onclick={onclick}>
-                <button slot="toggle_button" on:click={onclick}>
+                <button slot="toggle_button" on:click={onclick} class="nav-button">
                     <span class="material-symbols-outlined">tune</span>
                 </button>
 
-                <button><span class="material-symbols-outlined">settings</span> Einstellungen</button>
-                <button><span class="material-symbols-outlined">account_circle</span> Unterricht wählen</button>
-                <button on:click={logout}><span class="material-symbols-outlined">logout</span> Logout</button>
+                <button class="nav-button"><span class="material-symbols-outlined">settings</span> Einstellungen</button>
+                <button class="nav-button" on:click={() => {navigate_page("school_manager")}}><span class="material-symbols-outlined">school</span> Schule wechseln</button>
+                <button class="nav-button"><span class="material-symbols-outlined">account_circle</span> Unterricht wählen</button>
+                <button on:click={logout} class="nav-button"><span class="material-symbols-outlined">logout</span> Logout</button>
             </Dropdown>
         </li>
     </ul>
@@ -81,12 +87,18 @@
             pointer-events: none;
         }
 
-        img.logo {
-            box-sizing: border-box;
+        .logo-button {
             height: 100%;
-            padding: 10px;
-            @media only screen and (max-width: 601px) {
-                padding: 8px;
+            box-sizing: border-box;
+            border: none;
+            background: transparent;
+            .logo {
+                box-sizing: border-box;
+                height: 100%;
+                padding: 10px;
+                @media only screen and (max-width: 601px) {
+                    padding: 8px;
+                }
             }
         }
 
@@ -100,28 +112,29 @@
             li {
                 height: 100%;
                 list-style-type: none;
-                button {
-                    height: 100%;
-                    padding: 15px;
-                    background-color: transparent;
-                    border: none;
-                    font-size: 1rem;
-                    color: var(--text-color);
-                    transition: background-color 200ms ease;
-                    display: flex;
-                    flex-direction: row;
-                    justify-content: flex-start;
-                    align-items: center;
-                    gap: 10px;
+            }
+        }
 
-                    &:hover, &:focus-visible {
-                        background-color: rgba(0, 0, 0, 0.3);
-                    }
+        .nav-button {
+            height: 100%;
+            padding: 15px;
+            background-color: transparent;
+            border: none;
+            font-size: 1rem;
+            color: var(--text-color);
+            transition: background-color 200ms ease;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 10px;
 
-                    span {
-                        font-size: 1.4em;
-                    }
-                }
+            &:hover, &:focus-visible {
+                background-color: rgba(0, 0, 0, 0.3);
+            }
+
+            span {
+                font-size: 1.4em;
             }
         }
     }

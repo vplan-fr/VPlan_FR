@@ -1,5 +1,6 @@
 <script>
     import Plan from "./Plan.svelte";
+    import Weekplan from "./Weekplan.svelte";
     import Authentication from "./Authentication.svelte";
 	import Toast from './Toast.svelte';
     import SchoolAuthorization from './SchoolManager.svelte';
@@ -9,6 +10,7 @@
     import {group_rooms} from "./utils.js";
     import {notifications} from './notifications.js';
     import { logged_in, title, current_page } from './stores.js'
+    import SchoolManager from "./SchoolManager.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -111,7 +113,6 @@
 <Navbar />
 {/if}
 <main>
-    <!--<AboutUs />-->
     <div id="auth-wrapper">
         {#if isPopupVisible}
             <SchoolAuthorization bind:api_base bind:school_num={school_num} isPopupVisible={isPopupVisible} on:close={togglePopup}/>
@@ -119,59 +120,70 @@
     </div>
 
     {#if $logged_in}
-        <DatePicker
-                format="%Y-%m-%d"
-                locale="de-DE"
-                closeOnSelection
-                bind:disabledDates
-                value={(date === null) ? null : new Date(date)}
-                on:change={(evt) => {
-                let tmp_dat = evt.detail.value;
-                date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
-            }}
-        />
-        <input id="inp_school_num" type="text" bind:value={school_num}>
-        {date}
-        <br>
-        <div class="input-field" id="room-select">
-            <label for="rooms">Wähle einen Raum aus:</label>
-            <select name="rooms" id="rooms" bind:value={selected_room}
-                    on:change={() => {plan_type = 'rooms'; plan_value = selected_room}}>
-                {#each grouped_rooms as [category, rooms]}
-                    <optgroup label={category}>
-                        {#each rooms as room}
-                            <option value="{room}">{room}</option>
-                        {/each}
-                    </optgroup>
-                {/each}
-            </select>
-        </div>
-        <div class="input-field" id="teacher-select">
-            <label for="teachers">Wähle einen Lehrer aus:</label>
-            <select name="teachers" id="teachers" bind:value={selected_teacher}
-                    on:change={() => {plan_type = 'teachers'; plan_value = selected_teacher}}>
-                {#each teacher_list as teacher}
-                    <option value={teacher}>{teacher}</option>
-                {/each}
-            </select>
-        </div>
-        <div class="input-field" id="form-select">
-            <label for="forms">Wähle eine Klasse aus:</label>
-            <select name="forms" id="forms" bind:value={selected_form}
-                    on:change={() => {plan_type = 'forms'; plan_value = selected_form}}>
-                {#each Object.entries(grouped_forms) as [form_group, forms]}
-                    <optgroup label={form_group}>
-                        {#each forms as form}
-                            <option value="{form}">{form}</option>
-                        {/each}
-                    </optgroup>
-                {/each}
-            </select>
-        </div>
-        <br>
-        <br>
-        <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms/>
-        <!-- <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value /> -->
+        {#if $current_page === "plan" || $current_page === "weekplan"}
+            <DatePicker
+                    format="%Y-%m-%d"
+                    locale="de-DE"
+                    closeOnSelection
+                    bind:disabledDates
+                    value={(date === null) ? null : new Date(date)}
+                    on:change={(evt) => {
+                    let tmp_dat = evt.detail.value;
+                    date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
+                }}
+            />
+            <input id="inp_school_num" type="text" bind:value={school_num}>
+            {date}
+            <br>
+            <div class="input-field" id="room-select">
+                <label for="rooms">Wähle einen Raum aus:</label>
+                <select name="rooms" id="rooms" bind:value={selected_room}
+                        on:change={() => {plan_type = 'rooms'; plan_value = selected_room}}>
+                    {#each grouped_rooms as [category, rooms]}
+                        <optgroup label={category}>
+                            {#each rooms as room}
+                                <option value="{room}">{room}</option>
+                            {/each}
+                        </optgroup>
+                    {/each}
+                </select>
+            </div>
+            <div class="input-field" id="teacher-select">
+                <label for="teachers">Wähle einen Lehrer aus:</label>
+                <select name="teachers" id="teachers" bind:value={selected_teacher}
+                        on:change={() => {plan_type = 'teachers'; plan_value = selected_teacher}}>
+                    {#each teacher_list as teacher}
+                        <option value={teacher}>{teacher}</option>
+                    {/each}
+                </select>
+            </div>
+            <div class="input-field" id="form-select">
+                <label for="forms">Wähle eine Klasse aus:</label>
+                <select name="forms" id="forms" bind:value={selected_form}
+                        on:change={() => {plan_type = 'forms'; plan_value = selected_form}}>
+                    {#each Object.entries(grouped_forms) as [form_group, forms]}
+                        <optgroup label={form_group}>
+                            {#each forms as form}
+                                <option value="{form}">{form}</option>
+                            {/each}
+                        </optgroup>
+                    {/each}
+                </select>
+            </div>
+            <br>
+            <br>
+            {#if $current_page ===  "plan"}
+                <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms/>
+            {:else}
+                <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
+            {/if}
+        {:else if $current_page === "school_manager"}
+            <SchoolManager bind:school_num />
+        {:else if $current_page === "about_us"}
+            <AboutUs />
+        {:else}
+            <span>Seite nicht gefunden!</span>
+        {/if}
     {:else}
         <Authentication></Authentication>
     {/if}

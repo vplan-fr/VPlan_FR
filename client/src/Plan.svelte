@@ -133,7 +133,7 @@
 
     onMount(() => {
         location.hash = "#plan";
-        title.set("Hallöchen [NAME]");
+        title.set("Plan");
     });
 </script>
 

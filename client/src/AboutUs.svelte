@@ -1,5 +1,11 @@
 <script>
+    import { onMount } from "svelte";
+    import { title } from "./stores";
 
+    onMount(() => {
+        location.hash = "#about_us";
+        title.set("Über uns");
+    });
 </script>
 
 <main>

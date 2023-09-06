@@ -1,5 +1,12 @@
 <script>
     import Plan from "./Plan.svelte";
+    import { onMount } from "svelte";
+    import { title } from "./stores";
+
+    onMount(() => {
+        location.hash = "#weekplan";
+        title.set("Wochenplan");
+    });
     
     export let api_base;
     export let week_start;
