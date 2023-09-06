@@ -237,32 +237,32 @@
                 </ul>
             {/each}
         </div>
-        {#if plan_type === "forms" && (forms.length > 1)}
-            <ul class="extra_forms">
-                <li>
-                    <div class="horizontal_wrapper">
-                        Beteiligte Klassen:
-                        <div class="info-element">
-                            <DropdownShell let:toggle class="dropdown-shell">
-                                <button on:click={toggle}>
-                                    {forms_str}
-                                </button>
-                                <Dropdown>
-                                    <div class="lighten_background">
-                                        {#each forms as form}
-                                            <button on:click={() => {
-                                                plan_type = "forms";
-                                                plan_value = form;
-                                            }}>{form}</button>
-                                        {/each}
-                                    </div>
-                                </Dropdown>
-                            </DropdownShell>
-                        </div>
+    {/if}
+    {#if plan_type === "forms" && (forms.length > 1)}
+        <ul class="extra_forms">
+            <li>
+                <div class="horizontal_wrapper">
+                    Beteiligte Klassen:
+                    <div class="info-element">
+                        <DropdownShell let:toggle class="dropdown-shell">
+                            <button on:click={toggle}>
+                                {forms_str}
+                            </button>
+                            <Dropdown>
+                                <div class="lighten_background">
+                                    {#each forms as form}
+                                        <button on:click={() => {
+                                            plan_type = "forms";
+                                            plan_value = form;
+                                        }}>{form}</button>
+                                    {/each}
+                                </div>
+                            </Dropdown>
+                        </DropdownShell>
                     </div>
-                </li>
-            </ul>
-        {/if}
+                </div>
+            </li>
+        </ul>
     {/if}
 </div>
 <style lang="scss">
