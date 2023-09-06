@@ -5,6 +5,7 @@ from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import User, users
 import time
+from random import choice
 
 authorization = Blueprint('authorization', __name__)
 
@@ -106,4 +107,41 @@ def check_login():
     else:
         response_data = {'logged_in': False}
     return jsonify(response_data)
+
+
+@authorization.route("/greeting", methods=["GET"])
+@login_required
+def greeting():
+    if not current_user.user:
+        current_user.get_user()
+    greetings = [
+        "Grüß Gott {name}!",
+        "Moin {name}!",
+        "Moinsen {name}!",
+        "Yo Moinsen {name}!",
+        "Servus {name}!",
+        "Hi {name}!",
+        "Hey {name}!",
+        "Hallo {name}!",
+        "Hallöchen {name}!",
+        "Halli-Hallo {name}!",
+        "Hey, was geht ab {name}?",
+        "Tachchen {name}!",
+        "Na, alles fit, {name}?",
+        "Alles Klärchen, {name}?",
+        "Jo Digga {name}!",
+        "Heyho {name}!",
+        "Ahoihoi {name}!",
+        "Aloha {name}!",
+        "Alles cool im Pool, {name}?",
+        "Alles klar in Kanada, {name}?",
+        "Alles Roger in Kambodscha, {name}?",
+        "Hallöchen mit Öchen {name}!",
+        "{name} joined the game",
+        "Alles nice im Reis?",
+        "Alles cool in Suhl?",
+        "Howdy {name}!",
+    ]
+    random_greeting = choice(greetings).format(name=current_user["nickname"])
+    return Response(random_greeting)
 

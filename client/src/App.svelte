@@ -4,6 +4,7 @@
 	import Toast from './Toast.svelte';
     import SchoolAuthorization from './SchoolManager.svelte';
     import Navbar from "./Navbar.svelte";
+    import AboutUs from "./AboutUs.svelte";
     import {DatePicker} from 'attractions';
     import {group_rooms} from "./utils.js";
     import {notifications} from './notifications.js';
@@ -110,6 +111,7 @@
 <Navbar />
 {/if}
 <main>
+    <!--<AboutUs />-->
     <div id="auth-wrapper">
         {#if isPopupVisible}
             <SchoolAuthorization bind:api_base bind:school_num={school_num} isPopupVisible={isPopupVisible} on:close={togglePopup}/>
