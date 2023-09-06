@@ -21,7 +21,7 @@ class _InfoParsers:
 
     # teacher a,teacher b
     _teachers = fr"{_teacher}(?:, ?{_teacher})*"
-    _course = r"([A-Za-z0-9ÄÖÜäöüß-]{2,8})|(?:G\/R\/W)"  # maybe be more strict?
+    _course = r"([A-Za-z0-9ÄÖÜäöüß-]{2,8})|(?:G\/R\/W)|(?:RE\/e)"  # maybe be more strict?
     _period = r"St\.(?P<periods>(?P<period_begin>\d{1,2})(?:-(?P<period_end>\d{1,2}))?)"
     _periods = fr""
     _form = (

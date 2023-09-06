@@ -34,7 +34,8 @@ def schools() -> Response:
     school_icons = os.listdir("client/public/base_static/images/school_icons")
     for school_icon in school_icons:
         cur_num = school_icon.split(".")[0]
-        school_data[cur_num]["icon"] = school_icon
+        if cur_num in school_data:
+            school_data[cur_num]["icon"] = school_icon
     return jsonify(school_data)
 
 
