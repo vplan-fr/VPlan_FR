@@ -1,8 +1,20 @@
 <script>
     import {notifications} from './notifications.js';
-    import {logged_in} from './stores.js';
+    import {logged_in, current_page} from './stores.js';
     import Dropdown from './Dropdown.svelte';
     import { fly } from 'svelte/transition';
+
+    function navigate_page(page_id) {
+        switch (page_id) {
+            case 'about_us':
+                break;
+            case 'plan':
+                break;
+            default:
+                notifications.danger("Seite nicht gefunden!");
+                break;
+        }
+    }
 
     function logout() {
         fetch('/logout')
@@ -24,6 +36,7 @@
 <nav transition:fly={{y:-64}}>
     <img class="logo" src="/base_static/images/better_vp_white.svg" alt="Better VPlan Logo">
     <ul class="nav-element-wrapper">
+        <li><button on:click={() => {navigate_page("about_us")}}>Über uns</button></li>
         <li>
             <Dropdown 
                 let:onclick={onclick}>
@@ -36,7 +49,6 @@
                 <button on:click={logout}><span class="material-symbols-outlined">logout</span> Logout</button>
             </Dropdown>
         </li>
-        <!-- <li><button on:click={togglePopup}>Manage Schools</button></li> -->
     </ul>
 </nav>
 

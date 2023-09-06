@@ -8,7 +8,7 @@
     import {DatePicker} from 'attractions';
     import {group_rooms} from "./utils.js";
     import {notifications} from './notifications.js';
-    import { logged_in, title } from './stores.js'
+    import { logged_in, title, current_page } from './stores.js'
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
