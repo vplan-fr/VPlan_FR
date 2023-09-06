@@ -13,7 +13,7 @@ from .vplan_utils import group_forms
 
 
 class PlanProcessor:
-    VERSION = "42"
+    VERSION = "43"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
