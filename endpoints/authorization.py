@@ -2,10 +2,12 @@ from bson import ObjectId
 from flask import Blueprint, request, session, Response, jsonify
 from flask_login import login_required, current_user, login_user, logout_user
 
-from werkzeug.security import generate_password_hash, check_password_hash
-from utils import User, users
 import time
 from random import choice
+
+from werkzeug.security import generate_password_hash, check_password_hash
+from utils import User, users
+from var import *
 
 authorization = Blueprint('authorization', __name__)
 
@@ -46,7 +48,7 @@ def signup() -> Response:
         'authorized_schools': [],
         'password_hash': generate_password_hash(password, method='sha256'),
         'time_joined': time.time(),
-        'settings': {}
+        'settings': DEFAULT_SETTINGS
     })
     tmp_user = User(str(tmp_id.inserted_id))
     login_user(tmp_user)
@@ -74,9 +76,21 @@ def account() -> Response:
                 'settings': tmp_user['settings'], 
                 'time_joined': tmp_user['time_joined']
             })
-    else:
-        x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
-        return jsonify({"success": True}) if x.deleted_count == 1 else jsonify({"success": False})
+    # method must be 'DELETE'
+    x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
+    return jsonify({"success": True}) if x.deleted_count == 1 else jsonify({"success": False})
+
+
+@authorization.route("/settings", methods=['GET', 'DELETE', 'POST'])
+@login_required
+def settings() -> Response:
+    if request.method == "GET":
+        return jsonify(current_user.get_user()["settings"])
+    if request.method == "DELETE":
+        current_user.update_settings()
+        return jsonify({"success": True})
+    # method must be 'POST'
+    return Response("Dafuq, you thought we implemented this lol")
 
 
 @authorization.route('/authorized_schools', methods=['GET'])

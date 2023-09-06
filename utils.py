@@ -11,6 +11,8 @@ from flask_login import UserMixin, current_user
 
 from dotenv import load_dotenv
 
+from var import *
+
 load_dotenv()
 
 db = pymongo.MongoClient(os.getenv("MONGO_URL") if os.getenv("MONGO_URL") else "", 27017).vplan
@@ -40,7 +42,7 @@ class User(UserMixin):
             users.update_one({'_id': ObjectId(self.mongo_id)},
                              {"$set": {'authorized_schools': tmp_authorized_schools}})
 
-    def update_settings(self, user_settings):
+    def update_settings(self, user_settings: DEFAULT_SETTINGS):
         self.get_user()
         authorized_schools = self.user.get("authorized_schools", [])
 
@@ -68,6 +70,14 @@ class User(UserMixin):
             #    return make_response('Course not recognized', 400)
 
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'settings': new_settings}})
+
+    def update_preferences(self, preferences: {}):
+        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'preferences': preferences}})
+
+    # get setting for user, if setting not set get default setting
+    def get_setting(self, setting_key):
+        self.get_user()
+        return self.user.get("settings", {}).get(setting_key, DEFAULT_SETTINGS.get(setting_key, None))
 
 
 class AddStaticFileHashFlask(Flask):

@@ -132,6 +132,15 @@ def authorize() -> Response:
     })
 
 
+@api.route(f"{API_BASE_URL}/preferences", methods=["GET", "POST"])
+@login_required
+def preferences(school_num: str) -> Response:
+    if request.method == "GET":
+        return current_user.get_user().get("preferences", {})
+    # method must be "POST"
+    return Response("Lol not implemented")
+
+
 @api.route(f"{API_BASE_URL}/instant_authorization", methods=["GET"])
 @login_required
 def instant_authorize(school_num: str) -> Response:
