@@ -21,7 +21,7 @@ class _InfoParsers:
 
     # teacher a,teacher b
     _teachers = fr"{_teacher}(?:, ?{_teacher})*"
-    _course = r"([A-Za-z0-9ÄÖÜäöüß-]{2,8})|(?:G\/R\/W)|(?:RE\/e)"  # maybe be more strict?
+    _course = r"([A-Za-z0-9ÄÖÜäöüß\/-]{2,8})"  # maybe be more strict?
     _period = r"St\.(?P<periods>(?P<period_begin>\d{1,2})(?:-(?P<period_end>\d{1,2}))?)"
     _periods = fr""
     _form = (
@@ -199,7 +199,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
     _teachers: list[str]
     date: datetime.date | None
     periods: list[int]
-    teachers: list[str] = dataclasses.field(init=False)
+    teachers: list[str] = dataclasses.field(init=False, default=None)
 
     def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         if self.date is None:
@@ -286,7 +286,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
 class InsteadOfCourse(SerializeMixin, _HasTeachersAndCourse):
     course: str
     _teachers: list[str]
-    teachers: list[str] = dataclasses.field(init=False)
+    teachers: list[str] = dataclasses.field(init=False, default=None)
 
     def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         return [
@@ -307,7 +307,7 @@ class InsteadOfCourse(SerializeMixin, _HasTeachersAndCourse):
 class Cancelled(SerializeMixin, _HasTeachersAndCourse):
     course: str
     _teachers: list[str]
-    teachers: list[str] = dataclasses.field(init=False)
+    teachers: list[str] = dataclasses.field(init=False, default=None)
 
     def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
         return [
@@ -609,6 +609,12 @@ class ParsedLessonInfo:
                         message.parsed._teachers,
                         teacher_abbreviation_by_surname
                     )
+
+    def lesson_group_sort_key(self) -> list[list[list[str]]]:
+        return [
+            [message.parsed.original_messages for message in paragraph.messages]
+            for paragraph in self.sorted_canonical().paragraphs
+        ]
 
 
 def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,

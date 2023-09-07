@@ -160,12 +160,18 @@ class Lessons:
     ) -> ParsedLessonInfo | None:
         """Group two parsed lesson infos if possible."""
 
+        if len(parsed_info1.paragraphs) != len(parsed_info2.paragraphs):
+            return None
+
         info1: ParsedLessonInfo = parsed_info1.sorted_canonical()
         info2: ParsedLessonInfo = parsed_info2.sorted_canonical()
 
         new_info = []
 
         for paragraph1, paragraph2 in zip(info1.paragraphs, info2.paragraphs):
+            if len(paragraph1.messages) != len(paragraph2.messages):
+                return None
+
             new_paragraph = []
             for message1, message2 in zip(paragraph1.messages, paragraph2.messages):
                 message1: LessonInfoMessage
@@ -211,6 +217,8 @@ class Lessons:
         sorted_lessons = sorted(
             self.lessons,
             key=lambda x: (x.current_class if x.current_class is not None else "",
+                           x.current_teachers,
+                           x.parsed_info.lesson_group_sort_key(),
                            x.class_group if x.class_group is not None else "",
                            x.scheduled_forms,
                            x.periods)
