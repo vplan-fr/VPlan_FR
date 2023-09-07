@@ -216,7 +216,7 @@ class Lessons:
 
         sorted_lessons = sorted(
             self.lessons,
-            key=lambda x: (x.current_class if x.current_class is not None else "",
+            key=lambda x: (x.class_number if x.class_number else (x.current_class if x.current_class else ""),
                            x.current_teachers,
                            x.parsed_info.lesson_group_sort_key(),
                            x.class_group if x.class_group is not None else "",
