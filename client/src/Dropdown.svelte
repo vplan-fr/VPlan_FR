@@ -4,6 +4,7 @@
     export let transitionFunction = scale;
     export let transitionOptions = {duration: 200, start: 0.3};
     export let transform_origin = "100% 0%";
+    export let small_version = false;
     let open = false;
 
     function clickOutside(node, { enabled: initialEnabled, cb }) {
@@ -31,9 +32,9 @@
     }
 </script>
 
-<div class="dropdown-wrapper">
+<div class="dropdown-wrapper {small_version ? "small_version": ""} {open ? "open": ""}">
     <div class="btn-wrapper" use:clickOutside={{ enabled: open, cb: () => open = false }}>
-        <slot name="toggle_button" onclick={() => {open = !open}} />
+        <slot name="toggle_button" toggle={() => {open = !open}} />
     </div>
     {#if open}
         <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="transform-origin: {transform_origin};">
@@ -58,6 +59,7 @@
             bottom: 0;
             right: 0;
             transform: translateY(100%);
+            z-index: 999;
 
             display: flex;
             flex-direction: column;
@@ -75,6 +77,15 @@
                 height: 100%;
                 background: rgba(255, 255, 255, 0.07);
                 pointer-events: none;
+            }
+        }
+
+        &.small_version {
+            .dropdown-content {
+                box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.14), 0 10px 10px 0 rgba(0, 0, 0, 0.12);
+                min-width: 100%;
+                border-radius: 5px;
+                overflow: hidden;
             }
         }
     }

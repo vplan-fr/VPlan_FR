@@ -1,6 +1,12 @@
 <script>
     import {notifications} from './notifications.js';
+    import { onMount } from "svelte";
+    import { title } from "./stores";
 
+    onMount(() => {
+        location.hash = "#school_manager";
+        title.set("Schule wählen");
+    });
     export let school_num;
     function isObjectInList(object, list) {
         return list.some(item => item.toString() === object.toString());

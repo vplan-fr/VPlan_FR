@@ -146,11 +146,11 @@
         {/if}
         {#if lessons.length === 0}
             {#if loading}
-                Loading...
+                Lädt...
             {:else if error}
-                An error occured: {error}
+                Ein Fehler ist aufgetreten: {error}
             {:else}
-                No Lessons
+                Keine Stunden
             {/if}
         {:else}
         <div class="lessons-wrapper">
