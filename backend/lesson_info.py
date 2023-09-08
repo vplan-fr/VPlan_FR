@@ -185,7 +185,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
             ]
 
     def is_groupable(self, other: MovedFrom):
-        return self.date == other.date
+        return self.before == other.before and self.after == other.after and self.date == other.date
 
 
 class _HasTeachersAndCourse(ParsedLessonInfoMessage, abc.ABC):
@@ -473,12 +473,13 @@ def _parse_message(info: str, plan_year: int) -> ParsedLessonInfoMessage:
     info = info.strip()
     info = re.sub(r"(?<=\w)\/\s", "/", info)  # remove spaces after slashes like in G/ R/ W
     parsed_info, match = __parse_message(info, plan_year)
-    parsed_info.original_messages = [info]
 
-    if match:
+    if match is not None:
+        parsed_info.original_messages = [info[match.start():match.end()]]
         parsed_info.before = info[:match.start()]
         parsed_info.after = info[match.end():]
     else:
+        parsed_info.original_messages = [info]
         parsed_info.before = ""
         parsed_info.after = ""
 
