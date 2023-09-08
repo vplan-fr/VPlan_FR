@@ -7,7 +7,7 @@ import logging
 import re
 import typing
 
-from .vplan_utils import periods_to_block_label, parse_periods
+from .vplan_utils import periods_to_block_label, parse_periods, _parse_form_pattern
 from . import models
 
 
@@ -23,11 +23,7 @@ class _InfoParsers:
     _teachers = fr"{_teacher}(?:, ?{_teacher})*"
     _course = r"([A-Za-z0-9ÄÖÜäöüß\/-]{2,8})"  # maybe be more strict?
     _period = r"St\.(?P<periods>(?P<period_begin>\d{1,2})(?:-(?P<period_end>\d{1,2}))?)"
-    _periods = fr""
-    _form = (
-        r"(?:(?P<major>\d+|[A-Za-zÄÖÜäöüß]+)(?P<sep>[^A-Za-zÄÖÜäöüß0-9]?) ?(?P<minor>\d+|[A-Za-zÄÖÜäöüß]+?)|"
-        r"(?P<alpha>[A-Za-zÄÖÜäöüß]+|\d+))"
-    )
+    _form = _parse_form_pattern.pattern
 
     _weekday = r"(?:Mo|Di|Mi|Do|Fr|Sa|So)"
     _date = r"(?:\d{2}\.\d{2}\.)"
@@ -97,8 +93,7 @@ class _InfoParsers:
     eigentliche Stunde findet nicht statt, weil andere Stunde auf diese verlegt wurde 
     "verlegt aus der Zukunft/Vergangenheit" =: "statt"
     "verlegt aus der Zukunft/Vergangenheit" =: "verlegt von" (gleicher Tag)
-
-"""
+    """
 
 
 class SerializeMixin:

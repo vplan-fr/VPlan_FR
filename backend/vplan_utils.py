@@ -9,27 +9,20 @@ from collections import defaultdict
 ParsedForm = typing.Union[typing.Tuple[str], typing.Tuple[str, str, str]]
 
 _parse_form_pattern = re.compile(
-    r"(?P<major>"
-    r"(?P<_major_only_digits>11|12|13)"
-    r"|\d+"
-    r"|[A-Za-zÄÖÜäöüß]+(?![A-Za-zÄÖÜäöüß]))"
-
+    r"(?<!\S)(?:"
+    r"(?P<major>(?P<_major_only_digits>\d{1,2})|[A-Za-zÄÖÜäöüß]+(?![A-Za-zÄÖÜäöüß]))"
     r"(?P<sep>(?P<_contains_sep>[^A-Za-zÄÖÜäöüß0-9 \n])?)"
-
     r"(?(_contains_sep)(?P<_contains_whitespace> )?|)"
-
-    r"(?P<minor>"
-    r"\d+"
+    r"(?P<minor>\d+[A-Za-zÄÖÜäöüß]?"
     r"|[A-Za-zÄÖÜäöüß]+?"
     r"|(?(_major_only_digits)(?(_contains_sep)yes(?!.)|(?(_contains_whitespace)yes(?!.)|))|no(?!.)))"
-
-    r"|(?P<alpha>[A-ZÄÖÜ]+|\d+)"
+    r"|(?P<alpha>[A-ZÄÖÜ]{2,}|\d+)"
+    r")(?!\S)"
 )
 
 
 def parse_form(form: str) -> ParsedForm:
-    # TODO: make sure whole string matches
-    match = _parse_form_pattern.match(form)
+    match = _parse_form_pattern.fullmatch(form)
     if match is None or match.group("alpha"):
         return form,
     else:
@@ -62,7 +55,7 @@ def _parse_form_minor(minor: str) -> int | None:
     except ValueError:
         pass
 
-    if minor.isalpha():
+    if minor.isalpha() and len(minor) == 1:
         return ord(minor.lower()) - ord("a") + 1
 
     return None
