@@ -3,7 +3,6 @@
     import Weekplan from "./Weekplan.svelte";
     import Authentication from "./Authentication.svelte";
 	import Toast from './Toast.svelte';
-    import SchoolAuthorization from './SchoolManager.svelte';
     import Navbar from "./Navbar.svelte";
     import AboutUs from "./AboutUs.svelte";
     import {DatePicker} from 'attractions';
@@ -97,12 +96,6 @@
 
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
-
-    // Popup for school authorization
-    let isPopupVisible = false;
-    function togglePopup() {
-        isPopupVisible = !isPopupVisible;
-    }
 </script>
 
 <svelte:head>
@@ -110,15 +103,9 @@
 </svelte:head>
 
 {#if $logged_in}
-<Navbar />
+    <Navbar />
 {/if}
 <main>
-    <div id="auth-wrapper">
-        {#if isPopupVisible}
-            <SchoolAuthorization bind:api_base bind:school_num={school_num} isPopupVisible={isPopupVisible} on:close={togglePopup}/>
-        {/if}
-    </div>
-
     {#if $logged_in}
         {#if $current_page === "plan" || $current_page === "weekplan"}
             <DatePicker
@@ -209,9 +196,6 @@
         @media only screen and (max-width: 500px) {
             width: 95%;
         }
-    }
-    #auth-wrapper {
-        z-index: 10;
     }
     :global {
         ul {
