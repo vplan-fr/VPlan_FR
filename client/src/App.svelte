@@ -14,8 +14,8 @@
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
-    let plan_type = "forms";
-    let plan_value = "6/2";
+    let plan_type = "rooms";
+    let plan_value = "1110";
     let teacher_list = [];
     let all_rooms;
     let grouped_forms = [];
@@ -215,8 +215,8 @@
     }
     :global {
         ul {
-            padding-left: 30px !important;
-            @media only screen and (max-width: 601px) {
+            padding-left: 40px !important;
+            @media only screen and (max-width: 1501px) {
                 padding-left: 22px !important;
             }
             list-style-type: disc !important;

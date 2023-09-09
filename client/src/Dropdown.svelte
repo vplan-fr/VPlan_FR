@@ -85,6 +85,9 @@
                 box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.14), 0 10px 10px 0 rgba(0, 0, 0, 0.12);
                 min-width: 100%;
                 border-radius: 5px;
+                @media only screen and (min-width: 1501px) {
+                    border-radius: 8px;
+                }
                 overflow: hidden;
             }
         }

@@ -138,48 +138,48 @@
 </script>
 
 <div class="plan" class:extra-height={extra_height}>
-    <div class:loading>
-        {#if show_title && info}
-            <h1 class="responsive-heading">
-                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> <span class="no-linebreak">({info.week}-Woche)</span>
-            </h1>
-        {/if}
-        {#if lessons.length === 0}
-            {#if loading}
-                Lädt...
-            {:else if error}
-                Ein Fehler ist aufgetreten: {error}
-            {:else}
-                Keine Stunden
-            {/if}
+    {#if show_title && info}
+        <h1 class="responsive-heading">
+            Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+        </h1>
+    {/if}
+    {#if lessons.length === 0}
+        {#if loading}
+            Lädt...
+        {:else if error}
+            Ein Fehler ist aufgetreten: {error}
         {:else}
-        <div class="lessons-wrapper">
-            {#if external_times}
-                <div class="deco-bar"></div>
-            {/if}
-            {#each lessons as lesson, i}
-                {#if external_times}    
-                    {#if !lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
-                        <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
-                    {/if}
+            Keine Stunden
+        {/if}
+    {:else}
+    <div class="lessons-wrapper">
+        {#if external_times}
+            <div class="deco-bar"></div>
+        {/if}
+        {#each lessons as lesson, i}
+            {#if external_times}    
+                {#if !lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
+                    <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
                 {/if}
-                <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
+            {/if}
+            <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
+        {/each}
+    </div>
+    {/if}
+    {#if info}
+        {#if info.additional_info.length > 0}
+        <div class="additional-info">
+            {#each info.additional_info as cur_info}
+                {#if cur_info !== null}
+                    {cur_info}
+                {/if}
+                <br>
             {/each}
         </div>
         {/if}
-        {#if info}
-            <p class="additional-info">
-                {#each info.additional_info as cur_info}
-                    {#if cur_info !== null}
-                        {cur_info}
-                    {/if}
-                    <br>
-                {/each}
-            </p>
-            <span class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></span>
-        {/if}
-        <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms/>
-    </div>
+        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+    {/if}
+    <!-- <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms/> -->
 </div>
 
 <style lang="scss">
@@ -197,16 +197,6 @@
             @media only screen and (max-width: 601px) {
                 outline-width: 2px;
                 outline-offset: 1px;
-            }
-            border-radius: 1px;
-            transition: all .2s ease;
-            transition-delay: .1s;
-            &.loading {
-                outline-offset: 10px;
-                outline-color: rgba(255, 255, 255, 0.4);
-                @media only screen and (max-width: 601px) {
-                    outline-offset: 4px;
-                }
             }
         }
         &.extra-height {
@@ -228,15 +218,32 @@
     }
 
     .last-updated {
-        margin: 16px 0px;
         font-size: clamp(0.875rem, 2.8vmin, 1.75rem);
         line-height: 1.5;
+        margin-top: 20px;
+        display: block !important;
     }
 
     .additional-info {
-        margin-top: 20px;
+        position: relative;
         font-size: clamp(0.938rem, 3vmin, 1.875rem);
         line-height: 1.5;
+        border: clamp(1px, .3vmax, 3px) solid rgba(255, 255, 255, 0.2);
+        padding: 10px;
+        padding-top: calc(1vmax + .5rem);
+        margin-top: 30px;
+        border-radius: 5px;
+
+        &::before {
+            content: "Informationen";
+            color: rgba(255, 255, 255, 0.2);
+            background-color: var(--background-color);
+            padding: 0px 5px;
+            position: absolute;
+            top: 0;
+            left: 20px;
+            transform: translateY(-50%);
+        }
     }
 
     .no-linebreak {
@@ -252,7 +259,11 @@
             width: max-content;
             border-radius: 0px 8px 8px 0px;
         
-            font-size: 1.3rem;
+            font-size: 2rem;
+            @media only screen and (max-width: 1500px) {
+                font-size: 1.3rem;
+            }
+
             padding: 1rem;
             line-height: 1;
             
