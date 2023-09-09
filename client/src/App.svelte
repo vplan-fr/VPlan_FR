@@ -14,8 +14,8 @@
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
-    let plan_type = "teachers";
-    let plan_value = "BRU";
+    let plan_type = "forms";
+    let plan_value = "6/2";
     let teacher_list = [];
     let all_rooms;
     let grouped_forms = [];

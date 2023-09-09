@@ -150,7 +150,7 @@
             </div>
             {:else if teachers.length === 1}
             <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed}
-                    class:teacher_absent={teacher_absent}>
+                 class:teacher_absent={teacher_absent}>
                 <button on:click={() => {
                     plan_type = "teachers";
                     plan_value = teachers[0];
@@ -210,10 +210,10 @@
             {/if}
         {/if}
     </div>
-    {#if lesson.info.length > 0}
+    {#if (lesson.info.length > 0) || (plan_type === "forms" && (forms.length > 1))}
         <div class="info-element lesson-info">
-            {#each lesson.info as elem}
-                <ul>
+            <ul>
+                {#each lesson.info as elem}
                     {#each elem as element}
                         <li>
                             {#each element.text_segments as text_segment}
@@ -223,7 +223,7 @@
                                         plan_type = text_segment.link.type;
                                         plan_value = text_segment.link.value;
                                     }}>
-                                        <u style="text-decoration: 2px underline solid var(--accent-color)">{text_segment["text"]}</u>
+                                        <div class="clickable">{text_segment["text"]}</div>
                                     </button>
                                 {:else}
                                     <button class="no-btn-visuals">{text_segment["text"]}</button>
@@ -231,27 +231,27 @@
                             {/each}
                         </li>
                     {/each}
-                    {#if plan_type === "forms" && (forms.length > 1)}
-                        <li>
-                            <div class="horizontal_wrapper">
-                                Beteiligte Klassen:
-                                <div class="fit-content-width">
-                                    <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
-                                        <button slot="toggle_button" on:click={toggle} class="toggle-button">{forms_str}</button>
-                                        
-                                        {#each forms as form}
-                                            <button on:click={() => {
-                                                plan_type = "forms";
-                                                plan_value = form;
-                                            }}>{form}</button>
-                                        {/each}
-                                    </Dropdown>
-                                </div>
-                            </div>
-                        </li>
-                    {/if}
-                </ul>
-            {/each}
+                {/each}
+                {#if plan_type === "forms" && (forms.length > 1)}
+                <li>
+                    <div class="horizontal_wrapper">
+                        Beteiligte Klassen:
+                        <div class="fit-content-width">
+                            <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
+                                <button slot="toggle_button" on:click={toggle} class="toggle-button">{forms_str}</button>
+                                
+                                {#each forms as form}
+                                    <button on:click={() => {
+                                        plan_type = "forms";
+                                        plan_value = form;
+                                    }}>{form}</button>
+                                {/each}
+                            </Dropdown>
+                        </div>
+                    </div>
+                </li>
+                {/if}
+            </ul>
         </div>
     {/if}
 </div>
@@ -266,9 +266,13 @@
 
     .fit-content-width .dropdown-wrapper button, .max-width .dropdown-wrapper button {
         &.toggle-button {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
             overflow: hidden;
+
+            &:hover, &:focus-visible {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
         }
 
         border: none;
@@ -279,6 +283,10 @@
         padding: 5px;
         font-size: inherit;
         line-height: 1.313;
+
+        &:hover, &:focus-visible {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
     }
 
     .no-btn-visuals {
@@ -294,16 +302,17 @@
         flex-direction: row;
         align-items: center;
         gap: 10px;
-        margin-top: 5px;
     }
 
     .lesson-info {
         margin-top: 10px;
         padding: 8px !important;
         background: rgba(255, 255, 255, 0.05) !important;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+        ul {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
         min-height: unset !important;
         font-weight: 300;
 
@@ -312,6 +321,17 @@
             font-size: 0.875rem;
             line-height: 1.313rem;
             color: var(--text-color);
+        }
+
+        .clickable {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 0px 5px;
+            transition: background-color 0.2s ease;
+
+            &:hover, &:focus-visible {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
         }
     }
 
@@ -348,6 +368,16 @@
         background: none;
         width: 100%;
         height: 100%;
+    }
+    
+    .teachers button, .rooms button, .forms button {
+        border-radius: 5px;
+        flex: 1;
+        transition: background-color .2s ease;
+
+        &:hover, &:focus-visible {
+            background: rgba(255, 255, 255, 0.1);
+        }
     }
 
     .teachers button {
