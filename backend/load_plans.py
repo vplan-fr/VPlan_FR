@@ -65,11 +65,11 @@ async def get_clients(session: aiohttp.ClientSession | None = None,
         client = IndiwareStundenplanerClient(hosting, session)
 
         for plan_client in client.substitution_plan_clients:
-            #plan_client.proxy_provider = proxy_provider
+            plan_client.proxy_provider = proxy_provider
             plan_client.no_delay = True
 
         for plan_client in client.indiware_mobil_clients:
-            #plan_client.proxy_provider = proxy_provider
+            plan_client.proxy_provider = proxy_provider
             plan_client.no_delay = True
 
         plan_downloader = PlanDownloader(client, cache, logger=logger)
@@ -105,6 +105,7 @@ async def main():
                         datefmt="%Y-%m-%d %H:%M:%S")
 
     proxy_provider = proxies.ProxyProvider(Path("proxies.json").absolute())
+    # list(proxy_provider.fetch_proxies())
 
     clients = await get_clients(proxy_provider=proxy_provider)
     try:
@@ -128,6 +129,7 @@ async def main():
                 *[client.check_infinite(once=args.once) for client in clients.values()]
             )
     finally:
+        logging.info("Exit.")
         logging.debug("Closing clients...")
         await asyncio.gather(*(client.plan_downloader.client.close() for client in clients.values()),
                              return_exceptions=True)
