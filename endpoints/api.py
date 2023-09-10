@@ -9,9 +9,9 @@ from endpoints.authorization import school_authorized
 import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
+from utils import set_user_preferences
 
 from var import *
-
 
 api = Blueprint('api', __name__)
 
@@ -117,28 +117,21 @@ def authorize() -> Response:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
     school_data = get_school_by_id(school_num)
     if not school_data:
-        return jsonify({"error": "school number not known, please contact us, if you want to provide additional credentials"})
+        return jsonify(
+            {"error": "school number not known, please contact us, if you want to provide additional credentials"})
     username = request.form.get("username")
     if username is None:
         return jsonify({"error": "school username not provided"})
     pw = request.form.get("pw")
     if pw is None:
         return jsonify({"error": "school password not provided"})
-    if username != school_data["hosting"]["creds"]["students"]["username"] or pw != school_data["hosting"]["creds"]["students"]["password"]:
+    if username != school_data["hosting"]["creds"]["students"]["username"] or pw != \
+            school_data["hosting"]["creds"]["students"]["password"]:
         return jsonify({"error": "username or password wrong"})
     current_user.authorize_school(school_num)
     return jsonify({
         "message": "Success!!!"
     })
-
-
-@api.route(f"{API_BASE_URL}/preferences", methods=["GET", "POST"])
-@login_required
-def preferences(school_num: str) -> Response:
-    if request.method == "GET":
-        return current_user.get_user().get("preferences", {})
-    # method must be "POST"
-    return Response("Lol not implemented")
 
 
 @api.route(f"{API_BASE_URL}/instant_authorization", methods=["GET"])
@@ -158,3 +151,38 @@ def instant_authorize(school_num: str) -> Response:
         return jsonify({"error": "username or password wrong"})
     current_user.authorize_school(school_num)
     return Response("Success!")
+
+
+@api.route(f"{API_BASE_URL}/preferences", methods=['GET', 'POST'])
+@login_required
+def preferences(school_num: str) -> Response:
+    cache = backend.cache.Cache(Path(".cache") / school_num)
+    try:
+        class_groups = json.loads(cache.get_meta_file("forms.json"))["forms"][request.args["form"]]["class_groups"]
+    except KeyError:
+        return jsonify({"error": f"Invalid or missing form {request.args.get('form')!r}!"})
+
+    current_preferences = current_user.get_user().get("preferences", {})
+
+    if request.method == "GET":
+        return jsonify(current_preferences)
+
+    elif request.method == "POST":
+        stored_classes = []
+
+        try:
+            data = json.loads(request.args.get("data", "[]"))
+        except json.JSONDecodeError:
+            return jsonify({"error": "Invalid JSON data."})
+
+        for requested_class in data:
+            if requested_class not in class_groups:
+                continue
+
+            stored_classes.append(requested_class)
+
+        current_preferences.setdefault(school_num, {})[request.args["form"]] = stored_classes
+
+        set_user_preferences(current_user.get_id(), current_preferences)
+
+        return Response("Success!")
