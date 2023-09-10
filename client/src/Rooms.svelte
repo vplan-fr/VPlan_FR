@@ -21,31 +21,30 @@
         <h1>Nicht verfügbar.</h1>
     {:else}
         <CollapsibleWrapper let:closeOtherPanels>
-            {#each Object.entries(rooms_data.free_rooms_by_block) as [block, free_rooms], i}
+            {#each Object.entries(rooms_data.free_rooms_by_block) as [block, all_free_rooms], i}
                 <Collapsible on:panel-open={closeOtherPanels} let:toggle>
                     <button slot="handle" on:click={toggle} class="toggle-button" class:first={i == 0} class:last={i == Object.entries(rooms_data.free_rooms_by_block).length-1}>{block}. Block</button>
                     <div class="block">
                         <ul>
-                            {#each group_rooms(Object.fromEntries(free_rooms.map(r => [r, all_rooms[r]]))) as [category, rooms]}
+                            {#each group_rooms(Object.fromEntries(all_free_rooms.map(r => [r, all_rooms[r]]))) as [category, free_rooms]}
                                 <li>{category}:<br><br>
-                                    {#each rooms as room}
-                                        <button class="chip info-element" on:click={() => {
-                                            plan_type = 'rooms';
-                                            plan_value = room;
-                                        }}>
-                                            <span>{room}</span>
-                                        </button>
-                                    {/each}
-                                    {#if !used_rooms_hidden}
-                                        {#each all_rooms_grouped_dict[category].filter(n => !rooms.includes(n)) as room}
+                                    {#each all_rooms_grouped_dict[category] as room}
+                                        {#if !free_rooms.includes(room) && !used_rooms_hidden}
                                             <button class="chip info-element used-room" on:click={() => {
                                                 plan_type = 'rooms';
                                                 plan_value = room;
                                             }} transition:fade={{duration: 200}}>
                                                 <span>{room}</span>
                                             </button>
-                                        {/each}
-                                    {/if}
+                                        {:else if free_rooms.includes(room)}
+                                            <button class="chip info-element" on:click={() => {
+                                                plan_type = 'rooms';
+                                                plan_value = room;
+                                            }}>
+                                                <span>{room}</span>
+                                            </button>
+                                        {/if}
+                                    {/each}
                                 </li>
                             {/each}
                         </ul>
