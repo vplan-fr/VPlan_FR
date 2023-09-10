@@ -13,7 +13,7 @@ from .vplan_utils import group_forms
 
 
 class PlanProcessor:
-    VERSION = "47"
+    VERSION = "48"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -94,9 +94,10 @@ class PlanProcessor:
 
             all_rooms = self.meta_extractor.rooms()
             rooms_data = {
-                "used_rooms_by_period": plan_extractor.used_rooms_by_period(),
-                "free_rooms_by_period": plan_extractor.free_rooms_by_period(all_rooms),
-                "free_rooms_by_block": plan_extractor.free_rooms_by_block(all_rooms)
+                "used_rooms_by_period": (used_rooms := plan_extractor.used_rooms_by_period()),
+                "free_rooms_by_period": (free_rooms := plan_extractor.free_rooms_by_period(all_rooms)),
+                "used_rooms_by_block": plan_extractor.rooms_by_block(used_rooms),
+                "free_rooms_by_block": plan_extractor.rooms_by_block(free_rooms)
             }
 
             self.cache.store_plan_file(

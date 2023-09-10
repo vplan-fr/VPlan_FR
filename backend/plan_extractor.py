@@ -170,16 +170,17 @@ class PlanExtractor:
             for period, used_rooms in self.used_rooms_by_period().items()
         }
 
-    def free_rooms_by_block(self, all_rooms: set[str]) -> dict[int, set[str]]:
+    @staticmethod
+    def rooms_by_block(free_or_used_rooms_by_period: dict[int, set[str]]) -> dict[int, set[str]]:
         out: dict[int, set[str]] = {}
 
-        for period, free_rooms in self.free_rooms_by_period(all_rooms).items():
+        for period, rooms in free_or_used_rooms_by_period.items():
             block = (period + 1) // 2
 
             if block not in out:
-                out[block] = set(free_rooms)
+                out[block] = set(rooms)
             else:
-                out[block].intersection_update(free_rooms)
+                out[block].intersection_update(rooms)
 
         return out
 
