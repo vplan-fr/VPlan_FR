@@ -9,7 +9,7 @@
 </script>
 
 <div>
-    <h1>Freie Räume</h1>
+    <h1 class="responsive-heading">Freie Räume</h1>
     {#if rooms_data?.free_rooms_by_block == null}
         <h1>Nicht verfügbar.</h1>
     {:else}
@@ -39,28 +39,32 @@
 </div>
 
 <style lang="scss">
-  @import 'theme.scss';
-
-  .block {
-    margin-bottom: 20px;
-  }
-
-  .chip {
-    display: inline-block;
-    padding: 5px 5px;
-    margin: 0 10px 10px 0;
-    outline: black 1px solid;
-    width: 64px;
-    /*height: 50px;*/
-    /*font-size: 16px;*/
-    //line-height: 50px;
-    border-radius: 9999px;
-    border: none;
-    background: none;
-
-    span {
-      // text color
-      color: white;
+    .responsive-heading {
+        font-size: clamp(1.063rem, 4vw, 2.28rem);
+        line-height: 1.6;
+        margin-bottom: 15px;
     }
-  }
+
+    .block {
+        margin-bottom: 20px;
+    }
+
+    .chip {
+        display: inline-block;
+        padding: 5px 5px;
+        margin: 0 10px 10px 0;
+        outline: black 1px solid;
+        width: 64px;
+        /*height: 50px;*/
+        /*font-size: 16px;*/
+        //line-height: 50px;
+        border-radius: 9999px;
+        border: none;
+        background: none;
+
+        span {
+        // text color
+        color: white;
+        }
+    }
 </style>

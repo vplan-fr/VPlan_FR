@@ -41,7 +41,9 @@
         if (data) {
             data = JSON.parse(data);
             rooms_data = data["rooms"]
-            lessons = data["plans"][plan_type][entity] || [];
+            if (plan_type !== "free_rooms") {
+                lessons = data["plans"][plan_type][entity] || [];
+            }
             info = data["info"];
             week_letter = info["week"];
             data_from_cache = true;
@@ -137,6 +139,7 @@
     });
 </script>
 
+{#if plan_type !== "free_rooms"}
 <div class="plan" class:extra-height={extra_height}>
     {#if show_title && info}
         <h1 class="responsive-heading">
@@ -179,8 +182,12 @@
         {/if}
         <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
     {/if}
-    <!-- <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms/> -->
 </div>
+{:else}
+<div class:extra-height={extra_height}>
+    <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms/>
+</div>
+{/if}
 
 <style lang="scss">
     .plan {

@@ -13,8 +13,8 @@
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
-    let plan_type = "rooms";
-    let plan_value = "1110";
+    let plan_type = "free_rooms";
+    let plan_value = "";
     let teacher_list = [];
     let all_rooms;
     let grouped_forms = [];
@@ -109,12 +109,12 @@
     {#if $logged_in}
         {#if $current_page === "plan" || $current_page === "weekplan"}
             <DatePicker
-                    format="%Y-%m-%d"
-                    locale="de-DE"
-                    closeOnSelection
-                    bind:disabledDates
-                    value={(date === null) ? null : new Date(date)}
-                    on:change={(evt) => {
+                format="%Y-%m-%d"
+                locale="de-DE"
+                closeOnSelection
+                bind:disabledDates
+                value={(date === null) ? null : new Date(date)}
+                on:change={(evt) => {
                     let tmp_dat = evt.detail.value;
                     date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
                 }}
@@ -125,7 +125,7 @@
             <div class="input-field" id="room-select">
                 <label for="rooms">Wähle einen Raum aus:</label>
                 <select name="rooms" id="rooms" bind:value={selected_room}
-                        on:change={() => {plan_type = 'rooms'; plan_value = selected_room}}>
+                    on:change={() => {plan_type = 'rooms'; plan_value = selected_room}}>
                     {#each grouped_rooms as [category, rooms]}
                         <optgroup label={category}>
                             {#each rooms as room}
@@ -138,7 +138,7 @@
             <div class="input-field" id="teacher-select">
                 <label for="teachers">Wähle einen Lehrer aus:</label>
                 <select name="teachers" id="teachers" bind:value={selected_teacher}
-                        on:change={() => {plan_type = 'teachers'; plan_value = selected_teacher}}>
+                    on:change={() => {plan_type = 'teachers'; plan_value = selected_teacher}}>
                     {#each teacher_list as teacher}
                         <option value={teacher}>{teacher}</option>
                     {/each}
@@ -147,7 +147,7 @@
             <div class="input-field" id="form-select">
                 <label for="forms">Wähle eine Klasse aus:</label>
                 <select name="forms" id="forms" bind:value={selected_form}
-                        on:change={() => {plan_type = 'forms'; plan_value = selected_form}}>
+                    on:change={() => {plan_type = 'forms'; plan_value = selected_form}}>
                     {#each Object.entries(grouped_forms) as [form_group, forms]}
                         <optgroup label={form_group}>
                             {#each forms as form}
@@ -157,6 +157,10 @@
                     {/each}
                 </select>
             </div>
+            <button on:click={() => {
+                plan_type = "free_rooms";
+                plan_value = "";
+            }}>Freie Räume</button>
             <br>
             <br>
             {#if $current_page ===  "plan"}
