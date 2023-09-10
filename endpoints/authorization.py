@@ -2,10 +2,12 @@ from bson import ObjectId
 from flask import Blueprint, request, session, Response, jsonify
 from flask_login import login_required, current_user, login_user, logout_user
 
+import json
 import time
 from random import choice
 
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from utils import User, users
 from var import *
 
@@ -90,7 +92,8 @@ def settings() -> Response:
         current_user.update_settings()
         return jsonify({"success": True})
     # method must be 'POST'
-    return Response("Dafuq, you thought we implemented this lol")
+    new_settings = json.loads(request.data)
+    return current_user.update_settings(new_settings)
 
 
 @authorization.route('/authorized_schools', methods=['GET'])

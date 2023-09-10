@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import send_from_directory, Response, jsonify
 from flask_login import LoginManager
+from flask_wtf import CSRFProtect
 from flask_compress import Compress
 
 from endpoints.authorization import authorization
@@ -22,8 +23,8 @@ app.config["PERMANENT_SESSION_LIFETIME"] = 32140800
 compress = Compress()
 compress.init_app(app)
 
-# csrf = CSRFProtect(app)
-# csrf.init_app(app)
+csrf = CSRFProtect(app)
+csrf.init_app(app)
 
 
 # authorization

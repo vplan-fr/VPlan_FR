@@ -35,6 +35,7 @@
             return periods.map(p => periods_to_block_label([p])).join(", ");
         }
     }
+    $: console.log(lesson);
 </script>
 <!-- Desktop View -->
 <div class="card desktop-view" class:cancelled={!lesson.takes_place}>
