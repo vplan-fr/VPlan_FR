@@ -28,10 +28,10 @@
                     <button slot="handle" on:click={toggle} class="toggle-button" class:first={i == 0} class:last={i == Object.entries(rooms_data.free_rooms_by_block).length-1}>{block}. Block</button>
                     <div class="block">
                         <ul>
-                            {#each group_rooms(Object.fromEntries(all_free_rooms.map(r => [r, all_rooms[r]]))) as [category, free_rooms]}
+                            {#each group_rooms(Object.fromEntries(all_free_rooms.map(r => [r, all_rooms[r]]))) as [category, free_rooms] (category)}
                                 <li>{category}:<br><br>
                                     {#each all_rooms_grouped_dict[category] as room (room)}
-                                        <div animate:flip|local={{duration: 200}} style="display: inline-block;">
+                                        <div animate:flip|local={{duration: 200}} style={(!free_rooms.includes(room) && !used_rooms_hidden) || free_rooms.includes(room) ? "display: inline-block;": "display: none;"}}>
                                             {#if !free_rooms.includes(room) && !used_rooms_hidden}
                                                 <button class="chip info-element used-room" on:click={() => {
                                                     plan_type = 'rooms';
@@ -93,7 +93,7 @@
             min-height: calc(100vh - 64px);
         }
     }
-    
+
     .toggle-button {
         font-size: clamp(1.063rem, 1.5vw, 1.28rem);
         width: 100%;
@@ -108,7 +108,7 @@
         &.first {
             border-top: unset;
         }
-        
+
         &.last {
             border-bottom: unset;
         }
