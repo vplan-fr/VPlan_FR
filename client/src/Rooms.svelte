@@ -6,6 +6,8 @@
     export let plan_type;
     export let plan_value;
 
+    $: all_rooms_grouped = all_rooms ? group_rooms(all_rooms) : []
+    $: all_rooms_grouped_dict = Object.fromEntries(all_rooms_grouped)
 </script>
 
 <div>
@@ -19,14 +21,22 @@
                 <ul>
                     {#each group_rooms(Object.fromEntries(free_rooms.map(r => [r, all_rooms[r]]))) as [category, rooms]}
                         <li>{category}:
-                        {#each rooms as room}
-                            <button class="lighten_background chip info-element" on:click={() => {
+                            {#each rooms as room}
+                                <button class="lighten_background chip info-element" on:click={() => {
                                 plan_type = 'rooms';
                                 plan_value = room;
                             }}>
-                                <span>{room}</span>
-                            </button>
-                        {/each}
+                                    <span>{room}</span>
+                                </button>
+                            {/each}
+                            {#each all_rooms_grouped_dict[category].filter(n => !rooms.includes(n)) as room}
+                                <button class="lighten_background chip info-element used-room" on:click={() => {
+                                plan_type = 'rooms';
+                                plan_value = room;
+                            }}>
+                                    <span>{room}</span>
+                                </button>
+                            {/each}
                         </li>
                     {/each}
                 </ul>
@@ -57,7 +67,7 @@
         background: none;
 
         span {
-        color: white;
+            color: white;
         }
     }
 </style>
