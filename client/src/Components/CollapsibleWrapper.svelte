@@ -3,7 +3,9 @@
      * @typedef {{ close: () => void; toggle: () => void }} AccordionSectionControl
      * @slot {{ closeOtherPanels: (e: CustomEvent<AccordionSectionControl>) => void }}
      */
-    import classes from '../utils/classes.js';
+    function classes(...args) {
+        return args.filter(cls => !!cls).join(' ');
+    }
   
     let _class = null;
     /** @type {string | false | null} */
@@ -36,5 +38,19 @@
 </ul>
 
 <style lang="scss">
-    
+    ul {
+        padding-left: 0 !important;
+        @media only screen and (max-width: 1501px) {
+            padding-left: 0px !important;
+        }
+        list-style-type: none !important;
+    }
+    .accordion {
+        overflow: hidden;
+        border-radius: 5px;
+
+        @media only screen and (min-width: 1501px) {
+            border-radius: 8px;
+        }
+    }
 </style>

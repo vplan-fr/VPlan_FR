@@ -207,7 +207,11 @@
             }
         }
         &.extra-height {
-            min-height: calc(100vh - 20px);
+            min-height: calc(100vh - 56px);
+
+            @media only screen and (min-width: 1501px) {
+                min-height: calc(100vh - 64px);
+            }
         }
     }
 

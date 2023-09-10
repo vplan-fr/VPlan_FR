@@ -4,20 +4,16 @@
      * @event {{ close: () => void; toggle: () => void }} panel-open
      * @event {{ close: () => void; toggle: () => void }} panel-close
      */
-    import Button from '../button/button.svelte';
     import { createEventDispatcher } from 'svelte';
-    import classes from '../utils/classes.js';
+    import { slide } from 'svelte/transition';
+    function classes(...args) {
+        return args.filter(cls => !!cls).join(' ');
+    }
   
     let _class = null;
     /** @type {string | false | null} */
     export { _class as class };
   
-    /**
-     * The label text to use on the button that toggles the section.
-     * Not used if the handle slot is provided.
-     * @type {string | null}
-     */
-    export let label = null;
     /**
      * The state of the section: opened or closed.
      * @type {boolean}
@@ -38,14 +34,14 @@
 </script>
 
 <li class:open class={classes('panel', _class)}>
-    <slot name="handle" toggle={selfControl.toggle}>
-        <Button on:click={selfControl.toggle}>{label}</Button>
-    </slot>
+    <slot name="handle" toggle={selfControl.toggle}></slot>
 </li>
-<section>
+{#if open}
+<section transition:slide|local>
     <slot />
 </section>
-  
+{/if}
+
 <style lang="scss">
 
 </style>
