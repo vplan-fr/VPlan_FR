@@ -98,7 +98,7 @@
 
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
-    $: console.log(course_lists);
+    //$: console.log(course_lists);
 </script>
 
 <svelte:head>

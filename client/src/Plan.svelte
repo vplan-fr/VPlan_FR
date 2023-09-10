@@ -35,7 +35,7 @@
         }
         loading = true;
         controller = new AbortController();
-        console.log("getting lesson plan", school_num, date);
+        //console.log("getting lesson plan", school_num, date);
         let data_from_cache = false;
         let data = localStorage.getItem(`${school_num}_${date}`);
         if (data) {
@@ -67,7 +67,7 @@
 
                     }
                 }
-                console.log(lessons);
+                //console.log(lessons);
             })
             .catch(error => {
                 if (data_from_cache) {
@@ -165,7 +165,6 @@
                     <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
                 {/if}
             {/if}
-            {lesson.class_number}
             <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
         {/each}
     </div>
