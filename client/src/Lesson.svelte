@@ -1,5 +1,5 @@
 <script>
-    import Dropdown from "./Dropdown.svelte";
+    import Dropdown from "./Components/Dropdown.svelte";
 
     export let lesson;
     export let date;
@@ -59,33 +59,17 @@
             </div>
             <!-- Teachers -->
             <div class="small-area vert-align">
-                {#if teachers.length === 0}
-                <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed}
-                        class:teacher_absent={teacher_absent}>
-                    <span class="extra_padding">-</span>
-                </div>
-                {:else if teachers.length === 1}
                 <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed}
                     class:teacher_absent={teacher_absent}>
-                    <button on:click={() => {
-                        plan_type = "teachers";
-                        plan_value = teachers[0];
-                    }}>{teachers[0]}</button>
+                    {#each teachers as teacher}
+                        <button on:click={() => {
+                            plan_type = "teachers";
+                            plan_value = teacher;
+                        }}>{teacher}</button>
+                    {:else}
+                        <span class="extra_padding">-</span>
+                    {/each}
                 </div>
-                {:else}
-                <div class="max-width">
-                    <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
-                        <button slot="toggle_button" on:click={toggle}>{teachers.join(" ")}</button>
-                        
-                        {#each teachers as teacher}
-                            <button on:click={() => {
-                                plan_type = "teachers";
-                                plan_value = teacher;
-                            }}>{teacher}</button>
-                        {/each}
-                    </Dropdown>
-                </div>
-                {/if}
             </div>
             <!-- Rooms -->
             <div class="rooms vert-align max-width-center info-element small-area second_of_type" class:changed={room_changed}>
@@ -195,33 +179,17 @@
         </div>
         <!-- Teachers -->
         {#if plan_type !== "teachers"}
-            {#if teachers.length === 0}
-            <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed}
-                    class:teacher_absent={teacher_absent}>
-                <span class="extra_padding">-</span>
-            </div>
-            {:else if teachers.length === 1}
             <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed}
                  class:teacher_absent={teacher_absent}>
-                <button on:click={() => {
-                    plan_type = "teachers";
-                    plan_value = teachers[0];
-                }}>{teachers[0]}</button>
+                {#each teachers as teacher}
+                    <button on:click={() => {
+                        plan_type = "teachers";
+                        plan_value = teacher;
+                    }}>{teacher}</button>
+                {:else}
+                    <span class="extra_padding">-</span>
+                {/each}
             </div>
-            {:else}
-            <div class="max-width">
-                <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
-                    <button slot="toggle_button" on:click={toggle}>{teachers.join(" ")}</button>
-                    
-                    {#each teachers as teacher}
-                        <button on:click={() => {
-                            plan_type = "teachers";
-                            plan_value = teacher;
-                        }}>{teacher}</button>
-                    {/each}
-                </Dropdown>
-            </div>
-            {/if}
         {/if}
         <!-- Rooms -->
         <div class="rooms vert-align max-width-center info-element" class:changed={room_changed}>

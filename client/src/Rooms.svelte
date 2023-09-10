@@ -20,11 +20,10 @@
                     {#each group_rooms(Object.fromEntries(free_rooms.map(r => [r, all_rooms[r]]))) as [category, rooms]}
                         <li>{category}:
                         {#each rooms as room}
-                            <!--{group_rooms()}-->
                             <button class="lighten_background chip info-element" on:click={() => {
-                            plan_type = 'rooms';
-                            plan_value = room;
-                        }}>
+                                plan_type = 'rooms';
+                                plan_value = room;
+                            }}>
                                 <span>{room}</span>
                             </button>
                         {/each}
@@ -34,8 +33,6 @@
             </div>
         {/each}
     {/if}
-
-
 </div>
 
 <style lang="scss">
@@ -55,15 +52,11 @@
         margin: 0 10px 10px 0;
         outline: black 1px solid;
         width: 64px;
-        /*height: 50px;*/
-        /*font-size: 16px;*/
-        //line-height: 50px;
         border-radius: 9999px;
         border: none;
         background: none;
 
         span {
-        // text color
         color: white;
         }
     }

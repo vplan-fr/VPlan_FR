@@ -1,7 +1,7 @@
 <script>
     import {notifications} from './notifications.js';
     import {logged_in, current_page} from './stores.js';
-    import Dropdown from './Dropdown.svelte';
+    import Dropdown from './Components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
 
     function navigate_page(page_id) {
