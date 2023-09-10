@@ -3,6 +3,7 @@
     import {group_rooms} from "./utils.js";
     import Collapsible from "./Components/Collapsible.svelte";
     import { fade } from "svelte/transition";
+    import { flip } from "svelte/animate";
 
     export let rooms_data;
     export let all_rooms;
@@ -16,6 +17,7 @@
 </script>
 
 <div class:extra-height={extra_height}>
+    <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
     <h1 class="responsive-heading">Freie Räume</h1>
     {#if rooms_data?.free_rooms_by_block == null}
         <h1>Nicht verfügbar.</h1>
@@ -28,22 +30,24 @@
                         <ul>
                             {#each group_rooms(Object.fromEntries(all_free_rooms.map(r => [r, all_rooms[r]]))) as [category, free_rooms]}
                                 <li>{category}:<br><br>
-                                    {#each all_rooms_grouped_dict[category] as room}
-                                        {#if !free_rooms.includes(room) && !used_rooms_hidden}
-                                            <button class="chip info-element used-room" on:click={() => {
-                                                plan_type = 'rooms';
-                                                plan_value = room;
-                                            }} transition:fade={{duration: 200}}>
-                                                <span>{room}</span>
-                                            </button>
-                                        {:else if free_rooms.includes(room)}
-                                            <button class="chip info-element" on:click={() => {
-                                                plan_type = 'rooms';
-                                                plan_value = room;
-                                            }}>
-                                                <span>{room}</span>
-                                            </button>
-                                        {/if}
+                                    {#each all_rooms_grouped_dict[category] as room (room)}
+                                        <div animate:flip|local={{duration: 200}} style="display: inline-block;">
+                                            {#if !free_rooms.includes(room) && !used_rooms_hidden}
+                                                <button class="chip info-element used-room" on:click={() => {
+                                                    plan_type = 'rooms';
+                                                    plan_value = room;
+                                                }} transition:fade|local={{duration: 200}}>
+                                                    <span>{room}</span>
+                                                </button>
+                                            {:else if free_rooms.includes(room)}
+                                                <button class="chip info-element" on:click={() => {
+                                                    plan_type = 'rooms';
+                                                    plan_value = room;
+                                                }}>
+                                                    <span>{room}</span>
+                                                </button>
+                                            {/if}
+                                        </div>
                                     {/each}
                                 </li>
                             {/each}
@@ -53,17 +57,14 @@
             {/each}
         </CollapsibleWrapper>
     {/if}
-    <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">+</button>
 </div>
 
 <style lang="scss">
     .plus-btn {
-        position: absolute;
-        top: 0;
-        right: 0;
+        float: right;
         border: none;
         font-size: clamp(1.063rem, 4vw, 2.28rem);
-        height: clamp(1.063rem, 4vw, 2.28rem);
+        height: clamp(calc(1.063rem + 15px), calc(4vw + 15px), calc(2.28rem + 15px));
         aspect-ratio: 1;
         border-radius: 5px;
         background-color: rgba(255, 255, 255, 0.08);
