@@ -23,8 +23,8 @@ app.config["PERMANENT_SESSION_LIFETIME"] = 32140800
 compress = Compress()
 compress.init_app(app)
 
-csrf = CSRFProtect(app)
-csrf.init_app(app)
+# csrf = CSRFProtect(app)
+# csrf.init_app(app)
 
 
 # authorization
