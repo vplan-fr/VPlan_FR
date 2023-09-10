@@ -157,17 +157,21 @@ def instant_authorize(school_num: str) -> Response:
 @login_required
 def preferences(school_num: str) -> Response:
     cache = backend.cache.Cache(Path(".cache") / school_num)
-    try:
-        class_groups = json.loads(cache.get_meta_file("forms.json"))["forms"][request.args["form"]]["class_groups"]
-    except KeyError:
-        return jsonify({"error": f"Invalid or missing form {request.args.get('form')!r}!"})
 
     current_preferences = current_user.get_user().get("preferences", {})
 
     if request.method == "GET":
-        return jsonify(current_preferences)
+        if "form" in request.args:
+            return jsonify(current_preferences.get(school_num, {}).get(request.args["form"], []))
+        else:
+            return jsonify(current_preferences.get(school_num, {}))
 
     elif request.method == "POST":
+        try:
+            class_groups = json.loads(cache.get_meta_file("forms.json"))["forms"][request.args["form"]]["class_groups"]
+        except KeyError:
+            return jsonify({"error": f"Invalid or missing form {request.args.get('form')!r}!"})
+
         stored_classes = []
 
         try:
