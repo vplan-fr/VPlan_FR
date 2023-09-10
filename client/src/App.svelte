@@ -11,6 +11,7 @@
     import {notifications} from './notifications.js';
     import { logged_in, title, current_page } from './stores.js'
     import SchoolManager from "./SchoolManager.svelte";
+    import Preferences from "./Preferences.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -177,6 +178,8 @@
             <Settings />
         {:else if $current_page === "about_us"}
             <AboutUs />
+        {:else if $current_page === "preferences"}
+            <Preferences bind:api_base bind:grouped_forms bind:course_lists/>
         {:else}
             <span>Seite nicht gefunden!</span>
         {/if}
