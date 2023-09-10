@@ -4,6 +4,7 @@
     import Authentication from "./Authentication.svelte";
 	import Toast from './Toast.svelte';
     import Navbar from "./Navbar.svelte";
+    import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
     import {DatePicker} from 'attractions';
     import {group_rooms} from "./utils.js";
@@ -32,6 +33,7 @@
     let disabledDates = [];
     let enabled_dates = [];
     let grouped_rooms = [];
+    let course_lists = {};
 
     $: if (all_rooms) {
         grouped_rooms = group_rooms(all_rooms);
@@ -50,7 +52,7 @@
                 grouped_forms = data.forms.grouped_forms;
                 enabled_dates = Object.keys(data.dates);
                 date = data.date;
-                console.log(data);
+                course_lists = data.forms.forms;
             })
             .catch(error => {
                 notifications.danger("Metadata-fetch fehlgeschlagen!", 2000);
@@ -96,6 +98,7 @@
 
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
+    $: console.log(course_lists);
 </script>
 
 <svelte:head>
@@ -170,6 +173,8 @@
             {/if}
         {:else if $current_page === "school_manager"}
             <SchoolManager bind:school_num />
+        {:else if $current_page === "settings"}
+            <Settings />
         {:else if $current_page === "about_us"}
             <AboutUs />
         {:else}

@@ -48,7 +48,7 @@
                     <span class="material-symbols-outlined">tune</span>
                 </button>
 
-                <button class="nav-button"><span class="material-symbols-outlined">settings</span> Einstellungen</button>
+                <button class="nav-button" on:click={() => navigate_page("settings")}><span class="material-symbols-outlined">settings</span> Einstellungen</button>
                 <button class="nav-button" on:click={() => {navigate_page("school_manager")}}><span class="material-symbols-outlined">school</span> Schule wechseln</button>
                 <button class="nav-button"><span class="material-symbols-outlined">account_circle</span> Unterricht wählen</button>
                 <button on:click={logout} class="nav-button"><span class="material-symbols-outlined">logout</span> Logout</button>

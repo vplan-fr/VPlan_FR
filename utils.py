@@ -6,7 +6,7 @@ from werkzeug.security import safe_join
 import contextlib
 import hashlib
 
-from flask import Flask, make_response
+from flask import Flask, make_response, Response, jsonify
 from flask_login import UserMixin, current_user
 
 from dotenv import load_dotenv
@@ -29,6 +29,7 @@ class User(UserMixin):
 
     def get_user(self):
         self.user = users.find_one({'_id': ObjectId(self.mongo_id)})
+        return self.user
 
     def get_authorized_schools(self):
         self.get_user()
@@ -42,10 +43,11 @@ class User(UserMixin):
             users.update_one({'_id': ObjectId(self.mongo_id)},
                              {"$set": {'authorized_schools': tmp_authorized_schools}})
 
-    def update_settings(self, user_settings: DEFAULT_SETTINGS):
+    def update_settings(self, user_settings: DEFAULT_SETTINGS) -> Response:
         self.get_user()
         authorized_schools = self.user.get("authorized_schools", [])
 
+        print(user_settings)
         new_settings = {}
         try:
             new_settings["show_plan_toasts"] = bool(user_settings.get("show_plan_toasts", False))
@@ -70,8 +72,10 @@ class User(UserMixin):
             #    return make_response('Course not recognized', 400)
 
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'settings': new_settings}})
+        return jsonify({"success": True})
 
     def update_preferences(self, preferences: {}):
+        #available_courses =
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'preferences': preferences}})
 
     # get setting for user, if setting not set get default setting
