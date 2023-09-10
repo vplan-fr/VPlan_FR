@@ -27,7 +27,7 @@ export function group_rooms(rooms) {
     out.sort(([[house1, floor1], _], [[house2, floor2], __]) => {
         return sort_key(house1, floor1) - sort_key(house2, floor2);
     });
-    out.map(([_, rooms]) => rooms.sort((room1, room2) => rooms[room1]?.room_nr - rooms[room2]?.room_nr));
+    out.map(([_, curr_rooms]) => curr_rooms.sort((room1, room2) => rooms[room1]?.room_nr - rooms[room2]?.room_nr));
 
     function get_category_name([house, floor]) {
         let out = "";
