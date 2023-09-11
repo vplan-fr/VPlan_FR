@@ -45,6 +45,7 @@
                 lessons = data["plans"][plan_type][entity] || [];
             }
             info = data["info"];
+            console.log(data);
             week_letter = info["week"];
             data_from_cache = true;
         }
@@ -76,6 +77,7 @@
                     notifications.danger("Plan laden fehlgeschlagen!", 2000);
                 }
         });
+        location.hash = gen_location_hash();
     }
 
     function periods_to_block_label(periods) {
@@ -133,9 +135,27 @@
 
     $: load_lessons(date, plan_type, plan_value);
 
+    function gen_location_hash() {
+        if(school_num && date && plan_type) {
+            return `#plan|${school_num}|${date}|${plan_type}|${plan_value}`;
+        } else {
+            return "#plan";
+        }
+    }
+
     onMount(() => {
-        location.hash = "#plan";
+        location.hash = gen_location_hash();
         title.set("Plan");
+    });
+
+    window.addEventListener('popstate', (e) => {
+        let tmp_variables = location.hash.split("|");
+        if (tmp_variables.length === 5) {
+            school_num = decodeURI(tmp_variables[1]);
+            date = decodeURI(tmp_variables[2]);
+            plan_type = decodeURI(tmp_variables[3]);
+            plan_value = decodeURI(tmp_variables[4]);
+        }
     });
 </script>
 

@@ -2,7 +2,7 @@
     import Plan from "./Plan.svelte";
     import Weekplan from "./Weekplan.svelte";
     import Authentication from "./Authentication.svelte";
-	import Toast from './Toast.svelte';
+	import Toast from './Components/Toast.svelte';
     import Navbar from "./Navbar.svelte";
     import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
@@ -111,7 +111,7 @@
 {/if}
 <main>
     {#if $logged_in}
-        {#if $current_page === "plan" || $current_page === "weekplan"}
+        {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
             <DatePicker
                 format="%Y-%m-%d"
                 locale="de-DE"
@@ -167,7 +167,7 @@
             }}>Freie Räume</button>
             <br>
             <br>
-            {#if $current_page ===  "plan"}
+            {#if $current_page.substring(0, 4) === "plan"}
                 <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms/>
             {:else}
                 <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
