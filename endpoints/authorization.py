@@ -9,6 +9,7 @@ from random import choice
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from utils import User, users
+from utils import send_error, send_success
 from var import *
 
 authorization = Blueprint('authorization', __name__)
@@ -25,8 +26,8 @@ def login() -> Response:
         tmp_user = User(str(user["_id"]))
         login_user(tmp_user)
         session.permanent = True
-        return jsonify({"success": True})
-    return jsonify({"success": False, "error": "Benutzername oder Passwort waren falsch! Bitte versuch es erneut."})
+        return send_success()
+    return send_error("Benutzername oder Passwort waren falsch! Bitte versuch es erneut.")
 
 
 @authorization.route('/signup', methods=['POST'])
@@ -36,13 +37,13 @@ def signup() -> Response:
 
     tmp_user = users.find_one({'nickname': nickname})
     if tmp_user is not None:
-        return jsonify({"success": False, "error": "Nutzername ist schon vergeben!"})
+        return send_error("Nutzername ist schon vergeben!")
 
     if (len(nickname) < 3) or (len(nickname) > 15):
-        return jsonify({"success": False, "error": "Nutzername muss zwischen 3 und 15 Zeichen lang sein!"})
+        return send_error("Nutzername muss zwischen 3 und 15 Zeichen lang sein!")
 
     if len(password) < 10:
-        return jsonify({"success": False, "error": "Passwort muss mindestens 10 Zeichen lang sein!"})
+        return send_error("Passwort muss mindestens 10 Zeichen lang sein!")
 
     tmp_id = users.insert_one({
         'nickname': nickname,
@@ -56,14 +57,14 @@ def signup() -> Response:
     login_user(tmp_user)
     session.permanent = True
     current_user.update_settings({})
-    return jsonify({"success": True})
+    return send_success()
 
 
 @authorization.route('/logout')
 @login_required
 def logout() -> Response:
     logout_user()
-    return jsonify({"success": True})
+    return send_success()
 
 
 @authorization.route('/account', methods=['GET', 'DELETE'])
@@ -80,7 +81,7 @@ def account() -> Response:
             })
     # method must be 'DELETE'
     x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
-    return jsonify({"success": True}) if x.deleted_count == 1 else jsonify({"success": False})
+    return send_success() if x.deleted_count == 1 else send_error("User couldn't be deleted")
 
 
 @authorization.route("/settings", methods=['GET', 'DELETE', 'POST'])
@@ -90,7 +91,7 @@ def settings() -> Response:
         return jsonify(current_user.get_user()["settings"])
     if request.method == "DELETE":
         current_user.update_settings()
-        return jsonify({"success": True})
+        return send_success()
     # method must be 'POST'
     new_settings = json.loads(request.data)
     return current_user.update_settings(new_settings)
@@ -99,9 +100,7 @@ def settings() -> Response:
 @authorization.route('/authorized_schools', methods=['GET'])
 @login_required
 def authorized_schools() -> Response:
-    return jsonify(
-        current_user.get_authorized_schools()
-    )
+    return jsonify(current_user.get_authorized_schools())
 
 
 def school_authorized(func):
@@ -109,10 +108,10 @@ def school_authorized(func):
         if not current_user.user:
             current_user.get_user()
         if kwargs.get("school_num") is None:
-            return {"error": "no school number provided"}
+            return send_error("no school number provided")
         if not current_user.user.get("admin"):
             if kwargs.get("school_num") not in current_user.user.get("authorized_schools"):
-                return {"error": "user not authorized for specified school"}
+                return send_error("user not authorized for specified school")
         return func(*args, **kwargs)
     return wrapper_thing
 

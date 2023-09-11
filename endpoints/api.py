@@ -9,7 +9,7 @@ from endpoints.authorization import school_authorized
 import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
-from utils import set_user_preferences
+from utils import set_user_preferences, send_success, send_error
 
 from var import *
 
@@ -44,7 +44,7 @@ def schools() -> Response:
 @school_authorized
 def meta(school_num) -> Response:
     if school_num not in VALID_SCHOOLS:
-        return jsonify({"error": "Invalid school."})
+        return send_error("Invalid school.")
 
     cache = backend.cache.Cache(Path(".cache") / school_num)
     meta_data = json.loads(cache.get_meta_file("meta.json"))
@@ -56,14 +56,14 @@ def meta(school_num) -> Response:
     dates = sorted([datetime.datetime.strptime(elem, "%Y-%m-%d").date() for elem in list(dates_data.keys())])
     date = find_closest_date(dates)
 
-    return Response(json.dumps({
+    return jsonify({
         "meta": meta_data,
         "teachers": teachers_data,
         "forms": forms_data,
         "rooms": rooms_data,
         "dates": dates_data,
         "date": date.strftime("%Y-%m-%d")
-    }), mimetype='application/json')
+    })
 
 
 @api.route(f"{API_BASE_URL}/plan", methods=["GET"], endpoint="plan_api")
@@ -71,30 +71,30 @@ def meta(school_num) -> Response:
 @school_authorized
 def plan(school_num: str) -> Response:
     if school_num not in VALID_SCHOOLS:
-        return jsonify({"error": "Invalid school."})
+        return send_error("Invalid school")
 
     cache = backend.cache.Cache(Path(".cache") / school_num)
 
     _date = request.args.get("date")
     if not _date:
-        return jsonify({"error": "Missing date url parameter (YYYY-MM-DD)."})
+        return send_error("Missing date url parameter (YYYY-MM-DD).")
 
     try:
         date = datetime.datetime.strptime(_date, "%Y-%m-%d").date()
     except ValueError:
-        return jsonify({"error": "Invalid date format. Must be YYYY-MM-DD."})
+        return send_error("Invalid date format. Must be YYYY-MM-DD.")
 
     _revision = request.args.get("revision", default=".newest")
 
     try:
         revision = datetime.datetime.fromisoformat(_revision) if _revision != ".newest" else ".newest"
     except ValueError:
-        return jsonify({"error": "Invalid revision timestamp format. Must be in ISO format."})
+        return send_error("Invalid revision timestamp format. Must be in ISO format.")
 
     try:
         data = cache.get_all_json_plan_files(date, revision)
     except FileNotFoundError:
-        return jsonify({"error": "Invalid revision."})
+        return send_error("Invalid revision.")
 
     return jsonify(data)
 
@@ -112,45 +112,42 @@ def get_school_by_id(school_num: str):
 def authorize() -> Response:
     school_num = request.form.get("school_num")
     if school_num is None:
-        return jsonify({"error": "no school number provided"})
+        return send_error("no school number provided")
     with open(".cache/auth.log", "a") as f:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
     school_data = get_school_by_id(school_num)
     if not school_data:
-        return jsonify(
-            {"error": "school number not known, please contact us, if you want to provide additional credentials"})
+        return send_error("school number not known, please contact us, if you want to provide additional credentials")
     username = request.form.get("username")
     if username is None:
-        return jsonify({"error": "school username not provided"})
+        return send_error("school username not provided")
     pw = request.form.get("pw")
     if pw is None:
-        return jsonify({"error": "school password not provided"})
+        return send_error("school password not provided")
     if username != school_data["hosting"]["creds"]["students"]["username"] or pw != \
             school_data["hosting"]["creds"]["students"]["password"]:
-        return jsonify({"error": "username or password wrong"})
+        return send_error("username or password wrong")
     current_user.authorize_school(school_num)
-    return jsonify({
-        "message": "Success!!!"
-    })
+    return send_success()
 
 
 @api.route(f"{API_BASE_URL}/instant_authorization", methods=["GET"])
 @login_required
 def instant_authorize(school_num: str) -> Response:
     if "username" not in request.args:
-        return jsonify({"error": "username required"})
+        return send_error("username required")
     if "pw" not in request.args:
-        return jsonify({"error": "password required"})
+        return send_error("password required")
     with open("creds.json", "r") as f:
         creds = json.load(f)
     if school_num not in creds:
-        return jsonify({"error": "school number not found"})
+        return send_error("school number not found")
     username = request.args.get("username")
     pw = request.args.get("username")
     if username != creds[school_num]["username"] or pw != creds[school_num]["password"]:
-        return jsonify({"error": "username or password wrong"})
+        return send_error("username or password wrong")
     current_user.authorize_school(school_num)
-    return Response("Success!")
+    return send_success()
 
 
 @api.route(f"{API_BASE_URL}/preferences", methods=['GET', 'POST'])
@@ -170,7 +167,7 @@ def preferences(school_num: str) -> Response:
         try:
             class_groups = json.loads(cache.get_meta_file("forms.json"))["forms"][request.args["form"]]["class_groups"]
         except KeyError:
-            return jsonify({"success": False, "error": f"Invalid or missing form {request.args.get('form')!r}!"})
+            return send_error(f"Invalid or missing form {request.args.get('form')!r}!")
 
         stored_classes = []
 
@@ -178,7 +175,7 @@ def preferences(school_num: str) -> Response:
             data = json.loads(request.data)
             print(data)
         except json.JSONDecodeError:
-            return jsonify({"success": False, "error": "Invalid JSON data."})
+            return send_error("Invalid JSON data.")
 
         for requested_class in data:
             if requested_class not in class_groups:
@@ -190,4 +187,4 @@ def preferences(school_num: str) -> Response:
 
         set_user_preferences(current_user.get_id(), current_preferences)
 
-        return jsonify({"success": True})
+        return send_success()
