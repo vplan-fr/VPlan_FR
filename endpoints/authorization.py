@@ -158,6 +158,9 @@ def greeting():
         "Alles cool in Suhl?",
         "Howdy {name}!",
     ]
-    random_greeting = choice(greetings).format(name=current_user["nickname"])
+    if current_user.get_setting("chatgpt_greetings"):
+        with open("chatgpt_greetings.txt", "r") as f:
+            greetings += f.read().split("\n")
+    random_greeting = choice(greetings).format(name=current_user.user["nickname"])
     return send_success(random_greeting)
 

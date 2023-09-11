@@ -117,6 +117,19 @@
         );
     }
 
+    let greeting = "";
+    function get_greeting() {
+        customFetch("/greeting")
+            .then(data => {
+                greeting = data;
+            })
+            .catch(error => {
+
+            })
+    }
+
+    get_greeting();
+
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
     //$: console.log(course_lists);
@@ -131,6 +144,7 @@
 {/if}
 <main>
     {#if $logged_in}
+        <h1>{greeting}</h1>
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
             <DatePicker
                 format="%Y-%m-%d"
