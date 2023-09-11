@@ -17,7 +17,7 @@ _parse_form_pattern = re.compile(
     r"|[A-Za-zÄÖÜäöüß]+?"
     r"|(?(_major_only_digits)(?(_contains_sep)yes(?!.)|(?(_contains_whitespace)yes(?!.)|))|no(?!.)))"
     r"|(?P<alpha>[A-ZÄÖÜ]{2,}|\d+)"
-    r")(?!\S)"
+    r")(?=[\s,])"
 )
 
 
@@ -124,7 +124,6 @@ def _forms_to_str(forms: list[ParsedForm]) -> str:
         major, sep, minor = form
         grouped[major, sep].append(minor)
 
-    # sort my major
     grouped = {k: v for k, v in sorted(grouped.items(), key=lambda x: form_sort_key(x[0][0]))}
 
     out = []
