@@ -21,7 +21,6 @@
     let rooms_data = {};
     let info;
     let loading = true;
-    let error = "";
     let plan_type_map = {
         "forms": "Klasse",
         "rooms": "Raum",
@@ -48,25 +47,17 @@
             info = data["info"];
             week_letter = info["week"];
             data_from_cache = true;
+            loading = false;
         }
 
         customFetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
             .then(data => {
                 loading = false;
-                try {
-                    localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
-                    rooms_data = data["rooms"]
-                    lessons = data["plans"][plan_type][entity] || [];
-                    info = data["info"];
-                    week_letter = info["week"];
-                } catch {
-                    lessons = []
-                    try {
-                        error = data["error"];
-                    } catch {
-
-                    }
-                }
+                localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
+                rooms_data = data["rooms"]
+                lessons = data["plans"][plan_type][entity] || [];
+                info = data["info"];
+                week_letter = info["week"];
                 //console.log(lessons);
             })
             .catch(error => {
@@ -173,8 +164,6 @@
     {#if lessons.length === 0}
         {#if loading}
             Lädt...
-        {:else if error}
-            Ein Fehler ist aufgetreten: {error}
         {:else}
             Keine Stunden
         {/if}

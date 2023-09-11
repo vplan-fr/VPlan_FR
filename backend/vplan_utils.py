@@ -20,7 +20,6 @@ _parse_form_pattern = re.compile(
     r")(?![^\s,])"
 )
 
-breakpoint()
 
 def parse_form(form: str) -> ParsedForm:
     match = _parse_form_pattern.fullmatch(form)

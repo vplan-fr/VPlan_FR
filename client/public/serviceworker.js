@@ -4,6 +4,9 @@ const cacheFiles = [
     "/build/bundle.css", 
     "/base_static/webfont.js", 
     "/build/bundle.js",
+    "/base_static/images/better_vp_white.svg",
+    "/base_static/fonts/material_icons/kJF1BvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oDMzByHX9rA6RzaxHMPdY43zj-jCxv3fzvRNU22ZXGJpEpjC_1n-q_4MrImHCIJIZrDCvHOej.woff2",
+    "/base_static/favicon.png"
 ];
 
 self.addEventListener("install", event => {
@@ -17,7 +20,6 @@ self.addEventListener("install", event => {
 });
 
 self.addEventListener("fetch", event => {
-    console.log(event.request);
     event.respondWith(
         fetch(event.request)
         .catch(error => {
