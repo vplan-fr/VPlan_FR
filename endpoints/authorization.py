@@ -159,5 +159,5 @@ def greeting():
         "Howdy {name}!",
     ]
     random_greeting = choice(greetings).format(name=current_user["nickname"])
-    return Response(random_greeting)
+    return send_success(random_greeting)
 
