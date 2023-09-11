@@ -3,6 +3,7 @@
     import {notifications} from './notifications.js';
     import { fly, fade } from 'svelte/transition';
     import { logged_in, title } from './stores.js';
+    import {customFetch} from "./utils.js";
 
     let l_nickname;
     let l_password;
@@ -19,9 +20,9 @@
         let formData = new FormData();
         formData.append('nickname', l_nickname);
         formData.append('pw', l_password);
-        fetch('/login', {
+        customFetch('/login', {
             method: 'POST',
-            body: formData
+            body: formData,
         })
             .then(response => response.json())
             .then(data => {
@@ -41,7 +42,7 @@
         let formData = new FormData();
         formData.append('nickname', s_nickname);
         formData.append('pw', s_password);
-        fetch('/signup', {
+        customFetch('/signup', {
             method: 'POST',
             body: formData
         })

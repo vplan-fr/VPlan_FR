@@ -2,6 +2,7 @@
     import {notifications} from './notifications.js';
     import { onMount } from "svelte";
     import { title } from "./stores";
+    import {customFetch} from "./utils.js";
 
     onMount(() => {
         location.hash = "#school_manager";
@@ -19,7 +20,7 @@
     let schools = {};
     let authorized_school_ids = [];
     function get_schools() {
-        fetch("/schools")
+        customFetch("/schools")
             .then(response => response.json())
             .then(data => {
                 schools = data;
@@ -29,7 +30,7 @@
             })
     }
     function get_authorized_schools() {
-        fetch("/authorized_schools")
+        customFetch("/authorized_schools")
             .then(response => response.json())
             .then(data => {
                 authorized_school_ids = data;
@@ -58,7 +59,7 @@
         formData.append('school_num', authorize_school_id);
         formData.append('username', username);
         formData.append('pw', password);
-        fetch("/authorize", {
+        customFetch("/authorize", {
             method: 'POST',
             body: formData
         })

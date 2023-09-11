@@ -4,6 +4,7 @@
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
     import { title } from './stores.js';
+    import {customFetch} from "./utils.js";
 
     export let api_base;
     export let school_num;
@@ -49,7 +50,7 @@
             data_from_cache = true;
         }
 
-        fetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
+        customFetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
             .then(response => response.json())
             .then(data => {
                 loading = false;

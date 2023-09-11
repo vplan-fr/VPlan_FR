@@ -45,3 +45,24 @@ export function group_rooms(rooms) {
 
     return out.map(([category, rooms]) => [get_category_name(category), rooms]);
 }
+
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+export async function customFetch(url, options = {}) {
+    const headers = {
+        "X-CSRFToken": getCookie("csrftoken")
+    };
+
+    return fetch(url, {
+        ...options,
+        headers: {
+            ...options.headers,
+            ...headers,
+        },
+    });
+}

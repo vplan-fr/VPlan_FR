@@ -1,12 +1,13 @@
 <script>
     let settings;
+    import {customFetch} from "./utils.js";
 
     let show_plan_toasts;
     let day_switch_keys;
     let background_color;
     let accent_color;
     function get_settings() {
-        fetch("/settings")
+        customFetch("/settings")
             .then(response => response.json())
             .then(data => {
                 settings = data;
@@ -20,7 +21,7 @@
             })
     }
     function change_settings() {
-        fetch("/settings", {
+        customFetch("/settings", {
             method: "POST",
             body: JSON.stringify(settings),
         })

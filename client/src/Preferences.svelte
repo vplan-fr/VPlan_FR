@@ -1,7 +1,8 @@
 <script>
 
     import {notifications} from "./notifications.js";
-    import {preferences} from "./stores.js";
+    import {preferences} from './stores.js';
+    import {customFetch} from "./utils.js";
 
     export let api_base;
     export let grouped_forms;
@@ -15,7 +16,6 @@
     let selectedItems = [];
     let current_form_preferences = [];
 
-    $: console.log(form_groups);
 
     function sortCourses(obj) {
         const sortedArray = Object.entries(obj).sort((a, b) => a[1]["group"] - b[1]["group"]);
@@ -45,7 +45,7 @@
 
 
     function getPreferences() {
-        fetch(`${api_base}/preferences`)
+        customFetch(`${api_base}/preferences`)
             .then(response => response.json())
             .then(data => {
                 preferences.set(data);
@@ -53,7 +53,7 @@
     }
 
     function setPreferences() {
-        fetch(`${api_base}/preferences?` + new URLSearchParams(
+        customFetch(`${api_base}/preferences?` + new URLSearchParams(
             {
                 "form": selected_form
             }

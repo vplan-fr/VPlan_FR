@@ -10,6 +10,7 @@
     import {group_rooms} from "./utils.js";
     import {notifications} from './notifications.js';
     import { logged_in, title, current_page } from './stores.js'
+    import {customFetch} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
 
@@ -44,7 +45,7 @@
         if (!$logged_in) {
             return;
         }
-        fetch(`${api_base}/meta`)
+        customFetch(`${api_base}/meta`)
             .then(response => response.json())
             .then(data => {
                 meta = data.meta;
@@ -85,7 +86,7 @@
     }
 
     function check_login_status() {
-        fetch('/check_login')
+        customFetch('/check_login')
             .then(response => response.json())
             .then(data => {
                 $logged_in = data["logged_in"];

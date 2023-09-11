@@ -4,6 +4,7 @@
     import Dropdown from './Components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
     import { onMount } from 'svelte';
+    import {customFetch} from "./utils.js";
 
     function navigate_page(page_id) {
         $current_page = page_id;
@@ -11,7 +12,7 @@
     }
 
     function logout() {
-        fetch('/logout')
+        customFetch('/logout')
             .then(response => response.json())
             .then(data => {
                 $logged_in = !data["success"];

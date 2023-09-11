@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from flask import send_from_directory, Response, jsonify
 from flask_login import LoginManager
-from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_compress import Compress
 
 from endpoints.authorization import authorization
@@ -23,8 +23,8 @@ app.config["PERMANENT_SESSION_LIFETIME"] = 32140800
 compress = Compress()
 compress.init_app(app)
 
-# csrf = CSRFProtect(app)
-# csrf.init_app(app)
+csrf = CSRFProtect(app)
+csrf.init_app(app)
 
 
 # authorization
@@ -54,7 +54,9 @@ def unauthorized_callback() -> Response:
 # COMPILED SVELTE FILES
 @app.route("/", methods=["GET"])
 def base() -> Response:
-    return send_from_directory('client/public', 'index.html')
+    resp = send_from_directory('client/public', 'index.html')
+    resp.set_cookie("csrftoken", generate_csrf())
+    return resp
 
 
 @app.route("/<path:path>", methods=["GET"])
