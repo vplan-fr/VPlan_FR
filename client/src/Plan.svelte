@@ -143,12 +143,7 @@
         }
     }
 
-    onMount(() => {
-        location.hash = gen_location_hash();
-        title.set("Plan");
-    });
-
-    window.addEventListener('popstate', (e) => {
+    function refresh_plan_vars() {
         let tmp_variables = location.hash.split("|");
         if (tmp_variables.length === 5) {
             school_num = decodeURI(tmp_variables[1]);
@@ -156,6 +151,16 @@
             plan_type = decodeURI(tmp_variables[3]);
             plan_value = decodeURI(tmp_variables[4]);
         }
+    }
+
+    onMount(() => {
+        refresh_plan_vars();
+        location.hash = gen_location_hash();
+        title.set("Plan");
+    });
+
+    window.addEventListener('popstate', (e) => {
+        refresh_plan_vars();
     });
 </script>
 
