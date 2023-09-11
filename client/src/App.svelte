@@ -7,7 +7,7 @@
     import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
     import {DatePicker} from 'attractions';
-    import {group_rooms} from "./utils.js";
+    import {get_settings, group_rooms} from "./utils.js";
     import {notifications} from './notifications.js';
     import { logged_in, title, current_page } from './stores.js'
     import {customFetch} from "./utils.js";
@@ -25,6 +25,7 @@
     $: api_base = `./api/v69.420/${school_num}`;
     $logged_in = localStorage.getItem('logged_in') === 'true';
     check_login_status();
+    get_settings();
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
 

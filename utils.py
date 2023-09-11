@@ -60,6 +60,10 @@ class User(UserMixin):
         print(user_settings)
         new_settings = {}
         try:
+            new_settings["chatgpt_greetings"] = bool(user_settings.get("chatgpt_greetings", False))
+        except Exception:
+            return send_error("Invalid value for chatgpt_greetings")
+        try:
             new_settings["show_plan_toasts"] = bool(user_settings.get("show_plan_toasts", False))
         except Exception:
             return send_error("Invalid value for show_plan_toasts")
