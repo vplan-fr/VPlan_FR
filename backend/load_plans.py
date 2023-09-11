@@ -22,24 +22,30 @@ class PlanCrawler:
         self.plan_downloader = plan_downloader
         self.plan_processor = plan_processor
 
-    async def check_infinite(self, interval: int = 60, once: bool = False):
+    async def check_infinite(self, interval: int = 60, *, once: bool = False, ignore_exceptions: bool = False):
         self.plan_downloader.migrate_all()
         self.plan_processor.update_all()
 
         while True:
-            downloaded_files = await self.plan_downloader.update_fetch()
+            try:
+                downloaded_files = await self.plan_downloader.update_fetch()
 
-            self.plan_processor._logger.debug("* Processing plans...")
+                self.plan_processor._logger.debug("* Processing plans...")
 
-            if downloaded_files:
-                self.plan_processor.meta_extractor.invalidate_cache()
+                if downloaded_files:
+                    self.plan_processor.meta_extractor.invalidate_cache()
 
-            for (date, revision), downloaded_files_metadata in downloaded_files.items():
-                self.plan_processor.update_plans(date, revision)
+                for (date, revision), downloaded_files_metadata in downloaded_files.items():
+                    self.plan_processor.update_plans(date, revision)
 
-            if downloaded_files:
-                self.plan_processor.store_teachers()
-                self.plan_processor.update_meta()
+                if downloaded_files:
+                    self.plan_processor.store_teachers()
+                    self.plan_processor.update_meta()
+            except Exception as e:
+                if not ignore_exceptions:
+                    raise
+                else:
+                    self.plan_processor._logger.error("An error occurred.", exc_info=e)
 
             if once:
                 break
@@ -92,6 +98,8 @@ async def main():
                                  help="Only download once, then exit.")
     argument_parser.add_argument("--only-process", action="store_true",
                                  help="Do not download plans, only parse existing.")
+    argument_parser.add_argument("--ignore-exceptions", action="store_true",
+                                 help="Don't raise exceptions and crash the program, instead print them and continue.")
     argument_parser.add_argument("-loglevel", "-l", default="INFO")
 
     args = argument_parser.parse_args()
@@ -122,11 +130,13 @@ async def main():
                 )
             else:
                 await asyncio.gather(
-                    *[client.plan_downloader.check_infinite() for client in clients.values()]
+                    *[client.plan_downloader.check_infinite(ignore_exceptions=args.ignore_exceptions)
+                      for client in clients.values()]
                 )
         else:
             await asyncio.gather(
-                *[client.check_infinite(once=args.once) for client in clients.values()]
+                *[client.check_infinite(once=args.once, ignore_exceptions=args.ignore_exceptions)
+                  for client in clients.values()]
             )
     finally:
         logging.info("Exit.")

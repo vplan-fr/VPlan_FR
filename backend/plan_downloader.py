@@ -51,13 +51,20 @@ class PlanDownloader:
         self.client = client
         self.cache = cache
 
-    async def check_infinite(self, interval: int = 60):
+    async def check_infinite(self, interval: int = 60, *, ignore_exceptions: bool = False):
         self.migrate_all()
         # await asyncio.sleep(random.randint(0, 5))
 
         while True:
-            await self.update_fetch()
+            try:
+                await self.update_fetch()
+            except Exception as e:
+                if not ignore_exceptions:
+                    raise
+                else:
+                    self._logger.error("An error occurred while downloading plans.", exc_info=e)
 
+            self._logger.debug(f"Waiting {interval} s.")
             await asyncio.sleep(interval)
 
     async def update_fetch(self) -> dict[tuple[datetime.date, datetime.datetime], list[PlanFileMetadata]]:
