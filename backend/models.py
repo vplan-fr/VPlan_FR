@@ -54,8 +54,8 @@ class Lesson:
     def serialize(self, lesson_date: datetime.date) -> dict:
         return {
             "periods": sorted(self.periods),
-            "scheduled_forms": sorted(self.scheduled_forms),
-            "scheduled_forms_str": vplan_utils.forms_to_str(self.scheduled_forms),
+            "scheduled_forms": sorted(self.scheduled_forms) if self.scheduled_forms else None,
+            "scheduled_forms_str": vplan_utils.forms_to_str(self.scheduled_forms) if self.scheduled_forms else None,
             "scheduled_teachers": sorted(self.scheduled_teachers) if self.scheduled_teachers else None,
             "scheduled_rooms": sorted(self.current_rooms) if self.scheduled_rooms else None,
             "scheduled_class": self.scheduled_class,
@@ -140,15 +140,6 @@ class Lessons:
             [lesson.with_takes_place(plan_type, value) for lesson in self.lessons],
             self.date
         )
-
-    def make_plan(self, attributes: tuple[str, ...],
-                  plan_type: typing.Literal["rooms", "forms", "teachers"]) -> dict[str, Lessons]:
-        grouped = self.group_by(*attributes)
-
-        return {
-            attribute: lessons.with_takes_place(plan_type, attribute)
-            for attribute, lessons in grouped.items()
-        }
 
     def serialize(self) -> list[dict]:
         return [lesson.serialize(self.date) for lesson in self.lessons]
@@ -351,6 +342,9 @@ class Plan:
                     # the following should be empty already
                     # new_lesson.current_teachers = set()
                     # new_lesson.current_rooms = set()
+                    new_lesson.takes_place = False
+                else:
+                    new_lesson.takes_place = True
 
                 new_lesson.scheduled_class = (
                         new_lesson.scheduled_class or new_lesson.class_group or new_lesson.class_subject

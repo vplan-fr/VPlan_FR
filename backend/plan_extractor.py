@@ -19,7 +19,7 @@ class PlanExtractor:
         self._logger = logger
 
         form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_kl))
-        self.plan = Plan.from_form_plan(form_plan)
+        self.forms_plan = Plan.from_form_plan(form_plan)
 
         self.extracted_teachers = self._extract_teachers()
 
@@ -36,16 +36,16 @@ class PlanExtractor:
 
         self.fill_in_lesson_times()
 
-        self.lessons_grouped = self.plan.lessons.blocks_grouped()
+        self.forms_lessons_grouped = self.forms_plan.lessons.blocks_grouped()
 
         self.extrapolate_lesson_times()
 
         self.resolve_teachers_in_lesson_info(teacher_abbreviation_by_surname)
 
     def fill_in_lesson_times(self):
-        forms: dict[str, indiware_mobil.Form] = {form.short_name: form for form in self.plan.form_plan.forms}
+        forms: dict[str, indiware_mobil.Form] = {form.short_name: form for form in self.forms_plan.form_plan.forms}
 
-        for lesson in self.plan.lessons:
+        for lesson in self.forms_plan.lessons:
             if not lesson.scheduled_forms:
                 continue
 
@@ -63,14 +63,14 @@ class PlanExtractor:
 
     def extrapolate_lesson_times(self):
         # very sketchy
-        for lesson in self.lessons_grouped:
+        for lesson in self.forms_lessons_grouped:
             if lesson.begin is None:
                 # can't do anything about that
                 continue
 
             if lesson.end is None:
                 prev_block = [
-                    l for l in self.lessons_grouped
+                    l for l in self.forms_lessons_grouped
                     if (sorted(lesson.periods)[0] - sorted(l.periods)[-1] == 1
                         and len(l.periods) == len(lesson.periods)
                         and l.end is not None is not l.begin)
@@ -114,7 +114,7 @@ class PlanExtractor:
                 lesson.current_teachers = {teacher_abbreviation}
                 lesson.info = info
                 lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
-                self.plan.lessons.lessons.append(lesson)
+                self.forms_plan.lessons.lessons.append(lesson)
 
         for room_str in self.substitution_plan.absent_rooms:
             room, periods = parse_absent_element(room_str)
@@ -127,7 +127,7 @@ class PlanExtractor:
                 lesson.current_class = "Belegt"
                 lesson.info = info
                 lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
-                self.plan.lessons.lessons.append(lesson)
+                self.forms_plan.lessons.lessons.append(lesson)
 
         for form_str in self.substitution_plan.absent_forms:
             form, periods = parse_absent_element(form_str)
@@ -140,25 +140,25 @@ class PlanExtractor:
                 lesson.info = info
                 lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
 
-                self.plan.lessons.lessons.append(lesson)
+                self.forms_plan.lessons.lessons.append(lesson)
 
     def room_plan(self):
-        return self.lessons_grouped.make_plan(("current_rooms", "scheduled_rooms"), "rooms")
+        return self.forms_lessons_grouped.group_by("current_rooms", "scheduled_rooms")
 
     def teacher_plan(self):
-        return self.lessons_grouped.filter(lambda l: not l.is_internal).make_plan(
-            ("class_teachers", "scheduled_teachers", "current_teachers"), "teachers"
+        return self.forms_lessons_grouped.filter(lambda l: not l.is_internal).group_by(
+            "class_teachers", "scheduled_teachers", "current_teachers"
         )
 
     def form_plan(self):
-        return self.lessons_grouped.filter(lambda l: not l.is_internal).make_plan(
-            ("current_forms", "scheduled_forms"), "forms"
+        return self.forms_lessons_grouped.filter(lambda l: not l.is_internal).group_by(
+            "current_forms", "scheduled_forms"
         )
 
     def used_rooms_by_period(self) -> dict[int, set[str]]:
         out: dict[int, set[str]] = defaultdict(set)
 
-        for lesson in self.plan.lessons:
+        for lesson in self.forms_plan.lessons:
             assert len(lesson.periods) == 1
             out[list(lesson.periods)[0]].update(lesson.current_rooms)
 
@@ -186,20 +186,20 @@ class PlanExtractor:
 
     def info_data(self) -> dict[str, typing.Any]:
         return {
-            "additional_info": self.plan.additional_info,
-            "timestamp": self.plan.form_plan.timestamp.isoformat(),
-            "week": self.plan.week_letter()
+            "additional_info": self.forms_plan.additional_info,
+            "timestamp": self.forms_plan.form_plan.timestamp.isoformat(),
+            "week": self.forms_plan.week_letter()
         }
 
     def _extract_teachers(self) -> dict[str, Teacher]:
-        all_classes = self.plan.get_all_classes()
+        all_classes = self.forms_plan.get_all_classes()
         out: dict[str, Teacher] = {}
 
-        for lesson in self.plan.lessons:
+        for lesson in self.forms_plan.lessons:
             out |= lesson_info.extract_teachers(lesson, all_classes, logger=self._logger)
 
         return out
 
     def resolve_teachers_in_lesson_info(self, teacher_abbreviation_by_surname: dict[str, str]):
-        for lesson in self.lessons_grouped:
+        for lesson in self.forms_lessons_grouped:
             lesson.parsed_info.resolve_teachers(teacher_abbreviation_by_surname)
