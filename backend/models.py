@@ -315,7 +315,7 @@ class Plan:
 
                     scheduled_forms={form.short_name},
                     scheduled_teachers=None,
-                    scheduled_rooms=None,
+                    scheduled_rooms=lesson.room() if not lesson.room.was_changed else None,
                     scheduled_class=lesson.course2,
 
                     current_forms={form.short_name},
