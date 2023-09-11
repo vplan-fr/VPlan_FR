@@ -60,7 +60,7 @@
         }
         customFetch(`${api_base}/meta`)
             .then(data => {
-                console.log("Meta geladen");
+                // console.log("Meta geladen");
                 localStorage.setItem(`${school_num}_meta`, JSON.stringify(data));
                 meta = data.meta;
                 all_rooms = data.rooms;
@@ -111,7 +111,7 @@
             })
             .catch(error => {
                 //notifications.danger(error);
-                notifications.info("Login-Status konnte nicht überprüft werden");
+                notifications.danger("Login-Status konnte nicht überprüft werden");
             }
         );
     }

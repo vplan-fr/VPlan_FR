@@ -40,7 +40,7 @@
         let data = localStorage.getItem(`${school_num}_${date}`);
         if (data) {
             data = JSON.parse(data);
-            rooms_data = data["rooms"]
+            rooms_data = data["rooms"];
             if (plan_type !== "free_rooms") {
                 lessons = data["plans"][plan_type][entity] || [];
             }
