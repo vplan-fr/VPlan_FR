@@ -10,13 +10,10 @@ ParsedForm = typing.Union[typing.Tuple[str], typing.Tuple[str, str, str]]
 
 _parse_form_pattern = re.compile(
     r"(?<!\S)(?:"
-    r"(?P<major>(?P<_major_only_digits>\d{1,2})|[A-Za-zÄÖÜäöüß]+(?![A-Za-zÄÖÜäöüß]))"
-    r"(?P<sep>(?P<_contains_sep>[^A-Za-zÄÖÜäöüß0-9 \n])?)"
-    r"(?(_contains_sep)(?P<_contains_whitespace> )?|)"
-    r"(?P<minor>\d+[A-Za-zÄÖÜäöüß]?"
-    r"|[A-Za-zÄÖÜäöüß]+?"
-    r"|(?(_major_only_digits)(?(_contains_sep)yes(?!.)|(?(_contains_whitespace)yes(?!.)|))|no(?!.)))"
-    r"|(?P<alpha>[A-ZÄÖÜ]{2,}|\d+)"
+    r"(?P<major>\d{1,2}(?!\d)|[A-Za-zÄÖÜäöüß]+(?![A-Za-zÄÖÜäöüß]))"
+    r"(?P<sep>[\/.] |[^A-Za-zÄÖÜäöüß0-9() \n]?)"
+    r"(?P<minor>(?:\d{1,2}[A-Za-zÄÖÜäöüß]?|[A-Za-zÄÖÜäöüß]+?)(?:,(?:\d{1,2}[A-Za-zÄÖÜäöüß]?|[A-Za-zÄÖÜäöüß]+?))*)"
+    r"|(?P<alpha>\d{1,2})"
     r")(?![^\s,])"
 )
 
