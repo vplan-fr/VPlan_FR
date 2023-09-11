@@ -45,7 +45,6 @@
                 lessons = data["plans"][plan_type][entity] || [];
             }
             info = data["info"];
-            console.log(data);
             week_letter = info["week"];
             data_from_cache = true;
         }

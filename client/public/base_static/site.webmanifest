@@ -10,12 +10,22 @@
         {
             "src": "/base_static/icons/android-chrome-512x512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         }
     ],
     "theme_color": "#121212",
     "background_color": "#121212",
     "display": "standalone",
-    "start_url": "../../../favorite",
-    "scope": "../../../"
+    "start_url": "../#favorite",
+    "scope": "../",
+    "id": "better_vplan",
+    "description": "Die (garantiert bessere!!!) Alternative zur VpMobil24 App",
+    "lang": "de",
+    "dir": "ltr",
+    "categories": [
+        "education",
+        "personalization",
+        "productivity"
+    ]
 }

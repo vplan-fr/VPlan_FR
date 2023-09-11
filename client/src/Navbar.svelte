@@ -3,6 +3,7 @@
     import {logged_in, current_page} from './stores.js';
     import Dropdown from './Components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
+    import { onMount } from 'svelte';
 
     function navigate_page(page_id) {
         $current_page = page_id;
@@ -30,6 +31,14 @@
         if((new_location === "login" || new_location === "register") && logged_in) {
             e.preventDefault();
             history.go(1);
+            return;
+        }
+        navigate_page(new_location);
+    });
+
+    onMount(() => {
+        let new_location = location.hash.slice(1);
+        if((new_location === "login" || new_location === "register") && logged_in) {
             return;
         }
         navigate_page(new_location);
