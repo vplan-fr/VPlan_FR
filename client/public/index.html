@@ -39,6 +39,9 @@
             events: false,
             timeout: 60000
         });
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register("/base_static/serviceworker.js");
+        }
     </script>
     <style>
         /* http://meyerweb.com/eric/tools/css/reset/ 
