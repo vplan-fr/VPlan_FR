@@ -13,7 +13,6 @@
 
     function logout() {
         customFetch('/logout')
-            .then(response => response.json())
             .then(data => {
                 $logged_in = !data["success"];
                 localStorage.setItem('logged_in', `${$logged_in}`);
@@ -23,7 +22,7 @@
                 }
             })
             .catch(error => {
-                notifications.danger("Logout fehlgeschlagen!", 2000);
+                notifications.danger(error);
             });
     }
 

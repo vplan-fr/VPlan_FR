@@ -51,7 +51,6 @@
         }
 
         customFetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
-            .then(response => response.json())
             .then(data => {
                 loading = false;
                 try {
@@ -74,7 +73,7 @@
                 if (data_from_cache) {
                     notifications.info("Plan aus Cache geladen", 2000);
                 } else {
-                    notifications.danger("Plan laden fehlgeschlagen!", 2000);
+                    notifications.danger(error);
                 }
         });
         location.hash = gen_location_hash();

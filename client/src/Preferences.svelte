@@ -46,9 +46,11 @@
 
     function getPreferences() {
         customFetch(`${api_base}/preferences`)
-            .then(response => response.json())
             .then(data => {
                 preferences.set(data);
+            })
+            .catch(error => {
+                notifications.danger(error)
             })
     }
 
@@ -61,11 +63,13 @@
             method: "POST",
             body: JSON.stringify(selectedItems)
         })
-            .then(response => response.json())
             .then(data => {
                 if (data["success"]) {
                     notifications.info("Kurse gespeichert!", 2000);
                 }
+            })
+            .catch(error => {
+                notifications.danger(error);
             })
     }
 

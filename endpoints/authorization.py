@@ -1,5 +1,5 @@
 from bson import ObjectId
-from flask import Blueprint, request, session, Response, jsonify
+from flask import Blueprint, request, session, Response
 from flask_login import login_required, current_user, login_user, logout_user
 
 import json
@@ -72,7 +72,7 @@ def logout() -> Response:
 def account() -> Response:
     if request.method == "GET":
         tmp_user = current_user.get_user()
-        return jsonify({
+        return send_success({
                 'nickname': tmp_user['nickname'], 
                 'authorized_schools': tmp_user['authorized_schools'], 
                 'preferences': tmp_user['preferences'], 
@@ -88,7 +88,7 @@ def account() -> Response:
 @login_required
 def settings() -> Response:
     if request.method == "GET":
-        return jsonify(current_user.get_user()["settings"])
+        return send_success(current_user.get_user()["settings"])
     if request.method == "DELETE":
         current_user.update_settings()
         return send_success()
@@ -100,7 +100,7 @@ def settings() -> Response:
 @authorization.route('/authorized_schools', methods=['GET'])
 @login_required
 def authorized_schools() -> Response:
-    return jsonify(current_user.get_authorized_schools())
+    return send_success(current_user.get_authorized_schools())
 
 
 def school_authorized(func):
@@ -122,7 +122,7 @@ def check_login():
         response_data = {'logged_in': True}
     else:
         response_data = {'logged_in': False}
-    return jsonify(response_data)
+    return send_success(response_data)
 
 
 @authorization.route("/greeting", methods=["GET"])

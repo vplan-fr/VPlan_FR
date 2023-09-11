@@ -1,3 +1,5 @@
+import {notifications} from "./notifications.js";
+
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
     for (let [room, data] of Object.entries(rooms)) {
@@ -64,5 +66,17 @@ export async function customFetch(url, options = {}) {
             ...options.headers,
             ...headers,
         },
-    });
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Ein Netzwerkfehler ist aufgetreten");
+            }
+            return response.json()
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.error);
+            }
+            return data.data
+        })
 }

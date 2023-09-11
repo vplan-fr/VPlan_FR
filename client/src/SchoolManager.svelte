@@ -21,22 +21,20 @@
     let authorized_school_ids = [];
     function get_schools() {
         customFetch("/schools")
-            .then(response => response.json())
             .then(data => {
                 schools = data;
             })
             .catch(error => {
-                notifications.danger("Schulen laden fehlgeschlagen!", 2000);
+                notifications.danger(error);
             })
     }
     function get_authorized_schools() {
         customFetch("/authorized_schools")
-            .then(response => response.json())
             .then(data => {
                 authorized_school_ids = data;
             })
             .catch(error => {
-                notifications.danger("Authorisierte Schulen laden fehlgeschlagen!", 2000);
+                notifications.danger(error)
             }
         );
     }
@@ -63,7 +61,6 @@
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
             .then(data => {
                 if ("error" in data) {
                     authorization_message = data["error"];
@@ -73,7 +70,7 @@
                 authorized_school_ids = [...authorized_school_ids, authorize_school_id];
             })
             .catch(error => {
-                notifications.danger("Schule Authorisieren fehlgeschlagen!", 2000);
+                notifications.danger(error);
             }
         );
     }

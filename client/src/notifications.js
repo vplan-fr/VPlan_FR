@@ -33,10 +33,10 @@ function createNotificationStore (timeout) {
         subscribe,
         send,
 				default: (msg, timeout) => send(msg, "default", timeout),
-        danger: (msg, timeout) => send(msg, "danger", timeout),
-        warning: (msg, timeout) => send(msg, "warning", timeout),
-        info: (msg, timeout) => send(msg, "info", timeout),
-        success: (msg, timeout) => send(msg, "success", timeout),
+        danger: (msg, timeout=2000) => send(msg, "danger", timeout),
+        warning: (msg, timeout=2000) => send(msg, "warning", timeout),
+        info: (msg, timeout=2000) => send(msg, "info", timeout),
+        success: (msg, timeout=2000) => send(msg, "success", timeout),
     }
 }
 

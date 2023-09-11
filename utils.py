@@ -85,7 +85,6 @@ class User(UserMixin):
         return send_success()
 
     def update_preferences(self, preferences: {}):
-        #available_courses =
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'preferences': preferences}})
 
     # get setting for user, if setting not set get default setting

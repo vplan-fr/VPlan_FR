@@ -24,7 +24,6 @@
             method: 'POST',
             body: formData,
         })
-            .then(response => response.json())
             .then(data => {
                 $logged_in = data["success"];
                 if (!$logged_in) {
@@ -33,7 +32,7 @@
                 localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
-                notifications.danger("Login fehlgeschlagen!", 2000);
+                notifications.danger(error);
             }
         );
     }
@@ -46,7 +45,6 @@
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
             .then(data => {
                 $logged_in = data["success"];
                 if (!$logged_in) {
@@ -55,7 +53,7 @@
                 localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
-                notifications.danger("Registrieren fehlgeschlagen!", 2000);
+                notifications.danger(error);
             }
         );
     }

@@ -46,7 +46,6 @@
             return;
         }
         customFetch(`${api_base}/meta`)
-            .then(response => response.json())
             .then(data => {
                 meta = data.meta;
                 all_rooms = data.rooms;
@@ -57,7 +56,7 @@
                 course_lists = data.forms.forms;
             })
             .catch(error => {
-                notifications.danger("Metadata-fetch fehlgeschlagen!", 2000);
+                notifications.danger(error);
             });
     }
 
@@ -87,13 +86,12 @@
 
     function check_login_status() {
         customFetch('/check_login')
-            .then(response => response.json())
             .then(data => {
                 $logged_in = data["logged_in"];
                 localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
-                notifications.danger("Login-Check fehlgeschlagen!", 2000);
+                notifications.danger(error);
             }
         );
     }

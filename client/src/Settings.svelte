@@ -1,4 +1,6 @@
 <script>
+    import {notifications} from "./notifications.js";
+
     let settings;
     import {customFetch} from "./utils.js";
 
@@ -8,7 +10,6 @@
     let accent_color;
     function get_settings() {
         customFetch("/settings")
-            .then(response => response.json())
             .then(data => {
                 settings = data;
                 show_plan_toasts = settings["show_plan_toasts"];
@@ -17,7 +18,7 @@
                 accent_color = settings["accent_color"];
             })
             .catch(error => {
-                console.error(error);
+                notifications.danger(error)
             })
     }
     function change_settings() {
@@ -25,12 +26,11 @@
             method: "POST",
             body: JSON.stringify(settings),
         })
-            .then(response => response.json())
             .then(data => {
 
             })
             .catch(error => {
-                console.error(error);
+                notifications.danger(error)
                 get_settings();
             })
     }

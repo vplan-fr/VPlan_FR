@@ -2,7 +2,7 @@ import json
 import datetime
 from pathlib import Path
 
-from flask import Blueprint, request, Response, jsonify
+from flask import Blueprint, request, Response
 from flask_login import login_required, current_user
 from endpoints.authorization import school_authorized
 
@@ -36,7 +36,7 @@ def schools() -> Response:
         cur_num = school_icon.split(".")[0]
         if cur_num in school_data:
             school_data[cur_num]["icon"] = school_icon
-    return jsonify(school_data)
+    return send_success(school_data)
 
 
 @api.route(f"{API_BASE_URL}/meta", methods=["GET"], endpoint="meta_api")
@@ -56,7 +56,7 @@ def meta(school_num) -> Response:
     dates = sorted([datetime.datetime.strptime(elem, "%Y-%m-%d").date() for elem in list(dates_data.keys())])
     date = find_closest_date(dates)
 
-    return jsonify({
+    return send_success({
         "meta": meta_data,
         "teachers": teachers_data,
         "forms": forms_data,
@@ -96,7 +96,7 @@ def plan(school_num: str) -> Response:
     except FileNotFoundError:
         return send_error("Invalid revision.")
 
-    return jsonify(data)
+    return send_success(data)
 
 
 def get_school_by_id(school_num: str):
@@ -159,9 +159,9 @@ def preferences(school_num: str) -> Response:
 
     if request.method == "GET":
         if "form" in request.args:
-            return jsonify(current_preferences.get(school_num, {}).get(request.args["form"], []))
+            return send_success(current_preferences.get(school_num, {}).get(request.args["form"], []))
         else:
-            return jsonify(current_preferences.get(school_num, {}))
+            return send_success(current_preferences.get(school_num, {}))
 
     elif request.method == "POST":
         try:
