@@ -75,8 +75,9 @@ export async function customFetch(url, options = {}) {
         })
         .then(data => {
             if (!data.success) {
+                console.log(data);
                 throw new Error(data.error);
             }
-            return data.data
+            return data.data || {};
         })
 }

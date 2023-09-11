@@ -14,7 +14,7 @@
     function logout() {
         customFetch('/logout')
             .then(data => {
-                $logged_in = !data["success"];
+                $logged_in = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
                 if ($logged_in) {
                     error_hidden = false;

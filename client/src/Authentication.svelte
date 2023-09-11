@@ -25,13 +25,12 @@
             body: formData,
         })
             .then(data => {
-                $logged_in = data["success"];
-                if (!$logged_in) {
-                    notifications.danger(data["error"], 2000);
-                }
+                $logged_in = true;
                 localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
+                $logged_in = false;
+                localStorage.setItem('logged_in', `${$logged_in}`);
                 notifications.danger(error);
             }
         );
@@ -46,13 +45,12 @@
             body: formData
         })
             .then(data => {
-                $logged_in = data["success"];
-                if (!$logged_in) {
-                    notifications.danger(data["error"], 2000);
-                }
+                $logged_in = true;
                 localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
+                $logged_in = false;
+                localStorage.setItem('logged_in', `${$logged_in}`);
                 notifications.danger(error);
             }
         );

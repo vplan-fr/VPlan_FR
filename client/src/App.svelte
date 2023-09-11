@@ -45,8 +45,23 @@
         if (!$logged_in) {
             return;
         }
+        let data_from_cache = false;
+        let data = localStorage.getItem(`${school_num}_meta`);
+        if (data) {
+            data = JSON.parse(data);
+            meta = data.meta;
+            all_rooms = data.rooms;
+            teacher_list = Object.keys(data.teachers);
+            grouped_forms = data.forms.grouped_forms;
+            enabled_dates = Object.keys(data.dates);
+            date = data.date;
+            course_lists = data.forms.forms;
+            data_from_cache = true;
+        }
         customFetch(`${api_base}/meta`)
             .then(data => {
+                console.log("Meta geladen");
+                localStorage.setItem(`${school_num}_meta`, JSON.stringify(data));
                 meta = data.meta;
                 all_rooms = data.rooms;
                 teacher_list = Object.keys(data.teachers);
@@ -56,7 +71,11 @@
                 course_lists = data.forms.forms;
             })
             .catch(error => {
-                notifications.danger(error);
+                if (data_from_cache) {
+                    notifications.info("Metadaten aus Cache geladen", 2000);
+                } else {
+                    notifications.danger(error);
+                }
             });
     }
 
@@ -91,7 +110,8 @@
                 localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
-                notifications.danger(error);
+                //notifications.danger(error);
+                notifications.info("Login-Status konnte nicht überprüft werden");
             }
         );
     }
