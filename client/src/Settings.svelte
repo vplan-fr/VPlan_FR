@@ -1,6 +1,6 @@
 <script>
-
     let settings;
+
     let show_plan_toasts;
     let day_switch_keys;
     let background_color;

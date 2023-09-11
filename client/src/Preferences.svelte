@@ -1,16 +1,30 @@
 <script>
 
+    import {notifications} from "./notifications.js";
+    import {preferences} from "./stores.js";
+
     export let api_base;
     export let grouped_forms;
     export let course_lists;
-    let current_preferences;
     let selected_form;
-    $: console.log(course_lists);
-    $: forms_list = Object.keys(course_lists);
+    let form_groups;
+    $: form_groups = selected_form != null ? sortCourses(course_lists[selected_form]["class_groups"]): [];
 
+    let allItems = [];
+    let selection = {};
     let selectedItems = [];
+    let current_form_preferences = [];
 
+    $: console.log(form_groups);
 
+    function sortCourses(obj) {
+        const sortedArray = Object.entries(obj).sort((a, b) => a[1]["group"] - b[1]["group"]);
+        const sortedObject = {};
+        sortedArray.forEach(([key, value]) => {
+            sortedObject[key] = value;
+        });
+        return sortedObject;
+    }
     function toggleSelection(course_id) {
         console.log(course_id);
         if (!selectedItems.includes(course_id)) {
@@ -22,19 +36,43 @@
     }
 
     function updateCourses() {
-        selectedItems = Object.keys(course_lists[selected_form]["class_groups"]);
+        allItems = Object.keys(course_lists[selected_form]["class_groups"]);
+        selection = {};
+
+        current_form_preferences = $preferences[selected_form] || [];
+        selectedItems = allItems.filter(item => current_form_preferences.indexOf(item) !== -1);
     }
+
 
     function getPreferences() {
         fetch(`${api_base}/preferences`)
             .then(response => response.json())
             .then(data => {
-                current_preferences = data;
-                console.log(current_preferences)
+                preferences.set(data);
+            })
+    }
+
+    function setPreferences() {
+        fetch(`${api_base}/preferences?` + new URLSearchParams(
+            {
+                "form": selected_form
+            }
+        ), {
+            method: "POST",
+            body: JSON.stringify(selectedItems)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data["success"]) {
+                    notifications.info("Kurse gespeichert!", 2000);
+                }
             })
     }
 
     getPreferences()
+    function isChecked(id) {
+        return selectedItems.includes(id)
+    }
 
 </script>
 
@@ -50,18 +88,27 @@ Klasse wählen: <select name="forms" bind:value={selected_form} on:change={updat
 </select>
 <div>Selected form: {selected_form}</div>
 {#if selected_form != null}
+    <button on:click={setPreferences}>Speichern</button>
     Verfügbare Kurse:
     <ul>
-        {#each Object.keys(course_lists[selected_form]["class_groups"]) as course_id}
+        {#each Object.keys(form_groups) as course_id}
             <li>
-                <input
-                    type="checkbox"
-                    on:change={() => toggleSelection(course_id)}
-                  />
+                {#if current_form_preferences.includes(course_id)}
+                    <input
+                        type="checkbox"
+                        on:change={() => toggleSelection(course_id)}
+                      />
+                {:else}
+                    <input
+                        type="checkbox"
+                        on:change={() => toggleSelection(course_id)}
+                        checked
+                    />
+                {/if}
                 {course_id}
-                {course_lists[selected_form]["class_groups"][course_id]["teacher"]} |
-                {course_lists[selected_form]["class_groups"][course_id]["subject"]}
-                ({course_lists[selected_form]["class_groups"][course_id]["group"]})
+                {form_groups[course_id]["teacher"]} |
+                {form_groups[course_id]["subject"]}
+                ({form_groups[course_id]["group"]})
             </li>
         {/each}
     </ul>

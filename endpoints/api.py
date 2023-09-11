@@ -170,14 +170,15 @@ def preferences(school_num: str) -> Response:
         try:
             class_groups = json.loads(cache.get_meta_file("forms.json"))["forms"][request.args["form"]]["class_groups"]
         except KeyError:
-            return jsonify({"error": f"Invalid or missing form {request.args.get('form')!r}!"})
+            return jsonify({"success": False, "error": f"Invalid or missing form {request.args.get('form')!r}!"})
 
         stored_classes = []
 
         try:
-            data = json.loads(request.args.get("data", "[]"))
+            data = json.loads(request.data)
+            print(data)
         except json.JSONDecodeError:
-            return jsonify({"error": "Invalid JSON data."})
+            return jsonify({"success": False, "error": "Invalid JSON data."})
 
         for requested_class in data:
             if requested_class not in class_groups:
@@ -189,4 +190,4 @@ def preferences(school_num: str) -> Response:
 
         set_user_preferences(current_user.get_id(), current_preferences)
 
-        return Response("Success!")
+        return jsonify({"success": True})
