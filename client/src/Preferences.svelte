@@ -8,21 +8,31 @@
     export let grouped_forms;
     export let course_lists;
     let selected_form = null;
-    let form_groups;
-    $: form_groups = selected_form != null ? sortCourses(course_lists[selected_form]["class_groups"]): [];
+    let class_groups_by_subject = [];
+    $: class_groups_by_subject = selected_form != null ? sort_courses_by_subject(course_lists[selected_form]["class_groups"]) : [];
 
     let allItems = [];
     let selection = {};
     let current_form_preferences = [];
 
 
-    function sortCourses(obj) {
-        const sortedArray = Object.entries(obj).sort((a, b) => a[1]["group"] - b[1]["group"]);
-        const sortedObject = {};
-        sortedArray.forEach(([key, value]) => {
-            sortedObject[key] = value;
+    function sort_courses_by_subject(obj) {
+        const courses_by_subject = {};
+
+        Object.entries(obj).forEach(([class_number, class_data]) => {
+            const subject = class_data.subject;
+            if (courses_by_subject[subject] === undefined) {
+                courses_by_subject[subject] = [];
+            }
+            class_data.class_number = class_number;
+            courses_by_subject[subject].push(class_data);
         });
-        return sortedObject;
+
+        Object.values(courses_by_subject).map(class_datas => class_datas.sort((data1, data2) => data2.group?.localeCompare(data1.group)));
+
+        console.log(courses_by_subject)
+
+        return courses_by_subject;
     }
 
     function getFalse(obj) {
@@ -37,7 +47,7 @@
 
     function updateCourses() {
         if (selected_form === null) {
-             return
+            return
         }
         allItems = Object.keys(course_lists[selected_form]["class_groups"]);
         current_form_preferences = $preferences[selected_form] || [];
@@ -85,6 +95,7 @@
             }
         }
     }
+
     function select_none() {
         for (const key in selection) {
             if (selection.hasOwnProperty(key)) {
@@ -92,6 +103,7 @@
             }
         }
     }
+
     function reverse_selection() {
         for (const key in selection) {
             if (selection.hasOwnProperty(key)) {
@@ -103,39 +115,65 @@
 
 </script>
 
+<h1>Unterrichtswahl</h1>
 
-{#if selected_form != null}
-    <button on:click={select_all}>Alle auswählen</button>
-    <button on:click={select_none}>Nichts auswählen</button>
-    <button on:click={reverse_selection}>Auswahl invertieren</button>
-    <br>
-{/if}
-Klasse wählen:
-<select name="forms" bind:value={selected_form} on:change={updateCourses}>
-    {#each Object.entries(grouped_forms) as [form_group, forms]}
-        <optgroup label={form_group}>
-            {#each forms as form}
-                <option value="{form}">{form}</option>
-            {/each}
-        </optgroup>
-    {/each}
-</select>
-<div>Selected form: {selected_form}</div>
+<div>
+    Klasse wählen:
+    <select name="forms" bind:value={selected_form} on:change={updateCourses}>
+        {#each Object.entries(grouped_forms) as [form_group, forms]}
+            <optgroup label={form_group}>
+                {#each forms as form}
+                    <option value="{form}">{form}</option>
+                {/each}
+            </optgroup>
+        {/each}
+    </select>
+</div>
+<div>
+    {#if selected_form != null}
+        <button on:click={select_all}>Alle auswählen</button>
+        <button on:click={select_none}>Nichts auswählen</button>
+        <button on:click={reverse_selection}>Auswahl invertieren</button>
+        <br>
+    {/if}
+</div>
 {#if selected_form != null}
     <button on:click={setPreferences}>Speichern</button>
-    Verfügbare Kurse:
     <ul>
-        {#each Object.keys(form_groups) as course_id}
-            <li>
-                <input
-                    type="checkbox"
-                    bind:checked={selection[course_id]}
+
+        {#each Object.entries(class_groups_by_subject).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}
+
+            {#if courses.length === 1}
+                <li>{subject}:<input
+                        type="checkbox"
+                        bind:checked={selection[courses[0].class_number]}
                 />
-                {course_id}
-                {form_groups[course_id]["teacher"]} |
-                {form_groups[course_id]["subject"]}
-                ({form_groups[course_id]["group"]})
-            </li>
+                    {courses[0].class_number}
+                    {courses[0].teacher} |
+                    {courses[0].subject}
+                    {#if courses[0].group != null}
+                        ({courses[0].group})
+                    {/if}
+                </li>
+            {:else}
+                <li>{subject}</li>
+                <ul>
+                    {#each courses as course}
+                        <li>
+                            <input
+                                    type="checkbox"
+                                    bind:checked={selection[course.class_number]}
+                            />
+                            {course.class_number}
+                            {course.teacher} |
+                            {course.subject}
+                            {#if course.group != null}
+                                ({course.group})
+                            {/if}
+                        </li>
+                    {/each}
+                </ul>
+            {/if}
         {/each}
     </ul>
 {/if}
