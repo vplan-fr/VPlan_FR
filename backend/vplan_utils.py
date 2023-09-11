@@ -17,9 +17,10 @@ _parse_form_pattern = re.compile(
     r"|[A-Za-zÄÖÜäöüß]+?"
     r"|(?(_major_only_digits)(?(_contains_sep)yes(?!.)|(?(_contains_whitespace)yes(?!.)|))|no(?!.)))"
     r"|(?P<alpha>[A-ZÄÖÜ]{2,}|\d+)"
-    r")(?!\S)"
+    r")(?![^\s,])"
 )
 
+breakpoint()
 
 def parse_form(form: str) -> ParsedForm:
     match = _parse_form_pattern.fullmatch(form)
