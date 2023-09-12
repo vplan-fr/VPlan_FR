@@ -25,7 +25,9 @@
     $: api_base = `/api/v69.420/${school_num}`;
     $logged_in = localStorage.getItem('logged_in') === 'true';
     check_login_status();
-    get_settings();
+    if ($logged_in) {
+        get_settings();
+    }
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
 
