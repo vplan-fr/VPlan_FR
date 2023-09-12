@@ -62,10 +62,6 @@
             body: formData
         })
             .then(data => {
-                if ("error" in data) {
-                    authorization_message = data["error"];
-                    return
-                }
                 authorization_message = "Success!!!"
                 authorized_school_ids = [...authorized_school_ids, authorize_school_id];
             })
