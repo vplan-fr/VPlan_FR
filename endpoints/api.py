@@ -17,6 +17,7 @@ api = Blueprint('api', __name__)
 
 
 @api.route(f"/api/v69.420/schools", methods=["GET"])
+@login_required
 def schools() -> Response:
     with open("creds.json", "r") as f:
         creds: dict = json.load(f)
@@ -186,3 +187,34 @@ def preferences(school_num: str) -> Response:
         set_user_preferences(current_user.get_id(), current_preferences)
 
         return send_success()
+
+
+@api.route(f"/api/v69.420/changelog", methods=["GET", "POST"])
+@login_required
+def changelog() -> Response:
+    read_changelog = current_user.get_user().get("read_changelog", [])
+    with open("changelog.json", "r", encoding="utf-8") as f:
+        all_changelog = json.load(f)
+    if request.method == "GET":
+        all_changelog = [[ind, value] for ind, value in enumerate(all_changelog)]
+        user_changelog = [[ind, value] for ind, value in all_changelog if ind not in read_changelog]
+        print(user_changelog)
+        return send_success(user_changelog)
+    if request.method == "POST":
+        try:
+            num = int(request.data)
+        except Exception:
+            return send_error("Keine Nummer")
+        if num > len(all_changelog):
+            return send_error("Zu große Zahl")
+        if num in read_changelog:
+            return send_error("Nachricht schon gelesen")
+        read_changelog.append(num)
+        current_user.update_field("read_changelog", read_changelog)
+        return send_success()
+
+
+
+
+
+

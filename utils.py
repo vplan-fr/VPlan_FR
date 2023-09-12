@@ -107,6 +107,10 @@ class User(UserMixin):
         self.get_user()
         return self.user.get("settings", {}).get(setting_key, DEFAULT_SETTINGS.get(setting_key, None))
 
+    def update_field(self, field, value):
+        self.get_user()
+        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {field: value}})
+
 
 class AddStaticFileHashFlask(Flask):
     def __init__(self, *args, **kwargs):

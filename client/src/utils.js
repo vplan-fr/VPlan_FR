@@ -93,3 +93,4 @@ export function get_settings() {
             notifications.danger("Einstellungen konnten nicht geladen werden")
         })
 }
+

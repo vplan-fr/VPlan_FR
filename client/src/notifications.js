@@ -5,7 +5,10 @@ const TIMEOUT = 3000
 function createNotificationStore (timeout) {
     const _notifications = writable([])
 
-    function send (message, type = "default", timeout) {
+    function send (message, type = "default", timeout=2000) {
+        if (message.message) {
+            message = message.message
+        }
         _notifications.update(state => {
             return [...state, { id: id(), type, message, timeout }]
         })
@@ -32,7 +35,7 @@ function createNotificationStore (timeout) {
     return {
         subscribe,
         send,
-				default: (msg, timeout) => send(msg, "default", timeout),
+        default: (msg, timeout=2000) => send(msg, "default", timeout),
         danger: (msg, timeout=2000) => send(msg, "danger", timeout),
         warning: (msg, timeout=2000) => send(msg, "warning", timeout),
         info: (msg, timeout=2000) => send(msg, "info", timeout),
