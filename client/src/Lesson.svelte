@@ -50,12 +50,14 @@
         <div class="grid-align-wrapper" class:large_grid={plan_type !== "forms"}>
             <!-- Subject -->
             <div class="subject max-width-center wide-area extra_padding" class:changed={subject_changed}>
-                {lesson.current_class != null ? lesson.current_class : ""}
-                {#if lesson.scheduled_class !== lesson.current_class && lesson.scheduled_class != null}
-                    {#if lesson.current_class != null}&nbsp;{/if}
-                    <s>{lesson.scheduled_class}</s>
+                {#if lesson.takes_place}
+                    {#if lesson.scheduled_class !== lesson.current_class && lesson.scheduled_class != null}
+                        {#if lesson.current_class != null}&nbsp;{/if}
+                        <s>{lesson.scheduled_class}</s>
+                    {/if}
+                {:else}
+                    {lesson.scheduled_class}
                 {/if}
-                {#if lesson.scheduled_class == null && lesson.current_class == null}-{/if}
             </div>
             <!-- Teachers -->
             <div class="small-area vert-align">
@@ -171,9 +173,13 @@
         <!-- Subject -->
         <div class="subject info-element max-width-center extra_padding" class:changed={subject_changed}>
             {lesson.current_class != null ? lesson.current_class : ""}
-            {#if lesson.scheduled_class !== lesson.current_class && lesson.scheduled_class != null}
-                {#if lesson.current_class != null}&nbsp;{/if}
-                <s>{lesson.scheduled_class}</s>
+            {#if lesson.takes_place}
+                {#if lesson.scheduled_class !== lesson.current_class && lesson.scheduled_class != null}
+                    {#if lesson.current_class != null}&nbsp;{/if}
+                    <s>{lesson.scheduled_class}</s>
+                {/if}
+            {:else}
+                {lesson.scheduled_class}
             {/if}
             {#if lesson.scheduled_class == null && lesson.current_class == null}-{/if}
         </div>
