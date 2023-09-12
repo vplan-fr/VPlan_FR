@@ -91,7 +91,7 @@ def account() -> Response:
 @login_required
 def settings() -> Response:
     if request.method == "GET":
-        return send_success(current_user.get_user()["settings"])
+        return send_success(current_user.get_settings())
     if request.method == "DELETE":
         current_user.update_settings()
         return send_success()
@@ -133,37 +133,15 @@ def check_login():
 def greeting():
     if not current_user.user:
         current_user.get_user()
-    greetings = [
-        "Grüß Gott {name}!",
-        "Moin {name}!",
-        "Moinsen {name}!",
-        "Yo Moinsen {name}!",
-        "Servus {name}!",
-        "Hi {name}!",
-        "Hey {name}!",
-        "Hallo {name}!",
-        "Hallöchen {name}!",
-        "Halli-Hallo {name}!",
-        "Hey, was geht ab {name}?",
-        "Tachchen {name}!",
-        "Na, alles fit, {name}?",
-        "Alles Klärchen, {name}?",
-        "Jo Digga {name}!",
-        "Heyho {name}!",
-        "Ahoihoi {name}!",
-        "Aloha {name}!",
-        "Alles cool im Pool, {name}?",
-        "Alles klar in Kanada, {name}?",
-        "Alles Roger in Kambodscha, {name}?",
-        "Hallöchen mit Öchen {name}!",
-        "{name} joined the game",
-        "Alles nice im Reis?",
-        "Alles cool in Suhl?",
-        "Howdy {name}!",
-    ]
-    if current_user.get_setting("chatgpt_greetings"):
-        with open("chatgpt_greetings.txt", "r") as f:
+    greetings = []
+    if current_user.get_setting("normal_greetings"):
+        with open("normal_greetings.txt", "r", encoding="utf-8") as f:
             greetings += f.read().split("\n")
+    if current_user.get_setting("chatgpt_greetings"):
+        with open("chatgpt_greetings.txt", "r", encoding="utf-8") as f:
+            greetings += f.read().split("\n")
+    if not greetings:
+        greetings = ["Was bitte hast du gegen Begrüßungen?"]
     random_greeting = choice(greetings).format(name=current_user.user["nickname"])
     return send_success(random_greeting)
 

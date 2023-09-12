@@ -53,20 +53,31 @@ class User(UserMixin):
             users.update_one({'_id': ObjectId(self.mongo_id)},
                              {"$set": {'authorized_schools': tmp_authorized_schools}})
 
+    def get_settings(self):
+        self.get_user()
+        cur_settings = DEFAULT_SETTINGS
+        user_settings = self.user.get("settings", {})
+        for setting, value in user_settings.items():
+            cur_settings[setting] = value
+        return cur_settings
+
     def update_settings(self, user_settings: DEFAULT_SETTINGS) -> Response:
         self.get_user()
         authorized_schools = self.user.get("authorized_schools", [])
 
-        print(user_settings)
         new_settings = {}
+        try:
+            new_settings["normal_greetings"] = bool(user_settings.get("normal_greetings", False))
+        except Exception:
+            return send_error("ungültiger Wert für normal_greetings Einstellung")
         try:
             new_settings["chatgpt_greetings"] = bool(user_settings.get("chatgpt_greetings", False))
         except Exception:
-            return send_error("ungültige Wert für chatgpt_greetings Einstellung")
+            return send_error("ungültiger Wert für chatgpt_greetings Einstellung")
         try:
             new_settings["show_plan_toasts"] = bool(user_settings.get("show_plan_toasts", False))
         except Exception:
-            return send_error("ungültige Wert für show_plan_toasts Einstellung")
+            return send_error("ungültiger Wert für show_plan_toasts Einstellung")
         try:
             new_settings["day_switch_keys"] = bool(user_settings.get("day_switch_keys", True))
         except Exception:

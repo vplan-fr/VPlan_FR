@@ -26,6 +26,7 @@
 <main>
     <button on:click={change_settings}>Speichern</button>
     <br>
+    Normal greetings: <input type="checkbox" bind:checked={local_settings.normal_greetings}><br>
     ChatGPT greetings: <input type="checkbox" bind:checked={local_settings.chatgpt_greetings}><br>
     show plan toasts: <input type="checkbox" bind:checked={local_settings.show_plan_toasts}><br>
     day switch keys: <input type="checkbox" bind:checked={local_settings.day_switch_keys}><br>
