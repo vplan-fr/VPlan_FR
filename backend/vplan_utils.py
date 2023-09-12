@@ -7,6 +7,8 @@ import typing
 from collections import defaultdict
 
 ParsedForm = typing.Union[typing.Tuple[str], typing.Tuple[str, str, str]]
+# TODO: refactor to dataclass
+
 
 _parse_form_pattern = re.compile(
     r"(?<!\S)(?:"
@@ -24,6 +26,22 @@ def parse_form(form: str) -> ParsedForm:
         return form,
     else:
         return match.group("major"), match.group("sep"), match.group("minor")
+
+
+def expand_form(form: ParsedForm) -> list[ParsedForm]:
+    if len(form) == 1:
+        return [form]
+    else:
+        major, separator, all_minors = form
+
+        return [(major, separator, minor.strip()) for minor in all_minors.split(",")]
+
+
+def form_to_str(form: ParsedForm) -> str:
+    if len(form) == 1:
+        return form[0]
+    else:
+        return "".join(form)
 
 
 def form_sort_key(major: str | None):
