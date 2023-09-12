@@ -20,7 +20,7 @@
     let schools = {};
     let authorized_school_ids = [];
     function get_schools() {
-        customFetch("/schools")
+        customFetch("/api/v69.420/schools")
             .then(data => {
                 schools = data;
             })
@@ -29,7 +29,7 @@
             })
     }
     function get_authorized_schools() {
-        customFetch("/authorized_schools")
+        customFetch("/auth/authorized_schools")
             .then(data => {
                 authorized_school_ids = data;
             })
@@ -54,10 +54,10 @@
             return
         }
         let formData = new FormData();
-        formData.append('school_num', authorize_school_id);
         formData.append('username', username);
         formData.append('pw', password);
-        customFetch("/authorize", {
+        let tmp_api_base = `/api/v69.420/${authorize_school_id}`;
+        customFetch(`${tmp_api_base}/authorize`, {
             method: 'POST',
             body: formData
         })

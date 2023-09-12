@@ -76,7 +76,7 @@ export async function customFetch(url, options = {}) {
         })
         .then(data => {
             if (!data.success) {
-                console.log(data);
+                //console.log(data);
                 throw new Error(data.error);
             }
             return data.data || {};
@@ -85,7 +85,7 @@ export async function customFetch(url, options = {}) {
 
 
 export function get_settings() {
-    customFetch("/settings")
+    customFetch("/auth/settings")
         .then(data => {
             settings.set(data);
         })

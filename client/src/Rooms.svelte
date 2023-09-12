@@ -9,76 +9,52 @@
     export let all_rooms;
     export let plan_type;
     export let plan_value;
-    export let extra_height = true;
-    let used_rooms_hidden = true;
+    export let used_rooms_hidden = true;
 
     $: all_rooms_grouped = all_rooms ? group_rooms(all_rooms) : []
     $: all_rooms_grouped_dict = Object.fromEntries(all_rooms_grouped)
 </script>
 
-<div class:extra-height={extra_height}>
-    <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
-    <h1 class="responsive-heading">Freie Räume</h1>
-    {#if rooms_data?.free_rooms_by_block == null}
-        <h1>Nicht verfügbar.</h1>
-    {:else}
-        <CollapsibleWrapper let:closeOtherPanels>
-            {#each Object.entries(rooms_data.free_rooms_by_block) as [block, all_free_rooms], i}
-                <Collapsible on:panel-open={closeOtherPanels} let:toggle>
-                    <button slot="handle" on:click={toggle} class="toggle-button" class:first={i == 0} class:last={i == Object.entries(rooms_data.free_rooms_by_block).length-1}>{block}. Block</button>
-                    <div class="block">
-                        <ul>
-                            {#each group_rooms(Object.fromEntries(all_free_rooms.map(r => [r, all_rooms[r]]))) as [category, free_rooms] (category)}
-                                <li>{category}:<br><br>
-                                    {#each all_rooms_grouped_dict[category] as room (room)}
-                                        <div animate:flip|local={{duration: 200}} style={(!free_rooms.includes(room) && !used_rooms_hidden) || free_rooms.includes(room) ? "display: inline-block;": "display: none;"}}>
-                                            {#if !free_rooms.includes(room) && !used_rooms_hidden}
-                                                <button class="chip info-element used-room" on:click={() => {
-                                                    plan_type = 'rooms';
-                                                    plan_value = room;
-                                                }} transition:fade|local={{duration: 200}}>
-                                                    <span>{room}</span>
-                                                </button>
-                                            {:else if free_rooms.includes(room)}
-                                                <button class="chip info-element" on:click={() => {
-                                                    plan_type = 'rooms';
-                                                    plan_value = room;
-                                                }}>
-                                                    <span>{room}</span>
-                                                </button>
-                                            {/if}
-                                        </div>
-                                    {/each}
-                                </li>
-                            {/each}
-                        </ul>
-                    </div>
-                </Collapsible>
-            {/each}
-        </CollapsibleWrapper>
-    {/if}
-</div>
+{#if rooms_data?.free_rooms_by_block == null}
+    <h1>Raumdaten nicht verfügbar.</h1>
+{:else}
+    <CollapsibleWrapper let:closeOtherPanels>
+        {#each Object.entries(rooms_data.free_rooms_by_block) as [block, all_free_rooms], i}
+            <Collapsible on:panel-open={closeOtherPanels} let:toggle>
+                <button slot="handle" on:click={toggle} class="toggle-button" class:first={i == 0} class:last={i == Object.entries(rooms_data.free_rooms_by_block).length-1}>{block}. Block</button>
+                <div class="block">
+                    <ul>
+                        {#each group_rooms(Object.fromEntries(all_free_rooms.map(r => [r, all_rooms[r]]))) as [category, free_rooms] (category)}
+                            <li>{category}:<br><br>
+                                {#each all_rooms_grouped_dict[category] as room (room)}
+                                    <div animate:flip|local={{duration: 200}} style={(!free_rooms.includes(room) && !used_rooms_hidden) || free_rooms.includes(room) ? "display: inline-block;": "display: none;"}}>
+                                        {#if !free_rooms.includes(room) && !used_rooms_hidden}
+                                            <button class="chip info-element used-room" on:click={() => {
+                                                plan_type = 'rooms';
+                                                plan_value = room;
+                                            }} transition:fade|local={{duration: 200}}>
+                                                <span>{room}</span>
+                                            </button>
+                                        {:else if free_rooms.includes(room)}
+                                            <button class="chip info-element" on:click={() => {
+                                                plan_type = 'rooms';
+                                                plan_value = room;
+                                            }}>
+                                                <span>{room}</span>
+                                            </button>
+                                        {/if}
+                                    </div>
+                                {/each}
+                            </li>
+                        {/each}
+                    </ul>
+                </div>
+            </Collapsible>
+        {/each}
+    </CollapsibleWrapper>
+{/if}
 
 <style lang="scss">
-    .plus-btn {
-        float: right;
-        border: none;
-        font-size: clamp(1.063rem, 4vw, 2.28rem);
-        height: clamp(calc(1.063rem + 15px), calc(4vw + 15px), calc(2.28rem + 15px));
-        aspect-ratio: 1;
-        border-radius: 5px;
-        background-color: rgba(255, 255, 255, 0.08);
-        color: var(--text-color);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transition: background-color .2s ease;
-
-        &:hover, &:focus-visible {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-    }
-
     ul {
         display: flex;
         flex-direction: column;

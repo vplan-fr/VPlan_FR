@@ -22,7 +22,7 @@
     let all_rooms;
     let grouped_forms = [];
     let api_base;
-    $: api_base = `./api/v69.420/${school_num}`;
+    $: api_base = `/api/v69.420/${school_num}`;
     $logged_in = localStorage.getItem('logged_in') === 'true';
     check_login_status();
     get_settings();
@@ -105,7 +105,7 @@
     }
 
     function check_login_status() {
-        customFetch('/check_login')
+        customFetch('/auth/check_login')
             .then(data => {
                 $logged_in = data["logged_in"];
                 localStorage.setItem('logged_in', `${$logged_in}`);
@@ -119,7 +119,7 @@
 
     let greeting = "";
     function get_greeting() {
-        customFetch("/greeting")
+        customFetch("/auth/greeting")
             .then(data => {
                 greeting = data;
             })

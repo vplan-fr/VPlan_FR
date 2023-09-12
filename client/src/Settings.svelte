@@ -6,7 +6,7 @@
 
     let local_settings = $settings;
     function change_settings() {
-        customFetch("/settings", {
+        customFetch("/auth/settings", {
             method: "POST",
             body: JSON.stringify($settings),
         })

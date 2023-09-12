@@ -12,7 +12,7 @@
     }
 
     function logout() {
-        customFetch('/logout')
+        customFetch('/auth/logout')
             .then(data => {
                 $logged_in = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);

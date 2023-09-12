@@ -16,11 +16,14 @@
     export let week_letter = "";
     export let external_times = true;
     export let all_rooms;
+    let used_rooms_hidden = true;
 
     let lessons = [];
     let rooms_data = {};
     let info;
     let loading = true;
+    let loading_failed = false;
+    let data_from_cache = false;
     let plan_type_map = {
         "forms": "Klasse",
         "rooms": "Raum",
@@ -34,9 +37,10 @@
             return
         }
         loading = true;
+        data_from_cache = false;
+        loading_failed = false;
         controller = new AbortController();
         //console.log("getting lesson plan", school_num, date);
-        let data_from_cache = false;
         let data = localStorage.getItem(`${school_num}_${date}`);
         if (data) {
             data = JSON.parse(data);
@@ -46,25 +50,33 @@
             }
             info = data["info"];
             week_letter = info["week"];
+            
             data_from_cache = true;
             loading = false;
         }
 
         customFetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
             .then(data => {
-                loading = false;
                 localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
                 rooms_data = data["rooms"]
-                lessons = data["plans"][plan_type][entity] || [];
+                if (plan_type !== "free_rooms") {
+                    lessons = data["plans"][plan_type][entity] || [];
+                }
                 info = data["info"];
                 week_letter = info["week"];
                 //console.log(lessons);
+                
+                loading = false;
             })
             .catch(error => {
                 if (data_from_cache) {
+                    loading_failed = false;
+                    loading = false;
                     notifications.info("Plan aus Cache geladen", 2000);
                 } else {
-                    notifications.danger(error);
+                    loading_failed = true;
+                    loading = false;
+                    notifications.danger("Plan konnte nicht geladen werden.");
                 }
         });
         location.hash = gen_location_hash();
@@ -161,48 +173,77 @@
             Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> <span class="no-linebreak">({info.week}-Woche)</span>
         </h1>
     {/if}
-    {#if lessons.length === 0}
-        {#if loading}
-            Lädt...
-        {:else}
-            Keine Stunden
-        {/if}
+    {#if loading}
+        Lädt...
+    {:else if loading_failed}
+        Plan konnte nicht geladen werden.
     {:else}
-    <div class="lessons-wrapper">
-        {#if external_times}
-            <div class="deco-bar"></div>
-        {/if}
-        {#each lessons as lesson, i}
-            {#if external_times}    
-                {#if !lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
-                    <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
-                {/if}
+        {#if lessons.length === 0}
+            Keine Stunden
+        {:else}
+        <div class="lessons-wrapper">
+            {#if external_times}
+                <div class="deco-bar"></div>
             {/if}
-            <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
-        {/each}
-    </div>
-    {/if}
-    {#if info}
-        {#if info.additional_info.length > 0}
-        <div class="additional-info">
-            {#each info.additional_info as cur_info}
-                {#if cur_info !== null}
-                    {cur_info}
+            {#each lessons as lesson, i}
+                {#if external_times}    
+                    {#if !lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
+                        <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
+                    {/if}
                 {/if}
-                <br>
+                <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
             {/each}
         </div>
         {/if}
-        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+        {#if info}
+            {#if info.additional_info.length > 0}
+            <div class="additional-info">
+                {#each info.additional_info as cur_info}
+                    {#if cur_info !== null}
+                        {cur_info}
+                    {/if}
+                    <br>
+                {/each}
+            </div>
+            {/if}
+            <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+        {/if}
     {/if}
 </div>
 {:else}
 <div class:extra-height={extra_height}>
-    <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms/>
+    <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
+    <h1 class="responsive-heading">Raumübersicht</h1>
+    {#if loading}
+        Lädt...
+    {:else if loading_failed}
+        Plan konnte nicht geladen werden.
+    {:else}
+        <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
+    {/if}
 </div>
 {/if}
 
 <style lang="scss">
+    .plus-btn {
+        float: right;
+        border: none;
+        font-size: clamp(1.063rem, 4vw, 2.28rem);
+        height: clamp(calc(1.063rem + 15px), calc(4vw + 15px), calc(2.28rem + 15px));
+        aspect-ratio: 1;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.08);
+        color: var(--text-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: background-color .2s ease;
+
+        &:hover, &:focus-visible {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+    }
+
     .plan {
         & > div, & .lessons-wrapper {
             &:empty {
