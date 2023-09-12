@@ -1,0 +1,27 @@
+Grüß Gott {name}!
+Moin {name}!
+Moinsen {name}!
+Yo Moinsen {name}!
+Servus {name}!
+Hi {name}!
+Hey {name}!
+Hallo {name}!
+Hallöchen {name}!
+Halli-Hallo {name}!
+Hey, was geht ab {name}?
+Tachchen {name}!
+Na, alles fit, {name}?
+Alles Klärchen, {name}?
+Jo Digga {name}!
+Heyho {name}!
+Ahoihoi {name}!
+Aloha {name}!
+Alles cool im Pool, {name}?
+Alles klar in Kanada, {name}?
+Alles Roger in Kambodscha, {name}?
+Hallöchen mit Öchen {name}!
+{name} joined the game
+Alles nice im Reis?
+Alles cool in Suhl?
+Howdy {name}!
+Alles fit im Schritt

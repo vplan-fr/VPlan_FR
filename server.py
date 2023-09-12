@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import send_from_directory, Response, jsonify
+from flask import send_from_directory, Response
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_compress import Compress
@@ -8,7 +8,7 @@ from flask_compress import Compress
 from endpoints.authorization import authorization
 from endpoints.api import api
 
-from utils import User, AddStaticFileHashFlask, get_user
+from utils import User, AddStaticFileHashFlask, get_user, send_success, send_error
 from var import *
 
 
@@ -48,7 +48,7 @@ def user_loader(user_id: str) -> User | None:
 
 @login_manager.unauthorized_handler
 def unauthorized_callback() -> Response:
-    return jsonify({"error": "request without authorization"})
+    return send_error("request without authorization")
 
 
 # COMPILED SVELTE FILES

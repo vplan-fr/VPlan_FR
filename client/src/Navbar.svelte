@@ -5,6 +5,7 @@
     import { fly } from 'svelte/transition';
     import { onMount } from 'svelte';
     import {customFetch} from "./utils.js";
+    let error_hidden;
 
     function navigate_page(page_id) {
         $current_page = page_id;
@@ -12,14 +13,10 @@
     }
 
     function logout() {
-        customFetch('/logout')
+        customFetch('/auth/logout')
             .then(data => {
                 $logged_in = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
-                if ($logged_in) {
-                    error_hidden = false;
-                    error_message = data["error"];
-                }
             })
             .catch(error => {
                 notifications.danger(error);

@@ -53,35 +53,46 @@ class User(UserMixin):
             users.update_one({'_id': ObjectId(self.mongo_id)},
                              {"$set": {'authorized_schools': tmp_authorized_schools}})
 
+    def get_settings(self):
+        self.get_user()
+        cur_settings = DEFAULT_SETTINGS
+        user_settings = self.user.get("settings", {})
+        for setting, value in user_settings.items():
+            cur_settings[setting] = value
+        return cur_settings
+
     def update_settings(self, user_settings: DEFAULT_SETTINGS) -> Response:
         self.get_user()
         authorized_schools = self.user.get("authorized_schools", [])
 
-        print(user_settings)
         new_settings = {}
+        try:
+            new_settings["normal_greetings"] = bool(user_settings.get("normal_greetings", False))
+        except Exception:
+            return send_error("ungültiger Wert für normal_greetings Einstellung")
         try:
             new_settings["chatgpt_greetings"] = bool(user_settings.get("chatgpt_greetings", False))
         except Exception:
-            return send_error("Invalid value for chatgpt_greetings")
+            return send_error("ungültiger Wert für chatgpt_greetings Einstellung")
         try:
             new_settings["show_plan_toasts"] = bool(user_settings.get("show_plan_toasts", False))
         except Exception:
-            return send_error("Invalid value for show_plan_toasts")
+            return send_error("ungültiger Wert für show_plan_toasts Einstellung")
         try:
             new_settings["day_switch_keys"] = bool(user_settings.get("day_switch_keys", True))
         except Exception:
-            return send_error("Invalid value for day_switch_keys")
+            return send_error("ungültiger Wert für day_switch_keys Einstellung")
         new_settings["background_color"] = user_settings.get("background_color", "#121212")
         if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["background_color"]):
-            return send_error("Invalid Color for background_color")
+            return send_error("ungültiger Wert für background_color Einstellung")
         new_settings["accent_color"] = user_settings.get("accent_color", "#BB86FC")
         if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["accent_color"]):
-            return send_error("Invalid Color for accent_color")
+            return send_error("ungültiger Wert für accent_color Einstellung")
 
         new_settings["favorite"] = user_settings.get("favorite", [])
         if new_settings["favorite"]:
             if new_settings["favorite"][0] not in authorized_schools:
-                return send_error("Schoolnumber not authorized for user")
+                return send_error("Schulnummer für Benutzer nicht authentifiziert")
             # if new_settings["favorite"][1] not in MetaExtractor(new_settings["favorite"][0]).course_list():
             #    return make_response('Course not recognized', 400)
 

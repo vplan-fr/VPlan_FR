@@ -22,10 +22,12 @@
     let all_rooms;
     let grouped_forms = [];
     let api_base;
-    $: api_base = `./api/v69.420/${school_num}`;
+    $: api_base = `/api/v69.420/${school_num}`;
     $logged_in = localStorage.getItem('logged_in') === 'true';
     check_login_status();
-    get_settings();
+    if ($logged_in) {
+        get_settings();
+    }
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
 
@@ -105,7 +107,7 @@
     }
 
     function check_login_status() {
-        customFetch('/check_login')
+        customFetch('/auth/check_login')
             .then(data => {
                 $logged_in = data["logged_in"];
                 localStorage.setItem('logged_in', `${$logged_in}`);
@@ -116,6 +118,19 @@
             }
         );
     }
+
+    let greeting = "";
+    function get_greeting() {
+        customFetch("/auth/greeting")
+            .then(data => {
+                greeting = data;
+            })
+            .catch(error => {
+
+            })
+    }
+
+    get_greeting();
 
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
@@ -131,6 +146,7 @@
 {/if}
 <main>
     {#if $logged_in}
+        <h1>{greeting}</h1>
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
             <DatePicker
                 format="%Y-%m-%d"

@@ -20,7 +20,7 @@
         let formData = new FormData();
         formData.append('nickname', l_nickname);
         formData.append('pw', l_password);
-        customFetch('/login', {
+        customFetch('/auth/login', {
             method: 'POST',
             body: formData,
         })
@@ -40,7 +40,7 @@
         let formData = new FormData();
         formData.append('nickname', s_nickname);
         formData.append('pw', s_password);
-        customFetch('/signup', {
+        customFetch('/auth/signup', {
             method: 'POST',
             body: formData
         })

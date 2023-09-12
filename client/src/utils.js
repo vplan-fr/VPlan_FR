@@ -1,5 +1,5 @@
 import {notifications} from "./notifications.js";
-import {settings} from "./stores.js";
+import {preferences, settings} from "./stores.js";
 
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
@@ -76,7 +76,7 @@ export async function customFetch(url, options = {}) {
         })
         .then(data => {
             if (!data.success) {
-                console.log(data);
+                //console.log(data);
                 throw new Error(data.error);
             }
             return data.data || {};
@@ -85,11 +85,11 @@ export async function customFetch(url, options = {}) {
 
 
 export function get_settings() {
-    customFetch("/settings")
+    customFetch("/auth/settings")
         .then(data => {
             settings.set(data);
         })
         .catch(error => {
-            notifications.danger(error)
+            notifications.danger("Einstellungen konnten nicht geladen werden")
         })
 }

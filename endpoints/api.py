@@ -16,7 +16,7 @@ from var import *
 api = Blueprint('api', __name__)
 
 
-@api.route(f"/schools", methods=["GET"])
+@api.route(f"/api/v69.420/schools", methods=["GET"])
 def schools() -> Response:
     with open("creds.json", "r") as f:
         creds: dict = json.load(f)
@@ -44,7 +44,7 @@ def schools() -> Response:
 @school_authorized
 def meta(school_num) -> Response:
     if school_num not in VALID_SCHOOLS:
-        return send_error("Invalid school.")
+        return send_error("Schulnummer unbekannt")
 
     cache = backend.cache.Cache(Path(".cache") / school_num)
     meta_data = json.loads(cache.get_meta_file("meta.json"))
@@ -71,7 +71,7 @@ def meta(school_num) -> Response:
 @school_authorized
 def plan(school_num: str) -> Response:
     if school_num not in VALID_SCHOOLS:
-        return send_error("Invalid school")
+        return send_error("Schulnummer unbekannt")
 
     cache = backend.cache.Cache(Path(".cache") / school_num)
 
@@ -108,25 +108,23 @@ def get_school_by_id(school_num: str):
     return None
 
 
-@api.route(f"/authorize", methods=["POST"])
-def authorize() -> Response:
-    school_num = request.form.get("school_num")
-    if school_num is None:
-        return send_error("no school number provided")
+@api.route(f"{API_BASE_URL}/authorize", methods=["POST"])
+@login_required
+def authorize(school_num: str) -> Response:
     with open(".cache/auth.log", "a") as f:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
     school_data = get_school_by_id(school_num)
     if not school_data:
-        return send_error("school number not known, please contact us, if you want to provide additional credentials")
+        return send_error("Schulnummer unbekannt, falls du eine Schule hinzufügen möchtest, nimm bitte Kontakt mit uns auf")
     username = request.form.get("username")
     if username is None:
-        return send_error("school username not provided")
+        return send_error("Kein Nutzername für die Schule angegeben")
     pw = request.form.get("pw")
     if pw is None:
-        return send_error("school password not provided")
+        return send_error("Kein Passwort für die Schule angegeben")
     if username != school_data["hosting"]["creds"]["students"]["username"] or pw != \
             school_data["hosting"]["creds"]["students"]["password"]:
-        return send_error("username or password wrong")
+        return send_error("Nutzername oder Password falsch")
     current_user.authorize_school(school_num)
     return send_success()
 
@@ -135,17 +133,17 @@ def authorize() -> Response:
 @login_required
 def instant_authorize(school_num: str) -> Response:
     if "username" not in request.args:
-        return send_error("username required")
+        return send_error("Nutzername benötigt")
     if "pw" not in request.args:
-        return send_error("password required")
+        return send_error("Passwort benötigt")
     with open("creds.json", "r") as f:
         creds = json.load(f)
     if school_num not in creds:
-        return send_error("school number not found")
+        return send_error("Schulnummer nicht gefunden")
     username = request.args.get("username")
     pw = request.args.get("username")
     if username != creds[school_num]["username"] or pw != creds[school_num]["password"]:
-        return send_error("username or password wrong")
+        return send_error("Nutzername oder Passwort falsch")
     current_user.authorize_school(school_num)
     return send_success()
 
