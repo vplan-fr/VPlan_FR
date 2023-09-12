@@ -100,6 +100,9 @@ async def main():
                                  help="Do not download plans, only parse existing.")
     argument_parser.add_argument("--ignore-exceptions", action="store_true",
                                  help="Don't raise exceptions and crash the program, instead print them and continue.")
+    argument_parser.add_argument("--never-raise-out-of-proxies", action="store_true",
+                                 help="Never crash the program if no more proxies seem to be available. "
+                                      "Keep trying instead.")
     argument_parser.add_argument("-loglevel", "-l", default="INFO")
 
     args = argument_parser.parse_args()
@@ -112,7 +115,8 @@ async def main():
     logging.basicConfig(level=args.loglevel, format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S")
 
-    proxy_provider = proxies.ProxyProvider(Path("proxies.json").absolute())
+    proxy_provider = proxies.ProxyProvider(Path("proxies.json").absolute(),
+                                           never_raise_out_of_proxies=args.never_raise_out_of_proxies)
     # list(proxy_provider.fetch_proxies())
 
     clients = await get_clients(proxy_provider=proxy_provider)
