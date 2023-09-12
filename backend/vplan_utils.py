@@ -1,47 +1,79 @@
 # coding=utf-8
 from __future__ import annotations
 
+import abc
+import dataclasses
 import datetime
 import re
 import typing
 from collections import defaultdict
 
-ParsedForm = typing.Union[typing.Tuple[str], typing.Tuple[str, str, str]]
-# TODO: refactor to dataclass
-
-
 _parse_form_pattern = re.compile(
     r"(?<!\S)(?:"
     r"(?P<major>\d{1,2}(?!\d)|[A-Za-zÄÖÜäöüß]+(?![A-Za-zÄÖÜäöüß]))"
-    r"(?P<sep>[\/.] |[^A-Za-zÄÖÜäöüß0-9() \n]?)"
+    r"(?P<sep>[/.] |[^A-Za-zÄÖÜäöüß0-9() \n]?)"
     r"(?P<minor>(?:\d{1,2}[A-Za-zÄÖÜäöüß]?|[A-Za-zÄÖÜäöüß]+?)(?:,(?:\d{1,2}[A-Za-zÄÖÜäöüß]?|[A-Za-zÄÖÜäöüß]+?))*)"
     r"|(?P<alpha>\d{1,2})"
     r")(?![^\s,])"
 )
 
 
-def parse_form(form: str) -> ParsedForm:
-    match = _parse_form_pattern.fullmatch(form)
-    if match is None or match.group("alpha"):
-        return form,
-    else:
-        return match.group("major"), match.group("sep"), match.group("minor")
+class ParsedForm(abc.ABC):
+    @classmethod
+    def from_str(cls, form: str) -> ParsedForm:
+        match = _parse_form_pattern.fullmatch(form)
+        if match is None or match.group("alpha"):
+            return AlphanumParsedForm(form)
+        else:
+            return MajorMinorParsedForm(*match.group("major", "sep", "minor"))
+
+    @classmethod
+    def from_form_match(cls, match: re.Match) -> ParsedForm:
+        if match.group("alpha"):
+            return AlphanumParsedForm(match.group("alpha"))
+        else:
+            return MajorMinorParsedForm(*match.group("major", "sep", "minor"))
+
+    @abc.abstractmethod
+    def to_tuple(self) -> tuple[str, ...]:
+        ...
+
+    @abc.abstractmethod
+    def expand_forms(self) -> list[ParsedForm]:
+        ...
+
+    def to_str(self):
+        return "".join(self.to_tuple())
+
+    def __iter__(self):
+        return iter(self.to_tuple())
+
+    def __getitem__(self, item):
+        return self.to_tuple()[item]
 
 
-def expand_form(form: ParsedForm) -> list[ParsedForm]:
-    if len(form) == 1:
-        return [form]
-    else:
-        major, separator, all_minors = form
+@dataclasses.dataclass(frozen=True)
+class MajorMinorParsedForm(ParsedForm):
+    major: str
+    separator: str
+    minor: str
 
-        return [(major, separator, minor.strip()) for minor in all_minors.split(",")]
+    def to_tuple(self) -> tuple[str, str, str]:
+        return self.major, self.separator, self.minor
+
+    def expand_forms(self) -> list[ParsedForm]:
+        return [MajorMinorParsedForm(self.major, self.separator, minor.strip()) for minor in self.minor.split(",")]
 
 
-def form_to_str(form: ParsedForm) -> str:
-    if len(form) == 1:
-        return form[0]
-    else:
-        return "".join(form)
+@dataclasses.dataclass(frozen=True)
+class AlphanumParsedForm(ParsedForm):
+    alpha: str | None
+
+    def to_tuple(self) -> tuple[str]:
+        return self.alpha,
+
+    def expand_forms(self) -> list[ParsedForm]:
+        return [self]
 
 
 def form_sort_key(major: str | None):
@@ -57,14 +89,14 @@ def group_forms(forms: list[str]) -> dict[str, list[str]]:
     groups: dict[str | None, list[str]] = defaultdict(list)
 
     for form in forms:
-        group_name, *_ = parse_form(form)
+        group_name, *_ = ParsedForm.from_str(form)
 
         groups[group_name].append(form)
 
     return {k: v for k, v in sorted(groups.items(), key=lambda x: form_sort_key(x[0]))}
 
 
-def _parse_form_minor(minor: str) -> int | None:
+def _form_minor_to_int(minor: str) -> int | None:
     try:
         return int(minor)
     except ValueError:
@@ -76,8 +108,8 @@ def _parse_form_minor(minor: str) -> int | None:
     return None
 
 
-def parse_form_minor(minor: str) -> int | None:
-    minor_int = _parse_form_minor(minor)
+def form_minor_to_int(minor: str) -> int | None:
+    minor_int = _form_minor_to_int(minor)
 
     if minor_int is None:
         return None
@@ -107,7 +139,7 @@ def _increasing_sequences(seq: typing.Iterable, key=lambda x: x) -> list[list]:
 
 
 def _group_form_minors(first_part: str, minors: list[str]) -> list[str]:
-    _parsed_minors = {minor: parse_form_minor(minor) for minor in minors}
+    _parsed_minors = {minor: form_minor_to_int(minor) for minor in minors}
     _non_invalid_parsed_minors = {k: v for k, v in _parsed_minors.items() if v is not None}
     invalid_minors = [k for k, v in _parsed_minors.items() if v is None]
     parsed_minors = {k: v for k, v in sorted(_non_invalid_parsed_minors.items(), key=lambda x: x[1])}
@@ -129,9 +161,9 @@ def _group_form_minors(first_part: str, minors: list[str]) -> list[str]:
     return out
 
 
-def _forms_to_str(forms: list[ParsedForm]) -> str:
-    alphanum_forms = [form for form in forms if len(form) == 1]
-    other_forms = [form for form in forms if len(form) != 1]
+def parsed_forms_to_str(forms: list[ParsedForm]) -> str:
+    alphanum_forms = [form for form in forms if isinstance(form, AlphanumParsedForm)]
+    other_forms = [form for form in forms if isinstance(form, MajorMinorParsedForm)]
 
     grouped: dict[tuple[str, str], list[str]] = defaultdict(list)
 
@@ -153,7 +185,7 @@ def _forms_to_str(forms: list[ParsedForm]) -> str:
 
 
 def forms_to_str(forms: typing.Iterable[str]) -> str:
-    return _forms_to_str([parse_form(form) for form in forms])
+    return parsed_forms_to_str([ParsedForm.from_str(form) for form in forms])
 
 
 def periods_to_block_label(periods: list[int]) -> str:

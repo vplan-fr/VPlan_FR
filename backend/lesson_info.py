@@ -7,8 +7,8 @@ import logging
 import re
 import typing
 
-from .vplan_utils import periods_to_block_label, parse_periods, _parse_form_pattern, ParsedForm, expand_form, \
-    parse_form, form_to_str, _forms_to_str
+from .vplan_utils import periods_to_block_label, parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str, \
+    MajorMinorParsedForm, AlphanumParsedForm
 from . import models
 
 
@@ -467,7 +467,7 @@ def __parse_message(info: str, plan_year: int) -> tuple[ParsedLessonInfoMessage,
 
 def _parse_message(info: str, plan_year: int) -> ParsedLessonInfoMessage:
     info = info.strip()
-    info = re.sub(r"(?<=\w)\/ ", "/", info)  # remove spaces after slashes like in G/ R/ W
+    info = re.sub(r"(?<=\w)/ ", "/", info)  # remove spaces after slashes like in G/ R/ W
     parsed_info, match = __parse_message(info, plan_year)
 
     if match is not None:
@@ -659,11 +659,6 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
 def _parse_form_match(match: re.Match) -> ParsedForm:
     major, sep, minor, alpha = match.group("major", "sep", "minor", "alpha")
 
-    if alpha is not None:
-        return alpha,
-    else:
-        return major, sep, minor
-
 
 def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], date: datetime.date
                          ) -> list[LessonInfoTextSegment]:
@@ -674,31 +669,22 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
         segments.append(LessonInfoTextSegment(text[prev:match.start()]))
         prev = match.end()
 
-        parsed_forms = _parse_form_match(match)
+        parsed_forms = ParsedForm.from_form_match(match)
 
         matched_forms: list[ParsedForm] = []
 
-        for parsed_form in expand_form(parsed_forms):
+        for parsed_form in parsed_forms.expand_forms():
             form_match = None
 
-            if len(parsed_form) == 1:
-                for existing_form in parsed_existing_forms:
-                    if len(existing_form) == 1:
-                        if parsed_form[0] == existing_form[0]:
-                            form_match = existing_form
-                            break
-                    else:
-                        continue
-            else:
-                # try to find form that matches the parsed form
-                # only major and minor have to be the same
-                for existing_form in parsed_existing_forms:
-                    if len(existing_form) == 3:
-                        if existing_form[0].lower() == parsed_form[0].lower() and existing_form[2] == parsed_form[2]:
-                            form_match = existing_form
-                            break
-                    else:
-                        continue
+            for existing_form in parsed_existing_forms:
+                if AlphanumParsedForm == type(parsed_form) == type(existing_form):
+                    if parsed_form[0] == existing_form[0]:
+                        form_match = existing_form
+                        break
+                elif MajorMinorParsedForm == type(parsed_form) == type(existing_form):
+                    if existing_form[0].lower() == parsed_form[0].lower() and existing_form[2] == parsed_form[2]:
+                        form_match = existing_form
+                        break
 
             if form_match is not None:
                 matched_forms.append(form_match)
@@ -706,8 +692,8 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
         if matched_forms:
             segments.append(
                 LessonInfoTextSegment(
-                    _forms_to_str(matched_forms),
-                    link=LessonInfoTextSegmentLink("forms", [form_to_str(f) for f in matched_forms], date, None)
+                    parsed_forms_to_str(matched_forms),
+                    link=LessonInfoTextSegmentLink("forms", [f.to_str() for f in matched_forms], date, None)
                 )
             )
         else:
