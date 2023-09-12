@@ -6,12 +6,12 @@ from stundenplan24_py.proxies import ProxyProvider, Proxy
 
 def main():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("proxies_to_be_imported_file", type=str)
-    argparser.add_argument("proxies_file", type=str, default="proxies.json", nargs="?")
+    argparser.add_argument("proxies_txt_file", type=str)
+    argparser.add_argument("proxies_json_file", type=str, default="proxies.json", nargs="?")
     args = argparser.parse_args()
 
-    proxy_provider = ProxyProvider(Path(args.proxies_file))
-    with open(args.proxies_to_be_imported_file, "r") as f:
+    proxy_provider = ProxyProvider(Path(args.proxies_json_file))
+    with open(args.proxies_txt_file, "r") as f:
         for line in f.readlines():
             host, port = line.rsplit(":", 1)
             port = int(port)
