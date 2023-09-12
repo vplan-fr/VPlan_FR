@@ -24,4 +24,4 @@ Hallöchen mit Öchen {name}!
 Alles nice im Reis?
 Alles cool in Suhl?
 Howdy {name}!
-Alles fit im Schritt
+Alles fit im Schritt?
