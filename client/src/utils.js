@@ -1,5 +1,5 @@
 import {notifications} from "./notifications.js";
-import {settings} from "./stores.js";
+import {preferences, settings} from "./stores.js";
 
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
@@ -90,6 +90,6 @@ export function get_settings() {
             settings.set(data);
         })
         .catch(error => {
-            notifications.danger(error)
+            notifications.danger("Einstellungen konnten nicht geladen werden")
         })
 }
