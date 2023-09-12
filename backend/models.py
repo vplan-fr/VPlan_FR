@@ -311,6 +311,7 @@ class Plan:
 
                     current_forms={form.short_name},
                     current_teachers=set(lesson.teacher().split()) if lesson.teacher() else set(),
+                    # TODO: Some schools use rooms with spaces
                     current_rooms=lesson.room().split(" ") if lesson.room() else [],
                     current_class=lesson.subject(),
 
