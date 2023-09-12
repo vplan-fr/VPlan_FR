@@ -9,8 +9,9 @@ from xml.etree import ElementTree as ET
 from stundenplan24_py import indiware_mobil, substitution_plan
 
 from . import lesson_info
+from .lesson_info import process_additional_info
 from .models import Plan, Lesson, Teacher, Teachers
-from .vplan_utils import parse_absent_element
+from .vplan_utils import parse_absent_element, ParsedForm
 
 
 class PlanExtractor:
@@ -184,9 +185,13 @@ class PlanExtractor:
 
         return out
 
-    def info_data(self) -> dict[str, typing.Any]:
+    def info_data(self, parsed_forms: list[ParsedForm]) -> dict[str, typing.Any]:
         return {
             "additional_info": self.forms_plan.additional_info,
+            "processed_additional_info": [
+                [i.serialize() for i in process_additional_info(text, parsed_forms, self.forms_plan.form_plan.date)]
+                for text in self.forms_plan.additional_info
+            ],
             "timestamp": self.forms_plan.form_plan.timestamp.isoformat(),
             "week": self.forms_plan.week_letter()
         }

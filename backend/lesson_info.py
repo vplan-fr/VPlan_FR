@@ -656,8 +656,15 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
     return out
 
 
-def _parse_form_match(match: re.Match) -> ParsedForm:
-    major, sep, minor, alpha = match.group("major", "sep", "minor", "alpha")
+def process_additional_info(text: str, parsed_existing_forms: list[ParsedForm], date: datetime.date
+                            ) -> list[LessonInfoTextSegment]:
+    if text is None:
+        return []
+    # TODO: Dates, Teachers
+    # remove spaces after slashes like in 5/ 3
+    text = re.sub(r"(?<=\w)/ ", "/", text)
+
+    return add_fuzzy_form_links(text, parsed_existing_forms, date)
 
 
 def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], date: datetime.date
@@ -698,6 +705,10 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
             )
         else:
             segments[-1].text += match.group()
+
+    segments.append(LessonInfoTextSegment(
+        text=text[prev:]
+    ))
 
     return segments
 

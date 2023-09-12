@@ -9,11 +9,11 @@ from .cache import Cache
 from .plan_extractor import PlanExtractor
 from .meta_extractor import MetaExtractor
 from .models import Teachers, Lessons, Exam, Teacher
-from .vplan_utils import group_forms
+from .vplan_utils import group_forms, ParsedForm
 
 
 class PlanProcessor:
-    VERSION = "51"
+    VERSION = "52"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -106,9 +106,10 @@ class PlanProcessor:
                 "rooms.json"
             )
 
+            all_forms = self.meta_extractor.forms()
             self.cache.store_plan_file(
                 date, timestamp,
-                json.dumps(plan_extractor.info_data()),
+                json.dumps(plan_extractor.info_data([ParsedForm.from_str(f) for f in all_forms])),
                 "info.json"
             )
 
