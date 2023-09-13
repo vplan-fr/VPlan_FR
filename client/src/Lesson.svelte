@@ -297,6 +297,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
             overflow: hidden;
+            text-align: left;
 
             &:hover, &:focus-visible {
                 background-color: rgba(255, 255, 255, 0.2);

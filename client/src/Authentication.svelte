@@ -100,11 +100,17 @@
             <img src="/base_static/images/lock-solid.svg" alt="Lock Icon">
             <input disabled={!register_visible} autocomplete="new-password" name="s_password" bind:value={s_password} type="password" minlength="10" required class="textfield" placeholder="Passwort"/>
         </div>
+        <span class="extra-info">Mit dem Registrieren akzeptierst du alle unbedingt erforderlichen Cookies.</span>
         <button class="default-button" type="submit">Registrieren</button>
     </form>
     {/if}
 </main>
 <style lang="scss">
+    .extra-info {
+        font-size: .8em;
+        margin: 10px 0px;
+    }
+
     label {
         margin-bottom: 5px;
     }

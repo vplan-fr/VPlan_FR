@@ -1,0 +1,69 @@
+<script>
+    import Dropdown from "./Dropdown.svelte";
+
+    export let data = [];
+    export let selected_elem;
+    export let icon_location;
+</script>
+
+<div class="select-wrapper">
+    <Dropdown let:toggle small_version={true} transform_origin="100% 0%">
+        <button slot="toggle_button" on:click={toggle} class="toggle-btn">
+            {#if selected_elem}
+                {data[selected_elem]["name"]}
+            {:else}
+                <slot></slot>
+            {/if}
+        </button>
+    
+        {#each Object.entries(data) as elem}
+            <button class="select-option" on:click={() => {selected_elem = elem[0]}}>
+                {elem[1]["name"]}
+                {#if icon_location}
+                    <img src="{icon_location}/{elem[1]["icon"]}" alt="Schul-Logo" class="school-logo">
+                {/if}
+            </button>
+        {/each}
+    </Dropdown>
+</div>
+
+<style lang="scss">
+    .select-wrapper {
+        margin-bottom: 30px;
+    }
+
+    .toggle-btn {
+        width: 100%;
+        height: 100%;
+        font-size: 1rem;
+        padding: 10px;
+        text-align: left;
+        border: none;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        background-color: transparent;
+        color: var(--text-color);
+    }
+    .select-option {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 1rem;
+        padding: 0px 10px;
+        border: none;
+        background-color: transparent;
+        color: var(--text-color);
+        transition: background-color .2s ease;
+
+        &:hover, &:focus-visible {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .school-logo {
+            height: 40px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+    }
+</style>

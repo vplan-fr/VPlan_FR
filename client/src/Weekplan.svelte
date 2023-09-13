@@ -57,9 +57,4 @@
         width: 100%;
         overflow: scroll;
     }
-    .responsive-heading {
-        font-size: clamp(1.063rem, 4vw, 2.28rem);
-        line-height: 1.6;
-        margin-bottom: 15px;
-    }
 </style>

@@ -5,6 +5,7 @@
     export let transitionOptions = {duration: 200, start: 0.3};
     export let transform_origin = "100% 0%";
     export let small_version = false;
+    export let arrow_visible = true;
     let open = false;
 
     function clickOutside(node, { enabled: initialEnabled, cb }) {
@@ -32,9 +33,10 @@
     }
 </script>
 
-<div class="dropdown-wrapper {small_version ? "small_version": ""} {open ? "open": ""}">
+<div class="dropdown-wrapper {small_version ? "small_version": ""} {open ? "open": ""} {arrow_visible ? "arrow_visible" : ""}">
     <div class="btn-wrapper" use:clickOutside={{ enabled: open, cb: () => open = false }}>
         <slot name="toggle_button" toggle={() => {open = !open}} />
+        <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
     </div>
     {#if open}
         <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="transform-origin: {transform_origin};">
@@ -44,6 +46,33 @@
 </div>
 
 <style lang="scss">
+    .dropdown-arrow {
+        display: none;
+    }
+
+    .arrow_visible {
+        .btn-wrapper {
+            padding-right: .9em;
+        }
+
+        .dropdown-arrow {
+            display: block;
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            transition: transform .2s ease;
+            pointer-events: none;
+            font-size: 1.5em;
+        }
+
+        &.open {
+            .dropdown-arrow {
+                transform: rotate(180deg) translateY(50%);
+            }
+        } 
+    }
+
     .dropdown-wrapper {
         position: relative;
         width: 100%;
@@ -82,6 +111,7 @@
 
         &.small_version {
             .dropdown-content {
+                bottom: -10px;
                 box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.14), 0 10px 10px 0 rgba(0, 0, 0, 0.12);
                 min-width: 100%;
                 border-radius: 5px;

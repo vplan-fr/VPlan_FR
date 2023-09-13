@@ -33,22 +33,8 @@
 </main>
 
 <style lang="scss">
-    .responsive-heading {
-        font-size: clamp(1.3rem, 4vw, 2.3rem);
-        line-height: 1.3;
-        margin-bottom: 15px;
-        font-weight: 700;
-    }
-
     .bold {
         font-weight: 700 !important;
-    }
-    
-    .responsive-text {
-        font-size: clamp(0.8rem, 3vw, 1.5rem);
-        line-height: 1.6;
-        margin-bottom: 15px;
-        font-weight: 400;
     }
 
     .third_wrapper {

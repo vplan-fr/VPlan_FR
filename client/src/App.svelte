@@ -174,20 +174,21 @@
 {#if $logged_in}
     <Navbar />
 {/if}
-<main>
+<main>    
     {#if $logged_in}
-        <h1>{greeting}</h1>
-        <br>
-        <div id="changelog">
-            {#each changelog as cur_log}
-                <p>
-                    {cur_log[1]}
-                    <button on:click={() => {read_changelog(cur_log[0])}}>Als gelesen markieren</button>
-                </p>
-            {/each}
-        </div>
-        <br><br>
+        {#if !school_num}
+            <SchoolManager bind:school_num />
+        {:else}
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
+            <h1>{greeting}</h1>
+            <div id="changelog">
+                {#each changelog as cur_log}
+                    <p>
+                        {cur_log[1]}
+                        <button on:click={() => {read_changelog(cur_log[0])}}>Als gelesen markieren</button>
+                    </p>
+                {/each}
+            </div>
             <DatePicker
                 format="%Y-%m-%d"
                 locale="de-DE"
@@ -259,6 +260,7 @@
         {:else}
             <span>Seite nicht gefunden!</span>
         {/if}
+        {/if}
     {:else}
         <Authentication></Authentication>
     {/if}
@@ -266,6 +268,18 @@
 <Toast />
 
 <style lang="scss">
+    :global(.responsive-heading) {
+        font-size: clamp(1.063rem, 4vw, 2.28rem);
+        line-height: 1.6;
+        font-weight: 700;
+    }
+
+    :global(.responsive-text) {
+        font-size: clamp(0.8rem, 3vw, 1.5rem);
+        line-height: 1.6;
+        font-weight: 400;
+    }
+
     main {
         padding-top: 25px;
         margin: 64px auto;

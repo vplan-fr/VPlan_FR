@@ -269,12 +269,6 @@
         }
     }
 
-    .responsive-heading {
-        font-size: clamp(1.063rem, 4vw, 2.28rem);
-        line-height: 1.6;
-        margin-bottom: 15px;
-    }
-
     .custom-badge {
         background: rgba(255, 255, 255, 0.07);
         padding: 2px 7px;
