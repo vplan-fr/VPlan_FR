@@ -114,7 +114,7 @@ def school_authorized(func):
             return send_error("no school number provided")
         if not current_user.user.get("admin"):
             if kwargs.get("school_num") not in current_user.user.get("authorized_schools"):
-                return send_error("user not authorized for specified school")
+                return send_error("Benutzer nicht für gewählte Schule autorisiert")
         return func(*args, **kwargs)
     return wrapper_thing
 

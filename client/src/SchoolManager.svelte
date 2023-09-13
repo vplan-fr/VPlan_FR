@@ -18,7 +18,6 @@
     let authorize_school_id;
     let username = "schueler";
     let password = "";
-    let authorization_message = "Nothing to show";
     let schools = {};
     let authorized_school_ids = [];
     let school_auth_visible = false;
@@ -61,15 +60,15 @@
         get_authorized_schools();
         console.log(username, password);
         if (!isObjectInList(authorize_school_id, Object.keys(schools))) {
-            authorization_message = "School doesnt exist...";
+            notifications.danger("Schule unbekannt (kontaktiere uns, um deine Schule hinzuzufügen)")
             return
         }
         if (username === "") {
-            authorization_message = "No username provided";
+            notifications.danger("Bitte gib einen Nutzernamen an");
             return
         }
         if (password === "") {
-            authorization_message = "No password provided";
+            notifications.danger("Bitte gib ein Passwort an");
             return
         }
         let formData = new FormData();
@@ -81,7 +80,7 @@
             body: formData
         })
             .then(data => {
-                authorization_message = "Success!!!"
+                notifications.success("Schule wurde autorisiert");
                 authorized_school_ids = [...authorized_school_ids, authorize_school_id];
             })
             .catch(error => {
@@ -130,9 +129,6 @@
         <input bind:value={username}>
         <input type="password" bind:value={password}>
         <button on:click={authorize_school}>Authorize School</button>
-        <div>
-            {authorization_message}
-        </div>
     </div>
     {/if}
 </main>
