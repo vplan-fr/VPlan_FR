@@ -57,17 +57,6 @@
         }
     }
 
-
-    function getPreferences() {
-        customFetch(`${api_base}/preferences`)
-            .then(data => {
-                preferences.set(data);
-            })
-            .catch(error => {
-                notifications.danger(error)
-            })
-    }
-
     function setPreferences() {
         customFetch(`${api_base}/preferences?` + new URLSearchParams(
             {
@@ -132,7 +121,6 @@
             navigate_page('school_manager');
             return;
         }
-        getPreferences();
         updateCourses();
         location.hash = "#preferences";
         title.set("Unterricht wählen");
