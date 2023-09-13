@@ -100,11 +100,7 @@
 
 <main>
     {#if !school_auth_visible}
-    <form transition:fly|local={{x: -600}}>
-        <h1 class="responsive-heading">Schulauswahl</h1>
-        <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
-        <Select data={schools} icon_location="/base_static/images/school_icons" bind:selected_elem={authorize_school_id}>Schule auswählen</Select>
-        <button class="button" type="button" on:click={() => {
+    <form transition:fly|local={{x: -600}} on:submit|preventDefault={() => {
             if (authorize_school_id) {
                 if(isObjectInList(authorize_school_id, authorized_school_ids) || is_admin) {
                     school_num = authorize_school_id;
@@ -115,7 +111,11 @@
             } else {
                 notifications.danger("Wähle eine Schule aus um fortzufahren.");
             }
-        }}>Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></button>
+        }}>
+        <h1 class="responsive-heading">Schulauswahl</h1>
+        <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
+        <Select data={schools} icon_location="/base_static/images/school_icons" bind:selected_elem={authorize_school_id}>Schule auswählen</Select>
+        <button class="button" type="submit">Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></button>
     </form>
     {:else}
     <form transition:fly|local={{x: 600}} on:submit|preventDefault={authorize_school}>
@@ -124,12 +124,12 @@
         <span class="responsive-text">Trage hier die Zugangsdaten für deine Schule ein<br>(dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
         <label for="school_username">Nutzername</label>
         <div class="input_icon">
-            <img src="/base_static/images/user-solid.svg" alt="User Icon">
+            <img src="/base_static/images/user-solid-white.svg" alt="User Icon">
             <input disabled={!school_auth_visible} autocomplete="off" name="school_username" bind:value={username} type="text" required class="textfield" placeholder="Nutzername"/>
         </div>
         <label for="school_password">Passwort</label>
         <div class="input_icon">
-            <img src="/base_static/images/lock-solid.svg" alt="Lock Icon">
+            <img src="/base_static/images/lock-solid-white.svg" alt="Lock Icon">
             <input disabled={!school_auth_visible} autocomplete="off" name="school_password" bind:value={password} type="password" required class="textfield" placeholder="Passwort"/>
         </div>
         <button class="button" type="submit">Login</button>

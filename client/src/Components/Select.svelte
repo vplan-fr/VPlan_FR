@@ -8,7 +8,7 @@
 
 <div class="select-wrapper">
     <Dropdown let:toggle small_version={true} transform_origin="100% 0%">
-        <button slot="toggle_button" on:click={toggle} class="toggle-btn">
+        <button  type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
             {#if selected_elem}
                 {data[selected_elem]["name"]}
             {:else}
@@ -17,7 +17,7 @@
         </button>
     
         {#each Object.entries(data) as elem}
-            <button class="select-option" on:click={() => {selected_elem = elem[0]}}>
+            <button type="button" class="select-option" on:click={() => {selected_elem = elem[0]}}>
                 {elem[1]["name"]}
                 {#if icon_location}
                     <img src="{icon_location}/{elem[1]["icon"]}" alt="Schul-Logo" class="school-logo">
