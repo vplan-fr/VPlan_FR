@@ -40,7 +40,9 @@
     </div>
     {#if open}
         <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="transform-origin: {transform_origin};">
-            <slot />
+            <div class="height-limiter">
+                <slot />
+            </div>
         </div>
     {/if}
 </div>
@@ -114,6 +116,11 @@
                 height: 100%;
                 background: rgba(255, 255, 255, 0.07);
                 pointer-events: none;
+            }
+
+            .height-limiter {
+                max-height: min(500px, 50vh);
+                overflow-y: scroll;
             }
         }
 
