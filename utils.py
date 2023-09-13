@@ -161,8 +161,6 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
     return
 
 
-<<<<<<< Updated upstream
-=======
 def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None):
     embeds = [] if not embeds else embeds
     key = key.upper()
@@ -176,14 +174,10 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
     return
 
 
->>>>>>> Stashed changes
 if __name__ == "__main__":
     new_embed = DiscordEmbed(title="Moin again", description="Test", color="03b2f8")
     new_embed.set_author("VPlan Bot")
     webhook_send("WEBHOOK_TEST", "Hi guys")
-<<<<<<< Updated upstream
-=======
 
 
->>>>>>> Stashed changes
 
