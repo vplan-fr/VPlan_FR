@@ -20,7 +20,7 @@
     let password = "";
     let schools = {};
     let authorized_school_ids = [];
-    let school_auth_visible = false;
+    let school_auth_visible = true;
     let is_admin = false;
 
     function get_schools() {
@@ -97,20 +97,18 @@
     get_schools();
     get_authorized_schools();
     get_admin_status();
-    //$: console.log(schools);
+    $: console.log(schools);
     // $: console.log(authorized_school_ids);
 </script>
 
-<main style="position: relative;">
+<main>
     {#if !school_auth_visible}
-    <div transition:fly|local={{x: -600}} class="absolute-position">
+    <form transition:fly|local={{x: -600}}>
         <h1 class="responsive-heading">Schulauswahl</h1>
         <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
         <Select data={schools} icon_location="/base_static/images/school_icons" bind:selected_elem={authorize_school_id}>Schule auswählen</Select>
-        <button class="button" on:click={() => {
+        <button class="button" type="button" on:click={() => {
             if (authorize_school_id) {
-                console.log(authorized_school_ids);
-                console.log(is_admin)
                 if(isObjectInList(authorize_school_id, authorized_school_ids) || is_admin) {
                     school_num = authorize_school_id;
                     navigate_page("plan");
@@ -121,19 +119,73 @@
                 notifications.danger("Wähle eine Schule aus um fortzufahren.");
             }
         }}>Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></button>
-    </div>
+    </form>
     {:else}
-    <div transition:fly|local={{x: 600}} class="absolute-position">
+    <form transition:fly|local={{x: 600}} on:submit|preventDefault={authorize_school}>
         <button on:click={() => {school_auth_visible = false;}} type="reset" id="back_button">←</button>
-        <input bind:value={authorize_school_id}>
-        <input bind:value={username}>
-        <input type="password" bind:value={password}>
-        <button on:click={authorize_school}>Authorize School</button>
-    </div>
+        <h1 class="responsive-heading">{authorize_school_id ? schools[authorize_school_id]["name"] : "Schul"}-Login</h1>
+        <span class="responsive-text">Trage hier die Zugangsdaten für deine Schule ein (dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
+        <label for="school_username">Nutzername</label>
+        <div class="input_icon">
+            <img src="/base_static/images/user-solid.svg" alt="User Icon">
+            <input disabled={!school_auth_visible} autocomplete="off" name="school_username" bind:value={username} type="text" required class="textfield" placeholder="Nutzername"/>
+        </div>
+        <label for="school_password">Passwort</label>
+        <div class="input_icon">
+            <img src="/base_static/images/lock-solid.svg" alt="Lock Icon">
+            <input disabled={!school_auth_visible} autocomplete="off" name="school_password" bind:value={password} type="password" required class="textfield" placeholder="Passwort"/>
+        </div>
+        <button class="button" type="submit">Login</button>
+    </form>
     {/if}
 </main>
 
 <style lang="scss">
+    form {
+        position: absolute;
+        top: 50%;
+        left: calc(50% + (100vw - 100%) / 2);
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        min-width: min(400px, 75vw);
+    }
+
+    label {
+        margin-bottom: 5px;
+    }
+
+    .input_icon {
+        position: relative;
+        .textfield {
+            padding-left: 40px;
+        }
+        img {
+            position: absolute;
+            top: 14px;
+            left: 12px;
+            width: 20px;
+            height: 20px;
+            background-size: contain;
+            z-index: 1;
+        }
+    }
+
+    .textfield {
+        width: 100%;
+        padding: 12px 20px;
+        margin-bottom: 8px;
+        box-sizing: border-box;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-color);
+        border-radius: 5px;
+    }
+
     .absolute-position {
         position: absolute;
         top: 0;
@@ -154,20 +206,31 @@
         overflow: hidden;
         display: flex;
         align-items: center;
+        justify-content: center;
         border: none;
         background-color: var(--accent-color);
         color: var(--text-color);
         border-radius: 5px;
         padding: 10px;
+        margin-top: 20px;
         font-size: 1rem;
         position: relative;
-        padding-right: .5em;
 
         .material-symbols-outlined {
             font-size: 1.3em;
             float: right;
-            margin-left: .5em;
+            margin-left: .2em;
         }
+    }
+
+    #back_button {
+        position: absolute;
+        top: 0px;
+        left: 5px;
+        border: 0;
+        background: none;
+        color: white;
+        font-size: 1.5rem;
     }
 </style>
 

@@ -79,7 +79,7 @@ export async function customFetch(url, options = {}) {
                 //console.log(data);
                 throw new Error(data.error);
             }
-            return data.data || {};
+            return data.data === undefined ? {} : data.data;
         })
 }
 

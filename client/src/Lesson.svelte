@@ -100,7 +100,7 @@
                 {:else}
                 <div class="forms max-width wide-area second_of_type">
                     <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
-                        <button slot="toggle_button" on:click={toggle} class="toggle-button">{forms_str}</button>
+                        <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">{forms_str}</button>
                         
                         {#each forms as form}
                             <button on:click={() => {
@@ -224,7 +224,7 @@
             {:else}
             <div class="max-width">
                 <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
-                    <button slot="toggle_button" on:click={toggle} class="toggle-button">{forms_str}</button>
+                    <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">{forms_str}</button>
                     
                     {#each forms as form}
                         <button on:click={() => {
@@ -298,6 +298,10 @@
             border-radius: 5px;
             overflow: hidden;
             text-align: left;
+            
+            &.center-align {
+                text-align: center;
+            }
 
             &:hover, &:focus-visible {
                 background-color: rgba(255, 255, 255, 0.2);

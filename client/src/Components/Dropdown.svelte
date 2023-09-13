@@ -53,6 +53,10 @@
     .arrow_visible {
         .btn-wrapper {
             padding-right: .9em;
+
+            @media only screen and (min-width: 1501px) {
+                padding-right: 1.5em;
+            }
         }
 
         .dropdown-arrow {
@@ -64,6 +68,10 @@
             transition: transform .2s ease;
             pointer-events: none;
             font-size: 1.5em;
+
+            @media only screen and (min-width: 1501px) {
+                font-size: 2em;
+            }
         }
 
         &.open {
@@ -113,7 +121,7 @@
             .dropdown-content {
                 bottom: -10px;
                 box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.14), 0 10px 10px 0 rgba(0, 0, 0, 0.12);
-                min-width: 100%;
+                width: 100%;
                 border-radius: 5px;
                 @media only screen and (min-width: 1501px) {
                     border-radius: 8px;

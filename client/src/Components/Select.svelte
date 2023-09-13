@@ -29,7 +29,7 @@
 
 <style lang="scss">
     .select-wrapper {
-        margin-bottom: 30px;
+        margin-bottom: 10px;
     }
 
     .toggle-btn {
@@ -50,7 +50,7 @@
         align-items: center;
         justify-content: space-between;
         font-size: 1rem;
-        padding: 0px 10px;
+        padding: 5px 10px;
         border: none;
         background-color: transparent;
         color: var(--text-color);
