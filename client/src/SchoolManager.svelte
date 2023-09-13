@@ -1,8 +1,8 @@
 <script>
     import {notifications} from './notifications.js';
     import { onMount } from "svelte";
-    import { current_page, title } from "./stores";
-    import {customFetch} from "./utils.js";
+    import { title } from "./stores";
+    import {customFetch, navigate_page} from "./utils.js";
     import Select from "./Components/Select.svelte";
     import { fly } from 'svelte/transition';
 
@@ -20,7 +20,7 @@
     let password = "";
     let schools = {};
     let authorized_school_ids = [];
-    let school_auth_visible = true;
+    let school_auth_visible = false;
     let is_admin = false;
 
     function get_schools() {
@@ -81,17 +81,14 @@
         })
             .then(data => {
                 notifications.success("Schule wurde autorisiert");
+                school_num = authorize_school_id;
                 authorized_school_ids = [...authorized_school_ids, authorize_school_id];
+                navigate_page('plan');
             })
             .catch(error => {
                 notifications.danger(error);
             }
         );
-    }
-
-    function navigate_page(page_id) {
-        $current_page = page_id;
-        location.hash = `#${page_id}`;
     }
 
     get_schools();
@@ -124,7 +121,7 @@
     <form transition:fly|local={{x: 600}} on:submit|preventDefault={authorize_school}>
         <button on:click={() => {school_auth_visible = false;}} type="reset" id="back_button">←</button>
         <h1 class="responsive-heading">{authorize_school_id ? schools[authorize_school_id]["name"] : "Schul"}-Login</h1>
-        <span class="responsive-text">Trage hier die Zugangsdaten für deine Schule ein (dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
+        <span class="responsive-text">Trage hier die Zugangsdaten für deine Schule ein<br>(dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
         <label for="school_username">Nutzername</label>
         <div class="input_icon">
             <img src="/base_static/images/user-solid.svg" alt="User Icon">
@@ -229,7 +226,7 @@
         left: 5px;
         border: 0;
         background: none;
-        color: white;
+        color: var(--text-color);
         font-size: 1.5rem;
     }
 </style>

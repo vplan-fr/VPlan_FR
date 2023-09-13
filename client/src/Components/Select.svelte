@@ -37,6 +37,7 @@
         height: 100%;
         font-size: 1rem;
         padding: 10px;
+        padding-right: 1.5em;
         text-align: left;
         border: none;
         border-bottom: 2px solid rgba(255, 255, 255, 0.2);

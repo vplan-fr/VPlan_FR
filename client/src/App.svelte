@@ -179,9 +179,6 @@
 {/if}
 <main>    
     {#if $logged_in}
-        {#if !school_num}
-            <SchoolManager bind:school_num />
-        {:else}
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
             <h1>{greeting}</h1>
             <div id="changelog">
@@ -259,10 +256,9 @@
         {:else if $current_page === "about_us"}
             <AboutUs />
         {:else if $current_page === "preferences"}
-            <Preferences bind:api_base bind:grouped_forms bind:course_lists/>
+            <Preferences bind:api_base bind:grouped_forms bind:course_lists bind:school_num />
         {:else}
             <span>Seite nicht gefunden!</span>
-        {/if}
         {/if}
     {:else}
         <Authentication></Authentication>

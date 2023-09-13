@@ -1,5 +1,5 @@
 import {notifications} from "./notifications.js";
-import {preferences, settings} from "./stores.js";
+import {preferences, settings, current_page} from "./stores.js";
 
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
@@ -94,3 +94,7 @@ export function get_settings() {
         })
 }
 
+export function navigate_page(page_id) {
+    current_page.set(page_id);
+    location.hash = `#${page_id}`;
+}

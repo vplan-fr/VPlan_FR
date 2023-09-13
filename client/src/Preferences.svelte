@@ -2,11 +2,13 @@
 
     import {notifications} from "./notifications.js";
     import {preferences} from './stores.js';
-    import {customFetch} from "./utils.js";
+    import {customFetch, navigate_page} from "./utils.js";
+    import { onMount } from "svelte";
 
     export let api_base;
     export let grouped_forms;
     export let course_lists;
+    export let school_num;
     let selected_form = null;
     let class_groups_by_subject = [];
     $: class_groups_by_subject = selected_form != null ? sort_courses_by_subject(course_lists[selected_form]["class_groups"]) : [];
@@ -83,9 +85,6 @@
             })
     }
 
-    getPreferences();
-    updateCourses();
-
     function select_all() {
         for (const key in selection) {
             if (selection.hasOwnProperty(key)) {
@@ -128,6 +127,16 @@
         }
     }
 
+    onMount(() => {
+        if(!school_num) {
+            navigate_page('school_manager');
+            return;
+        }
+        getPreferences();
+        updateCourses();
+        location.hash = "#preferences";
+        title.set("Unterricht wählen");
+    });
 </script>
 
 <h1>Unterrichtswahl</h1>

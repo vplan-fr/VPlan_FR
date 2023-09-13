@@ -4,7 +4,7 @@
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
     import { title } from './stores.js';
-    import {customFetch} from "./utils.js";
+    import {customFetch, navigate_page} from "./utils.js";
 
     export let api_base;
     export let school_num;
@@ -158,6 +158,10 @@
 
     onMount(() => {
         refresh_plan_vars();
+        if(!school_num) {
+            navigate_page('school_manager');
+            return;
+        }
         location.hash = gen_location_hash();
         title.set("Plan");
     });
