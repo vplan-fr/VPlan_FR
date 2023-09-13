@@ -9,16 +9,16 @@
     import {DatePicker} from 'attractions';
     import {get_settings, group_rooms} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, settings} from './stores.js'
+    import {logged_in, title, current_page, preferences} from './stores.js'
     import {customFetch} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
-    import {onMount} from "svelte";
+    import { onMount } from "svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
     let plan_type = "forms";
-    let plan_value = "7/3";
+    let plan_value = "JG12";
     let teacher_list = [];
     let all_rooms;
     let grouped_forms = [];
@@ -45,7 +45,7 @@
             body: number
         })
             .then(data => {
-                notifications.success("Log als gelesen markiert")
+                notifications.info("Log als gelesen markiert")
             })
             .catch(error => {
                 notifications.danger("Log konnte nicht als gelesen markiert werden")
@@ -153,6 +153,16 @@
         );
     }
 
+    function get_preferences() {
+        customFetch(`${api_base}/preferences`)
+            .then(data => {
+                preferences.set(data);
+            })
+            .catch(error => {
+                notifications.danger(error)
+            })
+    }
+
     let greeting = "";
     function get_greeting() {
         customFetch("/auth/greeting")
@@ -164,15 +174,6 @@
             })
     }
 
-    function update_colors() {
-        if($settings.background_color) {
-            document.documentElement.style.setProperty('--background-color', $settings.background_color);
-        }
-        if($settings.accent_color) {
-            document.documentElement.style.setProperty('--accent-color', $settings.accent_color);
-        }
-    }
-
     onMount(() => {
         get_greeting();
     });
@@ -181,8 +182,8 @@
     $: $logged_in && get_settings();
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
-    $: $settings, update_colors();
-    //$: console.log(course_lists);
+    $: school_num, get_preferences();
+    $: console.log($preferences);
 </script>
 
 <svelte:head>
@@ -192,7 +193,7 @@
 {#if $logged_in}
     <Navbar />
 {/if}
-<main>    
+<main>
     {#if $logged_in}
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
             <h1>{greeting}</h1>
@@ -283,14 +284,13 @@
 
 <style lang="scss">
     :global(.responsive-heading) {
-        font-size: var(--font-size-xl);
-        margin-bottom: 15px;
+        font-size: clamp(1.063rem, 4vw, 2.28rem);
         line-height: 1.6;
         font-weight: 700;
     }
 
     :global(.responsive-text) {
-        font-size: var(--font-size-base);
+        font-size: clamp(0.8rem, 3vw, 1.5rem);
         line-height: 1.6;
         font-weight: 400;
     }

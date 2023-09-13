@@ -3,7 +3,7 @@
     import Lesson from './Lesson.svelte';
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
-    import { title } from './stores.js';
+    import { title, preferences } from './stores.js';
     import {customFetch, navigate_page} from "./utils.js";
 
     export let api_base;
@@ -19,7 +19,7 @@
     export let all_rooms;
     let used_rooms_hidden = true;
 
-    let lessons = [];
+    let all_lessons = [];
     let rooms_data = {};
     let info;
     let loading = true;
@@ -47,7 +47,7 @@
             data = JSON.parse(data);
             rooms_data = data["rooms"];
             if (plan_type !== "free_rooms") {
-                lessons = data["plans"][plan_type][entity] || [];
+                all_lessons = data["plans"][plan_type][entity] || [];
             }
             info = data["info"];
             week_letter = info["week"];
@@ -61,7 +61,7 @@
                 localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
                 rooms_data = data["rooms"]
                 if (plan_type !== "free_rooms") {
-                    lessons = data["plans"][plan_type][entity] || [];
+                    all_lessons = data["plans"][plan_type][entity] || [];
                 }
                 info = data["info"];
                 week_letter = info["week"];
@@ -171,14 +171,46 @@
     });
 
     let full_teacher_name = "";
-    $: console.log(all_meta)
     $: if (plan_type === "teachers") {
         full_teacher_name = all_meta["teachers"][plan_value]["surname"]
     }
+
+    let preferences_apply = true;
+
+    let lessons = all_lessons;
+    function render_lessons(lessons) {
+        if (plan_type !== "forms") {
+            return lessons
+        }
+        if (!preferences_apply) {
+            return lessons
+        }
+        if (!(plan_value in $preferences)) {
+            return lessons
+        }
+        let cur_preferences = $preferences[plan_value] || [];
+        let new_lessons = [];
+        for (const lesson of lessons) {
+            if (!(cur_preferences.includes(lesson["class_number"]))) {
+                new_lessons.push(lesson);
+            }
+        }
+        return new_lessons;
+
+    }
+    $: preferences_apply, lessons = render_lessons(all_lessons);
+
 </script>
 
 {#if plan_type !== "free_rooms"}
 <div class="plan" class:extra-height={extra_height}>
+    {#if plan_type === "forms" && (plan_value in $preferences)}
+        {#if preferences_apply}
+            <button on:click={() => {preferences_apply = !preferences_apply}}>Alle Stunden anzeigen</button>
+        {:else}
+            <button on:click={() => {preferences_apply = !preferences_apply}}>Nur eigene Stunden anzeigen</button>
+        {/if}
+    {/if}
     {#if show_title && info}
         <h1 class="plan-heading">
             Plan für {plan_type_map[plan_type]} <span class="custom-badge">
@@ -205,7 +237,7 @@
             {/if}
             {#each lessons as lesson, i}
                 {#if external_times}    
-                    {#if !lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
+                    {#if !all_lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
                         <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
                     {/if}
                 {/if}
