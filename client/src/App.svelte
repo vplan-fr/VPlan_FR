@@ -9,7 +9,11 @@
     import {DatePicker} from 'attractions';
     import {get_settings, group_rooms} from "./utils.js";
     import {notifications} from './notifications.js';
+<<<<<<< Updated upstream
     import {logged_in, title, current_page, preferences} from './stores.js'
+=======
+    import { logged_in, title, current_page, preferences } from './stores.js'
+>>>>>>> Stashed changes
     import {customFetch} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
@@ -182,8 +186,13 @@
     $: $logged_in && get_settings();
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
+<<<<<<< Updated upstream
     $: school_num, get_preferences();
     $: console.log($preferences);
+=======
+    //$: console.log(course_lists);
+    $: school_num, get_preferences();
+>>>>>>> Stashed changes
 </script>
 
 <svelte:head>

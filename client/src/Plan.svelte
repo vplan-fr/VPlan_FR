@@ -176,7 +176,10 @@
     }
 
     let preferences_apply = true;
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
     let lessons = all_lessons;
     function render_lessons(lessons) {
         if (plan_type !== "forms") {
@@ -196,10 +199,15 @@
             }
         }
         return new_lessons;
+<<<<<<< Updated upstream
 
     }
     $: preferences_apply, lessons = render_lessons(all_lessons);
 
+=======
+    }
+    $: preferences_apply, lessons = render_lessons(all_lessons);
+>>>>>>> Stashed changes
 </script>
 
 {#if plan_type !== "free_rooms"}
