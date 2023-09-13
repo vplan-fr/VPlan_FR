@@ -41,6 +41,14 @@ class User(UserMixin):
         self.user = users.find_one({'_id': ObjectId(self.mongo_id)})
         return self.user
 
+    def update_field(self, field, value):
+        self.get_user()
+        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {field: value}})
+
+    def get_field(self, field):
+        self.get_user()
+        return self.user.get(field)
+
     def get_authorized_schools(self):
         self.get_user()
         return self.user.get("authorized_schools")
@@ -99,17 +107,14 @@ class User(UserMixin):
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'settings': new_settings}})
         return send_success()
 
-    def update_preferences(self, preferences: {}):
-        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'preferences': preferences}})
+    def set_user_preferences(self, preferences):
+        users.update_one({'_id': ObjectId(self.mongo_id)}, {'$set': {'preferences': preferences}})
+        return "Success"
 
     # get setting for user, if setting not set get default setting
     def get_setting(self, setting_key):
         self.get_user()
         return self.user.get("settings", {}).get(setting_key, DEFAULT_SETTINGS.get(setting_key, None))
-
-    def update_field(self, field, value):
-        self.get_user()
-        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {field: value}})
 
 
 class AddStaticFileHashFlask(Flask):
@@ -144,7 +149,7 @@ def get_user(user_id):
         return
 
 
-def set_user_preferences(user_id, preferences):
-    users.update_one({'_id': ObjectId(user_id)}, {'$set': {'preferences': preferences}})
-    return "Success"
+
+
+
 

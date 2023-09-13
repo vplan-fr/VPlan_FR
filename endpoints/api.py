@@ -1,3 +1,5 @@
+from typing import List
+
 import json
 import datetime
 from pathlib import Path
@@ -9,7 +11,7 @@ from endpoints.authorization import school_authorized
 import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
-from utils import set_user_preferences, send_success, send_error
+from utils import send_success, send_error
 
 from var import *
 
@@ -47,12 +49,12 @@ def meta(school_num) -> Response:
     if school_num not in VALID_SCHOOLS:
         return send_error("Schulnummer unbekannt")
 
-    cache = backend.cache.Cache(Path(".cache") / school_num)
-    meta_data = json.loads(cache.get_meta_file("meta.json"))
-    teachers_data = json.loads(cache.get_meta_file("teachers.json"))["teachers"]
-    forms_data = json.loads(cache.get_meta_file("forms.json"))
-    rooms_data = json.loads(cache.get_meta_file("rooms.json"))
-    dates_data = json.loads(cache.get_meta_file("dates.json"))
+    cache: backend.cache.Cache = backend.cache.Cache(Path(".cache") / school_num)
+    meta_data: dict = json.loads(cache.get_meta_file("meta.json"))
+    teachers_data: dict = json.loads(cache.get_meta_file("teachers.json"))["teachers"]
+    forms_data: dict = json.loads(cache.get_meta_file("forms.json"))
+    rooms_data: dict = json.loads(cache.get_meta_file("rooms.json"))
+    dates_data: dict = json.loads(cache.get_meta_file("dates.json"))
 
     dates = sorted([datetime.datetime.strptime(elem, "%Y-%m-%d").date() for elem in list(dates_data.keys())])
     date = find_closest_date(dates)
@@ -184,7 +186,7 @@ def preferences(school_num: str) -> Response:
 
         current_preferences.setdefault(school_num, {})[request.args["form"]] = stored_classes
 
-        set_user_preferences(current_user.get_id(), current_preferences)
+        current_user.set_user_preferences(current_preferences)
 
         return send_success()
 
@@ -192,24 +194,24 @@ def preferences(school_num: str) -> Response:
 @api.route(f"/api/v69.420/changelog", methods=["GET", "POST"])
 @login_required
 def changelog() -> Response:
-    read_changelog = current_user.get_user().get("read_changelog", [])
+    read_changelog: List[int] = current_user.get_user().get("read_changelog", [])
     with open("changelog.json", "r", encoding="utf-8") as f:
         all_changelog = json.load(f)
     if request.method == "GET":
         all_changelog = [[ind, value] for ind, value in enumerate(all_changelog)]
         user_changelog = [[ind, value] for ind, value in all_changelog if ind not in read_changelog]
-        print(user_changelog)
         return send_success(user_changelog)
     if request.method == "POST":
         try:
             num = int(request.data)
-        except Exception:
-            return send_error("Keine Nummer")
+        except ValueError:
+            return send_error("Keine Zahl")
         if num > len(all_changelog):
             return send_error("Zu große Zahl")
         if num in read_changelog:
             return send_error("Nachricht schon gelesen")
         read_changelog.append(num)
+        read_changelog.sort()
         current_user.update_field("read_changelog", read_changelog)
         return send_success()
 

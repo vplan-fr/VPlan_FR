@@ -30,8 +30,6 @@
 
         Object.values(courses_by_subject).map(class_datas => class_datas.sort((data1, data2) => data2.group?.localeCompare(data1.group)));
 
-        console.log(courses_by_subject)
-
         return courses_by_subject;
     }
 
@@ -112,10 +110,30 @@
         }
     }
 
+    function select_all_part(courses) {
+        for (const course in courses) {
+            let key = courses[course].class_number;
+            if (selection.hasOwnProperty(key)) {
+                selection[key] = true;
+            }
+        }
+    }
+
+    function select_none_part(courses) {
+        for (const course in courses) {
+            let key = courses[course].class_number;
+            if (selection.hasOwnProperty(key)) {
+                selection[key] = false;
+            }
+        }
+    }
 
 </script>
 
 <h1>Unterrichtswahl</h1>
+{#if selected_form != null}
+    <button on:click={setPreferences}>Speichern</button>
+{/if}
 
 <div>
     Klasse wählen:
@@ -133,12 +151,11 @@
     {#if selected_form != null}
         <button on:click={select_all}>Alle auswählen</button>
         <button on:click={select_none}>Nichts auswählen</button>
-        <button on:click={reverse_selection}>Auswahl invertieren</button>
+        <!--<button on:click={reverse_selection}>Auswahl invertieren</button>-->
         <br>
     {/if}
 </div>
 {#if selected_form != null}
-    <button on:click={setPreferences}>Speichern</button>
     <ul>
 
         {#each Object.entries(class_groups_by_subject).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}
@@ -156,7 +173,11 @@
                     {/if}
                 </li>
             {:else}
-                <li>{subject}</li>
+                <li>
+                    {subject}
+                    <button on:click={() => {select_all_part(courses)}}>Alle auswählen</button>
+                    <button on:click={() => {select_none_part(courses)}}>Keinen auswählen</button>
+                </li>
                 <ul>
                     {#each courses as course}
                         <li>

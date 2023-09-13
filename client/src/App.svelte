@@ -75,7 +75,7 @@
         if (!$logged_in) {
             return;
         }
-        if (school_num === null) {
+        if (school_num === null || school_num === "") {
             return;
         }
         let data_from_cache = false;

@@ -128,6 +128,13 @@ def check_login():
     return send_success(response_data)
 
 
+@authorization.route(f"{AUTH_PATH}/is_admin", methods=["GET"])
+@login_required
+def is_admin():
+    user_is_admin = current_user.get_field("admin")
+    return send_success(user_is_admin)
+
+
 @authorization.route(f"{AUTH_PATH}/greeting", methods=["GET"])
 @login_required
 def greeting():
