@@ -67,8 +67,6 @@ def logout() -> Response:
     return send_success()
 
 
-"""
-dont remove -> later for legal purposes
 @authorization.route(f"{AUTH_PATH}/account", methods=['GET', 'DELETE'])
 @login_required
 def account() -> Response:
@@ -81,10 +79,9 @@ def account() -> Response:
                 'settings': tmp_user['settings'], 
                 'time_joined': tmp_user['time_joined']
             })
-    # method must be 'DELETE'
-    x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
-    return send_success() if x.deleted_count == 1 else send_error("User couldn't be deleted")
-"""
+    elif request.method == "DELETE":
+        x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
+        return send_success() if x.deleted_count == 1 else send_error("Account konnte nicht gelöscht werden, bitte wende dich an den support")
 
 
 @authorization.route(f"{AUTH_PATH}/settings", methods=['GET', 'DELETE', 'POST'])
@@ -92,12 +89,12 @@ def account() -> Response:
 def settings() -> Response:
     if request.method == "GET":
         return send_success(current_user.get_settings())
-    if request.method == "DELETE":
+    elif request.method == "DELETE":
         current_user.update_settings()
         return send_success()
-    # method must be 'POST'
-    new_settings = json.loads(request.data)
-    return current_user.update_settings(new_settings)
+    elif request.method == "POST":
+        new_settings = json.loads(request.data)
+        return current_user.update_settings(new_settings)
 
 
 @authorization.route(f'{AUTH_PATH}/authorized_schools', methods=['GET'])

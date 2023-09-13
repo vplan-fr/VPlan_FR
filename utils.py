@@ -83,10 +83,6 @@ class User(UserMixin):
         except Exception:
             return send_error("ungültiger Wert für chatgpt_greetings Einstellung")
         try:
-            new_settings["show_plan_toasts"] = bool(user_settings.get("show_plan_toasts", False))
-        except Exception:
-            return send_error("ungültiger Wert für show_plan_toasts Einstellung")
-        try:
             new_settings["day_switch_keys"] = bool(user_settings.get("day_switch_keys", True))
         except Exception:
             return send_error("ungültiger Wert für day_switch_keys Einstellung")
