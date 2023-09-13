@@ -13,6 +13,7 @@
     import {customFetch} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
+    import { onMount } from "svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -163,8 +164,12 @@
             })
     }
 
-    get_greeting();
+    onMount(() => {
+        get_greeting();
+    });
 
+
+    $: $logged_in && get_settings();
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
     //$: console.log(course_lists);

@@ -1,7 +1,7 @@
 <script>
 
     import {notifications} from "./notifications.js";
-    import {preferences} from './stores.js';
+    import {preferences, title} from './stores.js';
     import {customFetch, navigate_page} from "./utils.js";
     import { onMount } from "svelte";
 

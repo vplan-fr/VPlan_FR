@@ -9,7 +9,11 @@
     onMount(() => {
         location.hash = "#school_manager";
         title.set("Schule wählen");
+        get_schools();
+        get_authorized_schools();
+        get_admin_status();
     });
+    
     export let school_num;
     function isObjectInList(object, list) {
         return list.some(item => item.toString() === object.toString());
@@ -90,12 +94,6 @@
             }
         );
     }
-
-    get_schools();
-    get_authorized_schools();
-    get_admin_status();
-    $: console.log(schools);
-    // $: console.log(authorized_school_ids);
 </script>
 
 <main>
