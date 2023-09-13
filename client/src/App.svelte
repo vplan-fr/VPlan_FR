@@ -62,6 +62,7 @@
     let selected_room;
     let selected_form;
     let meta = {};
+    let all_meta = {};
     let disabledDates = [];
     let enabled_dates = [];
     let grouped_rooms = [];
@@ -82,6 +83,7 @@
         let data = localStorage.getItem(`${school_num}_meta`);
         if (data) {
             data = JSON.parse(data);
+            all_meta = data;
             meta = data.meta;
             all_rooms = data.rooms;
             teacher_list = Object.keys(data.teachers);
@@ -95,6 +97,7 @@
             .then(data => {
                 // console.log("Meta geladen");
                 localStorage.setItem(`${school_num}_meta`, JSON.stringify(data));
+                all_meta = data;
                 meta = data.meta;
                 all_rooms = data.rooms;
                 teacher_list = Object.keys(data.teachers);
@@ -245,7 +248,7 @@
             <br>
             <br>
             {#if $current_page.substring(0, 4) === "plan"}
-                <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms/>
+                <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta/>
             {:else}
                 <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
             {/if}

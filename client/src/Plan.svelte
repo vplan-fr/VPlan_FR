@@ -11,6 +11,7 @@
     export let date;
     export let plan_type;
     export let plan_value;
+    export let all_meta;
     export let show_title = true;
     export let extra_height = true;
     export let week_letter = "";
@@ -164,13 +165,26 @@
     window.addEventListener('popstate', (e) => {
         refresh_plan_vars();
     });
+
+    let full_teacher_name = "";
+    $: console.log(all_meta)
+    $: if (plan_type === "teachers") {
+        full_teacher_name = all_meta["teachers"][plan_value]["surname"]
+    }
 </script>
 
 {#if plan_type !== "free_rooms"}
 <div class="plan" class:extra-height={extra_height}>
     {#if show_title && info}
         <h1 class="responsive-heading">
-            Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> am <span class="custom-badge">{date}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+            Plan für {plan_type_map[plan_type]} <span class="custom-badge">
+            {plan_value}
+            {#if plan_type === "teachers"}
+                {#if full_teacher_name !== ""}
+                    ({full_teacher_name})
+                {/if}
+            {/if}
+            </span> am <span class="custom-badge">{date}</span> <span class="no-linebreak">({info.week}-Woche)</span>
         </h1>
     {/if}
     {#if loading}
