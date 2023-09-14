@@ -100,7 +100,10 @@
                 {:else}
                 <div class="forms max-width wide-area second_of_type">
                     <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
-                        <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">{forms_str}</button>
+                        <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
+                            {forms_str}
+                            <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                        </button>
                         
                         {#each forms as form}
                             <button on:click={() => {
@@ -143,7 +146,10 @@
                         Beteiligte Klassen:
                         <div class="fit-content-width">
                             <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
-                                <button slot="toggle_button" on:click={toggle} class="toggle-button">{forms_str}</button>
+                                <button slot="toggle_button" on:click={toggle} class="toggle-button">
+                                    {forms_str}
+                                    <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                                </button>
                                 
                                 {#each forms as form}
                                     <button on:click={() => {
@@ -224,7 +230,10 @@
             {:else}
             <div class="max-width">
                 <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
-                    <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">{forms_str}</button>
+                    <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
+                        {forms_str}
+                        <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                    </button>
                     
                     {#each forms as form}
                         <button on:click={() => {
@@ -266,7 +275,10 @@
                         Beteiligte Klassen:
                         <div class="fit-content-width">
                             <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
-                                <button slot="toggle_button" on:click={toggle} class="toggle-button">{forms_str}</button>
+                                <button slot="toggle_button" on:click={toggle} class="toggle-button">
+                                    {forms_str}
+                                    <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                                </button>
                                 
                                 {#each forms as form}
                                     <button on:click={() => {
@@ -284,6 +296,18 @@
     {/if}
 </div>
 <style lang="scss">
+    .dropdown-arrow {
+        display: block;
+        transition: transform .2s ease;
+        pointer-events: none;
+        font-size: var(--font-size-lg);
+        margin-left: .3em;
+    }
+
+    :global(.open) .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
     .fit-content-width {
         width: fit-content;
     }
@@ -294,6 +318,9 @@
 
     .fit-content-width .dropdown-wrapper button, .max-width .dropdown-wrapper button {
         &.toggle-button {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
             overflow: hidden;

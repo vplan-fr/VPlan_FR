@@ -5,7 +5,6 @@
     export let transitionOptions = {duration: 200, start: 0.3};
     export let transform_origin = "100% 0%";
     export let small_version = false;
-    export let arrow_visible = true;
     export let height_limit = false;
     let open = false;
 
@@ -34,10 +33,9 @@
     }
 </script>
 
-<div class="dropdown-wrapper {small_version ? "small_version": ""} {open ? "open": ""} {arrow_visible ? "arrow_visible" : ""}">
+<div class="dropdown-wrapper {small_version ? "small_version": ""} {open ? "open": ""}">
     <div class="btn-wrapper" use:clickOutside={{ enabled: open, cb: () => open = false }}>
         <slot name="toggle_button" toggle={() => {open = !open}} />
-        <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
     </div>
     {#if open}
         <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="transform-origin: {transform_origin};">
@@ -53,37 +51,6 @@
 </div>
 
 <style lang="scss">
-    .dropdown-arrow {
-        display: none;
-    }
-
-    .arrow_visible {
-        .btn-wrapper {
-            padding-right: .9em;
-
-            @media only screen and (min-width: 1501px) {
-                padding-right: 1.5em;
-            }
-        }
-
-        .dropdown-arrow {
-            display: block;
-            position: absolute;
-            top: 50%;
-            right: 0;
-            transform: translateY(-50%);
-            transition: transform .2s ease;
-            pointer-events: none;
-            font-size: var(--font-size-lg);
-        }
-
-        &.open {
-            .dropdown-arrow {
-                transform: rotate(180deg) translateY(50%);
-            }
-        } 
-    }
-
     .dropdown-wrapper {
         position: relative;
         width: 100%;
