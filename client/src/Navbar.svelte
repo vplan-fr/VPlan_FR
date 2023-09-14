@@ -121,11 +121,12 @@
         }
 
         .nav-button {
+            width: 100%;
             height: 100%;
             padding: 15px;
             background-color: transparent;
             border: none;
-            font-size: 1rem;
+            font-size: var(--font-size-base);
             color: var(--text-color);
             transition: background-color 200ms ease;
             display: flex;

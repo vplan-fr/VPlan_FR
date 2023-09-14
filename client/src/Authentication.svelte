@@ -70,7 +70,7 @@
 <main transition:fade>
     {#if !register_visible}
     <form on:submit|preventDefault={login} transition:fly|local={{x:-500}}>
-        <h1 class="unresponsive-heading">Login</h1>
+        <h1 class="responsive-heading">Login</h1>
         <label for="l_nickname">Nutzername</label>
         <div class="input_icon">
             <img src="/base_static/images/user-solid.svg" alt="User Icon">
@@ -83,13 +83,13 @@
         </div>
         <button class="link-button" id="forgot_password" type="button" on:click={() => {alert('Verkackt :D Aber da wir keine E-Mails zum Registrieren benutzen ist ein Passwort-Reset nicht möglich. Aber frag uns einfach und wir helfen dir beim wiederherstellen deiner Einstellungen & Präferenzen bei einem neuen Account.')}}>Passwort vergessen?</button>
         <button class="default-button" type="submit">Login</button>
-        <span>Noch kein Account? <button on:click={toggle_form} class="link-button" type="button">Registrieren</button></span>
+        <span class="no-account-info">Noch kein Account? <button on:click={toggle_form} class="link-button" type="button">Registrieren</button></span>
     </form>
     {/if}
     {#if register_visible}
     <form on:submit|preventDefault={signup} transition:fly|local={{x:500}}>
         <button on:click={toggle_form} type="reset" id="back_button">←</button>
-        <h1 class="unresponsive-heading">Registrieren</h1>
+        <h1 class="responsive-heading">Registrieren</h1>
         <label for="s_nickname">Nutzername</label>
         <div class="input_icon">
             <img src="/base_static/images/user-solid.svg" alt="User Icon">
@@ -107,12 +107,17 @@
 </main>
 <style lang="scss">
     .extra-info {
-        font-size: .8em;
+        font-size: var(--font-size-base);
         margin: 10px 0px;
     }
 
+    .no-account-info {
+        font-size: var(--font-size-base);
+    }
+
     label {
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        font-size: var(--font-size-base);
     }
 
     main::before {
@@ -133,7 +138,6 @@
 
     #forgot_password {
         text-align: right;
-        margin-bottom: 8px;
     }
 
     form {
@@ -162,12 +166,6 @@
         }
     }
 
-    .unresponsive-heading {
-        font-size: 3rem;
-        line-height: 1.6;
-        margin-bottom: 15px;
-    }
-
     .input_icon {
         position: relative;
         .textfield {
@@ -191,6 +189,7 @@
         box-sizing: border-box;
         border: 2px solid white;
         border-radius: 5px;
+        font-size: var(--font-size-sm);
     }
 
     .default-button {
@@ -202,7 +201,7 @@
         border: 0;
         border-radius: 99vw;
         background: white;
-        font-size: 1rem;
+        font-size: var(--font-size-base);
         font-weight: 500;
     }
 
@@ -214,7 +213,7 @@
         color: #0f0fff;
         background: transparent;
         border: 0;
-        font-size: inherit;
+        font-size: var(--font-size-base);
     }
 
     #back_button {
@@ -224,6 +223,6 @@
         border: 0;
         background: none;
         color: white;
-        font-size: 1.5rem;
+        font-size: var(--font-size-md);
     }
 </style>

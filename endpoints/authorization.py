@@ -90,8 +90,8 @@ def settings() -> Response:
     if request.method == "GET":
         return send_success(current_user.get_settings())
     elif request.method == "DELETE":
-        current_user.update_settings()
-        return send_success()
+        current_user.update_settings(DEFAULT_SETTINGS)
+        return send_success(DEFAULT_SETTINGS)
     elif request.method == "POST":
         new_settings = json.loads(request.data)
         return current_user.update_settings(new_settings)

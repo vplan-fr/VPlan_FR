@@ -16,7 +16,7 @@
 </script>
 
 {#if rooms_data?.free_rooms_by_block == null}
-    <h1>Raumdaten nicht verfügbar.</h1>
+    <h1 class="responsive-heading">Raumdaten nicht verfügbar.</h1>
 {:else}
     <CollapsibleWrapper let:closeOtherPanels>
         {#each Object.entries(rooms_data.free_rooms_by_block) as [block, all_free_rooms], i}
@@ -59,6 +59,7 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
+        font-size: var(--font-size-base);
     }
 
     .extra-height {
@@ -71,7 +72,7 @@
     }
 
     .toggle-button {
-        font-size: clamp(1.063rem, 1.5vw, 1.28rem);
+        font-size: var(--font-size-base);
         width: 100%;
         border: none;
         padding: .7em;
@@ -99,10 +100,11 @@
     }
 
     .chip {
+        font-size: var(--font-size-base);
         display: inline-block;
         vertical-align: middle;
-        padding: 0.5em 1.7em;
-        margin: .4em;
+        padding: 0.3em 1.1em;
+        margin: .2em;
         border-radius: 999vw;
         border: none;
         background-color: rgba(255, 255, 255, 0.2);

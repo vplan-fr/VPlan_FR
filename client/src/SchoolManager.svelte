@@ -151,12 +151,16 @@
     }
 
     label {
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        font-size: var(--font-size-base);
     }
 
     .input_icon {
         position: relative;
+        margin-bottom: 5px;
+
         .textfield {
+            font-size: var(--font-size-sm);
             padding-left: 40px;
         }
         img {
@@ -207,8 +211,8 @@
         color: var(--text-color);
         border-radius: 5px;
         padding: 10px;
-        margin-top: 20px;
-        font-size: 1rem;
+        margin-top: 15px;
+        font-size: var(--font-size-base);
         position: relative;
 
         .material-symbols-outlined {
@@ -225,7 +229,7 @@
         border: 0;
         background: none;
         color: var(--text-color);
-        font-size: 1.5rem;
+        font-size: var(--font-size-md);
     }
 </style>
 

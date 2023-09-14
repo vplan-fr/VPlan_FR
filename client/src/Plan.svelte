@@ -180,7 +180,7 @@
 {#if plan_type !== "free_rooms"}
 <div class="plan" class:extra-height={extra_height}>
     {#if show_title && info}
-        <h1 class="responsive-heading">
+        <h1 class="plan-heading">
             Plan für {plan_type_map[plan_type]} <span class="custom-badge">
             {plan_value}
             {#if plan_type === "teachers"}
@@ -231,7 +231,7 @@
 {:else}
 <div class:extra-height={extra_height}>
     <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
-    <h1 class="responsive-heading">Raumübersicht</h1>
+    <h1 class="plan-heading">Raumübersicht</h1>
     {#if loading}
         Lädt...
     {:else if loading_failed}
@@ -243,10 +243,21 @@
 {/if}
 
 <style lang="scss">
+    .plan-heading {
+        font-size: var(--font-size-lg);
+        line-height: 1.6;
+        font-weight: 700;
+        margin-bottom: 15px;
+
+        @media only screen and (min-width: 1501px) {
+            font-size: var(--font-size-xl);
+        }
+    }
+
     .plus-btn {
         float: right;
         border: none;
-        font-size: clamp(1.063rem, 4vw, 2.28rem);
+        font-size: var(--font-size-xl);
         height: clamp(calc(1.063rem + 15px), calc(4vw + 15px), calc(2.28rem + 15px));
         aspect-ratio: 1;
         border-radius: 5px;

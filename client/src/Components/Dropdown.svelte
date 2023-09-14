@@ -6,6 +6,7 @@
     export let transform_origin = "100% 0%";
     export let small_version = false;
     export let arrow_visible = true;
+    export let height_limit = false;
     let open = false;
 
     function clickOutside(node, { enabled: initialEnabled, cb }) {
@@ -40,9 +41,13 @@
     </div>
     {#if open}
         <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="transform-origin: {transform_origin};">
+            {#if height_limit}
             <div class="height-limiter">
                 <slot />
             </div>
+            {:else}
+            <slot />
+            {/if}
         </div>
     {/if}
 </div>
@@ -69,11 +74,7 @@
             transform: translateY(-50%);
             transition: transform .2s ease;
             pointer-events: none;
-            font-size: 1.5em;
-
-            @media only screen and (min-width: 1501px) {
-                font-size: 2em;
-            }
+            font-size: var(--font-size-lg);
         }
 
         &.open {

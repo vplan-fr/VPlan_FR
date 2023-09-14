@@ -12,7 +12,7 @@
             body: JSON.stringify($settings),
         })
             .then(data => {
-                notifications.info("Einstellungen gespeichert")
+                notifications.success("Einstellungen gespeichert")
             })
             .catch(error => {
                 notifications.danger(error);
@@ -24,7 +24,9 @@
             method: "DELETE"
         })
             .then(data => {
-                notifications.success("Einstellungen zurückgesetzt")
+                $settings = data;
+                temp_settings = data;
+                notifications.success("Einstellungen zurückgesetzt");
             })
             .catch(error => {
                 notifications.danger(error);
@@ -67,16 +69,13 @@
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.day_switch_keys}>Pfeiltasten (Tastatur) zum Tag wechseln nutzen</span>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.background_color}>Hintergrundfarbe</span>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.accent_color}>Akzentfarbe</span>
-        <span class="responsive-text">In Arbeit: Favorit</span>
+        <br>
         <button on:click={change_settings} class="button" style="background-color: var(--accent-color);">Speichern</button>
         <div class="horizontal-container">
-            <button on:click={() => {temp_settings = $settings}} class="button halfed">Abbrechen</button>
             <button on:click={reset_settings} class="button halfed">Einstellungen zurücksetzen</button>
-        </div>
-        <div class="horizontal-container">
             <button on:click={view_saved_data} class="button halfed">Gespeicherte Daten Einsehen</button>
-            <button on:click={delete_account} class="button halfed" style="background-color: rgb(226, 109, 105);">Account löschen</button>
         </div>
+        <button on:click={delete_account} class="button" style="background-color: rgb(226, 109, 105);">Account löschen</button>
     </div>
     {:else}
     <span class="responsive-text">Einstellungen konnten nicht geladen werden.</span>
@@ -97,6 +96,25 @@
         }
     }
 
+    input[type="checkbox"], input[type="color"] {
+        padding: 0;
+        margin: 0;
+        margin-right: 10px;
+        width: var(--font-size-base);
+        height: var(--font-size-base);
+        border: 2px solid #5a5a5a;
+    }
+
+    input[type="color"] {
+        -webkit-appearance: none;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch {
+        border: none;
+    }
+
     .button {
         overflow: hidden;
         display: flex;
@@ -108,7 +126,7 @@
         border-radius: 5px;
         padding: 10px;
         margin: 3px;
-        font-size: 1rem;
+        font-size: var(--font-size-base);
         position: relative;
 
         .material-symbols-outlined {
