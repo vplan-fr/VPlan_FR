@@ -5,7 +5,6 @@
     export let transitionOptions = {duration: 200, start: 0.3};
     export let transform_origin = "100% 0%";
     export let small_version = false;
-    export let height_limit = false;
     let open = false;
 
     function clickOutside(node, { enabled: initialEnabled, cb }) {
@@ -39,13 +38,9 @@
     </div>
     {#if open}
         <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="transform-origin: {transform_origin};">
-            {#if height_limit}
             <div class="height-limiter">
                 <slot />
             </div>
-            {:else}
-            <slot />
-            {/if}
         </div>
     {/if}
 </div>
@@ -88,7 +83,7 @@
 
             .height-limiter {
                 max-height: min(300px, 50vh);
-                overflow-y: scroll;
+                overflow-y: auto;
             }
         }
 

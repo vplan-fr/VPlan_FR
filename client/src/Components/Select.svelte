@@ -4,18 +4,19 @@
     export let data = [];
     export let selected_elem;
     export let icon_location;
-    export let height_limit = false;
 </script>
 
 <!-- Preloading Icons -->
 <svelte:head>
+    {#if icon_location}
     {#each Object.entries(data) as elem}
         <link rel="preload" as="image" href="{icon_location}/{elem[1]["icon"]}" />
     {/each}
+    {/if}
 </svelte:head>
 
 <div class="select-wrapper">
-    <Dropdown let:toggle small_version={true} transform_origin="100% 0%" height_limit={height_limit}>
+    <Dropdown let:toggle small_version={true} transform_origin="100% 0%">
         <button  type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
             {#if selected_elem}
                 {data[selected_elem]["name"]}

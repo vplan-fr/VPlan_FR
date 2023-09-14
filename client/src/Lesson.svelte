@@ -102,7 +102,7 @@
                     <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
                         <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
                             <span class="grow">{forms_str}</span>
-                            <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                            <span class="material-symbols-outlined dropdown-arrow centered_txt">arrow_drop_down</span>
                         </button>
                         
                         {#each forms as form}
@@ -232,7 +232,7 @@
                 <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
                     <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
                         <span class="grow">{forms_str}</span>
-                        <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                        <span class="material-symbols-outlined dropdown-arrow centered_txt">arrow_drop_down</span>
                     </button>
                     
                     {#each forms as form}
@@ -301,6 +301,16 @@
         display: block;
         transition: transform .2s ease;
         pointer-events: none;
+
+        @media only screen and (min-width: 1501px) {
+            font-size: 1em;
+            margin-left: .2em;
+         
+            &.centered_txt {
+                position: absolute;
+                right: 10px;
+            }
+        }
     }
 
     :global(.open) .dropdown-arrow {
