@@ -140,7 +140,7 @@
 
 <h1 class="responsive-heading">Unterrichtswahl</h1>
 <div>
-    <Select data={select_dict} bind:selected_elem={selected_form} height_limit={true}>Klasse auswählen</Select>
+    <Select data={select_dict} bind:selected_elem={selected_form}>Klasse auswählen</Select>
     <!-- <select name="forms" bind:value={selected_form} on:change={updateCourses}>
         {#each Object.entries(grouped_forms) as [form_group, forms]}
             <optgroup label={form_group}>
