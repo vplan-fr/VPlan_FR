@@ -350,7 +350,7 @@
         &::before {
             content: "Informationen";
             color: rgba(255, 255, 255, 0.2);
-            background-color: var(--background-color);
+            background: var(--background-color);
             padding: 0px 5px;
             position: absolute;
             top: 0;

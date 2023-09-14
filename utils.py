@@ -72,7 +72,7 @@ class User(UserMixin):
             cur_settings[setting] = value
         return cur_settings
 
-    def update_settings(self, user_settings: DEFAULT_SETTINGS) -> Response:
+    def update_settings(self, user_settings=DEFAULT_SETTINGS) -> Response:
         self.get_user()
         authorized_schools = self.user.get("authorized_schools", [])
 
@@ -95,10 +95,10 @@ class User(UserMixin):
         new_settings["accent_color"] = user_settings.get("accent_color", "#BB86FC")
         if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["accent_color"]):
             return send_error("ungültiger Wert für accent_color Einstellung")
-        new_settings["text_color"] = user_settings.get("text_color", "#BB86FC")
+        new_settings["text_color"] = user_settings.get("text_color", "#ffffff")
         if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["text_color"]):
             return send_error("ungültiger Wert für text_color Einstellung")
-        new_settings["cancelled_color"] = user_settings.get("cancelled_color", "#BB86FC")
+        new_settings["cancelled_color"] = user_settings.get("cancelled_color", "#ff1744")
         if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["cancelled_color"]):
             return send_error("ungültiger Wert für cancelled_color Einstellung")
         try:

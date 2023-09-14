@@ -106,7 +106,7 @@
             left: 50%;
             color: var(--text-color);
             font-size: var(--font-size-md);
-            background-color: var(--accent-color);
+            background: var(--accent-color);
             border-radius: 5px;
             padding: 5px;
             transform: translateX(0%);
