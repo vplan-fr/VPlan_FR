@@ -34,15 +34,15 @@
             Wir sind drei Nerds, die sich dachten, dass der VpMobil24-App einige wichtige Features fehlen. Also haben wir diese Website mit den fehlenden Features programmiert. Offensichtlich ist sie nicht perfekt, über Vorschläge für Features und Design freuen wir uns immer! Schreibt uns dafür einfach auf Discord, unsere Tags stehen unter unseren Profilbildern.
         </p>
         <div class="third_wrapper">
-            <div class="third" data-msg="Project Lead">
+            <div class="third">
                 <img src="/base_static/images/about/_qrtrenH.webp" alt="_qrtrenH Profilbild">
                 <span class="responsive-text bold">_qrtrenh</span>
             </div>
-            <div class="third" data-msg="Frontend Dev">
+            <div class="third">
                 <img src="/base_static/images/about/Brot.webp" alt="officialbrot Profilbild">
                 <span class="responsive-text bold">officialbrot</span>
             </div>
-            <div class="third" data-msg="Backend Dev">
+            <div class="third">
                 <img src="/base_static/images/about/bela.webp" alt="belissimo_t Profilbild">
                 <span class="responsive-text bold">belissimo_t</span>
             </div>
