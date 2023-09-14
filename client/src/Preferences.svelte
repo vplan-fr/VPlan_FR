@@ -1,5 +1,5 @@
 <script>
-
+    import Select from "./Components/Select.svelte";
     import {notifications} from "./notifications.js";
     import {preferences, title} from './stores.js';
     import {customFetch, navigate_page} from "./utils.js";
@@ -16,7 +16,15 @@
     let allItems = [];
     let selection = {};
     let current_form_preferences = [];
+    let select_dict = {};
 
+    function create_select_dict(grouped_forms) {
+        for (const [form_groups, forms] of Object.entries(grouped_forms)) {
+            for (const [form_group, form] of Object.entries(forms)) {
+                select_dict[form] = {"name": form, id: form};
+            }
+        }
+    }
 
     function sort_courses_by_subject(obj) {
         const courses_by_subject = {};
@@ -67,7 +75,7 @@
             body: JSON.stringify(getFalse(selection))
         })
             .then(data => {
-                notifications.info("Kurse gespeichert!", 2000);
+                notifications.success("Kurse gespeichert!", 2000);
             })
             .catch(error => {
                 notifications.danger(error);
@@ -125,16 +133,15 @@
         location.hash = "#preferences";
         title.set("Unterricht wählen");
     });
+
+    $: create_select_dict(grouped_forms)
+    $: selected_form, updateCourses();
 </script>
 
-<h1>Unterrichtswahl</h1>
-{#if selected_form != null}
-    <button on:click={setPreferences}>Speichern</button>
-{/if}
-
+<h1 class="responsive-heading">Unterrichtswahl</h1>
 <div>
-    Klasse wählen:
-    <select name="forms" bind:value={selected_form} on:change={updateCourses}>
+    <Select data={select_dict} bind:selected_elem={selected_form} height_limit={true}>Klasse auswählen</Select>
+    <!-- <select name="forms" bind:value={selected_form} on:change={updateCourses}>
         {#each Object.entries(grouped_forms) as [form_group, forms]}
             <optgroup label={form_group}>
                 {#each forms as form}
@@ -146,17 +153,15 @@
 </div>
 <div>
     {#if selected_form != null}
-        <button on:click={select_all}>Alle auswählen</button>
-        <button on:click={select_none}>Nichts auswählen</button>
+        <button on:click={select_all} class="button">Alle auswählen</button>
+        <button on:click={select_none} class="button">Nichts auswählen</button>-->
         <!--<button on:click={reverse_selection}>Auswahl invertieren</button>-->
-        <br>
-    {/if}
+        <!--<br>
+    {/if}-->
 </div>
 {#if selected_form != null}
-    <ul>
-
+    <ul class="responsive-text">
         {#each Object.entries(class_groups_by_subject).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}
-
             {#if courses.length === 1}
                 <li>{subject}:<input
                         type="checkbox"
@@ -172,15 +177,17 @@
             {:else}
                 <li>
                     {subject}
-                    <button on:click={() => {select_all_part(courses)}}>Alle auswählen</button>
-                    <button on:click={() => {select_none_part(courses)}}>Keinen auswählen</button>
+                    {#if courses.length > 2}
+                    <button on:click={() => {select_all_part(courses)}} class="button">Alle auswählen</button>
+                    <button on:click={() => {select_none_part(courses)}} class="button">Keinen auswählen</button>
+                    {/if}
                 </li>
                 <ul>
                     {#each courses as course}
                         <li>
                             <input
-                                    type="checkbox"
-                                    bind:checked={selection[course.class_number]}
+                                type="checkbox"
+                                bind:checked={selection[course.class_number]}
                             />
                             {course.class_number}
                             {course.teacher} |
@@ -195,7 +202,28 @@
         {/each}
     </ul>
 {/if}
+{#if selected_form != null}
+    <button on:click={setPreferences} class="button" style="background-color: var(--accent-color);">Speichern</button>
+{/if}
 
 <style lang="scss">
-
+    .button {
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: var(--text-color);
+        border-radius: 5px;
+        padding: 10px;
+        margin: 3px;
+        font-size: 1rem;
+        position: relative;
+        .material-symbols-outlined {
+            font-size: 1.3em;
+            float: right;
+            margin-left: .2em;
+        }
+    }
 </style>
