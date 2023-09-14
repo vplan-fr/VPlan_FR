@@ -148,3 +148,19 @@ export function clear_caches() {
         }
     }
 }
+
+export function format_date(date) {
+    date = new Date(date);
+
+    const months = [
+        "Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
+        "August", "September", "Oktober", "November", "Dezember"
+    ];
+
+    const day = date.getDate();
+    const monthIndex = date.getMonth();
+    const year = date.getFullYear();
+
+    return `${day}. ${months[monthIndex]} ${year}`;
+
+}
