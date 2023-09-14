@@ -297,11 +297,10 @@
 </div>
 <style lang="scss">
     .dropdown-arrow {
+        font-size: 1.4em;
         display: block;
         transition: transform .2s ease;
         pointer-events: none;
-        font-size: var(--font-size-lg);
-        margin-left: .3em;
     }
 
     :global(.open) .dropdown-arrow {
@@ -320,6 +319,7 @@
         &.toggle-button {
             display: flex;
             flex-direction: row;
+            align-items: center;
             justify-content: space-between;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
