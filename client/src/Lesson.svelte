@@ -101,7 +101,7 @@
                 <div class="forms max-width wide-area second_of_type">
                     <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
                         <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
-                            {forms_str}
+                            <span class="grow">{forms_str}</span>
                             <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
                         </button>
                         
@@ -147,7 +147,7 @@
                         <div class="fit-content-width">
                             <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
                                 <button slot="toggle_button" on:click={toggle} class="toggle-button">
-                                    {forms_str}
+                                    <span class="grow">{forms_str}</span>
                                     <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
                                 </button>
                                 
@@ -231,7 +231,7 @@
             <div class="max-width">
                 <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
                     <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
-                        {forms_str}
+                        <span class="grow">{forms_str}</span>
                         <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
                     </button>
                     
@@ -276,7 +276,7 @@
                         <div class="fit-content-width">
                             <Dropdown let:toggle small_version={true} transform_origin="50% 0%">
                                 <button slot="toggle_button" on:click={toggle} class="toggle-button">
-                                    {forms_str}
+                                    <span class="grow">{forms_str}</span>
                                     <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
                                 </button>
                                 
@@ -325,6 +325,11 @@
             border-radius: 5px;
             overflow: hidden;
             text-align: left;
+
+            span.grow {
+                flex: 1;
+                white-space: nowrap;
+            }
             
             &.center-align {
                 text-align: center;
