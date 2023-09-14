@@ -9,7 +9,7 @@
     import {DatePicker} from 'attractions';
     import {get_settings, group_rooms} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, settings} from './stores.js'
+    import {logged_in, title, current_page, preferences, settings } from './stores.js'
     import {customFetch} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
@@ -18,7 +18,7 @@
     let school_num = localStorage.getItem('school_num');
     let date = null;
     let plan_type = "forms";
-    let plan_value = "7/3";
+    let plan_value = "JG12";
     let teacher_list = [];
     let all_rooms;
     let grouped_forms = [];
@@ -153,6 +153,16 @@
         );
     }
 
+    function get_preferences() {
+        customFetch(`${api_base}/preferences`)
+            .then(data => {
+                preferences.set(data);
+            })
+            .catch(error => {
+                notifications.danger(error)
+            })
+    }
+
     let greeting = "";
     function get_greeting() {
         customFetch("/auth/greeting")
@@ -181,8 +191,8 @@
     $: $logged_in && get_settings();
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
-    $: $settings, update_colors();
-    //$: console.log(course_lists);
+    $: school_num, get_preferences();
+    $: console.log($preferences);
 </script>
 
 <svelte:head>
