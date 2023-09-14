@@ -8,3 +8,4 @@ pymongo~=4.3.3
 python-dotenv~=1.0.0
 stundenplan24-wrapper@ git+https://github.com/Belissimo-T/stundenplan24-wrapper@a531c0ba
 Werkzeug~=2.3.6
+discord-webhook~=1.3.0
