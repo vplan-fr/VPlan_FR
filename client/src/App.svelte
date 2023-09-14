@@ -7,7 +7,7 @@
     import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
     import {DatePicker} from 'attractions';
-    import {get_settings, group_rooms} from "./utils.js";
+    import {get_settings, group_rooms, update_colors} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences} from './stores.js'
     import {customFetch} from "./utils.js";
@@ -183,7 +183,7 @@
     $: $logged_in, get_meta(api_base);
     $: $logged_in, update_disabled_dates(enabled_dates);
     $: school_num, get_preferences();
-    $: console.log($preferences);
+    $: update_colors($settings);
 </script>
 
 <svelte:head>

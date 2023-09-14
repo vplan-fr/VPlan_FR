@@ -2,11 +2,12 @@
     import {onMount} from "svelte";
     import {notifications} from "./notifications.js";
     import {logged_in, settings, title} from './stores.js';
-    import {customFetch} from "./utils.js";
+    import {customFetch, update_colors} from "./utils.js";
 
     let temp_settings;
 
     function change_settings() {
+        $settings = structuredClone(temp_settings);
         customFetch("/auth/settings", {
             method: "POST",
             body: JSON.stringify($settings),
@@ -24,13 +25,17 @@
             method: "DELETE"
         })
             .then(data => {
-                $settings = data;
-                temp_settings = data;
+                $settings = structuredClone(data);
+                temp_settings = structuredClone(data);
                 notifications.success("Einstellungen zurückgesetzt");
             })
             .catch(error => {
                 notifications.danger(error);
             })
+    }
+
+    function cancel_setting_changes() {
+        temp_settings = structuredClone($settings);
     }
     
     function delete_account() {
@@ -54,10 +59,12 @@
     onMount(() => {
         location.hash = "#settings";
         title.set("Einstellungen");
+        temp_settings = structuredClone($settings);
     });
 
-    $: temp_settings = $settings;
-    $: settings.set(temp_settings);
+    $: console.log(`temp_settings: ${JSON.stringify(temp_settings)}`);
+    $: console.log(`$settings: ${JSON.stringify($settings)}`);
+    $: update_colors(temp_settings);
 </script>
 
 <main>
@@ -70,7 +77,10 @@
         <span class="responsive-text"><input type="color" bind:value={temp_settings.background_color}>Hintergrundfarbe</span>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.accent_color}>Akzentfarbe</span>
         <br>
-        <button on:click={change_settings} class="button" style="background-color: var(--accent-color);">Speichern</button>
+        <div class="horizontal-container">
+            <button on:click={change_settings} class="button halfed" style="background-color: var(--accent-color);">Speichern</button>
+            <button on:click={cancel_setting_changes} class="button halfed">Abbrechen</button>
+        </div>
         <div class="horizontal-container">
             <button on:click={reset_settings} class="button halfed">Einstellungen zurücksetzen</button>
             <button on:click={view_saved_data} class="button halfed">Gespeicherte Daten Einsehen</button>

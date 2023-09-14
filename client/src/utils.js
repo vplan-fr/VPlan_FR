@@ -98,3 +98,13 @@ export function navigate_page(page_id) {
     current_page.set(page_id);
     location.hash = `#${page_id}`;
 }
+
+export function update_colors(settings) {
+    if(!settings) {return;}
+    if(settings.background_color) {
+        document.documentElement.style.setProperty('--background-color', settings.background_color);
+    }
+    if(settings.accent_color) {
+        document.documentElement.style.setProperty('--accent-color', settings.accent_color);
+    }
+}
