@@ -48,7 +48,7 @@ def user_loader(user_id: str) -> User | None:
 
 @login_manager.unauthorized_handler
 def unauthorized_callback() -> Response:
-    return send_error("request without authorization")
+    return send_error("Für diese Anfrage musst du eingeloggt sein.")
 
 
 # COMPILED SVELTE FILES

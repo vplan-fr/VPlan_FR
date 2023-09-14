@@ -49,7 +49,7 @@
     <ul class="nav-element-wrapper">
         <li><button on:click={() => {navigate_page("about_us")}} class="nav-button">Über uns</button></li>
         <li>
-            <Dropdown let:toggle arrow_visible={false}>
+            <Dropdown let:toggle>
                 <button slot="toggle_button" on:click={toggle} class="nav-button">
                     <span class="material-symbols-outlined">tune</span>
                 </button>

@@ -22,6 +22,7 @@
             {:else}
                 <slot></slot>
             {/if}
+            <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
         </button>
     
         {#each Object.entries(data) as elem}
@@ -36,16 +37,30 @@
 </div>
 
 <style lang="scss">
+    .dropdown-arrow {
+        display: block;
+        transition: transform .2s ease;
+        pointer-events: none;
+        font-size: var(--font-size-lg);
+        margin-left: .3em;
+    }
+
+    :global(.open) .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
     .select-wrapper {
         margin-bottom: 10px;
     }
 
     .toggle-btn {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
         width: 100%;
         height: 100%;
         font-size: var(--font-size-base);
         padding: 10px;
-        padding-right: 1.5em;
         text-align: left;
         border: none;
         border-bottom: 2px solid rgba(255, 255, 255, 0.2);
