@@ -120,7 +120,7 @@
             }
 
             .height-limiter {
-                max-height: min(500px, 50vh);
+                max-height: min(300px, 50vh);
                 overflow-y: scroll;
             }
         }
