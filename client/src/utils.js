@@ -108,3 +108,43 @@ export function update_colors(settings) {
         document.documentElement.style.setProperty('--accent-color', settings.accent_color);
     }
 }
+
+
+function get_cache_keys() {
+    let cache_keys = [];
+    for ( var i = 0, len = localStorage.length; i < len; ++i ) {
+        cache_keys.push(localStorage.key(i))
+    }
+    return cache_keys
+}
+
+export function should_date_be_cached(date) {
+    const dateParts = date.split("-");
+    const year = parseInt(dateParts[0]);
+    const month = parseInt(dateParts[1]) - 1;
+    const day = parseInt(dateParts[2]);
+    const parsedDate = new Date(year, month, day);
+
+    const currentDate = new Date();
+
+    const currentWeekStart = new Date(currentDate);
+    currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay());
+
+    return parsedDate >= currentWeekStart;
+
+}
+
+export function clear_caches() {
+    let cache_keys = get_cache_keys();
+    console.log(cache_keys);
+    for (const ind in cache_keys) {
+        let cache_key = cache_keys[ind];
+        if (cache_key === "logged_in" || cache_key === "school_num" || cache_key.endsWith("_meta")) {
+            continue;
+        }
+        let cur_date = cache_key.split("_")[1];
+        if (!should_date_be_cached(cur_date)) {
+            localStorage.removeItem(cache_key);
+        }
+    }
+}

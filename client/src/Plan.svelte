@@ -4,7 +4,7 @@
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
     import { title, preferences } from './stores.js';
-    import {customFetch, navigate_page} from "./utils.js";
+    import {customFetch, navigate_page, should_date_be_cached} from "./utils.js";
 
     export let api_base;
     export let school_num;
@@ -42,23 +42,26 @@
         loading_failed = false;
         controller = new AbortController();
         //console.log("getting lesson plan", school_num, date);
-        let data = localStorage.getItem(`${school_num}_${date}`);
-        if (data) {
-            data = JSON.parse(data);
-            rooms_data = data["rooms"];
-            if (plan_type !== "free_rooms") {
-                all_lessons = data["plans"][plan_type][entity] || [];
-            }
-            info = data["info"];
-            week_letter = info["week"];
-            
-            data_from_cache = true;
-            loading = false;
-        }
+        if (should_date_be_cached(date)) {
+            let data = localStorage.getItem(`${school_num}_${date}`);
+            if (data) {
+                data = JSON.parse(data);
+                rooms_data = data["rooms"];
+                if (plan_type !== "free_rooms") {
+                    all_lessons = data["plans"][plan_type][entity] || [];
+                }
+                info = data["info"];
+                week_letter = info["week"];
 
+                data_from_cache = true;
+                loading = false;
+            }
+        }
         customFetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
             .then(data => {
-                localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
+                if (should_date_be_cached(date)) {
+                    localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
+                }
                 rooms_data = data["rooms"]
                 if (plan_type !== "free_rooms") {
                     all_lessons = data["plans"][plan_type][entity] || [];
