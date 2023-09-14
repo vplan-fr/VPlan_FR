@@ -150,13 +150,15 @@ def _group_form_minors(first_part: str, minors: list[str]) -> list[str]:
     for seq in seqs:
         if not seq:
             continue
-        elif len(seq) == 1:
-            out.append(f"{first_part}{seq[0]}")
+
+        if len(seq) < 3:
+            for minor in seq:
+                invalid_minors.append(minor)
         else:
             out.append(f"{first_part}{seq[0]}-{seq[-1]}")
 
-    for invalid_minor in invalid_minors:
-        out.append(f"{first_part}{invalid_minor}")
+    if invalid_minors:
+        out.append(f"{first_part}{','.join(invalid_minors)}")
 
     return out
 
@@ -181,7 +183,7 @@ def parsed_forms_to_str(forms: list[ParsedForm]) -> str:
     for form in alphanum_forms:
         out.append(form[0])
 
-    return ", ".join(out)
+    return "; ".join(out)
 
 
 def forms_to_str(forms: typing.Iterable[str]) -> str:
