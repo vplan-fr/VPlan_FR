@@ -10,7 +10,7 @@
     import {get_settings, group_rooms, update_colors} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings } from './stores.js'
-    import {customFetch} from "./utils.js";
+    import {customFetch, clear_caches} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
     import {onMount} from "svelte";
@@ -27,6 +27,7 @@
     $: api_base = `/api/v69.420/${school_num}`;
     $logged_in = localStorage.getItem('logged_in') === 'true';
     check_login_status();
+    clear_caches();
     function get_changelog() {
         customFetch("/api/v69.420/changelog")
             .then(data => {
