@@ -107,6 +107,19 @@ export function update_colors(settings) {
     if(settings.accent_color) {
         document.documentElement.style.setProperty('--accent-color', settings.accent_color);
     }
+    if(settings.text_color) {
+        document.documentElement.style.setProperty('--text-color', settings.text_color);
+    }
+    if(settings.cancelled_color) {
+        document.documentElement.style.setProperty('--cancelled-color', settings.cancelled_color);
+    }
+    if(settings.rainbow) {
+        if(navigator.userAgent.toLowerCase().includes('firefox')) {
+            document.documentElement.style.setProperty('--background-color', 'var(--fallback-rainbow)');
+        } else {
+            document.documentElement.style.setProperty('--background-color', 'var(--rainbow)');
+        }
+    }
 }
 
 

@@ -62,8 +62,6 @@
         temp_settings = structuredClone($settings);
     });
 
-    $: console.log(`temp_settings: ${JSON.stringify(temp_settings)}`);
-    $: console.log(`$settings: ${JSON.stringify($settings)}`);
     $: update_colors(temp_settings);
 </script>
 
@@ -74,11 +72,14 @@
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.normal_greetings}>Normale Begrüßungen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.chatgpt_greetings}>ChatGPT Begrüßungen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.day_switch_keys}>Pfeiltasten (Tastatur) zum Tag wechseln nutzen</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.rainbow}>Regenbogen 🌈</span>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.background_color}>Hintergrundfarbe</span>
+        <span class="responsive-text"><input type="color" bind:value={temp_settings.text_color}>Textfarbe</span>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.accent_color}>Akzentfarbe</span>
+        <span class="responsive-text"><input type="color" bind:value={temp_settings.cancelled_color}>Ausfallfarbe</span>
         <br>
         <div class="horizontal-container">
-            <button on:click={change_settings} class="button halfed" style="background-color: var(--accent-color);">Speichern</button>
+            <button on:click={change_settings} class="button halfed" style="background: var(--accent-color);">Speichern</button>
             <button on:click={cancel_setting_changes} class="button halfed">Abbrechen</button>
         </div>
         <div class="horizontal-container">

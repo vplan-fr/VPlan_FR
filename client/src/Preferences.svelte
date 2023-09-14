@@ -203,7 +203,7 @@
     </ul>
 {/if}
 {#if selected_form != null}
-    <button on:click={setPreferences} class="button" style="background-color: var(--accent-color);">Speichern</button>
+    <button on:click={setPreferences} class="button" style="background: var(--accent-color);">Speichern</button>
 {/if}
 
 <style lang="scss">
