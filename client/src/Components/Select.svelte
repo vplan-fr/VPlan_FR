@@ -57,6 +57,7 @@
         display: flex;
         flex-direction: row;
         align-items: center;
+        text-align: left;
         justify-content: space-between;
         font-size: var(--font-size-base);
         padding: 5px 10px;
@@ -77,6 +78,8 @@
             height: 40px;
             margin: 5px;
             border-radius: 5px;
+            aspect-ratio: 1;
+            object-fit: contain;
         }
     }
 </style>
