@@ -11,5 +11,8 @@ DEFAULT_SETTINGS = {
     "day_switch_keys": False,
     "background_color": "#121212",
     "accent_color": "#bb86fc",
+    "text_color": "#ffffff",
+    "cancelled_color": "#ff1744",
+    "rainbow": False,
     "favorite": [],
 }

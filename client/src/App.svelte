@@ -10,7 +10,7 @@
     import {get_settings, group_rooms, update_colors} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings } from './stores.js'
-    import {customFetch, clear_caches} from "./utils.js";
+    import {customFetch, clear_caches, format_date} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
     import {onMount} from "svelte";
@@ -185,6 +185,7 @@
     $: $logged_in, update_disabled_dates(enabled_dates);
     $: school_num, get_preferences();
     $: update_colors($settings);
+
 </script>
 
 <svelte:head>
@@ -218,7 +219,7 @@
                 }}
             />
             <input id="inp_school_num" type="text" bind:value={school_num}>
-            {date}
+            {format_date(date)}
             <br>
             <div class="input-field" id="room-select">
                 <label for="rooms">Wähle einen Raum aus:</label>

@@ -95,6 +95,16 @@ class User(UserMixin):
         new_settings["accent_color"] = user_settings.get("accent_color", "#BB86FC")
         if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["accent_color"]):
             return send_error("ungültiger Wert für accent_color Einstellung")
+        new_settings["text_color"] = user_settings.get("text_color", "#BB86FC")
+        if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["text_color"]):
+            return send_error("ungültiger Wert für text_color Einstellung")
+        new_settings["cancelled_color"] = user_settings.get("cancelled_color", "#BB86FC")
+        if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["cancelled_color"]):
+            return send_error("ungültiger Wert für cancelled_color Einstellung")
+        try:
+            new_settings["rainbow"] = bool(user_settings.get("rainbow", False))
+        except Exception:
+            return send_error("ungültiger Wert für rainbow Einstellung")
 
         new_settings["favorite"] = user_settings.get("favorite", [])
         if new_settings["favorite"]:
