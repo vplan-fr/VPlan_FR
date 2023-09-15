@@ -15,6 +15,7 @@
     import Preferences from "./Preferences.svelte";
     import {onMount} from "svelte";
     import Changelog from "./Changelog.svelte";
+    import Modal from "./Components/Modal.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -179,6 +180,7 @@
     $: school_num, get_preferences();
     $: update_colors($settings);
 
+    let tmp_modal_show = false;
 </script>
 
 <svelte:head>
@@ -188,7 +190,16 @@
 {#if $logged_in}
     <Navbar />
 {/if}
-<main>    
+<main>
+    <button on:click={() => {tmp_modal_show = !tmp_modal_show}}>Toggle Modal</button>
+    <Modal bind:showModal={tmp_modal_show}>
+        <h1 class="responsive-heading">Hello, World!</h1>
+        <span class="responsive-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!</span>
+        <svelte:fragment slot="footer">
+            <button class="button btn-small" on:click={() => {tmp_modal_show = false}}>Schließen</button>
+            <button class="button btn-small">Speichern</button>
+        </svelte:fragment>
+    </Modal>
     {#if $logged_in}
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
             <Changelog></Changelog>
@@ -249,7 +260,7 @@
                     <button class="button" on:click={() => {
                         plan_type = "free_rooms";
                         plan_value = "";
-                    }}>Freie Räume</button>
+                    }}>Raumübersicht</button>
                 </div>
             </div>
             {#if $current_page.substring(0, 4) === "plan"}
@@ -301,7 +312,7 @@
                 width: 100%;
                 height: 100%;
             }
-            
+
             &#c1 {grid-area: 1 / 1 / 2 / 3;}
             &#c2 {grid-area: 2 / 1 / 3 / 2;}
             &#c3 {grid-area: 2 / 2 / 3 / 3;}
@@ -332,10 +343,14 @@
         background-color: rgba(255, 255, 255, 0.2);
         color: var(--text-color);
         border-radius: 5px;
-        padding: 10px;
+        padding: .5em;
         margin: 3px;
         font-size: var(--font-size-base);
         position: relative;
+
+        &.btn-small {
+            font-size: var(--font-size-sm);
+        }
 
         .material-symbols-outlined {
             font-size: 1.3em;

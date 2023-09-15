@@ -355,7 +355,7 @@
         &::before {
             content: "Informationen";
             color: rgba(255, 255, 255, 0.2);
-            background: var(--background-color);
+            background: var(--background);
             padding: 0px 5px;
             position: absolute;
             top: 0;
@@ -403,7 +403,7 @@
                 width: var(--bar-width);
                 aspect-ratio: 1;
 
-                background: radial-gradient(circle at 50% -15% , transparent calc(.5 * var(--bar-width)), var(--background-color) calc(.5 * var(--bar-width) + .5px));
+                background: radial-gradient(circle at 50% -15% , transparent calc(.5 * var(--bar-width)), var(--background) calc(.5 * var(--bar-width) + .5px));
             }
             
             &.gap::after {
@@ -415,7 +415,7 @@
                 width: var(--bar-width);
                 aspect-ratio: 1;
 
-                background: radial-gradient(circle at 100% 100% , transparent var(--bar-width), var(--background-color) calc(var(--bar-width) + .5px));
+                background: radial-gradient(circle at 100% 100% , transparent var(--bar-width), var(--background) calc(var(--bar-width) + .5px));
             }
         }
 

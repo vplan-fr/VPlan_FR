@@ -216,10 +216,15 @@
         background-color: rgba(255, 255, 255, 0.2);
         color: var(--text-color);
         border-radius: 5px;
-        padding: 10px;
+        padding: .5em;
         margin: 3px;
         font-size: 1rem;
         position: relative;
+
+        &.btn-small {
+            font-size: var(--font-size-sm);
+        }
+
         .material-symbols-outlined {
             font-size: 1.3em;
             float: right;

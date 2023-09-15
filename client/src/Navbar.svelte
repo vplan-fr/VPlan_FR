@@ -66,7 +66,7 @@
 <style lang="scss">
     nav {
         z-index: 999;
-        background: var(--background-color);
+        background: var(--background);
         box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
         height: 64px;
         @media only screen and (max-width: 601px) {
