@@ -9,13 +9,11 @@
     import {DatePicker} from 'attractions';
     import {get_settings, group_rooms, update_colors} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, preferences, settings} from './stores.js'
-    import {customFetch, clear_caches, format_date} from "./utils.js";
+    import {logged_in, title, current_page, preferences, settings, active_modal} from './stores.js'
+    import {customFetch, clear_caches} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
-    import {onMount} from "svelte";
     import Changelog from "./Changelog.svelte";
-    import Modal from "./Components/Modal.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -169,14 +167,17 @@
             })
     }
 
+    function close_modal() {
+        $active_modal = "";
+    }
+
     $: $logged_in && get_settings();
     $: $logged_in && get_meta(api_base);
     $: $logged_in && update_disabled_dates(enabled_dates);
     $: $logged_in && get_greeting();
+    $: !$logged_in && close_modal();
     $: school_num, $logged_in && get_preferences();
     $: update_colors($settings);
-
-    let active_modal = null;
 </script>
 
 <svelte:head>
