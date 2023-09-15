@@ -8,8 +8,11 @@ from random import choice
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from discord_webhook import DiscordEmbed
+
 from utils import User, users
 from utils import send_error, send_success
+from utils import webhook_send
 from var import *
 
 authorization = Blueprint('authorization', __name__)
@@ -57,6 +60,10 @@ def signup() -> Response:
     login_user(tmp_user)
     session.permanent = True
     current_user.update_settings({})
+    embed = DiscordEmbed(title="User creation", color="00ff00")
+    embed.add_embed_field("", f"```{nickname}```", inline=False)
+    embed.add_embed_field("Account created:", f"<t:{int(time.time())}:F>", inline=False)
+    webhook_send("WEBHOOK_USER_CREATION", "", embeds=[embed])
     return send_success()
 
 
@@ -70,8 +77,8 @@ def logout() -> Response:
 @authorization.route(f"{AUTH_PATH}/account", methods=['GET', 'DELETE'])
 @login_required
 def account() -> Response:
+    tmp_user = current_user.get_user()
     if request.method == "GET":
-        tmp_user = current_user.get_user()
         return send_success({
                 'nickname': tmp_user['nickname'], 
                 'authorized_schools': tmp_user['authorized_schools'], 
@@ -81,6 +88,13 @@ def account() -> Response:
             })
     elif request.method == "DELETE":
         x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
+        embed = DiscordEmbed(title="User deletion", color="ff0000")
+        embed.add_embed_field("", f"```{tmp_user['nickname']}```", inline=False)
+        if tmp_user.get("time_joined"):
+            embed.add_embed_field("Account created:", f"<t:{int(tmp_user['time_joined'])}:F>", inline=False)
+        embed.add_embed_field("Account deleted:", f"<t:{int(time.time())}:F>", inline=False)
+        # embed.set_timestamp()
+        webhook_send("WEBHOOK_USER_CREATION", "", embeds=[embed])
         return send_success() if x.deleted_count == 1 else send_error("Account konnte nicht gelöscht werden, bitte wende dich an den support")
 
 

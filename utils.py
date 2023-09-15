@@ -8,7 +8,7 @@ from werkzeug.security import safe_join
 import contextlib
 import hashlib
 
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 from flask_login import UserMixin, current_user
 
 from dotenv import load_dotenv
@@ -139,20 +139,8 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
     if not os.getenv(key):
         return
     url = os.getenv(key)
-    webhook = DiscordWebhook(url=url, content=message, username="VPlan-Bot")
-    for embed in embeds:
-        webhook.add_embed(embed)
-    webhook.execute()
-    return
+    webhook = DiscordWebhook(url=url, content=message, username="VPlan-Bot", avatar_url="https://vplan.fr/static/images/icons/android-chrome-192x192.png")
 
-
-def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None):
-    embeds = [] if not embeds else embeds
-    key = key.upper()
-    if not os.getenv(key):
-        return
-    url = os.getenv(key)
-    webhook = DiscordWebhook(url=url, content=message, username="VPlan-Bot")
     for embed in embeds:
         webhook.add_embed(embed)
     webhook.execute()
