@@ -67,7 +67,7 @@
             flex-direction: column;
             width: max-content;
             
-            background: var(--background-color);
+            background: var(--background);
             box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
 
             &::before {

@@ -212,11 +212,15 @@
         background-color: var(--accent-color);
         color: var(--text-color);
         border-radius: 5px;
-        padding: 10px;
+        padding: .5em;
         margin: 1px;
         margin-top: 15px;
         font-size: var(--font-size-base);
         position: relative;
+
+        &.btn-small {
+            font-size: var(--font-size-sm);
+        }
 
         .material-symbols-outlined {
             font-size: 1.3em;
