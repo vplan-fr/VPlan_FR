@@ -14,6 +14,7 @@
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
     import {onMount} from "svelte";
+    import Changelog from "./Changelog.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -23,39 +24,14 @@
     let all_rooms;
     let grouped_forms = [];
     let api_base;
-    let changelog = [];
+    
     $: api_base = `/api/v69.420/${school_num}`;
     $logged_in = localStorage.getItem('logged_in') === 'true';
     check_login_status();
     clear_caches();
-    function get_changelog() {
-        customFetch("/api/v69.420/changelog")
-            .then(data => {
-                if (Array.isArray(data)) {
-                    changelog = data;
-                }
-            })
-            .catch(error => {
-                changelog = [];
-                console.error(error);
-            })
-    }
-    function read_changelog(number) {
-        customFetch("/api/v69.420/changelog", {
-            method: "POST",
-            body: number
-        })
-            .then(data => {
-                notifications.success("Log als gelesen markiert")
-            })
-            .catch(error => {
-                notifications.danger("Log konnte nicht als gelesen markiert werden")
-            })
-        changelog = changelog.filter(item => item[0] !== number)
-    }
+    
     if ($logged_in) {
         get_settings();
-        get_changelog()
     }
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
@@ -215,14 +191,7 @@
 <main>    
     {#if $logged_in}
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
-            <!-- <div id="changelog">
-                {#each changelog as cur_log}
-                    <p>
-                        {cur_log[1]}
-                        <button on:click={() => {read_changelog(cur_log[0])}}>Als gelesen markieren</button>
-                    </p>
-                {/each}
-            </div> -->
+            <Changelog></Changelog>
             <h1 class="responsive-heading">{greeting}</h1>
             <DatePicker
                 format="%Y-%m-%d"
