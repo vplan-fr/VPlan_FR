@@ -176,7 +176,16 @@
     function get_greeting() {
         customFetch("/auth/greeting")
             .then(data => {
-                greeting = data;
+                let curr_date = new Date();
+                let curr_hours = curr_date.getHours();
+                let emoji = "👋";
+                if (curr_hours >= 4 && curr_hours < 8) {
+                    emoji = "🥱";
+                }
+                if (curr_hours >= 18 || curr_hours < 4) {
+                    emoji = "😴";
+                }
+                greeting = `${emoji} ${data}`;
             })
             .catch(error => {
 
