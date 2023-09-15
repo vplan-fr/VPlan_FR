@@ -226,8 +226,6 @@
                     date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
                 }}
             />
-            <input id="inp_school_num" type="text" bind:value={school_num}>
-            {format_date(date)}
             <br>
             <div class="input-field" id="room-select">
                 <label for="rooms">Wähle einen Raum aus:</label>
