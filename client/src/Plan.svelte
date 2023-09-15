@@ -32,7 +32,7 @@
     };
     let controller = new AbortController();
     
-    export function load_lessons(date, plan_type, entity) {
+    export function load_lessons(date, plan_type, entity, revision=".newest") {
         controller.abort();
         if (date === null) {
             return
@@ -42,7 +42,7 @@
         loading_failed = false;
         controller = new AbortController();
         //console.log("getting lesson plan", school_num, date);
-        if (should_date_be_cached(date)) {
+        if (should_date_be_cached(date) && revision !== ".newest") {
             let data = localStorage.getItem(`${school_num}_${date}`);
             if (data !== "undefined" && data) {
                 data = JSON.parse(data);
@@ -57,9 +57,13 @@
                 loading = false;
             }
         }
-        customFetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
+        let params = new URLSearchParams();
+        params.append("date", date);
+        params.append("revision", revision);
+        console.log(params.toString());
+        customFetch(`${api_base}/plan?${params.toString()}`, {signal: controller.signal})
             .then(data => {
-                if (should_date_be_cached(date)) {
+                if (should_date_be_cached(date) && revision !== ".newest") {
                     try {
                         localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
                     } catch (error) {
@@ -260,7 +264,7 @@
 {:else}
 <div class:extra-height={extra_height}>
     <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
-    <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</h1>
+    <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
     {#if loading}
         Lädt...
     {:else if loading_failed}

@@ -23,12 +23,10 @@ api = Blueprint('api', __name__)
 @api.route(f"/api/v69.420/schools", methods=["GET"])
 @login_required
 def schools() -> Response:
-    with open("creds.json", "r", encoding="utf-8") as f:
-        creds: dict = json.load(f)
     school_list = [
         {
             k: v for k, v in elem.items() if k in ["school_number", "display_name"]
-        } for elem in creds.values()
+        } for elem in CREDS.values()
     ]
     school_data = {
         elem["school_number"]: {
@@ -105,9 +103,7 @@ def plan(school_num: str) -> Response:
 
 
 def get_school_by_id(school_num: str):
-    with open("creds.json", "r", encoding="utf-8") as f:
-        creds: dict = json.load(f)
-    for school_data in creds.values():
+    for school_data in CREDS.values():
         if school_data.get("school_number") == school_num:
             return school_data
     return None
@@ -148,13 +144,11 @@ def instant_authorize(school_num: str) -> Response:
         return send_error("Nutzername benötigt")
     if "pw" not in request.args:
         return send_error("Passwort benötigt")
-    with open("creds.json", "r", encoding="utf-8") as f:
-        creds = json.load(f)
-    if school_num not in creds:
+    if school_num not in CREDS:
         return send_error("Schulnummer nicht gefunden")
     username = request.args.get("username")
     pw = request.args.get("username")
-    if username != creds[school_num]["username"] or pw != creds[school_num]["password"]:
+    if username != CREDS[school_num]["username"] or pw != CREDS[school_num]["password"]:
         return send_error("Nutzername oder Passwort falsch")
     current_user.authorize_school(school_num)
     return send_success()
