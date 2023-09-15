@@ -17,6 +17,7 @@
     export let week_letter = "";
     export let external_times = true;
     export let all_rooms;
+    export let selected_revision;
     let used_rooms_hidden = true;
 
     let all_lessons = [];
@@ -42,7 +43,7 @@
         loading_failed = false;
         controller = new AbortController();
         //console.log("getting lesson plan", school_num, date);
-        if (should_date_be_cached(date) && revision !== ".newest") {
+        if (should_date_be_cached(date) && revision === ".newest") {
             let data = localStorage.getItem(`${school_num}_${date}`);
             if (data !== "undefined" && data) {
                 data = JSON.parse(data);
@@ -60,10 +61,9 @@
         let params = new URLSearchParams();
         params.append("date", date);
         params.append("revision", revision);
-        console.log(params.toString());
         customFetch(`${api_base}/plan?${params.toString()}`, {signal: controller.signal})
             .then(data => {
-                if (should_date_be_cached(date) && revision !== ".newest") {
+                if (should_date_be_cached(date) && revision === ".newest") {
                     try {
                         localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
                     } catch (error) {
@@ -151,7 +151,7 @@
         return `${formattedDate}`;
     }
 
-    $: load_lessons(date, plan_type, plan_value);
+    $: load_lessons(date, plan_type, plan_value, selected_revision);
 
     function gen_location_hash() {
         if(school_num && date && plan_type) {
