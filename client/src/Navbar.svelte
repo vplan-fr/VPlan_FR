@@ -1,6 +1,6 @@
 <script>
     import {notifications} from './notifications.js';
-    import {logged_in, current_page} from './stores.js';
+    import {logged_in, current_page, active_modal} from './stores.js';
     import Dropdown from './Components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
     import { onMount } from 'svelte';
@@ -54,7 +54,7 @@
                     <span class="material-symbols-outlined">tune</span>
                 </button>
 
-                <button class="nav-button" on:click={() => navigate_page("settings")}><span class="material-symbols-outlined">settings</span> Einstellungen</button>
+                <button class="nav-button" on:click={() => $active_modal = "settings"}><span class="material-symbols-outlined">settings</span> Einstellungen</button>
                 <button class="nav-button" on:click={() => navigate_page("school_manager")}><span class="material-symbols-outlined">school</span> Schule wechseln</button>
                 <button class="nav-button" on:click={() => navigate_page("preferences")}><span class="material-symbols-outlined">account_circle</span> Unterricht wählen</button>
                 <button on:click={logout} class="nav-button"><span class="material-symbols-outlined">logout</span> Logout</button>

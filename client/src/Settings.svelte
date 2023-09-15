@@ -1,8 +1,8 @@
 <script>
-    import {onMount} from "svelte";
     import {notifications} from "./notifications.js";
-    import {logged_in, settings, title} from './stores.js';
+    import {logged_in, settings, active_modal} from './stores.js';
     import {customFetch, update_colors} from "./utils.js";
+    import Modal from "./Components/Modal.svelte";
 
     let temp_settings;
 
@@ -56,16 +56,11 @@
         window.open("/auth/account", "_blank");
     }
 
-    onMount(() => {
-        location.hash = "#settings";
-        title.set("Einstellungen");
-        temp_settings = structuredClone($settings);
-    });
-
+    $: $active_modal, cancel_setting_changes();
     $: update_colors(temp_settings);
 </script>
 
-<main>
+<Modal id="settings">
     <h1 class="responsive-heading">Einstellungen</h1>
     {#if temp_settings}
     <div class="settings-container">
@@ -79,10 +74,6 @@
         <span class="responsive-text"><input type="color" bind:value={temp_settings.cancelled_color}>Ausfallfarbe</span>
         <br>
         <div class="horizontal-container">
-            <button on:click={change_settings} class="button halfed" style="background: var(--accent-color);">Speichern</button>
-            <button on:click={cancel_setting_changes} class="button halfed">Abbrechen</button>
-        </div>
-        <div class="horizontal-container">
             <button on:click={reset_settings} class="button halfed">Einstellungen zurücksetzen</button>
             <button on:click={view_saved_data} class="button halfed">Gespeicherte Daten Einsehen</button>
         </div>
@@ -91,7 +82,11 @@
     {:else}
     <span class="responsive-text">Einstellungen konnten nicht geladen werden.</span>
     {/if}
-</main>
+    <svelte:fragment slot="footer">
+        <button class="button btn-small" on:click={() => {change_settings(); $active_modal = ""}} style="background: var(--accent-color);">Speichern</button>
+        <button class="button btn-small" on:click={() => {$active_modal = ""}}>Abbrechen</button>
+    </svelte:fragment>
+</Modal>
 
 <style lang="scss">
     .settings-container {

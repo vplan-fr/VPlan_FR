@@ -44,7 +44,7 @@
         //console.log("getting lesson plan", school_num, date);
         if (should_date_be_cached(date)) {
             let data = localStorage.getItem(`${school_num}_${date}`);
-            if (data !== "undefined") {
+            if (data !== "undefined" && data) {
                 data = JSON.parse(data);
                 rooms_data = data["rooms"];
                 if (plan_type !== "free_rooms") {
