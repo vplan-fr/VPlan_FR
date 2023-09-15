@@ -206,15 +206,15 @@
 <main>
     {#if $logged_in}
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
-            <h1>{greeting}</h1>
-            <div id="changelog">
+            <!-- <div id="changelog">
                 {#each changelog as cur_log}
                     <p>
                         {cur_log[1]}
                         <button on:click={() => {read_changelog(cur_log[0])}}>Als gelesen markieren</button>
                     </p>
                 {/each}
-            </div>
+            </div> -->
+            <h1 class="responsive-heading">{greeting}</h1>
             <DatePicker
                 format="%Y-%m-%d"
                 locale="de-DE"
