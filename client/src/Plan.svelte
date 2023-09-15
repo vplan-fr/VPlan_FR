@@ -212,18 +212,14 @@
 
 {#if plan_type !== "free_rooms"}
 <div class="plan" class:extra-height={extra_height}>
-    {#if plan_type === "forms" && (plan_value in $preferences)}
-        {#if preferences_apply}
-            <button on:click={() => {preferences_apply = !preferences_apply}}>Alle Stunden anzeigen</button>
-        {:else}
-            <button on:click={() => {preferences_apply = !preferences_apply}}>Nur eigene Stunden anzeigen</button>
-        {/if}
-    {/if}
     {#if show_title && info}
-        <h1 class="plan-heading">
-            Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== ""}({full_teacher_name}){/if}{/if}</span> am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
-        </h1>
-    {/if}
+        {#if plan_type === "forms" && (plan_value in $preferences)}
+            <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
+        {/if}
+            <h1 class="plan-heading">
+                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== ""}({full_teacher_name}){/if}{/if}</span> am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+            </h1>
+        {/if}
     {#if loading}
         Lädt...
     {:else if loading_failed}
@@ -264,7 +260,7 @@
 {:else}
 <div class:extra-height={extra_height}>
     <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
-    <h1 class="plan-heading">Raumübersicht</h1>
+    <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</h1>
     {#if loading}
         Lädt...
     {:else if loading_failed}
@@ -300,6 +296,7 @@
         justify-content: center;
         align-items: center;
         transition: background-color .2s ease;
+        margin-left: 20px;
 
         &:hover, &:focus-visible {
             background-color: rgba(255, 255, 255, 0.05);
