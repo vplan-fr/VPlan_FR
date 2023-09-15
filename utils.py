@@ -8,7 +8,7 @@ from werkzeug.security import safe_join
 import contextlib
 import hashlib
 
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 from flask_login import UserMixin, current_user
 
 from dotenv import load_dotenv
@@ -74,44 +74,19 @@ class User(UserMixin):
 
     def update_settings(self, user_settings=DEFAULT_SETTINGS) -> Response:
         self.get_user()
-        authorized_schools = self.user.get("authorized_schools", [])
 
         new_settings = {}
-        try:
-            new_settings["normal_greetings"] = bool(user_settings.get("normal_greetings", False))
-        except Exception:
-            return send_error("ungültiger Wert für normal_greetings Einstellung")
-        try:
-            new_settings["chatgpt_greetings"] = bool(user_settings.get("chatgpt_greetings", False))
-        except Exception:
-            return send_error("ungültiger Wert für chatgpt_greetings Einstellung")
-        try:
-            new_settings["day_switch_keys"] = bool(user_settings.get("day_switch_keys", True))
-        except Exception:
-            return send_error("ungültiger Wert für day_switch_keys Einstellung")
-        new_settings["background_color"] = user_settings.get("background_color", "#121212")
-        if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["background_color"]):
-            return send_error("ungültiger Wert für background_color Einstellung")
-        new_settings["accent_color"] = user_settings.get("accent_color", "#BB86FC")
-        if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["accent_color"]):
-            return send_error("ungültiger Wert für accent_color Einstellung")
-        new_settings["text_color"] = user_settings.get("text_color", "#ffffff")
-        if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["text_color"]):
-            return send_error("ungültiger Wert für text_color Einstellung")
-        new_settings["cancelled_color"] = user_settings.get("cancelled_color", "#ff1744")
-        if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', new_settings["cancelled_color"]):
-            return send_error("ungültiger Wert für cancelled_color Einstellung")
-        try:
-            new_settings["rainbow"] = bool(user_settings.get("rainbow", False))
-        except Exception:
-            return send_error("ungültiger Wert für rainbow Einstellung")
-
-        new_settings["favorite"] = user_settings.get("favorite", [])
-        if new_settings["favorite"]:
-            if new_settings["favorite"][0] not in authorized_schools:
-                return send_error("Schulnummer für Benutzer nicht authentifiziert")
-            # if new_settings["favorite"][1] not in MetaExtractor(new_settings["favorite"][0]).course_list():
-            #    return make_response('Course not recognized', 400)
+        for setting, setting_data in SETTINGS.items():
+            validate_function = TYPE_FUNCTIONS[setting_data["type"]]["validation"]
+            cur_setting = user_settings.get(setting, setting_data["default"])
+            if not validate_function(cur_setting):
+                send_error(f"ungültiger Wert für {cur_setting} Einstellung({setting_data['type']} erwartet)")
+            conversion_function = TYPE_FUNCTIONS[setting_data["type"]]["conversion"]
+            try:
+                cur_setting = conversion_function(cur_setting)
+            except Exception:
+                send_error(f"ungültiger Wert für {cur_setting} Einstellung ({setting_data['type']} erwartet)")
+            new_settings[setting] = cur_setting
 
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'settings': new_settings}})
         return send_success()
@@ -164,20 +139,8 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
     if not os.getenv(key):
         return
     url = os.getenv(key)
-    webhook = DiscordWebhook(url=url, content=message, username="VPlan-Bot")
-    for embed in embeds:
-        webhook.add_embed(embed)
-    webhook.execute()
-    return
+    webhook = DiscordWebhook(url=url, content=message, username="VPlan-Bot", avatar_url="https://vplan.fr/static/images/icons/android-chrome-192x192.png")
 
-
-def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None):
-    embeds = [] if not embeds else embeds
-    key = key.upper()
-    if not os.getenv(key):
-        return
-    url = os.getenv(key)
-    webhook = DiscordWebhook(url=url, content=message, username="VPlan-Bot")
     for embed in embeds:
         webhook.add_embed(embed)
     webhook.execute()
