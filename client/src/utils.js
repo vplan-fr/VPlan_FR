@@ -183,3 +183,20 @@ export function format_date(date) {
     return `${day}. ${months[monthIndex]} ${year}`;
 
 }
+
+export function format_revision_date(date) {
+    if (date === ".newest") {
+        return "Aktuellste Version"
+    }
+    date = new Date(date);
+
+    const options = {
+        year: "numeric",
+        month: "2-digit",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    };
+
+    return date.toLocaleString("de-DE", options) + " Uhr";
+}

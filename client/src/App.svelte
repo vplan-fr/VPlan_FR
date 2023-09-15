@@ -10,20 +10,22 @@
     import {get_settings, group_rooms, update_colors} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings, active_modal} from './stores.js'
-    import {customFetch, clear_caches} from "./utils.js";
+    import {customFetch, clear_caches, format_revision_date} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
     import Changelog from "./Changelog.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
+    let all_revisions = [".newest"];
     let plan_type = "forms";
     let plan_value = "JG12";
     let teacher_list = [];
     let all_rooms;
     let grouped_forms = [];
     let api_base;
-    
+
+
     $: api_base = `/api/v69.420/${school_num}`;
     $logged_in = localStorage.getItem('logged_in') === 'true';
     check_login_status();
@@ -38,6 +40,7 @@
     let selected_teacher;
     let selected_room;
     let selected_form;
+    let selected_revision = ".newest";
     let meta = {};
     let all_meta = {};
     let disabledDates = [];
@@ -99,6 +102,7 @@
                 }
             });
     }
+    $: all_revisions = [".newest"].concat((all_meta.dates || {})[date] || []);
 
     function update_disabled_dates(enabled_dates) {
         if (!$logged_in) {
@@ -253,9 +257,19 @@
                         plan_value = "";
                     }}>Raumübersicht</button>
                 </div>
+                <div class="" id="c5">
+                    <div class="input-field">
+                        <select bind:value={selected_revision}
+                                on:change={() => {}}>
+                                    {#each all_revisions as revision}
+                                        <option value="{revision}">{format_revision_date(revision)}</option>
+                                    {/each}
+                        </select>
+                    </div>
+                </div>
             </div>
             {#if $current_page.substring(0, 4) === "plan"}
-                <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta/>
+                <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision/>
             {:else}
                 <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
             {/if}
