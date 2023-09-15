@@ -83,7 +83,6 @@
         }
         let data_from_cache = false;
         let data = localStorage.getItem(`${school_num}_meta`);
-        console.log(data);
         if (data !== "undefined") {
             data = JSON.parse(data);
             all_meta = data;
