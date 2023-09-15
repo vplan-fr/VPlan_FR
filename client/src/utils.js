@@ -156,7 +156,6 @@ export function should_date_be_cached(date) {
 
 export function clear_caches() {
     let cache_keys = get_cache_keys();
-    console.log(cache_keys);
     for (const ind in cache_keys) {
         let cache_key = cache_keys[ind];
         if (cache_key === "logged_in" || cache_key === "school_num" || cache_key.endsWith("_meta")) {
