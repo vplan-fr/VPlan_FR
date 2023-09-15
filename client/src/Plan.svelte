@@ -60,7 +60,15 @@
         customFetch(`${api_base}/plan?date=${date}`, {signal: controller.signal})
             .then(data => {
                 if (should_date_be_cached(date)) {
-                    localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
+                    try {
+                        localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
+                    } catch (error) {
+                        if (error.name === 'QuotaExceededError' ) {
+                            notifications.danger("Der aktuelle Plan konnte nicht gecached werden.")
+                        } else {
+                            throw error;
+                        }
+                    }
                 }
                 rooms_data = data["rooms"]
                 if (plan_type !== "free_rooms") {

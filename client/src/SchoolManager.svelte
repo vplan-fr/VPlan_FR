@@ -86,6 +86,7 @@
             .then(data => {
                 notifications.success("Schule wurde autorisiert");
                 school_num = authorize_school_id;
+                localStorage.setItem("school_num", school_num);
                 authorized_school_ids = [...authorized_school_ids, authorize_school_id];
                 navigate_page('plan');
             })
@@ -102,6 +103,7 @@
             if (authorize_school_id) {
                 if(isObjectInList(authorize_school_id, authorized_school_ids) || is_admin) {
                     school_num = authorize_school_id;
+                    localStorage.setItem("school_num", school_num);
                     navigate_page("plan");
                 } else {
                     school_auth_visible = true;

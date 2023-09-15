@@ -98,7 +98,15 @@
         customFetch(`${api_base}/meta`)
             .then(data => {
                 // console.log("Meta geladen");
-                localStorage.setItem(`${school_num}_meta`, JSON.stringify(data));
+                try {
+                    localStorage.setItem(`${school_num}_meta`, JSON.stringify(data));
+                } catch (error) {
+                    if (error.name === 'QuotaExceededError' ) {
+                        notifications.danger("Die Schulmetadaten konnten nicht gecached werden.")
+                    } else {
+                        throw error;
+                    }
+                }
                 all_meta = data;
                 meta = data.meta;
                 all_rooms = data.rooms;

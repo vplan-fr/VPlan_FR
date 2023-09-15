@@ -140,11 +140,12 @@ export function should_date_be_cached(date) {
 
     const currentDate = new Date();
 
-    const currentWeekStart = new Date(currentDate);
-    currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay());
+    const currentDay = currentDate.getDay();
+    const daysUntilLastSaturday = currentDay === 6 ? 1 : currentDay + 1; // Adjust for Saturday being the start of the week
+    const lastSaturday = new Date(currentDate);
+    lastSaturday.setDate(currentDate.getDate() - daysUntilLastSaturday);
 
-    return parsedDate >= currentWeekStart;
-
+    return parsedDate >= lastSaturday;
 }
 
 export function clear_caches() {
