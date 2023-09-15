@@ -60,7 +60,7 @@
         }
         let data_from_cache = false;
         let data = localStorage.getItem(`${school_num}_meta`);
-        if (data !== "undefined") {
+        if (data !== "undefined" && data) {
             data = JSON.parse(data);
             all_meta = data;
             meta = data.meta;
@@ -169,18 +169,14 @@
             })
     }
 
-    onMount(() => {
-        get_greeting();
-    });
-
-
     $: $logged_in && get_settings();
     $: $logged_in && get_meta(api_base);
     $: $logged_in && update_disabled_dates(enabled_dates);
-    $: school_num, get_preferences();
+    $: $logged_in && get_greeting();
+    $: school_num, $logged_in && get_preferences();
     $: update_colors($settings);
 
-    let tmp_modal_show = false;
+    let active_modal = null;
 </script>
 
 <svelte:head>
@@ -190,16 +186,10 @@
 {#if $logged_in}
     <Navbar />
 {/if}
+
+<Settings />
+
 <main>
-    <button on:click={() => {tmp_modal_show = !tmp_modal_show}}>Toggle Modal</button>
-    <Modal bind:showModal={tmp_modal_show}>
-        <h1 class="responsive-heading">Hello, World!</h1>
-        <span class="responsive-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nulla explicabo ullam, corporis veritatis dolores ipsum facere soluta delectus est. Ducimus, incidunt culpa aliquam numquam natus necessitatibus veritatis molestias voluptatum tenetur!</span>
-        <svelte:fragment slot="footer">
-            <button class="button btn-small" on:click={() => {tmp_modal_show = false}}>Schließen</button>
-            <button class="button btn-small">Speichern</button>
-        </svelte:fragment>
-    </Modal>
     {#if $logged_in}
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
             <Changelog></Changelog>
@@ -270,8 +260,6 @@
             {/if}
         {:else if $current_page === "school_manager"}
             <SchoolManager bind:school_num />
-        {:else if $current_page === "settings"}
-            <Settings />
         {:else if $current_page === "about_us"}
             <AboutUs />
         {:else if $current_page === "preferences"}
