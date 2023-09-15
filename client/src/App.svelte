@@ -9,7 +9,7 @@
     import {DatePicker} from 'attractions';
     import {get_settings, group_rooms, update_colors} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, preferences, settings } from './stores.js'
+    import {logged_in, title, current_page, preferences, settings} from './stores.js'
     import {customFetch, clear_caches, format_date} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
@@ -164,7 +164,7 @@
                 greeting = `${emoji} ${data}`;
             })
             .catch(error => {
-
+                notifications.danger(error);
             })
     }
 
@@ -174,8 +174,8 @@
 
 
     $: $logged_in && get_settings();
-    $: $logged_in, get_meta(api_base);
-    $: $logged_in, update_disabled_dates(enabled_dates);
+    $: $logged_in && get_meta(api_base);
+    $: $logged_in && update_disabled_dates(enabled_dates);
     $: school_num, get_preferences();
     $: update_colors($settings);
 
@@ -193,59 +193,65 @@
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
             <Changelog></Changelog>
             <h1 class="responsive-heading">{greeting}</h1>
-            <DatePicker
-                format="%Y-%m-%d"
-                locale="de-DE"
-                closeOnSelection
-                bind:disabledDates
-                value={(date === null) ? null : new Date(date)}
-                on:change={(evt) => {
-                    let tmp_dat = evt.detail.value;
-                    date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
-                }}
-            />
-            <br>
-            <div class="input-field" id="room-select">
-                <label for="rooms">Wähle einen Raum aus:</label>
-                <select name="rooms" id="rooms" bind:value={selected_room}
-                    on:change={() => {plan_type = 'rooms'; plan_value = selected_room}}>
-                    {#each grouped_rooms as [category, rooms]}
-                        <optgroup label={category}>
-                            {#each rooms as room}
-                                <option value="{room}">{room}</option>
+            <div class="controls-wrapper">
+                <div class="control" id="c1">
+                    <DatePicker
+                        format="%Y-%m-%d"
+                        locale="de-DE"
+                        closeOnSelection
+                        bind:disabledDates
+                        value={(date === null) ? null : new Date(date)}
+                        on:change={(evt) => {
+                            let tmp_dat = evt.detail.value;
+                            date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
+                        }}
+                    />
+                </div>
+                <div class="control" id="c2">
+                    <div class="input-field">
+                        <select bind:value={selected_form}
+                            on:change={() => {plan_type = 'forms'; plan_value = selected_form}}>
+                            {#each Object.entries(grouped_forms) as [form_group, forms]}
+                                <optgroup label={form_group}>
+                                    {#each forms as form}
+                                        <option value="{form}">{form}</option>
+                                    {/each}
+                                </optgroup>
                             {/each}
-                        </optgroup>
-                    {/each}
-                </select>
-            </div>
-            <div class="input-field" id="teacher-select">
-                <label for="teachers">Wähle einen Lehrer aus:</label>
-                <select name="teachers" id="teachers" bind:value={selected_teacher}
-                    on:change={() => {plan_type = 'teachers'; plan_value = selected_teacher}}>
-                    {#each teacher_list as teacher}
-                        <option value={teacher}>{teacher}</option>
-                    {/each}
-                </select>
-            </div>
-            <div class="input-field" id="form-select">
-                <label for="forms">Wähle eine Klasse aus:</label>
-                <select name="forms" id="forms" bind:value={selected_form}
-                    on:change={() => {plan_type = 'forms'; plan_value = selected_form}}>
-                    {#each Object.entries(grouped_forms) as [form_group, forms]}
-                        <optgroup label={form_group}>
-                            {#each forms as form}
-                                <option value="{form}">{form}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control" id="c3">
+                    <div class="input-field">
+                        <select bind:value={selected_teacher}
+                            on:change={() => {plan_type = 'teachers'; plan_value = selected_teacher}}>
+                            {#each teacher_list as teacher}
+                                <option value={teacher}>{teacher}</option>
                             {/each}
-                        </optgroup>
-                    {/each}
-                </select>
+                        </select>
+                    </div>
+                </div>
+                <div class="control" id="c4">
+                    <div class="input-field">
+                        <select bind:value={selected_room}
+                            on:change={() => {plan_type = 'rooms'; plan_value = selected_room}}>
+                            {#each grouped_rooms as [category, rooms]}
+                                <optgroup label={category}>
+                                    {#each rooms as room}
+                                        <option value="{room}">{room}</option>
+                                    {/each}
+                                </optgroup>
+                            {/each}
+                        </select>
+                    </div>
+                </div>
+                <div class="control" id="c5">
+                    <button class="button" on:click={() => {
+                        plan_type = "free_rooms";
+                        plan_value = "";
+                    }}>Freie Räume</button>
+                </div>
             </div>
-            <button on:click={() => {
-                plan_type = "free_rooms";
-                plan_value = "";
-            }}>Freie Räume</button>
-            <br>
-            <br>
             {#if $current_page.substring(0, 4) === "plan"}
                 <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta/>
             {:else}
@@ -280,6 +286,62 @@
         font-size: var(--font-size-base);
         line-height: 1.6;
         font-weight: 400;
+    }
+
+    .controls-wrapper {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        grid-column-gap: 10px;
+        grid-row-gap: 10px;
+        margin-bottom: 20px;
+
+        .control {
+            & > :global(*) {
+                width: 100%;
+                height: 100%;
+            }
+            
+            &#c1 {grid-area: 1 / 1 / 2 / 3;}
+            &#c2 {grid-area: 2 / 1 / 3 / 2;}
+            &#c3 {grid-area: 2 / 2 / 3 / 3;}
+            &#c4 {grid-area: 3 / 1 / 4 / 2;}
+            &#c5 {grid-area: 3 / 2 / 4 / 3;}
+        }
+
+        @media only screen and (min-width: 1501px) {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+
+            .control {
+                &#c1 {grid-area: 1 / 1 / 2 / 5;}
+                &#c2 {grid-area: 2 / 1 / 3 / 2;}
+                &#c3 {grid-area: 2 / 2 / 3 / 3;}
+                &#c4 {grid-area: 2 / 3 / 3 / 4;}
+                &#c5 {grid-area: 2 / 4 / 3 / 5;}
+            }
+        }
+    }
+
+    .button {
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: var(--text-color);
+        border-radius: 5px;
+        padding: 10px;
+        margin: 3px;
+        font-size: var(--font-size-base);
+        position: relative;
+
+        .material-symbols-outlined {
+            font-size: 1.3em;
+            float: right;
+            margin-left: .2em;
+        }
     }
 
     main {

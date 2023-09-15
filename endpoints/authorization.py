@@ -145,7 +145,7 @@ def greeting():
         with open("chatgpt_greetings.txt", "r", encoding="utf-8") as f:
             greetings += f.read().split("\n")
     if not greetings:
-        greetings = ["Was bitte hast du gegen Begrüßungen?"]
+        greetings = ["Was bitte hast du gegen Begrüßungen? 😯"]
     random_greeting = choice(greetings).format(name=current_user.user["nickname"])
     return send_success(random_greeting)
 

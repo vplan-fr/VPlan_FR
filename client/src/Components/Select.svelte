@@ -17,7 +17,7 @@
 
 <div class="select-wrapper">
     <Dropdown let:toggle small_version={true} transform_origin="100% 0%">
-        <button  type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
+        <button type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
             {#if selected_elem}
                 {data[selected_elem]["name"]}
             {:else}
