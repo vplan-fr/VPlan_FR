@@ -81,6 +81,12 @@ export async function customFetch(url, options = {}) {
             }
             return data.data === undefined ? {} : data.data;
         })
+        .catch(error => {
+            if (error.name === "TypeError" && error.message === "NetworkError when attempting to fetch resource.") {
+                throw new Error("Ein Netzwerkfehler ist aufgetreten");
+            }
+            throw error;
+        })
 }
 
 
