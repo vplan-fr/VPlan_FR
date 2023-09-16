@@ -3,13 +3,22 @@
 
     export let id;
     let dialog;
+    let open = false;
 
-    function toggle_modal(showModal) {
-        if($active_modal === id) {
-            document.documentElement.style.top = `-${window.scrollY}px`;
-            document.documentElement.style.position = 'fixed';
+    function scrollbar_visible() {
+        return document.documentElement.scrollHeight > document.documentElement.clientHeight;
+    }
+
+    function toggle_modal(active_modal) {
+        if(active_modal === id) {
+            open = true;
+            if(scrollbar_visible()) {
+                document.documentElement.style.top = `-${window.scrollY}px`;
+                document.documentElement.style.position = 'fixed';
+            }
             dialog.showModal();
-        } else { 
+        } else if (open) {
+            open = false;
             dialog.close();
             const scrollY = document.documentElement.style.top;
             document.documentElement.style.position = '';
@@ -22,7 +31,7 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
-<dialog bind:this={dialog} on:click|self={() => {$active_modal = ""}}>
+<dialog bind:this={dialog} on:close={() => {$active_modal = ""}} on:click|self={() => {dialog.close()}}>
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div on:click|stopPropagation class="content-scroll">
         <slot />

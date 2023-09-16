@@ -189,11 +189,11 @@
 {/if}
 
 <Settings />
+<Changelog />
 
 <main>
     {#if $logged_in}
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
-            <Changelog></Changelog>
             <h1 class="responsive-heading">{greeting}</h1>
             <div class="controls-wrapper">
                 <div class="control" id="c1">
