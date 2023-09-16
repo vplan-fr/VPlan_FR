@@ -5,6 +5,7 @@ import re
 import pymongo
 from bson import ObjectId
 from werkzeug.security import safe_join
+from copy import deepcopy
 import contextlib
 import hashlib
 
@@ -66,7 +67,7 @@ class User(UserMixin):
 
     def get_settings(self):
         self.get_user()
-        cur_settings = DEFAULT_SETTINGS
+        cur_settings = deepcopy(DEFAULT_SETTINGS)
         user_settings = self.user.get("settings", {})
         for setting, value in user_settings.items():
             cur_settings[setting] = value

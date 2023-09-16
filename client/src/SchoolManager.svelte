@@ -26,6 +26,7 @@
     let authorized_school_ids = [];
     let school_auth_visible = false;
     let is_admin = false;
+    let schools_arr = [];
 
     function get_schools() {
         customFetch("/api/v69.420/schools")
@@ -95,6 +96,16 @@
             }
         );
     }
+
+    function update_schools_arr(schools) {
+        schools_arr = [];
+        for(let [school_id, content] of Object.entries(schools)) {
+            schools_arr.push({"id": school_id, "name": content["name"], "icon": content["icon"]});
+        }
+    }
+
+    $: console.log(schools);
+    $: update_schools_arr(schools);
 </script>
 
 <main>
@@ -114,7 +125,7 @@
         }}>
         <h1 class="responsive-heading">Schulauswahl</h1>
         <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
-        <Select data={schools} icon_location="/base_static/images/school_icons" bind:selected_elem={authorize_school_id}>Schule auswählen</Select>
+        <Select data={schools_arr} icon_location="/base_static/images/school_icons" bind:selected_id={authorize_school_id}>Schule auswählen</Select>
         <button class="button" type="submit">Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></button>
     </form>
     {:else}

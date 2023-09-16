@@ -48,7 +48,7 @@
             if (data !== "undefined" && data) {
                 data = JSON.parse(data);
                 rooms_data = data["rooms"];
-                if (plan_type !== "free_rooms") {
+                if (plan_type !== "room_overview") {
                     all_lessons = data["plans"][plan_type][entity] || [];
                 }
                 info = data["info"];
@@ -75,7 +75,7 @@
                     }
                 }
                 rooms_data = data["rooms"]
-                if (plan_type !== "free_rooms") {
+                if (plan_type !== "room_overview") {
                     all_lessons = data["plans"][plan_type][entity] || [];
                 }
                 info = data["info"];
@@ -214,7 +214,7 @@
     $: preferences_apply, lessons = render_lessons(all_lessons);
 </script>
 
-{#if plan_type !== "free_rooms"}
+{#if plan_type !== "room_overview"}
 <div class="plan" class:extra-height={extra_height}>
     {#if show_title && info}
         {#if plan_type === "forms" && (plan_value in $preferences)}

@@ -16,13 +16,18 @@
     let allItems = [];
     let selection = {};
     let current_form_preferences = [];
-    let select_dict = {};
+    let select_arr = [];
 
-    function create_select_dict(grouped_forms) {
-        for (const [form_groups, forms] of Object.entries(grouped_forms)) {
-            for (const [form_group, form] of Object.entries(forms)) {
-                select_dict[form] = {"name": form, id: form};
+    // [("Überschrift", [{id: "", name: "", icon: ""}, {}]), (...)]
+
+    function create_select_arr(grouped_forms) {
+        select_arr = []
+        for (const [form_group, forms] of Object.entries(grouped_forms)) {
+            let converted_forms = [];
+            for(let form of forms) {
+                converted_forms.push({"id": form, "name": form});
             }
+            select_arr.push([form_group, converted_forms]);
         }
     }
 
@@ -134,31 +139,12 @@
         title.set("Unterricht wählen");
     });
 
-    $: create_select_dict(grouped_forms)
+    $: create_select_arr(grouped_forms)
     $: selected_form, updateCourses();
 </script>
 
 <h1 class="responsive-heading">Unterrichtswahl</h1>
-<div>
-    <Select data={select_dict} bind:selected_elem={selected_form}>Klasse auswählen</Select>
-    <!-- <select name="forms" bind:value={selected_form} on:change={updateCourses}>
-        {#each Object.entries(grouped_forms) as [form_group, forms]}
-            <optgroup label={form_group}>
-                {#each forms as form}
-                    <option value="{form}">{form}</option>
-                {/each}
-            </optgroup>
-        {/each}
-    </select>
-</div>
-<div>
-    {#if selected_form != null}
-        <button on:click={select_all} class="button">Alle auswählen</button>
-        <button on:click={select_none} class="button">Nichts auswählen</button>-->
-        <!--<button on:click={reverse_selection}>Auswahl invertieren</button>-->
-        <!--<br>
-    {/if}-->
-</div>
+<Select data={select_arr} grouped={true} bind:selected_id={selected_form}>Klasse auswählen</Select>
 {#if selected_form != null}
     <ul class="responsive-text">
         {#each Object.entries(class_groups_by_subject).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}

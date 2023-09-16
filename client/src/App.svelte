@@ -14,6 +14,7 @@
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
     import Changelog from "./Changelog.svelte";
+    import Select from "./Components/Select.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -176,7 +177,7 @@
                 if (curr_hours >= 18 || curr_hours < 4) {
                     emoji = "😴";
                     if(curr_day === 5 || curr_day === 6) {
-                        emoji = choose(["🕺", "💃", "🎉", "🎊", "🍹", "🍕", "🎮", "🎧"]);
+                        emoji = choose(["🕺", "💃", "🎮", "🎧"]);
                     }
                 }
                 greeting = `${emoji} ${data}`;
@@ -190,6 +191,47 @@
         $active_modal = "";
     }
 
+    function set_plan(new_plan_type, new_plan_value) {
+        plan_type = new_plan_type;
+        plan_value = new_plan_value;
+        ("forms" !== plan_type) && (selected_form = null);
+        ("teachers" !== plan_type) && (selected_teacher = null);
+        ("rooms" !== plan_type) && (selected_room = null);
+    }
+
+    let form_arr = [];
+    let teacher_arr = [];
+    let room_arr = [];
+
+    function gen_form_arr(grouped_forms) {
+        form_arr = [];
+        for (const [form_group, forms] of Object.entries(grouped_forms)) {
+            let converted_forms = [];
+            for(let form of forms) {
+                converted_forms.push({"id": form, "name": form});
+            }
+            form_arr.push([form_group, converted_forms]);
+        }
+    }
+    
+    function gen_teacher_arr(teacher_list) {
+        teacher_arr = [];
+        for(let teacher of teacher_list) {
+            teacher_arr.push({"id": teacher, "name": teacher});
+        }
+    }
+    
+    function gen_room_arr(grouped_rooms) {
+        room_arr = [];
+        for (let room_group of grouped_rooms) {
+            let converted_rooms = [];
+            for(let room of room_group[1]) {
+                converted_rooms.push({"id": room, "name": room});
+            }
+            room_arr.push([room_group[0], converted_rooms]);
+        }
+    }
+
     $: $logged_in && get_settings();
     $: $logged_in && get_meta(api_base);
     $: $logged_in && update_disabled_dates(enabled_dates);
@@ -197,6 +239,12 @@
     $: !$logged_in && close_modal();
     $: school_num, $logged_in && get_preferences();
     $: update_colors($settings);
+    $: selected_form && set_plan("forms", selected_form);
+    $: gen_form_arr(grouped_forms);
+    $: selected_teacher && set_plan("teachers", selected_teacher);
+    $: gen_teacher_arr(teacher_list);
+    $: selected_room && set_plan("rooms", selected_room);
+    $: gen_room_arr(grouped_rooms);
 </script>
 
 <svelte:head>
@@ -215,6 +263,7 @@
         {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
             <h1 class="responsive-heading">{greeting}</h1>
             <div class="controls-wrapper">
+                <!-- Datepicker -->
                 <div class="control" id="c1">
                     <DatePicker
                         format="%Y-%m-%d"
@@ -228,61 +277,31 @@
                         }}
                     />
                 </div>
+                <!-- Select Form -->
                 <div class="control" id="c2">
-                    <div class="input-field">
-                        <select bind:value={selected_form}
-                            on:change={() => {plan_type = 'forms'; plan_value = selected_form}}>
-                            {#each Object.entries(grouped_forms) as [form_group, forms]}
-                                <optgroup label={form_group}>
-                                    {#each forms as form}
-                                        <option value="{form}">{form}</option>
-                                    {/each}
-                                </optgroup>
-                            {/each}
-                        </select>
-                    </div>
+                    <Select data={form_arr} grouped={true} bind:selected_id={selected_form}>Klasse auswählen</Select>
                 </div>
+                <!-- Select Teacher -->
                 <div class="control" id="c3">
-                    <div class="input-field">
-                        <select bind:value={selected_teacher}
-                            on:change={() => {plan_type = 'teachers'; plan_value = selected_teacher}}>
-                            {#each teacher_list as teacher}
-                                <option value={teacher}>{teacher}</option>
-                            {/each}
-                        </select>
-                    </div>
+                    <Select data={teacher_arr} bind:selected_id={selected_teacher}>Lehrer auswählen</Select>
                 </div>
+                <!-- Select Room -->
                 <div class="control" id="c4">
-                    <div class="input-field">
-                        <select bind:value={selected_room}
-                            on:change={() => {plan_type = 'rooms'; plan_value = selected_room}}>
-                            {#each grouped_rooms as [category, rooms]}
-                                <optgroup label={category}>
-                                    {#each rooms as room}
-                                        <option value="{room}">{room}</option>
-                                    {/each}
-                                </optgroup>
-                            {/each}
-                        </select>
-                    </div>
+                    <Select data={room_arr} grouped={true} bind:selected_id={selected_room}>Raum auswählen</Select>
                 </div>
+                <!-- Show room overview -->
                 <div class="control" id="c5">
                     <button class="button" on:click={() => {
-                        plan_type = "free_rooms";
-                        plan_value = "";
+                        set_plan("room_overview", "");
                     }}>Raumübersicht</button>
                 </div>
-                <div class="" id="c5">
-                    <div class="input-field">
-                        <select bind:value={selected_revision}
-                                on:change={() => {}}>
-                                    {#each all_revisions as revision}
-                                        <option value="{revision}">{format_revision_date(revision)}</option>
-                                    {/each}
-                        </select>
-                    </div>
-                </div>
             </div>
+            <select bind:value={selected_revision}
+                    on:change={() => {}}>
+                        {#each all_revisions as revision}
+                            <option value="{revision}">{format_revision_date(revision)}</option>
+                        {/each}
+            </select>
             {#if $current_page.substring(0, 4) === "plan"}
                 <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision/>
             {:else}
