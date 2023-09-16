@@ -128,7 +128,12 @@
 
                     :global(img) {
                         width: 40%;
-                        margin: 10px 0px;
+                        margin: 10px 0;
+                    }
+                    
+                    :global(img[alt=center]) {
+                        margin: 10px auto;
+                        display: block;
                     }
 
                     :global(h1) {
