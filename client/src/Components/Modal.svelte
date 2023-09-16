@@ -97,6 +97,7 @@
         justify-content: flex-end;
         padding: 10px;
         background: rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
     }
 
 </style>

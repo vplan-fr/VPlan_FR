@@ -382,7 +382,7 @@
         }
     }
     :global {
-        ul {
+        ul, ol {
             padding-left: 40px !important;
             @media only screen and (max-width: 1501px) {
                 padding-left: 22px !important;

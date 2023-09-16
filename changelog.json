@@ -1,7 +1,14 @@
 [
-  "Changelog hinzugefügt",
-  "Testnachricht 1",
-  "Testnachricht 2",
-  "Testnachricht 3",
-  "Testnachricht 4"
+    {
+        "title": "Der neue V­Plan",
+        "version": "2.0.0",
+        "content": "WoooOoOOooOooOooooo",
+        "date": "16.09.2023"
+    },
+    {
+        "title": "Testtitel",
+        "version": "2.0.1",
+        "content": "~~Dies~~ *ist* **eine** Testnachricht\n\n> Blockquote\n---\n1. first item\n2. second item\n3. third item\n---\n- unordered list\n- woo\n- woo\ninline `inline code` code\n\n```js\ntest\nvar test = 0;\n```\n\n[Link title](https://example.com)\n\n![alt text](/base_static/images/better_vp.svg)\n\n# Überschrift\nyayy\nwoo\n\n# Zweite Überschrift\nwojoawjdasodjasasd asd asd a a a a dkas sald haskjdh a\najsdklasdjad asdasdasd as dka dksadjasd\n\n---\n\n| Month    | Savings | Savings |\n| -------- |:-------:| ------- |\n| January  | $250    | asdasd  |\n| February | $80     | asdasd  |\n| March    | $420    | asdasd  |",
+        "date": "16.09.2023"
+    }
 ]
