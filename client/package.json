@@ -23,6 +23,7 @@
   "dependencies": {
     "attractions": "^3.7.0",
     "postcss": "^8.4.24",
-    "sirv-cli": "^2.0.0"
+    "sirv-cli": "^2.0.0",
+    "svelte-markdown": "^0.4.0"
   }
 }
