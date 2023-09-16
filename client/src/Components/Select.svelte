@@ -2,42 +2,75 @@
     import Dropdown from "./Dropdown.svelte";
 
     export let data = [];
-    export let selected_elem;
-    export let icon_location;
+    export let selected_elem = null;
+    export let selected_id = null;
+    export let icon_location = null;
+    export let grouped = false;
+
+    function update_selected_id() {
+        selected_id = selected_elem["id"];
+    }
+
+    $: selected_elem && update_selected_id();
 </script>
 
 <!-- Preloading Icons -->
 <svelte:head>
     {#if icon_location}
-    {#each Object.entries(data) as elem}
-        <link rel="preload" as="image" href="{icon_location}/{elem[1]["icon"]}" />
-    {/each}
+        {#each data as elem}
+            {#if grouped}
+                {#each elem[1] as element}
+                    <link rel="preload" as="image" href="{icon_location}/{element["icon"]}" />
+                {/each}
+            {:else}
+                <link rel="preload" as="image" href="{icon_location}/{elem["icon"]}" />
+            {/if}
+        {/each}
     {/if}
 </svelte:head>
 
 <div class="select-wrapper">
     <Dropdown let:toggle small_version={true} transform_origin="100% 0%">
         <button type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
-            {#if selected_elem}
-                {data[selected_elem]["name"]}
+            {#if selected_elem && selected_id}
+                {selected_elem["name"]}
             {:else}
                 <slot></slot>
             {/if}
             <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
         </button>
-    
-        {#each Object.entries(data) as elem}
-            <button type="button" class="select-option {icon_location ? "" : "no_icons"}" on:click={() => {selected_elem = elem[0]}}>
-                {elem[1]["name"]}
-                {#if icon_location}
-                    <img src="{icon_location}/{elem[1]["icon"]}" alt="Schul-Logo" class="school-logo">
-                {/if}
-            </button>
+
+        {#each data as elem}
+            {#if grouped}
+                <span class="heading">{elem[0]}</span>
+                {#each elem[1] as element}
+                    <button type="button" class="select-option indented {icon_location ? "" : "no_icons"}" on:click={() => {selected_elem = element}}>
+                        {element["name"]}
+                        {#if icon_location}
+                            <img src="{icon_location}/{element["icon"]}" alt="Schul-Logo" class="school-logo">
+                        {/if}
+                    </button>
+                {/each}
+            {:else}
+                <button type="button" class="select-option {icon_location ? "" : "no_icons"}" on:click={() => {selected_elem = elem}}>
+                    {elem["name"]}
+                    {#if icon_location}
+                        <img src="{icon_location}/{elem["icon"]}" alt="Schul-Logo" class="school-logo">
+                    {/if}
+                </button>
+            {/if}
         {/each}
     </Dropdown>
 </div>
 
 <style lang="scss">
+    .heading {
+        display: block;
+        font-weight: 700;
+        padding: 15px;
+        font-size: var(--font-size-md);
+    }
+
     .dropdown-arrow {
         display: block;
         transition: transform .2s ease;
@@ -97,6 +130,10 @@
             border-radius: 5px;
             aspect-ratio: 1;
             object-fit: contain;
+        }
+
+        &.indented {
+            padding-left: 40px;
         }
     }
 </style>
