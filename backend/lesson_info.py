@@ -102,6 +102,8 @@ class SerializeMixin:
         def convert(obj: typing.Any) -> typing.Any:
             if isinstance(obj, datetime.date):
                 return obj.isoformat()
+            elif isinstance(obj, set):
+                return sorted(obj)
             else:
                 return obj
 
@@ -126,20 +128,21 @@ def de_weekday_to_str(weekday: int) -> str:
 class ParsedLessonInfoMessage(abc.ABC):
     before: str
     after: str
+    plan_type: typing.Literal["forms", "teachers", "rooms", None]
     original_messages: list[str]
 
     @abc.abstractmethod
     def serialize(self) -> dict[str, typing.Any]:
         ...
 
-    def to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
+    def to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
         return [
             *([LessonInfoTextSegment(self.before)] if self.before else []),
-            *self._to_text_segments(lesson_date, lesson),
+            *self._to_text_segments(lesson_date),
             *([LessonInfoTextSegment(self.after)] if self.after else [])
         ]
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment("\n".join(self.original_messages))
         ]
@@ -147,19 +150,21 @@ class ParsedLessonInfoMessage(abc.ABC):
 
 @dataclasses.dataclass
 class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
+    plan_type: typing.Literal["forms", "teachers", "rooms"]
+    plan_value: set[str]
     periods: list[int]
     date: datetime.date | None
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
-        # TODO: Fallback when len(periods) == 1
+    def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
+        # TODO: Fallback when len(periods) == 1?
         if self.date is None:
             return [
                 LessonInfoTextSegment("verlegt von "),
                 LessonInfoTextSegment(
                     f"Block {periods_to_block_label(self.periods)}",
                     link=LessonInfoTextSegmentLink(
-                        type="forms",
-                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
+                        type=self.plan_type,
+                        value=sorted(self.plan_value),
                         date=lesson_date,
                         periods=self.periods
                     )
@@ -172,8 +177,8 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
-                        type="forms",
-                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
+                        type=self.plan_type,
+                        value=sorted(self.plan_value),
                         date=self.date,
                         periods=self.periods
                     )
@@ -181,31 +186,54 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
             ]
 
     def is_groupable(self, other: MovedFrom):
-        return self.before == other.before and self.after == other.after and self.date == other.date
-
-
-class _HasTeachersAndCourse(ParsedLessonInfoMessage, abc.ABC):
-    _teachers: list[str]
-    course: str
+        return (
+                self.before == other.before and
+                self.after == other.after and
+                self.date == other.date and
+                self.plan_type == other.plan_type
+        )
 
 
 @dataclasses.dataclass
-class MovedTo(SerializeMixin, _HasTeachersAndCourse):
+class AbstractParsedLessonInfoMessageWithCourseInfo(ParsedLessonInfoMessage, abc.ABC):
     course: str
-    _teachers: list[str]
+    # _teachers: list[str]
+    # teachers: list[str] = dataclasses.field(init=False, default=None)
+
+    plan_type: typing.Literal["forms", "teachers"]
+    # other info to display:  teacher  form
+    plan_value: set[str]
+
+    other_info_value: set[str] | None  # None if teacher abbreviations are not yet resolved
+
+    _teachers: set[str] = dataclasses.field(default=None, kw_only=True)
+
+    @property
+    def other_info_type(self):
+        return {"forms": "teachers", "teachers": "forms"}[self.plan_type]
+
+    @property
+    def original_other_info_value(self):
+        if self._teachers:
+            return self._teachers
+        else:
+            return self.other_info_value
+
+
+@dataclasses.dataclass
+class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
     date: datetime.date | None
     periods: list[int]
-    teachers: list[str] = dataclasses.field(init=False, default=None)
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
         if self.date is None:
             return [
                 LessonInfoTextSegment(f"{self.course} "),
                 LessonInfoTextSegment(
                     f"{', '.join(self._teachers)}",
                     link=LessonInfoTextSegmentLink(
-                        type="teachers",
-                        value=self.teachers,
+                        type=self.other_info_type,
+                        value=sorted(self.original_other_info_value),
                         date=lesson_date,
                         periods=self.periods
                     )
@@ -214,8 +242,8 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                 LessonInfoTextSegment(
                     f"Block {periods_to_block_label(self.periods)}",
                     link=LessonInfoTextSegmentLink(
-                        type="forms",
-                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
+                        type=self.plan_type,
+                        value=sorted(self.plan_value),
                         date=lesson_date,
                         periods=self.periods
                     )
@@ -227,8 +255,8 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                 LessonInfoTextSegment(
                     f"{', '.join(self._teachers)}",
                     link=LessonInfoTextSegmentLink(
-                        type="teachers",
-                        value=self.teachers,
+                        type=self.other_info_type,
+                        value=sorted(self.original_other_info_value),
                         date=self.date,
                         periods=self.periods
                     )
@@ -238,8 +266,8 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
-                        type="forms",
-                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
+                        type=self.plan_type,
+                        value=sorted(self.plan_value),
                         date=self.date,
                         periods=self.periods
                     )
@@ -251,8 +279,8 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                 LessonInfoTextSegment(
                     f"{', '.join(self._teachers)}",
                     link=LessonInfoTextSegmentLink(
-                        type="teachers",
-                        value=self.teachers,
+                        type=self.other_info_type,
+                        value=sorted(self.original_other_info_value),
                         date=self.date,
                         periods=self.periods
                     )
@@ -262,8 +290,8 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
-                        type="forms",
-                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
+                        type=self.plan_type,
+                        value=sorted(self.plan_value),
                         date=self.date,
                         periods=self.periods
                     )
@@ -272,49 +300,46 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
 
     def is_groupable(self, other: MovedTo):
         return (
-                self.course == other.course
-                and set(self._teachers) == set(other._teachers)
-                and self.date == other.date
+                self.course == other.course and
+                self.original_other_info_value == other.original_other_info_value and
+                self.date == other.date and
+                self.plan_type == other.plan_type
         )
 
 
 @dataclasses.dataclass
-class InsteadOfCourse(SerializeMixin, _HasTeachersAndCourse):
-    course: str
-    _teachers: list[str]
-    teachers: list[str] = dataclasses.field(init=False, default=None)
+class InsteadOfCourse(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
+    periods: set[int]
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(f"für {self.course} "),
             LessonInfoTextSegment(
-                f"{', '.join(self._teachers)}",
+                f"{', '.join(self.original_other_info_value)}",
                 link=LessonInfoTextSegmentLink(
-                    type="teachers",
-                    value=self.teachers,
+                    type=self.other_info_type,
+                    value=sorted(self.other_info_value),
                     date=lesson_date,
-                    periods=sorted(lesson.periods)
+                    periods=sorted(self.periods)
                 )
             )
         ]
 
 
 @dataclasses.dataclass
-class Cancelled(SerializeMixin, _HasTeachersAndCourse):
-    course: str
-    _teachers: list[str]
-    teachers: list[str] = dataclasses.field(init=False, default=None)
+class Cancelled(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
+    periods: set[int]
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(f"{self.course} "),
             LessonInfoTextSegment(
-                f"{', '.join(self._teachers)}",
+                f"{', '.join(self.original_other_info_value)}",
                 link=LessonInfoTextSegmentLink(
-                    type="teachers",
-                    value=self.teachers,
+                    type=self.other_info_type,
+                    value=sorted(self.other_info_value),
                     date=lesson_date,
-                    periods=sorted(lesson.periods)
+                    periods=sorted(self.periods)
                 )
             ),
             LessonInfoTextSegment(" fällt aus")
@@ -323,39 +348,44 @@ class Cancelled(SerializeMixin, _HasTeachersAndCourse):
 
 @dataclasses.dataclass
 class DoIndependently(SerializeMixin, ParsedLessonInfoMessage):
-    pass
+    plan_type: str = dataclasses.field(init=False, default="forms")
 
 
 @dataclasses.dataclass
 class TasksInLernsax(SerializeMixin, ParsedLessonInfoMessage):
-    pass
+    plan_type: str = dataclasses.field(init=False, default="forms")
 
 
 @dataclasses.dataclass
 class TasksWereGiven(SerializeMixin, ParsedLessonInfoMessage):
-    pass
+    plan_type: str = dataclasses.field(init=False, default="forms")
 
 
 @dataclasses.dataclass
 class DoAtLocation(SerializeMixin, ParsedLessonInfoMessage):
     location: str
+    plan_type: str = dataclasses.field(init=False, default="forms")
 
 
 @dataclasses.dataclass
 class IndividualRevision(SerializeMixin, ParsedLessonInfoMessage):
     location: str | None
+    plan_type: str = dataclasses.field(init=False, default="forms")
 
 
 @dataclasses.dataclass
 class Exam(SerializeMixin, ParsedLessonInfoMessage):
     last_name: str
+    plan_type = None
 
 
 @dataclasses.dataclass
 class WholeForm(SerializeMixin, ParsedLessonInfoMessage):
     form: str
+    periods: set[int]
+    plan_type = None
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(f"gesamte "),
             LessonInfoTextSegment(
@@ -364,7 +394,7 @@ class WholeForm(SerializeMixin, ParsedLessonInfoMessage):
                     type="forms",
                     value=[self.form],
                     date=lesson_date,
-                    periods=sorted(lesson.periods)
+                    periods=sorted(self.periods)
                 )
             )
         ]
@@ -372,7 +402,9 @@ class WholeForm(SerializeMixin, ParsedLessonInfoMessage):
 
 @dataclasses.dataclass
 class FailedToParse(SerializeMixin, ParsedLessonInfoMessage):
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
+    plan_type = None
+
+    def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(", ".join(self.original_messages))
         ]
@@ -403,49 +435,68 @@ def resolve_teacher_abbreviations(surnames: list[str], abbreviation_by_surname: 
     return [abbreviation_by_surname.get(surname, surname) for surname in surnames]
 
 
-def __parse_message(info: str, plan_year: int) -> tuple[ParsedLessonInfoMessage, re.Match | None]:
+def __parse_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoMessage, re.Match | None]:
     if match := _InfoParsers.substitution.search(info):
         return InsteadOfCourse(
-            match.group("course"),
-            teachers := match.group("teachers").split(","),
-            # resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname)
+            plan_type="forms",
+            plan_value=lesson.forms,
+            course=match.group("course"),
+            other_info_value=None,
+            periods=lesson.periods,
+            _teachers=set(match.group("teachers").split(",")),
         ), match
     elif match := _InfoParsers.moved_from.search(info):
-        return MovedFrom([int(match.group("period_begin"))], None), match
+        return MovedFrom(
+            plan_type="forms",
+            plan_value=lesson.forms,
+            periods=[int(match.group("period_begin"))],
+            date=None
+        ), match
     elif match := _InfoParsers.instead_of.search(info):
         return MovedFrom(
-            parse_periods(match.group("periods")),
-            datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date()
+            plan_type="forms",
+            plan_value=lesson.forms,
+            periods=parse_periods(match.group("periods")),
+            date=datetime.datetime.strptime(f'{match.group("date")}{lesson._lesson_date.year}', "%d.%m.%Y").date()
         ), match
     elif match := _InfoParsers.held_at.search(info):
         return MovedTo(
-            match.group("course"),
-            teachers := match.group("teachers").split(","),
-            # resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname),
-            datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
-            parse_periods(match.group("periods"))
+            plan_type="forms",
+            plan_value=lesson.forms,
+            course=match.group("course"),
+            _teachers=set(match.group("teachers").split(",")),
+            other_info_value=None,
+            date=datetime.datetime.strptime(f'{match.group("date")}{lesson._lesson_date.year}', "%d.%m.%Y").date(),
+            periods=parse_periods(match.group("periods"))
         ), match
     elif match := _InfoParsers.moved_to.search(info):
         return MovedTo(
-            match.group("course"),
-            teachers := match.group("teachers").split(","),
-            # resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname),
-            None,
-            parse_periods(match.group("periods"))
+            plan_type="forms",
+            plan_value=lesson.forms,
+            course=match.group("course"),
+            _teachers=set(match.group("teachers").split(",")),
+            other_info_value=None,
+            date=None,
+            periods=parse_periods(match.group("periods")),
         ), match
     elif match := _InfoParsers.moved_to_date.search(info):
         return MovedTo(
-            match.group("course"),
-            teachers := match.group("teachers").split(","),
-            # resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname),
-            datetime.datetime.strptime(f'{match.group("date")}{plan_year}', "%d.%m.%Y").date(),
-            parse_periods(match.group("periods"))
+            plan_type="forms",
+            plan_value=lesson.forms,
+            course=match.group("course"),
+            _teachers=set(match.group("teachers").split(",")),
+            other_info_value=None,
+            date=datetime.datetime.strptime(f'{match.group("date")}{lesson._lesson_date.year}', "%d.%m.%Y").date(),
+            periods=parse_periods(match.group("periods")),
         ), match
     elif match := _InfoParsers.cancelled.search(info):
         return Cancelled(
-            match.group("course"),
-            teachers := match.group("teachers").split(","),
-            # resolve_teacher_abbreviations(teachers, teacher_abbreviation_by_surname)
+            plan_type="forms",
+            plan_value=lesson.forms,
+            course=match.group("course"),
+            _teachers=set(match.group("teachers").split(",")),
+            other_info_value=None,
+            periods=lesson.periods,
         ), match
     elif match := _InfoParsers.exam.search(info):
         return Exam(match.group("last_name")), match
@@ -454,7 +505,10 @@ def __parse_message(info: str, plan_year: int) -> tuple[ParsedLessonInfoMessage,
     elif match := _InfoParsers.individual_revision.search(info):
         return IndividualRevision(match.groupdict(None)["location"]), match
     elif match := _InfoParsers.whole_form.search(info):
-        return WholeForm(match.group("form").replace(" ", "")), match
+        return WholeForm(
+            form=match.group("form").replace(" ", ""),
+            periods=lesson.periods
+        ), match
     elif match := _InfoParsers.independent.search(info):
         return DoIndependently(), match
     elif match := _InfoParsers.tasks_in_lernsax.search(info):
@@ -465,10 +519,10 @@ def __parse_message(info: str, plan_year: int) -> tuple[ParsedLessonInfoMessage,
         return FailedToParse(), None
 
 
-def _parse_message(info: str, plan_year: int) -> ParsedLessonInfoMessage:
+def _parse_message(info: str, lesson: models.Lesson) -> ParsedLessonInfoMessage:
     info = info.strip()
     info = re.sub(r"(?<=\w)/ ", "/", info)  # remove spaces after slashes like in G/ R/ W
-    parsed_info, match = __parse_message(info, plan_year)
+    parsed_info, match = __parse_message(info, lesson)
 
     if match is not None:
         parsed_info.original_messages = [info[match.start():match.end()]]
@@ -512,21 +566,21 @@ class LessonInfoMessage:
     index: int
 
     @classmethod
-    def from_str(cls, message: str, plan_year: int, index: int) -> LessonInfoMessage:
-        parsed = _parse_message(message, plan_year)
+    def from_str(cls, message: str, lesson: models.Lesson, index: int) -> LessonInfoMessage:
+        parsed = _parse_message(message, lesson)
 
         return cls(
             parsed=parsed,
             index=index
         )
 
-    def serialize(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> dict:
+    def serialize(self, lesson_date: datetime.date) -> dict:
         return {
             "parsed": (
                 self.parsed.serialize()
                 if not isinstance(self.parsed, FailedToParse) else None
             ),
-            "text_segments": [segment.serialize() for segment in self.parsed.to_text_segments(lesson_date, lesson)]
+            "text_segments": [segment.serialize() for segment in self.parsed.to_text_segments(lesson_date)]
         }
 
 
@@ -536,9 +590,9 @@ class LessonInfoParagraph:
     index: int
 
     @classmethod
-    def from_str(cls, paragraph: str, plan_year: int, index: int) -> LessonInfoParagraph:
+    def from_str(cls, paragraph: str, lesson: models.Lesson, index: int) -> LessonInfoParagraph:
         messages = [
-            LessonInfoMessage.from_str(message.strip(), plan_year, i)
+            LessonInfoMessage.from_str(message.strip(), lesson, i)
             for i, message in enumerate(paragraph.split(","))
         ]
         new_messages = []
@@ -555,8 +609,8 @@ class LessonInfoParagraph:
 
         return cls(new_messages, index=index)
 
-    def serialize(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list:
-        return [info.serialize(lesson_date, lesson) for info in self.messages]
+    def serialize(self, lesson_date: datetime.date) -> list:
+        return [info.serialize(lesson_date) for info in self.messages]
 
     def sorted(self, key: typing.Callable[[LessonInfoMessage], typing.Any]) -> LessonInfoParagraph:
         return LessonInfoParagraph(sorted(self.messages, key=key), self.index)
@@ -570,14 +624,14 @@ class ParsedLessonInfo:
     paragraphs: list[LessonInfoParagraph]
 
     @classmethod
-    def from_str(cls, info: str, plan_year: int) -> ParsedLessonInfo:
+    def from_str(cls, info: str, lesson: models.Lesson) -> ParsedLessonInfo:
         return cls([
-            LessonInfoParagraph.from_str(paragraph.strip(), plan_year, i)
+            LessonInfoParagraph.from_str(paragraph.strip(), lesson, i)
             for i, paragraph in enumerate(info.split(";"))
         ])
 
-    def serialize(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list:
-        return [paragraph.serialize(lesson_date, lesson) for paragraph in self.paragraphs]
+    def serialize(self, lesson_date: datetime.date) -> list:
+        return [paragraph.serialize(lesson_date) for paragraph in self.paragraphs]
 
     def sorted(self, key: typing.Callable[[LessonInfoParagraph], typing.Any]) -> ParsedLessonInfo:
         return ParsedLessonInfo(sorted(self.paragraphs, key=key))
@@ -602,7 +656,7 @@ class ParsedLessonInfo:
         for paragraph in self.paragraphs:
             for message in paragraph.messages:
                 if hasattr(message.parsed, "_teachers"):
-                    message.parsed.teachers = resolve_teacher_abbreviations(
+                    message.parsed.other_info_value = resolve_teacher_abbreviations(
                         message.parsed._teachers,
                         teacher_abbreviation_by_surname
                     )
@@ -633,8 +687,13 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
 
     for paragraph in lesson.parsed_info.paragraphs:
         for message in paragraph.messages:
-            if isinstance(message.parsed, _HasTeachersAndCourse):
-                surname = message.parsed._teachers[0]
+            if (
+                    getattr(message.parsed, "other_info_value", -1) is None and
+                    hasattr(message.parsed, "course") and
+                    getattr(message.parsed, "_teachers", None) is not None
+            ):
+                # noinspection PyUnresolvedReferences
+                surname = next(iter(message.parsed._teachers))
                 course = message.parsed.course
 
                 if len(surname.split()) == 1:
