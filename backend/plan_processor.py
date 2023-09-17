@@ -13,7 +13,7 @@ from .vplan_utils import group_forms, ParsedForm
 
 
 class PlanProcessor:
-    VERSION = "55"
+    VERSION = "56"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -118,9 +118,15 @@ class PlanProcessor:
             )
 
             all_forms = self.meta_extractor.forms()
+            _teacher_abbreviation_by_surname = (
+                    {-i: t.abbreviation
+                     for i, t in enumerate(self.meta_extractor.teachers())}
+                    | self.teachers.abbreviation_by_surname()
+            )
             self.cache.store_plan_file(
                 date, timestamp,
-                json.dumps(plan_extractor.info_data([ParsedForm.from_str(f) for f in all_forms])),
+                json.dumps(plan_extractor.info_data([ParsedForm.from_str(f) for f in all_forms],
+                                                    _teacher_abbreviation_by_surname)),
                 "info.json"
             )
 
