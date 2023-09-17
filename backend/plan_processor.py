@@ -8,12 +8,12 @@ from . import schools
 from .cache import Cache
 from .plan_extractor import PlanExtractor
 from .meta_extractor import MetaExtractor
-from .models import Teachers, Lessons, Exam, Teacher
+from .models import Teachers, Exam, Teacher, PlanLesson
 from .vplan_utils import group_forms, ParsedForm
 
 
 class PlanProcessor:
-    VERSION = "53"
+    VERSION = "55"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -82,9 +82,20 @@ class PlanProcessor:
                     "rooms": plan_extractor.room_plan(),
                     "teachers": plan_extractor.teacher_plan(),
                     "forms": plan_extractor.form_plan()
-                }, default=Lessons.serialize),
+                }, default=PlanLesson.serialize),
                 "plans.json"
             )
+
+            # from .models import Lesson
+            # self.cache.store_plan_file(
+            #     date, timestamp,
+            #     json.dumps({
+            #         "rooms": plan_extractor.forms_lessons_grouped.group_by("rooms"),
+            #         "teachers": plan_extractor.forms_lessons_grouped.group_by("teachers"),
+            #         "forms": plan_extractor.forms_lessons_grouped.group_by("forms")
+            #     }, default=Lessons.serialize),
+            #     "_plans_raw.json"
+            # )
 
             self.cache.store_plan_file(
                 date, timestamp,

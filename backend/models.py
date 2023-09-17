@@ -17,102 +17,147 @@ from . import vplan_utils
 @dataclasses.dataclass
 class Lesson:
     periods: set[int]
+    begin: datetime.time | None
+    end: datetime.time | None
 
-    # None means we don't know
-    scheduled_forms: set[str]
-    scheduled_teachers: set[str] | None
-    scheduled_rooms: set[str] | None
-    scheduled_class: str | None
-
-    current_forms: set[str]
-    current_teachers: set[str]
-    current_rooms: set[str]
-    current_class: str | None  # is class group if available, then subject
-
-    # taken directly from plan xml
-    class_subject: str | None
-    class_group: str | None
-    class_teachers: set[str] | None
-    class_number: str | None
-
-    # taken directly from plan xml
-    subject_changed: bool
-    teacher_changed: bool
-    room_changed: bool
+    forms: set[str]
+    teachers: set[str] | None
+    rooms: set[str] | None
+    course: str | None  # class group if available else subject
 
     info: str
     parsed_info: ParsedLessonInfo
 
-    begin: datetime.time | None
-    end: datetime.time | None
+    # taken directly from plan xml
+    class_: ClassData | None
 
-    # different for different plan types
-    takes_place: bool | None = None
+    subject_changed: bool
+    teacher_changed: bool
+    room_changed: bool
+
+    is_scheduled: bool
+    takes_place: bool | None = None  # whether this lesson in its current form takes place
 
     is_internal: bool = False
+    _lesson_date: datetime.date = None
 
-    def serialize(self, lesson_date: datetime.date) -> dict:
-        return {
-            "periods": sorted(self.periods),
-            "scheduled_forms": sorted(self.scheduled_forms) if self.scheduled_forms else None,
-            "scheduled_forms_str": vplan_utils.forms_to_str(self.scheduled_forms) if self.scheduled_forms else None,
-            "scheduled_teachers": sorted(self.scheduled_teachers) if self.scheduled_teachers else None,
-            "scheduled_rooms": sorted(self.current_rooms) if self.scheduled_rooms else None,
-            "scheduled_class": self.scheduled_class,
-            "current_forms": sorted(self.current_forms),
-            "current_forms_str": vplan_utils.forms_to_str(self.current_forms),
-            "current_rooms": sorted(self.current_rooms),
-            "current_teachers": sorted(self.current_teachers),
-            "current_class": self.current_class,
-            "class_subject": self.class_subject,
-            "class_group": self.class_group,
-            "class_teachers": sorted(self.class_teachers) if self.class_teachers else None,
-            "class_number": self.class_number,
-            "subject_changed": self.subject_changed,
-            "teacher_changed": self.teacher_changed,
-            "room_changed": self.room_changed,
-            # "info": self.info,
-            "info": self.parsed_info.serialize(lesson_date, self),
-            "begin": self.begin.strftime("%H:%M") if self.begin else None,
-            "takes_place": self.takes_place,
-            "end": self.end.strftime("%H:%M") if self.end else None,
-        }
+    @property
+    def class_opt(self):
+        if self.class_ is None:
+            # noinspection PyTypeChecker
+            return ClassData(None, None, None, None)
+        else:
+            return self.class_
 
     @classmethod
     def create_internal(cls):
         return cls(
             periods=set(),
-            scheduled_forms=set(),
-            scheduled_teachers=None,
-            scheduled_rooms=None,
-            scheduled_class=None,
-            current_forms=set(),
-            current_teachers=set(),
-            current_rooms=set(),
-            current_class=None,
+            forms=set(),
+            teachers=None,
+            rooms=None,
+            course=None,
             info="",
             parsed_info=ParsedLessonInfo([]),
-            class_subject=None,
-            class_group=None,
-            class_teachers=None,
-            class_number=None,
+            class_=None,
             subject_changed=False,
             teacher_changed=False,
             room_changed=False,
             begin=None,
             end=None,
-            is_internal=True
+            takes_place=True,
+            is_internal=True,
+            is_scheduled=False,
+            _lesson_date=None,
         )
 
-    def with_takes_place(self, plan_type: typing.Literal["rooms", "forms", "teachers"], value: str) -> Lesson:
-        takes_place = value in getattr(self, f"current_{plan_type}")
-        return dataclasses.replace(self, takes_place=takes_place)
+    def serialize(self) -> dict:
+        return {
+            "periods": sorted(self.periods),
+            "forms": sorted(self.forms),
+            "teachers": sorted(self.teachers) if self.teachers is not None else None,
+            "rooms": sorted(self.rooms) if self.rooms is not None else None,
+            "course": self.course,
+            "begin": self.begin.strftime("%H:%M") if self.begin else None,
+            "end": self.end.strftime("%H:%M") if self.end else None,
+            "subject_changed": self.subject_changed,
+            "teacher_changed": self.teacher_changed,
+            "room_changed": self.room_changed,
+            "takes_place": self.takes_place,
+            "is_internal": self.is_internal,
+            "is_scheduled": self.is_scheduled,
+            "class_data": repr(self.class_),
+        }
+
+
+@dataclasses.dataclass
+class ClassData(indiware_mobil.Class):
+    number: str
+
+
+@dataclasses.dataclass
+class PlanLesson:
+    periods: set[int]
+    begin: datetime.time | None
+    end: datetime.time | None
+
+    # None means we don't know
+    scheduled_forms: set[str]
+    scheduled_teachers: set[str] | None
+    scheduled_rooms: set[str] | None
+    scheduled_course: str | None
+
+    current_forms: set[str]
+    current_teachers: set[str]
+    current_rooms: set[str]
+    current_course: str | None
+
+    class_number: str
+
+    subject_changed: bool
+    teacher_changed: bool
+    room_changed: bool
+    forms_changed: bool
+
+    info: str
+    parsed_info: ParsedLessonInfo
+
+    takes_place: bool | None = None
+
+    is_internal: bool = False
+    _lesson_date: datetime.date = None
+
+    def serialize(self) -> dict:
+        return {
+            "periods": sorted(self.periods),
+            "scheduled_forms": sorted(self.scheduled_forms) if self.scheduled_forms is not None else None,
+            "scheduled_forms_str": (
+                vplan_utils.forms_to_str(self.scheduled_forms) if self.scheduled_forms is not None else None
+            ),
+            "scheduled_teachers": sorted(self.scheduled_teachers) if self.scheduled_teachers is not None else None,
+            "scheduled_rooms": sorted(self.current_rooms) if self.current_rooms is not None else None,
+            "scheduled_class": self.scheduled_course,
+            "current_forms": sorted(self.current_forms),
+            "current_forms_str": vplan_utils.forms_to_str(self.current_forms),
+            "current_rooms": sorted(self.current_rooms) if self.current_rooms is not None else None,
+            "current_teachers": sorted(self.current_teachers) if self.current_teachers is not None else None,
+            "current_class": self.current_course,
+            "class_number": self.class_number,
+            "subject_changed": self.subject_changed,
+            "teacher_changed": self.teacher_changed,
+            "room_changed": self.room_changed,
+            "forms_changed": self.forms_changed,
+            # "info": self.info,
+            "info": self.parsed_info.serialize(self._lesson_date, self),
+            "begin": self.begin.strftime("%H:%M") if self.begin else None,
+            "takes_place": self.takes_place,
+            "end": self.end.strftime("%H:%M") if self.end else None,
+        }
 
 
 @dataclasses.dataclass
 class Lessons:
     lessons: list[Lesson]
-    date: datetime.date
 
     def group_by(self, *attributes: str, include_none: bool = False) -> dict[str, Lessons]:
         grouped_i = defaultdict(set)
@@ -132,17 +177,130 @@ class Lessons:
 
         grouped = {attribute: [self.lessons[i] for i in indices] for attribute, indices in grouped_i.items()}
 
-        return {attribute: Lessons(sorted(lessons, key=lambda x: list(x.periods)[0]), self.date)
+        return {attribute: Lessons(sorted(lessons, key=lambda x: list(x.periods)[0]))
                 for attribute, lessons in grouped.items()}
 
-    def with_takes_place(self, plan_type: typing.Literal["rooms", "forms", "teachers"], value: str) -> Lessons:
-        return Lessons(
-            [lesson.with_takes_place(plan_type, value) for lesson in self.lessons],
-            self.date
-        )
+    def to_plan_lessons(self) -> list[PlanLesson]:
 
-    def serialize(self) -> list[dict]:
-        return [lesson.serialize(self.date) for lesson in self.lessons]
+        lessons_by_periods: dict[frozenset[int], list[Lesson]] = defaultdict(list)
+        for lesson in self:
+            lessons_by_periods[frozenset(lesson.periods)].append(lesson)
+
+        out: list[PlanLesson] = []
+
+        for periods, lessons in lessons_by_periods.items():
+            scheduled_lessons = [lesson for lesson in lessons if lesson.is_scheduled]
+            used_scheduled_lessons = []
+            lessons.sort(key=lambda l: (
+                l.takes_place,
+                l.course if l.course else "",
+            ), reverse=True)
+
+            for current_lesson in lessons:
+                if current_lesson.is_scheduled:
+                    continue
+
+                # if len(scheduled_lessons) == 1 and scheduled_lessons[0].course is not None:
+                #     scheduled_lesson = scheduled_lessons[0]
+                # else:
+                for scheduled_lesson in scheduled_lessons:
+                    # if None is not scheduled_lesson.class_opt.number == current_lesson.class_opt.number is not None:
+                    #     break
+                    if (
+                            # scheduled_lesson.course is not None is not current_lesson.course and
+                            (scheduled_lesson.course != current_lesson.course) in (
+                    False, current_lesson.subject_changed)
+                    ):
+                        break
+                else:
+                    scheduled_lesson = None
+
+                if not current_lesson.takes_place:
+                    # try to find corresponding used scheduled lesson to drop this lesson
+                    found = False
+                    for used_scheduled_lesson in used_scheduled_lessons:
+                        if (
+                                used_scheduled_lesson.course == current_lesson.course and
+                                used_scheduled_lesson.teachers == current_lesson.teachers and
+                                used_scheduled_lesson.forms == current_lesson.forms
+                        ):
+                            found = True
+                            break
+
+                    if found:
+                        continue
+
+                if scheduled_lesson is not None:
+                    scheduled_lessons.remove(scheduled_lesson)
+                    used_scheduled_lessons.append(scheduled_lesson)
+
+                plan_lesson = PlanLesson(
+                    periods=set(periods),
+                    begin=current_lesson.begin,
+                    end=current_lesson.end,
+                    scheduled_forms=scheduled_lesson.forms if scheduled_lesson is not None else None,
+                    scheduled_teachers=scheduled_lesson.teachers if scheduled_lesson is not None else None,
+                    scheduled_rooms=scheduled_lesson.rooms if scheduled_lesson is not None else None,
+                    scheduled_course=scheduled_lesson.course if scheduled_lesson is not None else None,
+                    current_forms=current_lesson.forms,
+                    current_teachers=current_lesson.teachers,
+                    current_rooms=current_lesson.rooms,
+                    current_course=current_lesson.course,
+                    class_number=current_lesson.class_opt.number,
+                    subject_changed=current_lesson.subject_changed,
+                    teacher_changed=current_lesson.teacher_changed,
+                    room_changed=current_lesson.room_changed,
+                    forms_changed=current_lesson.forms != scheduled_lesson.forms if scheduled_lesson is not None else True,
+                    info=current_lesson.info,  # TODO
+                    parsed_info=current_lesson.parsed_info,
+                    takes_place=current_lesson.takes_place,
+                    is_internal=current_lesson.is_internal,
+                    _lesson_date=current_lesson._lesson_date
+                )
+
+                if not plan_lesson.takes_place and scheduled_lesson is not None:
+                    plan_lesson.current_forms = set()
+                    plan_lesson.current_teachers = set()
+                    plan_lesson.current_rooms = set()
+                    plan_lesson.current_course = None
+
+                out.append(plan_lesson)
+
+            # convert remaining scheduled lessons
+            for scheduled_lesson in scheduled_lessons:
+                out.append(PlanLesson(
+                    periods=set(periods),
+                    begin=scheduled_lesson.begin,
+                    end=scheduled_lesson.end,
+                    scheduled_forms=scheduled_lesson.forms,
+                    scheduled_teachers=scheduled_lesson.teachers,
+                    scheduled_rooms=scheduled_lesson.rooms,
+                    scheduled_course=scheduled_lesson.course,
+                    current_forms=set(),
+                    current_teachers=set(),
+                    current_rooms=set(),
+                    current_course=None,
+                    class_number=scheduled_lesson.class_opt.number,
+                    subject_changed=False,
+                    teacher_changed=False,
+                    room_changed=False,
+                    forms_changed=False,
+                    info=scheduled_lesson.info,  # TODO
+                    parsed_info=scheduled_lesson.parsed_info,
+                    takes_place=False,
+                    is_internal=scheduled_lesson.is_internal,
+                    _lesson_date=scheduled_lesson._lesson_date
+                ))
+
+        return out
+
+    def make_plan(self, plan_type: typing.Literal["rooms", "forms", "teachers"]) -> dict[str, list[PlanLesson]]:
+        grouped_lessons = self.group_by(plan_type)
+
+        return {
+            group: lessons.to_plan_lessons()
+            for group, lessons in grouped_lessons.items()
+        }
 
     @staticmethod
     def _group_lesson_info(
@@ -207,12 +365,13 @@ class Lessons:
 
         sorted_lessons = sorted(
             self.lessons,
-            key=lambda x: (x.class_number if x.class_number else (x.current_class if x.current_class else ""),
-                           x.current_teachers,
+            key=lambda x: (str(x.is_scheduled),
+                           x.class_.number if x.class_ else (x.course if x.course else ""),
+                           x.teachers or set(),
                            x.parsed_info.lesson_group_sort_key(),
-                           x.class_group if x.class_group is not None else "",
-                           x.scheduled_forms,
-                           x.periods)
+                           x.class_opt.group or "",
+                           x.forms or set(),
+                           x.periods or set())
         )
 
         grouped: list[Lesson] = []
@@ -221,10 +380,10 @@ class Lessons:
         for lesson in sorted_lessons:
             can_get_grouped = (
                     previous_lesson is not None and
-                    lesson.current_rooms == previous_lesson.current_rooms and
-                    lesson.current_class == previous_lesson.current_class and
-                    lesson.current_teachers == previous_lesson.current_teachers and
-                    lesson.class_number == previous_lesson.class_number
+                    lesson.rooms == previous_lesson.rooms and
+                    lesson.course == previous_lesson.course and
+                    lesson.teachers == previous_lesson.teachers and
+                    lesson.class_opt.number == previous_lesson.class_opt.number
             )
 
             if previous_lesson is not None:
@@ -237,10 +396,10 @@ class Lessons:
             if previous_lesson is not None:
                 if (
                         # both lessons have no form
-                        (not lesson.scheduled_forms and not grouped[-1].scheduled_forms)
+                        (not lesson.forms and not grouped[-1].forms)
                         # or lesson form is the same as previous lesson form
                         # when this method is called, lessons should only have one form
-                        or (lesson.scheduled_forms and list(lesson.scheduled_forms)[0] in grouped[-1].scheduled_forms)
+                        or (lesson.forms and list(lesson.forms)[0] in grouped[-1].forms)
                 ):
                     # "temporal" grouping, since lesson is duplicated for each period of block,
                     # period must be even to get grouped onto first lesson of block
@@ -251,23 +410,29 @@ class Lessons:
 
             if can_get_grouped:
                 grouped[-1].periods |= lesson.periods
-                grouped[-1].scheduled_forms |= lesson.scheduled_forms
-                grouped[-1].current_forms |= lesson.current_forms
+                grouped[-1].forms |= lesson.forms
                 grouped[-1].info = "\n".join(filter(lambda x: x, [grouped[-1].info, lesson.info]))
                 grouped[-1].parsed_info = grouped_additional_info
-                grouped[-1].end = lesson.end
+                grouped[-1].begin = min(filter(lambda x: x, (grouped[-1].begin, lesson.begin)), default=None)
+                grouped[-1].end = min(filter(lambda x: x, (grouped[-1].end, lesson.end)), default=None)
             else:
                 grouped.append(copy.deepcopy(lesson))
 
             previous_lesson = lesson
 
-        return Lessons(sorted(grouped, key=lambda x: x.periods), self.date)
+        return Lessons(sorted(grouped, key=lambda x: x.periods))
 
     def filter(self, function: typing.Callable[[Lesson], bool]) -> Lessons:
-        return Lessons(list(filter(function, self.lessons)), self.date)
+        return Lessons(list(filter(function, self.lessons)))
+
+    def serialize(self) -> list:
+        return [lesson.serialize() for lesson in self.lessons]
 
     def __iter__(self):
         return iter(self.lessons)
+
+    def __len__(self):
+        return len(self.lessons)
 
 
 class Exam(stundenplan24_py.Exam):
@@ -289,7 +454,7 @@ class Plan:
     additional_info: list[str]
     exams: dict[str, list[Exam]]
 
-    form_plan: indiware_mobil.IndiwareMobilPlan
+    indiware_plan: indiware_mobil.IndiwareMobilPlan
 
     @classmethod
     def from_form_plan(cls, form_plan: indiware_mobil.IndiwareMobilPlan) -> Plan:
@@ -297,62 +462,92 @@ class Plan:
         exams: dict[str, list[Exam]] = defaultdict(list)
         for form in form_plan.forms:
             for lesson in form.lessons:
+                # lesson.information = "lesson information unavailable"  # TODO
                 parsed_info = ParsedLessonInfo.from_str(
                     lesson.information, form_plan.timestamp.year
                 ) if lesson.information is not None else ParsedLessonInfo([])
 
-                new_lesson = Lesson(
-                    periods={lesson.period} if lesson.period is not None else [],
+                if lesson.class_number in form.classes:
+                    _class = form.classes[lesson.class_number]
 
-                    scheduled_forms={form.short_name},
-                    scheduled_teachers=None,
-                    scheduled_rooms=lesson.room() if not lesson.room.was_changed else None,
-                    scheduled_class=lesson.course2,
+                    class_data = ClassData(
+                        teacher=_class.teacher,
+                        subject=_class.subject,
+                        group=_class.group,
+                        number=lesson.class_number
+                    )
+                else:
+                    class_data = None
 
-                    current_forms={form.short_name},
-                    current_teachers=set(lesson.teacher().split()) if lesson.teacher() else set(),
+                current_lesson = Lesson(
+                    periods={lesson.period} if lesson.period is not None else set(),
+                    begin=lesson.start,
+                    end=lesson.end,
+
+                    forms={form.short_name},
+                    teachers=set(lesson.teacher().split()) if lesson.teacher() else set(),
                     # TODO: Some schools use rooms with spaces
-                    current_rooms=lesson.room().split(" ") if lesson.room() else [],
-                    current_class=lesson.subject(),
+                    rooms=set(lesson.room().split(" ")) if lesson.room() else set(),
+                    course=lesson.subject(),
 
                     info=lesson.information if lesson.information is not None else "",
                     parsed_info=parsed_info,
 
-                    class_subject=(
-                        form.classes[lesson.class_number].subject if lesson.class_number in form.classes else None
-                    ),
-                    class_group=(
-                        form.classes[lesson.class_number].group if lesson.class_number in form.classes else None
-                    ),
-                    class_teachers=(
-                        set(form.classes[lesson.class_number].teacher.split())
-                        if lesson.class_number in form.classes else None
-                    ),
-                    class_number=lesson.class_number,
+                    class_=class_data,
                     subject_changed=lesson.subject.was_changed,
                     teacher_changed=lesson.teacher.was_changed,
                     room_changed=lesson.room.was_changed,
+                    _lesson_date=form_plan.date,
+                    is_scheduled=False
+                )
 
+                scheduled_lesson = Lesson(
+                    periods={lesson.period} if lesson.period is not None else set(),
                     begin=lesson.start,
-                    end=lesson.end
+                    end=lesson.end,
+
+                    forms={form.short_name},
+                    teachers={class_data.teacher} if class_data is not None else None,
+                    rooms=current_lesson.rooms if not current_lesson.room_changed else None,
+                    course=(
+                            lesson.course2
+                            or (class_data.group if class_data is not None else None)
+                            or (class_data.subject if class_data is not None else None)
+                            or (current_lesson.course if not current_lesson.room_changed else None)
+                    ),
+
+                    info=lesson.information if lesson.information is not None else "",
+                    parsed_info=parsed_info,
+
+                    class_=class_data,
+                    subject_changed=False,
+                    teacher_changed=False,
+                    room_changed=False,
+                    takes_place=None,
+                    is_scheduled=True,
+                    _lesson_date=form_plan.date,
                 )
-                if new_lesson.current_class == "---" and new_lesson.subject_changed:
+
+                if current_lesson.course == "---" and current_lesson.subject_changed:
                     # Indiware Stundenplaner's way of telling us that the lesson is cancelled
-                    new_lesson.current_forms = set()
-                    new_lesson.current_class = None
-                    # the following should be empty already
-                    # new_lesson.current_teachers = set()
-                    # new_lesson.current_rooms = set()
-                    new_lesson.takes_place = False
+                    current_lesson.course = scheduled_lesson.course
+                    current_lesson.teachers = scheduled_lesson.teachers
+                    current_lesson.rooms = scheduled_lesson.rooms
+                    current_lesson.takes_place = False
+                    scheduled_lesson.takes_place = False
+                    # the following should be true already
+                    current_lesson.subject_changed = True
+                    current_lesson.teacher_changed = True
+                    current_lesson.room_changed = True
                 else:
-                    new_lesson.takes_place = True
+                    current_lesson.takes_place = True
+                    scheduled_lesson.takes_place = False
 
-                new_lesson.scheduled_class = (
-                        new_lesson.scheduled_class or new_lesson.class_group or new_lesson.class_subject
-                )
-                new_lesson.scheduled_teachers = new_lesson.class_teachers
+                if current_lesson.subject_changed:
+                    scheduled_lesson.class_ = None
 
-                lessons.append(new_lesson)
+                lessons.append(scheduled_lesson)
+                lessons.append(current_lesson)
 
             for exam in form.exams:
                 exam = copy.deepcopy(exam)
@@ -361,10 +556,10 @@ class Plan:
                 exams[form.short_name].append(exam)
 
         return cls(
-            lessons=Lessons(lessons, form_plan.date),
+            lessons=Lessons(lessons),
             additional_info=form_plan.additional_info,
 
-            form_plan=form_plan,
+            indiware_plan=form_plan,
             exams=exams
         )
 
@@ -372,12 +567,12 @@ class Plan:
         return {
             1: "A",
             2: "B"
-        }.get(self.form_plan.week, "?")
+        }.get(self.indiware_plan.week, "?")
 
     def get_all_classes(self) -> dict[str, Class]:
         out: dict[str, Class] = {}
 
-        for form in self.form_plan.forms:
+        for form in self.indiware_plan.forms:
             for class_nr, class_ in form.classes.items():
                 if class_nr in out:
                     out[class_nr].forms.add(form.short_name)

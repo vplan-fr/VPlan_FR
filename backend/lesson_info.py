@@ -132,14 +132,14 @@ class ParsedLessonInfoMessage(abc.ABC):
     def serialize(self) -> dict[str, typing.Any]:
         ...
 
-    def to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
         return [
             *([LessonInfoTextSegment(self.before)] if self.before else []),
             *self._to_text_segments(lesson_date, lesson),
             *([LessonInfoTextSegment(self.after)] if self.after else [])
         ]
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment("\n".join(self.original_messages))
         ]
@@ -150,7 +150,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
     periods: list[int]
     date: datetime.date | None
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
         # TODO: Fallback when len(periods) == 1
         if self.date is None:
             return [
@@ -159,7 +159,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                     f"Block {periods_to_block_label(self.periods)}",
                     link=LessonInfoTextSegmentLink(
                         type="forms",
-                        value=sorted(lesson.scheduled_forms),
+                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
                         date=lesson_date,
                         periods=self.periods
                     )
@@ -173,7 +173,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
                         type="forms",
-                        value=sorted(lesson.scheduled_forms),
+                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
                         date=self.date,
                         periods=self.periods
                     )
@@ -197,7 +197,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
     periods: list[int]
     teachers: list[str] = dataclasses.field(init=False, default=None)
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
         if self.date is None:
             return [
                 LessonInfoTextSegment(f"{self.course} "),
@@ -215,7 +215,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                     f"Block {periods_to_block_label(self.periods)}",
                     link=LessonInfoTextSegmentLink(
                         type="forms",
-                        value=sorted(lesson.scheduled_forms),
+                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
                         date=lesson_date,
                         periods=self.periods
                     )
@@ -239,7 +239,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
                         type="forms",
-                        value=sorted(lesson.scheduled_forms),
+                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
                         date=self.date,
                         periods=self.periods
                     )
@@ -263,7 +263,7 @@ class MovedTo(SerializeMixin, _HasTeachersAndCourse):
                     f"{periods_to_block_label(self.periods)}. Block",
                     link=LessonInfoTextSegmentLink(
                         type="forms",
-                        value=sorted(lesson.scheduled_forms),
+                        value=sorted(lesson.scheduled_forms or lesson.current_forms),
                         date=self.date,
                         periods=self.periods
                     )
@@ -284,7 +284,7 @@ class InsteadOfCourse(SerializeMixin, _HasTeachersAndCourse):
     _teachers: list[str]
     teachers: list[str] = dataclasses.field(init=False, default=None)
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(f"für {self.course} "),
             LessonInfoTextSegment(
@@ -305,7 +305,7 @@ class Cancelled(SerializeMixin, _HasTeachersAndCourse):
     _teachers: list[str]
     teachers: list[str] = dataclasses.field(init=False, default=None)
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(f"{self.course} "),
             LessonInfoTextSegment(
@@ -355,7 +355,7 @@ class Exam(SerializeMixin, ParsedLessonInfoMessage):
 class WholeForm(SerializeMixin, ParsedLessonInfoMessage):
     form: str
 
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(f"gesamte "),
             LessonInfoTextSegment(
@@ -372,7 +372,7 @@ class WholeForm(SerializeMixin, ParsedLessonInfoMessage):
 
 @dataclasses.dataclass
 class FailedToParse(SerializeMixin, ParsedLessonInfoMessage):
-    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.Lesson) -> list[LessonInfoTextSegment]:
+    def _to_text_segments(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list[LessonInfoTextSegment]:
         return [
             LessonInfoTextSegment(", ".join(self.original_messages))
         ]
@@ -520,7 +520,7 @@ class LessonInfoMessage:
             index=index
         )
 
-    def serialize(self, lesson_date: datetime.date, lesson: models.Lesson) -> dict:
+    def serialize(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> dict:
         return {
             "parsed": (
                 self.parsed.serialize()
@@ -555,7 +555,7 @@ class LessonInfoParagraph:
 
         return cls(new_messages, index=index)
 
-    def serialize(self, lesson_date: datetime.date, lesson: models.Lesson) -> list:
+    def serialize(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list:
         return [info.serialize(lesson_date, lesson) for info in self.messages]
 
     def sorted(self, key: typing.Callable[[LessonInfoMessage], typing.Any]) -> LessonInfoParagraph:
@@ -576,7 +576,7 @@ class ParsedLessonInfo:
             for i, paragraph in enumerate(info.split(";"))
         ])
 
-    def serialize(self, lesson_date: datetime.date, lesson: models.Lesson) -> list:
+    def serialize(self, lesson_date: datetime.date, lesson: models.PlanLesson) -> list:
         return [paragraph.serialize(lesson_date, lesson) for paragraph in self.paragraphs]
 
     def sorted(self, key: typing.Callable[[LessonInfoParagraph], typing.Any]) -> ParsedLessonInfo:
@@ -613,10 +613,24 @@ class ParsedLessonInfo:
             for paragraph in self.sorted_canonical().paragraphs
         ]
 
+    def filter_messages(self, func: typing.Callable[[LessonInfoMessage], bool]) -> ParsedLessonInfo:
+        out = ParsedLessonInfo([])
+
+        for paragraph in self.paragraphs:
+            filtered_messages = LessonInfoParagraph(list(filter(func, paragraph.messages)), paragraph.index)
+            if filtered_messages.messages:
+                out.paragraphs.append(filtered_messages)
+
+        return out
+
 
 def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                      logger: logging.Logger) -> dict[str, models.Teacher]:
     out: dict[str, models.Teacher] = {}
+
+    if lesson.is_scheduled:
+        return out
+
     for paragraph in lesson.parsed_info.paragraphs:
         for message in paragraph.messages:
             if isinstance(message.parsed, _HasTeachersAndCourse):
@@ -629,12 +643,12 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
 
                 _class: dict[str, models.Class] = {
                     class_nr: class_ for class_nr, class_ in classes.items()
-                    if course in (class_.subject, class_.group) and lesson.scheduled_forms.issubset(class_.forms)
+                    if course in (class_.subject, class_.group) and lesson.forms.issubset(class_.forms)
                 }
 
                 _name = surname.split()[1]
-                if len({c.teacher for c in _class.values()}) > 1 and lesson.class_number:
-                    new_classes = {c_id: c for c_id, c in _class.items() if c_id == lesson.class_number}
+                if len({c.teacher for c in _class.values()}) > 1 and lesson.class_opt.number:
+                    new_classes = {c_id: c for c_id, c in _class.items() if c_id == lesson.class_opt.number}
                     if new_classes:
                         _class = new_classes
 
@@ -643,7 +657,7 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
 
                 if len({c.teacher for c in _class.values()}) != 1:
                     logger.debug(
-                        f"Could not find class {course!r} in form {lesson.scheduled_forms!r}. "
+                        f"Could not find class {course!r} in form {lesson.forms!r}. "
                         f"Message: {message.parsed.original_messages!r}"
                     )
                     continue
@@ -711,6 +725,5 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
     ))
 
     return segments
-
 
 # TODO: Group list[LessonInfoTextSegment]

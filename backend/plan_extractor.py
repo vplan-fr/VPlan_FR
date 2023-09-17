@@ -10,7 +10,7 @@ from stundenplan24_py import indiware_mobil, substitution_plan
 
 from . import lesson_info
 from .lesson_info import process_additional_info
-from .models import Plan, Lesson, Teacher, Teachers
+from .models import Plan, Teacher, Teachers, Lesson
 from .vplan_utils import parse_absent_element, ParsedForm
 
 
@@ -44,14 +44,14 @@ class PlanExtractor:
         self.resolve_teachers_in_lesson_info(teacher_abbreviation_by_surname)
 
     def fill_in_lesson_times(self):
-        forms: dict[str, indiware_mobil.Form] = {form.short_name: form for form in self.forms_plan.form_plan.forms}
+        forms: dict[str, indiware_mobil.Form] = {form.short_name: form for form in self.forms_plan.indiware_plan.forms}
 
         for lesson in self.forms_plan.lessons:
-            if not lesson.scheduled_forms:
+            if not lesson.forms:
                 continue
 
             try:
-                lesson_form = forms[list(lesson.scheduled_forms)[0]]
+                lesson_form = forms[list(lesson.forms)[0]]
             except KeyError:
                 self._logger.warning(f" -> Lesson has unknown form: {lesson.scheduled_forms!r}")
                 continue
@@ -88,7 +88,7 @@ class PlanExtractor:
 
                     self._logger.debug(
                         f" -> Extrapolated end time for a lesson. "
-                        f"Period: {lesson.periods!r}, subject: {lesson.current_class!r}, "
+                        f"Period: {lesson.periods!r}, subject: {lesson.current_course!r}, "
                         f"form: {lesson.scheduled_forms!r}, duration: {block_duration.seconds / 60:.2f} min."
                     )
                 else:
@@ -125,7 +125,7 @@ class PlanExtractor:
                 lesson = Lesson.create_internal()
                 lesson.periods = {period}
                 lesson.current_rooms = {room_str}
-                lesson.current_class = "Belegt"
+                lesson.current_course = "Belegt"
                 lesson.info = info
                 lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
                 self.forms_plan.lessons.lessons.append(lesson)
@@ -144,24 +144,22 @@ class PlanExtractor:
                 self.forms_plan.lessons.lessons.append(lesson)
 
     def room_plan(self):
-        return self.forms_lessons_grouped.group_by("current_rooms", "scheduled_rooms")
+        return self.forms_lessons_grouped.filter(lambda l: not l.is_internal).make_plan("rooms")
 
     def teacher_plan(self):
-        return self.forms_lessons_grouped.filter(lambda l: not l.is_internal).group_by(
-            "class_teachers", "scheduled_teachers", "current_teachers"
-        )
+        return self.forms_lessons_grouped.filter(lambda l: not l.is_internal).make_plan("teachers")
 
     def form_plan(self):
-        return self.forms_lessons_grouped.filter(lambda l: not l.is_internal).group_by(
-            "current_forms", "scheduled_forms"
-        )
+        return self.forms_lessons_grouped.make_plan("forms")
 
     def used_rooms_by_period(self) -> dict[int, set[str]]:
         out: dict[int, set[str]] = defaultdict(set)
 
         for lesson in self.forms_plan.lessons:
             assert len(lesson.periods) == 1
-            out[list(lesson.periods)[0]].update(lesson.current_rooms)
+            if not lesson.takes_place or not lesson.rooms:
+                continue
+            out[list(lesson.periods)[0]].update(lesson.rooms)
 
         return out
 
@@ -189,10 +187,10 @@ class PlanExtractor:
         return {
             "additional_info": self.forms_plan.additional_info,
             "processed_additional_info": [
-                [i.serialize() for i in process_additional_info(text, parsed_forms, self.forms_plan.form_plan.date)]
+                [i.serialize() for i in process_additional_info(text, parsed_forms, self.forms_plan.indiware_plan.date)]
                 for text in self.forms_plan.additional_info
             ],
-            "timestamp": self.forms_plan.form_plan.timestamp.isoformat(),
+            "timestamp": self.forms_plan.indiware_plan.timestamp.isoformat(),
             "week": self.forms_plan.week_letter()
         }
 

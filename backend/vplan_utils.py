@@ -153,14 +153,13 @@ def _group_form_minors(first_part: str, minors: list[str]) -> list[str]:
 
         if len(seq) < 3:
             for minor in seq:
-                invalid_minors.append(minor)
+                out.append(minor)
         else:
-            out.append(f"{first_part}{seq[0]}-{seq[-1]}")
+            out.append(f"{seq[0]}-{seq[-1]}")
 
-    if invalid_minors:
-        out.append(f"{first_part}{','.join(invalid_minors)}")
+    out += invalid_minors
 
-    return out
+    return [f"{first_part}{','.join(out)}"]
 
 
 def parsed_forms_to_str(forms: list[ParsedForm]) -> str:
