@@ -48,10 +48,10 @@
             </div>
         </div>
         <p class="responsive-text">
-            Man kann uns per Mail unter <a href="mailto:elanus4506@gmail.com">elanus4506@gmail.com</a> erreichen.
+            Man kann uns per E-Mail unter <a href="mailto:elanus4506@gmail.com">elanus4506@gmail.com</a> erreichen.
         </p>
-        <p class="responseive-text">
-            Hier ist außerdem unser <a href="https://github.com/ArtrenH/VPlan_FR">Github-Repository</a>
+        <p class="responsive-text">
+            Hier ist außerdem unser <a href="https://github.com/ArtrenH/VPlan_FR">Github-Repository</a>.
         </p>
     </div>
 </main>
