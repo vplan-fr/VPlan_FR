@@ -139,6 +139,7 @@
                     :global(h1) {
                         font-size: var(--font-size-md);
                         font-weight: 600;
+                        margin-top: 15px;
                     }
 
                     :global(strong) {
