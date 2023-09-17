@@ -164,7 +164,7 @@ class Lessons:
 
         for lesson_i, lesson in enumerate(self.lessons):
             for attribute in attributes:
-                value = getattr(lesson, attribute)
+                value = getattr(lesson, attribute, None)
 
                 if not include_none and value is None:
                     continue
@@ -215,7 +215,7 @@ class Lessons:
                         if (
                                 # scheduled_lesson.course is not None is not current_lesson.course and
                                 (scheduled_lesson.course != current_lesson.course) in (
-                        False, current_lesson.subject_changed)
+                                False, current_lesson.subject_changed)
                         ):
                             break
                     else:
@@ -300,8 +300,9 @@ class Lessons:
 
         return out
 
-    def make_plan(self, plan_type: typing.Literal["rooms", "forms", "teachers"]) -> dict[str, list[PlanLesson]]:
-        grouped_lessons = self.group_by(plan_type)
+    def make_plan(self, plan_type: str,
+                  *additional_attrs: str) -> dict[str, list[PlanLesson]]:
+        grouped_lessons = self.group_by(plan_type, *additional_attrs)
 
         return {
             group: lessons.to_plan_lessons()
@@ -552,6 +553,16 @@ class Plan:
                 #
                 # if current_lesson.subject_changed:
                 #     scheduled_lesson.class_ = None
+
+                for l in current_lesson, scheduled_lesson:
+                    l._grouped_form_plan_current_course = current_lesson.course
+                    l._grouped_form_plan_current_teachers = current_lesson.teachers
+                    l._grouped_form_plan_current_rooms = current_lesson.rooms
+                    l._grouped_form_plan_current_forms = current_lesson.forms
+                    l._grouped_form_plan_scheduled_course = scheduled_lesson.course
+                    l._grouped_form_plan_scheduled_teachers = scheduled_lesson.teachers
+                    l._grouped_form_plan_scheduled_rooms = scheduled_lesson.rooms
+                    l._grouped_form_plan_scheduled_forms = scheduled_lesson.forms
 
                 lessons.append(scheduled_lesson)
                 lessons.append(current_lesson)

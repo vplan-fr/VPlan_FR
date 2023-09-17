@@ -13,7 +13,7 @@ from .vplan_utils import group_forms, ParsedForm
 
 
 class PlanProcessor:
-    VERSION = "57"
+    VERSION = "58"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -84,6 +84,11 @@ class PlanProcessor:
                     "forms": plan_extractor.form_plan()
                 }, default=PlanLesson.serialize),
                 "plans.json"
+            )
+            self.cache.store_plan_file(
+                date, timestamp,
+                json.dumps(plan_extractor.grouped_form_plans(), default=PlanLesson.serialize),
+                "grouped_form_plans.json"
             )
 
             # from .models import Lesson
