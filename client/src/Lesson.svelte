@@ -8,7 +8,7 @@
     export let plan_value;
     export let display_time = true;
 
-    $: teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers.length === 0 && lesson.takes_place;
+    $: teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers?.length === 0 && lesson.takes_place;
     $: teachers = (lesson.takes_place && !teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers) || [];
     $: forms = (lesson.takes_place ? lesson.current_forms : lesson.scheduled_forms) || [];
     $: forms_str = lesson.takes_place ? lesson.current_forms_str : lesson.scheduled_forms_str;
