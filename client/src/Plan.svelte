@@ -192,7 +192,7 @@
     let teacher_contact_link = null;
     $: if (plan_type === "teachers") {
         full_teacher_name = all_meta["teachers"][plan_value]?.surname || null;
-        teacher_contact_link = all_meta["teachers"][plan_value]["contact_link"] || null;
+        teacher_contact_link = all_meta["teachers"][plan_value]?.contact_link || null;
     }
 
     let preferences_apply = true;
