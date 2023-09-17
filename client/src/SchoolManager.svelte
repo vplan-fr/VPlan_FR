@@ -104,7 +104,7 @@
         }
     }
 
-    $: console.log(schools);
+    // $: console.log(schools);
     $: update_schools_arr(schools);
 </script>
 
