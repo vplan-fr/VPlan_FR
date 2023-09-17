@@ -738,16 +738,22 @@ def process_additional_info(text: str, parsed_existing_forms: list[ParsedForm],
     # remove spaces after slashes like in 5/ 3
     text = re.sub(r"(?<=\w)/ ", "/", text)
 
-    segments = add_fuzzy_form_links(text, parsed_existing_forms, date)
+    funcs = (
+        lambda s: add_fuzzy_teachers(s, teacher_abbreviation_by_surname, date),
+        lambda s: add_fuzzy_form_links(s, parsed_existing_forms, date)
+    )
 
-    new_segments = []
-    for segment in segments:
-        if segment.link is None:
-            new_segments += add_fuzzy_teachers(segment.text, teacher_abbreviation_by_surname, date)
-        else:
-            new_segments.append(segment)
+    segments = [LessonInfoTextSegment(text)]
+    for func in funcs:
+        new_segments = []
+        for segment in segments:
+            if segment.link is None:
+                new_segments += func(segment.text)
+            else:
+                new_segments.append(segment)
+        segments = new_segments
 
-    return new_segments
+    return group_text_segments(segments)
 
 
 def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], date: datetime.date
@@ -831,4 +837,16 @@ def add_fuzzy_teachers(text: str, teacher_abbreviation_by_surname: dict[str, str
 
     return segments
 
-# TODO: Group list[LessonInfoTextSegment]
+
+def group_text_segments(segments: list[LessonInfoTextSegment]) -> list[LessonInfoTextSegment]:
+    out = []
+
+    for segment in segments:
+        if not segment.text:
+            continue
+        if out and out[-1].link == segment.link:
+            out[-1].text += segment.text
+        else:
+            out.append(segment)
+
+    return out
