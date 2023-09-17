@@ -184,11 +184,13 @@ export function format_date(date) {
 
 }
 
-export function format_revision_date(date) {
+export function format_revision_date(date, latest) {
+    let date_obj;
     if (date === ".newest") {
-        return "Aktuellste Version"
+        date_obj = new Date(latest);
+    } else {
+        date_obj = new Date(date);
     }
-    date = new Date(date);
 
     const options = {
         year: "numeric",
@@ -198,5 +200,9 @@ export function format_revision_date(date) {
         minute: "2-digit",
     };
 
-    return date.toLocaleString("de-DE", options) + " Uhr";
+    let formatted_date = date_obj.toLocaleString("de-DE", options) + " Uhr";
+    if (date === ".newest") {
+        return `Aktuellste Version --> ${formatted_date}`
+    }
+    return formatted_date
 }

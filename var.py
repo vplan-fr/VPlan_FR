@@ -31,6 +31,10 @@ SETTINGS = {
         "default": False,
         "type": "bool",
     },
+    "show_plan_file_timestamps": {
+        "default": False,
+        "type": "bool",
+    },
     "day_switch_keys": {
         "default": False,
         "type": "bool",
