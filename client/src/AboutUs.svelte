@@ -12,7 +12,11 @@
     <h1 class="responsive-heading">Über uns</h1>
     <div class="desktop">
         <p class="responsive-text">
-            Wir sind drei Nerds, die sich dachten, dass der VpMobil24-App einige wichtige Features fehlen. Also haben wir diese Website mit den fehlenden Features programmiert. Offensichtlich ist sie nicht perfekt, über Vorschläge für Features und Design freuen wir uns immer! Schreibt uns dafür einfach auf Discord, unsere Tags stehen unter unseren Profilbildern.<br><br>Man kann uns per Mail unter <a href="mailto:elanus4506@gmail.com">elanus4506@gmail.com</a> erreichen.
+            Wir sind drei Nerds, die sich dachten, dass der VpMobil24-App einige wichtige Features fehlen. Also haben wir diese Website mit den fehlenden Features programmiert. Offensichtlich ist sie nicht perfekt, über Vorschläge für Features und Design freuen wir uns immer! Schreibt uns dafür einfach auf Discord, unsere Tags stehen unter unseren Profilbildern.
+            <br><br>
+            Man kann uns per Mail unter <a href="mailto:elanus4506@gmail.com">elanus4506@gmail.com</a> erreichen.
+            <br>
+            Hier ist außerdem unser <a href="https://github.com/ArtrenH/VPlan_FR">Github-Repository</a>.
         </p>
         <div class="third_wrapper">
             <div class="third" data-msg="Project Lead">
@@ -49,8 +53,7 @@
         </div>
         <p class="responsive-text">
             Man kann uns per E-Mail unter <a href="mailto:elanus4506@gmail.com">elanus4506@gmail.com</a> erreichen.
-        </p>
-        <p class="responsive-text">
+            <br>
             Hier ist außerdem unser <a href="https://github.com/ArtrenH/VPlan_FR">Github-Repository</a>.
         </p>
     </div>
@@ -70,6 +73,27 @@
 
             .third {
                 width: 100%;
+
+                &::after {
+                    content: attr(data-msg);
+                    display: block;
+                    position: absolute;
+                    top: 0;
+                    left: 50%;
+                    color: var(--text-color);
+                    font-size: var(--font-size-md);
+                    background: var(--accent-color);
+                    border-radius: 5px;
+                    padding: 5px;
+                    transform: translateX(0%);
+                    opacity: 0;
+                    transition: all .2s ease;
+                }
+
+                &:hover::after {
+                    transform: translateX(25%);
+                    opacity: 1;
+                }
             }
         }
     }
@@ -100,27 +124,6 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-
-        &::after {
-            content: attr(data-msg);
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 50%;
-            color: var(--text-color);
-            font-size: var(--font-size-md);
-            background: var(--accent-color);
-            border-radius: 5px;
-            padding: 5px;
-            transform: translateX(0%);
-            opacity: 0;
-            transition: all .2s ease;
-        }
-
-        &:hover::after {
-            transform: translateX(25%);
-            opacity: 1;
-        }
     }
 
     img {
