@@ -51,7 +51,7 @@
                 data = JSON.parse(data);
                 rooms_data = data["rooms"];
                 if (plan_type !== "room_overview") {
-                    all_lessons = data[plan_key][plan_type][entity] || [];
+                    all_lessons = data[plan_key][plan_type] ? data[plan_key][plan_type][entity] || [] : [];
                 }
                 info = data["info"];
                 week_letter = info["week"];
