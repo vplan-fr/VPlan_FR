@@ -230,13 +230,13 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
             return [
                 LessonInfoTextSegment(f"{self.course} "),
                 LessonInfoTextSegment(
-                    f"{', '.join(self._teachers)}",
+                    f"{', '.join(self.original_other_info_value)}",
                     link=LessonInfoTextSegmentLink(
                         type=self.other_info_type,
-                        value=sorted(self.original_other_info_value),
+                        value=sorted(self.other_info_value),
                         date=lesson_date,
                         periods=self.periods
-                    )
+                    ) if self.other_info_value else None
                 ),
                 LessonInfoTextSegment(" verlegt nach "),
                 LessonInfoTextSegment(
@@ -253,13 +253,13 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
             return [
                 LessonInfoTextSegment(f"{self.course} "),
                 LessonInfoTextSegment(
-                    f"{', '.join(self._teachers)}",
+                    f"{', '.join(self.original_other_info_value)}",
                     link=LessonInfoTextSegmentLink(
                         type=self.other_info_type,
-                        value=sorted(self.original_other_info_value),
+                        value=sorted(self.other_info_value),
                         date=self.date,
                         periods=self.periods
-                    )
+                    ) if self.other_info_value else None
                 ),
                 LessonInfoTextSegment(" gehalten am "),
                 LessonInfoTextSegment(
@@ -277,13 +277,13 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
             return [
                 LessonInfoTextSegment(f"{self.course} "),
                 LessonInfoTextSegment(
-                    f"{', '.join(self._teachers)}",
+                    f"{', '.join(self.original_other_info_value)}",
                     link=LessonInfoTextSegmentLink(
                         type=self.other_info_type,
-                        value=sorted(self.original_other_info_value),
+                        value=sorted(self.other_info_value),
                         date=self.date,
                         periods=self.periods
-                    )
+                    ) if self.other_info_value else None
                 ),
                 LessonInfoTextSegment(" verlegt nach "),
                 LessonInfoTextSegment(
@@ -321,7 +321,7 @@ class InsteadOfCourse(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseI
                     value=sorted(self.other_info_value),
                     date=lesson_date,
                     periods=sorted(self.periods)
-                )
+                ) if self.other_info_value else None
             )
         ]
 
@@ -340,7 +340,7 @@ class Cancelled(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
                     value=sorted(self.other_info_value),
                     date=lesson_date,
                     periods=sorted(self.periods)
-                )
+                ) if self.other_info_value else None
             ),
             LessonInfoTextSegment(" fällt aus")
         ]

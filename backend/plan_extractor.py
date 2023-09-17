@@ -37,6 +37,25 @@ class PlanExtractor:
 
         self.fill_in_lesson_times()
 
+        self.form_plan_extractor = SubPlanExtractor(
+            self.forms_plan,
+            "forms",
+            self.teacher_abbreviation_by_surname,
+            logger=self._logger
+        )
+        self.room_plan_extractor = SubPlanExtractor(
+            self.forms_plan,
+            "rooms",
+            self.teacher_abbreviation_by_surname,
+            logger=self._logger
+        )
+        self.teacher_plan_extractor = SubPlanExtractor(
+            self.forms_plan,
+            "teachers",
+            self.teacher_abbreviation_by_surname,
+            logger=self._logger
+        )
+
     def fill_in_lesson_times(self):
         forms: dict[str, indiware_mobil.Form] = {form.short_name: form for form in self.forms_plan.indiware_plan.forms}
 
@@ -139,8 +158,9 @@ class PlanExtractor:
         return {
             "additional_info": self.forms_plan.additional_info,
             "processed_additional_info": [
-                [i.serialize() for i in process_additional_info(text, parsed_forms, self.teacher_abbreviation_by_surname,
-                                                                self.forms_plan.indiware_plan.date)]
+                [i.serialize() for i in
+                 process_additional_info(text, parsed_forms, self.teacher_abbreviation_by_surname,
+                                         self.forms_plan.indiware_plan.date)]
                 for text in self.forms_plan.additional_info
             ],
             "timestamp": self.forms_plan.indiware_plan.timestamp.isoformat(),
@@ -155,38 +175,6 @@ class PlanExtractor:
             out |= lesson_info.extract_teachers(lesson, all_classes, logger=self._logger)
 
         return out
-
-    def form_plan(self):
-        return SubPlanExtractor(
-            self.forms_plan,
-            "forms",
-            self.teacher_abbreviation_by_surname,
-            logger=self._logger
-        ).plan()
-
-    def room_plan(self):
-        return SubPlanExtractor(
-            self.forms_plan,
-            "rooms",
-            self.teacher_abbreviation_by_surname,
-            logger=self._logger
-        ).plan()
-
-    def teacher_plan(self):
-        return SubPlanExtractor(
-            self.forms_plan,
-            "teachers",
-            self.teacher_abbreviation_by_surname,
-            logger=self._logger
-        ).plan()
-
-    def grouped_form_plans(self):
-        return SubPlanExtractor(
-            self.forms_plan,
-            "forms",
-            self.teacher_abbreviation_by_surname,
-            logger=self._logger
-        ).grouped_form_plans()
 
 
 class SubPlanExtractor:
