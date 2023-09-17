@@ -74,19 +74,21 @@ export async function customFetch(url, options = {}) {
     })
         .then(response => {
             if (!response.ok) {
+                console.log(`Got the followoing non-ok response at url ${url}`, response);
                 throw new Error("Ein Netzwerkfehler ist aufgetreten");
             }
             return response.json()
         })
         .then(data => {
             if (!data.success) {
-                //console.log(data);
+                console.log(`Got the following error stream at url ${url}`, data);
                 throw new Error(data.error);
             }
             return data.data;
         })
         .catch(error => {
             if (error.name === "TypeError" && error.message === "NetworkError when attempting to fetch resource.") {
+                console.log(`NetworkError at url ${url}`)
                 throw new Error("Ein Netzwerkfehler ist aufgetreten");
             }
             throw error;

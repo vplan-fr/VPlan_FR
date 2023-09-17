@@ -170,7 +170,7 @@
 
     function scrollTo(element) {
         // Disable on Desktop (aspect ratio > 1)
-        if (window.innerWidth > window.innerHeight) {return;}
+        if ((window.innerWidth > window.innerHeight) || !element) {return;}
         var headerOffset = window.innerWidth > 601 ? 74 : 66;
         var elementPosition = element.getBoundingClientRect().top;
         var offsetPosition = elementPosition + window.scrollY - headerOffset;
