@@ -31,7 +31,7 @@ SETTINGS = {
         "default": False,
         "type": "bool",
     },
-    "show_plan_file_timestamps": {
+    "show_revision_selector": {
         "default": False,
         "type": "bool",
     },

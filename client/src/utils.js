@@ -206,7 +206,7 @@ export function format_revision_date(date, latest) {
 
     let formatted_date = date_obj.toLocaleString("de-DE", options) + " Uhr";
     if (date === ".newest") {
-        return `Aktuellste Version --> ${formatted_date}`
+        return `${formatted_date} (Aktuellste)`
     }
     return formatted_date
 }

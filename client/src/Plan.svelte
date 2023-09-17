@@ -248,19 +248,17 @@
         {/if}
         {#if info}
             {#if info.additional_info.length > 0}
-            <div class="additional-info">
-                {#each info.additional_info as cur_info}
-                    {#if cur_info !== null}
-                        {cur_info}
-                    {/if}
-                    <br>
-                {/each}
-            </div>
+                <div class="additional-info">
+                    {#each info.additional_info as cur_info}
+                        {#if cur_info !== null}
+                            {cur_info}
+                        {/if}
+                        <br>
+                    {/each}
+                </div>
             {/if}
         {/if}
-        {#if $settings.show_plan_file_timestamps}
-            <div class="last-updated">Zeitstempel in Plandatei: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
-        {/if}
+        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
     {/if}
 </div>
 {:else}
@@ -273,9 +271,7 @@
         Plan konnte nicht geladen werden.
     {:else}
         <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
-        {#if $settings.show_plan_file_timestamps}
-            <div class="last-updated">Zeitstempel in Plandatei: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
-        {/if}
+        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
     {/if}
 </div>
 {/if}
