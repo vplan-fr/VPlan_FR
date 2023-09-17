@@ -159,10 +159,7 @@ class MetaExtractor:
     def dates_data(self) -> dict[str, list[str]]:
         # noinspection PyTypeChecker
         return {
-            day.isoformat(): [
-                timestamp.astimezone(datetime.timezone.utc).replace(tzinfo=None).isoformat()
-                for timestamp in self.cache.get_timestamps(day)
-            ]
+            day.isoformat(): list(map(datetime.datetime.isoformat, self.cache.get_timestamps(day)))
             for day in self.cache.get_days(reverse=False)
         }
 
