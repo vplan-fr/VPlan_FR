@@ -23,5 +23,6 @@ jobs:
           source venv/bin/activate.fish
           pip install -r requirements.txt
           cd client
+          npm install --force
           npm run build
           sudo service apache2 restart
