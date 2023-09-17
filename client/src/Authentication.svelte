@@ -201,6 +201,7 @@
         border: 0;
         border-radius: 99vw;
         background: white;
+        color: black;
         font-size: var(--font-size-base);
         font-weight: 500;
     }

@@ -5,7 +5,6 @@
     import { fly } from 'svelte/transition';
     import { onMount } from 'svelte';
     import {customFetch} from "./utils.js";
-    let error_hidden;
 
     function navigate_page(page_id) {
         $current_page = page_id;
@@ -67,7 +66,7 @@
 
 <style lang="scss">
     nav {
-        z-index: 999;
+        z-index: 9999;
         background: var(--background);
         box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
         height: 64px;
