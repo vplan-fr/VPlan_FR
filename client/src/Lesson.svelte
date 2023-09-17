@@ -15,7 +15,7 @@
     $: subject_changed = lesson.subject_changed && lesson.takes_place;
     $: teacher_changed = lesson.teacher_changed && lesson.takes_place;
     $: room_changed = lesson.room_changed && lesson.takes_place;
-    // $: form_changed = lesson.form_changed && lesson.takes_place;
+    $: forms_changed = lesson.forms_changed && lesson.takes_place;
 
     function periods_to_block_label(periods) {
         periods.sort(function (a, b) {
@@ -90,11 +90,11 @@
             <!-- Forms -->
             {#if plan_type !== "forms"}
                 {#if forms.length === 0}
-                    <div class="forms max-width-center wide-area second_of_type info-element">
+                    <div class="forms max-width-center wide-area second_of_type info-element" class:changed={forms_changed}>
                         <span class="extra_padding">-</span>
                     </div>
                 {:else if forms.length === 1}
-                <div class="forms max-width-center wide-area second_of_type info-element">
+                <div class="forms max-width-center wide-area second_of_type info-element" class:changed={forms_changed}>
                     <button on:click={() => {
                         plan_type = "forms";
                         plan_value = forms[0];
@@ -220,11 +220,11 @@
         <!-- Forms -->
         {#if plan_type !== "forms"}
             {#if forms.length === 0}
-                <div class="forms max-width-center info-element vert-align">
+                <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
                     <span class="extra_padding">-</span>
                 </div>
             {:else if forms.length === 1}
-            <div class="forms max-width-center info-element vert-align">
+            <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
                 <button on:click={() => {
                     plan_type = "forms";
                     plan_value = forms[0];
