@@ -80,12 +80,8 @@ def account() -> Response:
     tmp_user = current_user.get_user()
     if request.method == "GET":
         return send_success({
-                'nickname': tmp_user['nickname'], 
-                'authorized_schools': tmp_user['authorized_schools'], 
-                'preferences': tmp_user['preferences'], 
-                'settings': tmp_user['settings'], 
-                'time_joined': tmp_user['time_joined']
-            })
+            key: value for key, value in tmp_user.items() if key not in ["_id", "admin"]
+        })
     elif request.method == "DELETE":
         x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
         embed = DiscordEmbed(title="User deletion", color="ff0000")
