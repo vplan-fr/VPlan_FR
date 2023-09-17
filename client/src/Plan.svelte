@@ -87,7 +87,8 @@
                 loading = false;
             })
             .catch(error => {
-                if (data_from_cache) {
+                if (error.name === "AbortError") {
+                } else if (data_from_cache) {
                     loading_failed = false;
                     loading = false;
                     notifications.info("Plan aus Cache geladen", 2000);
