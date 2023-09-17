@@ -200,9 +200,18 @@ def changelog() -> Response:
     read_changelog: List[int] = current_user.get_user().get("read_changelog", [])
     with open("changelog.json", "r", encoding="utf-8") as f:
         all_changelog = json.load(f)
+    for ind, value in enumerate(all_changelog):
+        if "content" not in value:
+            filename = f"docs/changelog/{value['version']}.md"
+            if not os.path.exists(f"docs/changelog/{value['version']}.md"):
+                value["content"] = ""
+            else:
+                with open(filename, "r", encoding="utf-8") as f:
+                    value["content"] = f.read()
+        all_changelog[ind] = value
     if request.method == "GET":
         all_changelog = [[ind, value] for ind, value in enumerate(all_changelog)]
-        user_changelog = [[ind, value] for ind, value in all_changelog if ind not in read_changelog]
+        user_changelog = [[ind in read_changelog, value] for ind, value in all_changelog]
         return send_success(user_changelog)
     if request.method == "POST":
         try:
@@ -219,7 +228,34 @@ def changelog() -> Response:
         return send_success()
 
 
+@api.route(f"/api/v69.420/contact", methods=["POST"])
+@login_required
+def contact() -> Response:
+    data = json.loads(request.data)
+    category = data.get("category")
+    if not category:
+        return send_error("Keine Nachrichtenkategorie angegeben")
+    if category not in ["bug", "enhancement", "authorization", "advertisement", "sponsoring", "questions", "else"]:
+        return send_error("Nachrichtenkategorie nicht valide")
+    person = data.get("person")
+    if not person:
+        return send_error("Keine Person angegeben")
+    if person not in ["student", "teacher", "head_teacher", "developer", "else"]:
+        return send_error("Person nicht valide")
+    contact_data = data.get("contact_data")
+    if not contact_data:
+        return send_error("Keine Kontaktdaten angegeben")
+    message = data.get("message")
+    if not message:
+        return send_error("Keine Nachricht angegeben")
 
-
+    embed = DiscordEmbed(title="Neue Kontaktaufnahme!", color="ffffff", inline=False)
+    embed.add_embed_field("Kategorie:", category, inline=False)
+    embed.add_embed_field("Nutzerart:", person, inline=False)
+    embed.add_embed_field("Nutzername:", current_user.get_field("nickname"), inline=False)
+    embed.add_embed_field("Kontaktdaten:", f"```{contact_data}```", inline=False)
+    embed.add_embed_field("Nachricht:", f"```{message}```", inline=False)
+    webhook_send("WEBHOOK_TEST", embeds=[embed])
+    return send_success()
 
 

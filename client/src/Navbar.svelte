@@ -57,6 +57,7 @@
                 <button class="nav-button" on:click={() => $active_modal = "settings"}><span class="material-symbols-outlined">settings</span> Einstellungen</button>
                 <button class="nav-button" on:click={() => navigate_page("school_manager")}><span class="material-symbols-outlined">school</span> Schule wechseln</button>
                 <button class="nav-button" on:click={() => navigate_page("preferences")}><span class="material-symbols-outlined">account_circle</span> Unterricht wählen</button>
+                <button class="nav-button" on:click={() => navigate_page("contact")}><span class="material-symbols-outlined">contact_page</span> Kontaktiere uns</button>
                 <button class="nav-button" on:click={() => $active_modal = "changelog"}><span class="material-symbols-outlined">assignment</span> Changelog</button>
                 <button on:click={logout} class="nav-button"><span class="material-symbols-outlined">logout</span> Logout</button>
             </Dropdown>

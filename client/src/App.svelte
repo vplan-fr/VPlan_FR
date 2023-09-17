@@ -15,6 +15,7 @@
     import Preferences from "./Preferences.svelte";
     import Changelog from "./Changelog.svelte";
     import Select from "./Components/Select.svelte";
+    import Contact from "./Contact.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -313,6 +314,8 @@
             <AboutUs />
         {:else if $current_page === "preferences"}
             <Preferences bind:api_base bind:grouped_forms bind:course_lists bind:school_num />
+        {:else if $current_page === "contact"}
+            <Contact />
         {:else}
             <span>Seite nicht gefunden!</span>
         {/if}
