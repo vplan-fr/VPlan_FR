@@ -79,7 +79,7 @@
         align-items: center;
         justify-content: center;
         border: none;
-        background-color: rgba(255, 255, 255, 0.2);
+        background-color: var(--accent-color);
         color: var(--text-color);
         border-radius: 5px;
         padding: .5em;
