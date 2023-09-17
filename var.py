@@ -59,6 +59,10 @@ SETTINGS = {
         "default": False,
         "type": "bool",
     },
+    "filled_in_buttons": {
+        "default": False,
+        "type": "bool",
+    },
 }
 
 TYPE_FUNCTIONS = {
