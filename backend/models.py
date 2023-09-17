@@ -25,7 +25,6 @@ class Lesson:
     rooms: set[str] | None
     course: str | None  # class group if available else subject
 
-    info: str
     parsed_info: ParsedLessonInfo
 
     # taken directly from plan xml
@@ -41,6 +40,15 @@ class Lesson:
     is_internal: bool = False
     _lesson_date: datetime.date = None
 
+    _grouped_form_plan_current_course: str = None
+    _grouped_form_plan_current_teachers: set[str] = None
+    _grouped_form_plan_current_rooms: set[str] = None
+    _grouped_form_plan_current_forms: set[str] = None
+    _grouped_form_plan_scheduled_course: str = None
+    _grouped_form_plan_scheduled_teachers: set[str] = None
+    _grouped_form_plan_scheduled_rooms: set[str] = None
+    _grouped_form_plan_scheduled_forms: set[str] = None
+
     @property
     def class_opt(self):
         if self.class_ is None:
@@ -50,14 +58,13 @@ class Lesson:
             return self.class_
 
     @classmethod
-    def create_internal(cls):
+    def create_internal(cls, date: datetime.date):
         return cls(
             periods=set(),
             forms=set(),
             teachers=None,
             rooms=None,
             course=None,
-            info="",
             parsed_info=ParsedLessonInfo([]),
             class_=None,
             subject_changed=False,
@@ -68,7 +75,7 @@ class Lesson:
             takes_place=True,
             is_internal=True,
             is_scheduled=False,
-            _lesson_date=None,
+            _lesson_date=date,
         )
 
     def serialize(self) -> dict:
@@ -87,6 +94,7 @@ class Lesson:
             "is_internal": self.is_internal,
             "is_scheduled": self.is_scheduled,
             "class_data": repr(self.class_),
+            "info": self.parsed_info.serialize(self._lesson_date),
         }
 
 
@@ -119,7 +127,6 @@ class PlanLesson:
     room_changed: bool
     forms_changed: bool
 
-    info: str
     parsed_info: ParsedLessonInfo
 
     takes_place: bool | None = None
@@ -148,7 +155,7 @@ class PlanLesson:
             "room_changed": self.room_changed,
             "forms_changed": self.forms_changed,
             # "info": self.info,
-            "info": self.parsed_info.serialize(self._lesson_date, self),
+            "info": self.parsed_info.serialize(self._lesson_date),
             "begin": self.begin.strftime("%H:%M") if self.begin else None,
             "takes_place": self.takes_place,
             "end": self.end.strftime("%H:%M") if self.end else None,
@@ -164,7 +171,7 @@ class Lessons:
 
         for lesson_i, lesson in enumerate(self.lessons):
             for attribute in attributes:
-                value = getattr(lesson, attribute, None)
+                value = getattr(lesson, attribute)
 
                 if not include_none and value is None:
                     continue
@@ -257,8 +264,7 @@ class Lessons:
                     teacher_changed=current_lesson.teacher_changed,
                     room_changed=current_lesson.room_changed,
                     forms_changed=current_lesson.forms != scheduled_lesson.forms if scheduled_lesson is not None else True,
-                    info=current_lesson.info,  # TODO
-                    parsed_info=current_lesson.parsed_info,
+                    parsed_info=current_lesson.parsed_info,  # TODO
                     takes_place=current_lesson.takes_place,
                     is_internal=current_lesson.is_internal,
                     _lesson_date=current_lesson._lesson_date
@@ -291,7 +297,6 @@ class Lessons:
                     teacher_changed=False,
                     room_changed=False,
                     forms_changed=False,
-                    info=scheduled_lesson.info,  # TODO
                     parsed_info=scheduled_lesson.parsed_info,
                     takes_place=False,
                     is_internal=scheduled_lesson.is_internal,
@@ -349,6 +354,7 @@ class Lessons:
                         new_message.parsed: MovedFrom | MovedTo
                         new_message.parsed.periods += parsed2.periods
                         new_message.parsed.original_messages += parsed2.original_messages
+                        new_message.parsed.plan_value |= parsed2.plan_value
                         new_paragraph.append(new_message)
                     else:
                         return None
@@ -366,7 +372,7 @@ class Lessons:
         out.sort_original()
         return out
 
-    def blocks_grouped(self) -> Lessons:
+    def group_blocks_and_lesson_info(self) -> Lessons:
         assert all(len(x.periods) <= 1 for x in self.lessons), \
             "Lessons must be ungrouped. (Must only have one period.)"
 
@@ -418,7 +424,6 @@ class Lessons:
             if can_get_grouped:
                 grouped[-1].periods |= lesson.periods
                 grouped[-1].forms |= lesson.forms
-                grouped[-1].info = "\n".join(filter(lambda x: x, [grouped[-1].info, lesson.info]))
                 grouped[-1].parsed_info = grouped_additional_info
                 grouped[-1].begin = min(filter(lambda x: x, (grouped[-1].begin, lesson.begin)), default=None)
                 grouped[-1].end = min(filter(lambda x: x, (grouped[-1].end, lesson.end)), default=None)
@@ -431,6 +436,13 @@ class Lessons:
 
     def filter(self, function: typing.Callable[[Lesson], bool]) -> Lessons:
         return Lessons(list(filter(function, self.lessons)))
+
+    def filter_plan_type_messages(self, plan_type: typing.Literal["forms", "rooms", "teachers"]) -> Lessons:
+        return Lessons([
+            dataclasses.replace(lesson, parsed_info=lesson.parsed_info.filter_messages(
+                lambda m: m.parsed.plan_type is None or m.parsed.plan_type == plan_type
+            )) for lesson in self.lessons
+        ])
 
     def serialize(self) -> list:
         return [lesson.serialize() for lesson in self.lessons]
@@ -470,11 +482,6 @@ class Plan:
         all_classes = {number: class_ for form in form_plan.forms for number, class_ in form.classes.items()}
         for form in form_plan.forms:
             for lesson in form.lessons:
-                # lesson.information = "lesson information unavailable"  # TODO
-                parsed_info = ParsedLessonInfo.from_str(
-                    lesson.information, form_plan.timestamp.year
-                ) if lesson.information is not None else ParsedLessonInfo([])
-
                 if lesson.class_number in all_classes:
                     _class = all_classes[lesson.class_number]
 
@@ -498,8 +505,7 @@ class Plan:
                     rooms=set(lesson.room().split(" ")) if lesson.room() else set(),
                     course=lesson.subject(),
 
-                    info=lesson.information if lesson.information is not None else "",
-                    parsed_info=parsed_info,
+                    parsed_info=None,
 
                     class_=class_data,
                     subject_changed=lesson.subject.was_changed,
@@ -508,6 +514,9 @@ class Plan:
                     _lesson_date=form_plan.date,
                     is_scheduled=False
                 )
+                current_lesson.parsed_info = ParsedLessonInfo.from_str(
+                    lesson.information, current_lesson
+                ) if lesson.information is not None else ParsedLessonInfo([])
 
                 scheduled_lesson = Lesson(
                     periods={lesson.period} if lesson.period is not None else set(),
@@ -523,9 +532,7 @@ class Plan:
                             or (class_data.subject if class_data is not None else None)
                             or (current_lesson.course if not current_lesson.room_changed else None)
                     ),
-
-                    info=lesson.information if lesson.information is not None else "",
-                    parsed_info=parsed_info,
+                    parsed_info=current_lesson.parsed_info,
 
                     class_=class_data,
                     subject_changed=False,
