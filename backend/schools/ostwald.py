@@ -16,6 +16,12 @@ def scrape_teachers():
     teacher_data = []
 
     for teacher in teachers:
+        """
+        # very slow
+        teacher_link = teacher.find("a")["href"]
+        teacher_data.append(
+            scrape_teacher(f"https://www.ostwaldgymnasium.de{teacher_link}")
+        )"""
         name, faecher = [elem.strip() for elem in teacher.find("a").text.strip().split(" -")[:2]]
         teacher.find("a").decompose()
         additional_info = teacher.find("div", {"class": "list-title"}).text.strip()
@@ -31,7 +37,43 @@ def scrape_teachers():
             )
         )
 
+    r2 = requests.get("https://www.ostwaldgymnasium.de/index.php/kontakte/12-schulleitung")
+    soup = BeautifulSoup(r2.text, features="html.parser")
+    soup = soup.find("ul", {"class": "category"})
+    teachers = soup.find_all("li")
+    for teacher in teachers:
+        teacher_link = teacher.find("a")["href"]
+        teacher_data.append(
+            scrape_teacher(f"https://www.ostwaldgymnasium.de{teacher_link}")
+        )
     return teacher_data
+
+
+def scrape_teacher(teacher_link: str):
+    r = requests.get(teacher_link)
+    soup = BeautifulSoup(r.text, features="html.parser")
+    name_field = soup.find("span", {"class": "contact-name"}).text.strip()
+    if "-" in name_field:
+        name, subjects, _ = name_field.split(" -")
+        name, subjects = name.strip(), subjects.strip()
+        subjects = subjects.split(" ")
+    else:
+        name = name_field
+        subjects = soup.find("span", {"class": "contact-misc"}).find("p").text.strip().split("/")
+
+    additional_info = soup.find("dd", {"itemprop": "jobTitle"})
+    if additional_info:
+        additional_info = additional_info.text.strip()
+    else:
+        additional_info = ""
+    kuerzel = soup.find("span", {"class": "contact-mobile", "itemprop": "telephone"}).text.strip()
+    return Teacher(
+        full_name=None,
+        surname=name.replace("Madama", "Frau").replace("Monsieur", "Frau"),
+        subjects=subjects,
+        abbreviation=kuerzel,
+        info=additional_info
+    )
 
 
 def parse_room(room_str: str) -> Room:
@@ -97,5 +139,4 @@ def parse_room(room_str: str) -> Room:
 
 
 if __name__ == "__main__":
-    o = scrape_teachers()
-    print(o)
+    ...
