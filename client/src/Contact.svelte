@@ -1,5 +1,5 @@
 <script>
-    import {customFetch} from "./utils.js";
+    import {customFetch, navigate_page} from "./utils.js";
     import {notifications} from "./notifications.js";
     import Select from "./Components/Select.svelte";
 
@@ -19,7 +19,8 @@
             })
         })
             .then(data => {
-                notifications.success("Nachricht übermittelt")
+                notifications.success("Nachricht übermittelt");
+                navigate_page("plan");
             })
             .catch(error => {
                 notifications.danger(error);
@@ -46,16 +47,54 @@
     {"id": "developer", "name": "Developer"},
     {"id": "else", "name": "Sonstige"}
 ]} bind:selected_id={person}>Person</Select>
-<br><br>
-Deine Kontaktdaten: (Telefon/E-Mail)<br>
-<input type="text" bind:value={contact_data}>
-<br><br>
-Deine Nachricht:<br>
-<input type="text" bind:value={message}>
-<br>
-<br>
-<button on:click={send_message}>Absenden</button>
+
+<label for="contact_data">Deine Kontaktdaten (Discord/E-Mail/Telefon):</label>
+<input class="textfield" name="contact_data" type="text" bind:value={contact_data}>
+<label for="message">Deine Nachricht:</label>
+<textarea class="textfield" name="message" bind:value={message} style="resize: vertical;"></textarea>
+<button class="button" on:click={send_message}>Absenden</button>
 
 <style lang="scss">
+    label {
+        display: block;
+        margin-top: 4px;
+        margin-bottom: 8px;
+        font-size: var(--font-size-base);
+    }
 
+    .textfield {
+        width: 100%;
+        padding: 12px 20px;
+        margin-bottom: 8px;
+        box-sizing: border-box;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-color);
+        border-radius: 5px;
+    }
+
+    .button {
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: var(--text-color);
+        border-radius: 5px;
+        padding: .5em;
+        margin: 3px;
+        font-size: var(--font-size-base);
+        position: relative;
+
+        &.btn-small {
+            font-size: var(--font-size-sm);
+        }
+
+        .material-symbols-outlined {
+            font-size: 1.3em;
+            float: right;
+            margin-left: .2em;
+        }
+    }
 </style>
