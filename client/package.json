@@ -21,9 +21,9 @@
     "svelte-preprocess": "^5.0.4"
   },
   "dependencies": {
-    "attractions": "^3.7.0",
     "postcss": "^8.4.24",
     "sirv-cli": "^2.0.0",
-    "svelte-markdown": "^0.4.0"
+    "svelte-markdown": "^0.4.0",
+    "svelty-picker": "^4.1.4"
   }
 }

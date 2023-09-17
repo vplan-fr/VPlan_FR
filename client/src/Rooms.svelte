@@ -62,15 +62,6 @@
         font-size: var(--font-size-base);
     }
 
-    .extra-height {
-        position: relative;
-        min-height: calc(100vh - 56px);
-
-        @media only screen and (min-width: 1501px) {
-            min-height: calc(100vh - 64px);
-        }
-    }
-
     .toggle-button {
         font-size: var(--font-size-base);
         width: 100%;

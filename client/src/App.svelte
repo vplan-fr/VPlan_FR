@@ -6,7 +6,7 @@
     import Navbar from "./Navbar.svelte";
     import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
-    import {DatePicker} from 'attractions';
+    import SveltyPicker from 'svelty-picker';
     import {get_settings, group_rooms, update_colors} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings, active_modal} from './stores.js'
@@ -16,6 +16,7 @@
     import Changelog from "./Changelog.svelte";
     import Select from "./Components/Select.svelte";
     import Contact from "./Contact.svelte";
+    import { de } from 'svelty-picker/i18n';
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -45,7 +46,6 @@
     let selected_revision = ".newest";
     let meta = {};
     let all_meta = {};
-    let disabledDates = [];
     let enabled_dates = [];
     let grouped_rooms = [];
     let course_lists = {};
@@ -105,30 +105,6 @@
             });
     }
     $: all_revisions = [".newest"].concat((all_meta.dates || {})[date] || []);
-
-    function update_disabled_dates(enabled_dates) {
-        if (!$logged_in) {
-            return;
-        }
-        let tmp_start = new Date(enabled_dates[enabled_dates.length - 1]);
-        let tmp_end = new Date(enabled_dates[0]);
-        tmp_start.setDate(tmp_start.getDate() + 1);
-        tmp_end.setDate(tmp_end.getDate() - 1);
-        disabledDates = [
-            {start: new Date("0"), end: tmp_end},
-            {start: tmp_start, end: new Date("9999")},
-        ];
-        for (let i = 0; i < enabled_dates.length; i++) {
-            tmp_start = new Date(enabled_dates[i]);
-            tmp_end = new Date(enabled_dates[i + 1]);
-            tmp_start.setDate(tmp_start.getDate() + 1);
-            tmp_end.setDate(tmp_end.getDate() - 1);
-            disabledDates.push({
-                start: tmp_start,
-                end: tmp_end
-            });
-        }
-    }
 
     function check_login_status() {
         customFetch('/auth/check_login')
@@ -192,12 +168,26 @@
         $active_modal = "";
     }
 
+    function scrollTo(element) {
+        // Disable on Desktop (aspect ratio > 1)
+        if (window.innerWidth > window.innerHeight) {return;}
+        var headerOffset = window.innerWidth > 601 ? 74 : 66;
+        var elementPosition = element.getBoundingClientRect().top;
+        var offsetPosition = elementPosition + window.scrollY - headerOffset;
+    
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth"
+        });
+    }
+
     function set_plan(new_plan_type, new_plan_value) {
         plan_type = new_plan_type;
         plan_value = new_plan_value;
         ("forms" !== plan_type) && (selected_form = null);
         ("teachers" !== plan_type) && (selected_teacher = null);
         ("rooms" !== plan_type) && (selected_room = null);
+        scrollTo(document.getElementsByClassName("plan-heading")[0]);
     }
 
     let form_arr = [];
@@ -233,9 +223,12 @@
         }
     }
 
+    function getDateDisabled(date) {
+        return !enabled_dates.includes(`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`);
+    }
+
     $: $logged_in && get_settings();
     $: $logged_in && get_meta(api_base);
-    $: $logged_in && update_disabled_dates(enabled_dates);
     $: $logged_in && get_greeting();
     $: !$logged_in && close_modal();
     $: school_num, $logged_in && get_preferences();
@@ -266,16 +259,13 @@
             <div class="controls-wrapper">
                 <!-- Datepicker -->
                 <div class="control" id="c1">
-                    <DatePicker
-                        format="%Y-%m-%d"
-                        locale="de-DE"
-                        closeOnSelection
-                        bind:disabledDates
-                        value={(date === null) ? null : new Date(date)}
-                        on:change={(evt) => {
-                            let tmp_dat = evt.detail.value;
-                            date = `${tmp_dat.getFullYear()}-${pad(tmp_dat.getMonth()+1)}-${pad(tmp_dat.getDate())}`;
-                        }}
+                    <SveltyPicker
+                        format="yyyy-mm-dd"
+                        displayFormat="dd.mm.yyyy"
+                        disableDatesFn={getDateDisabled}
+                        initialDate={(date === null) ? new Date() : new Date(date)}
+                        i18n={de}
+                        bind:value={date}
                     />
                 </div>
                 <!-- Select Form -->
@@ -297,12 +287,13 @@
                     }}>Raumübersicht</button>
                 </div>
             </div>
-            <select bind:value={selected_revision}
-                    on:change={() => {}}>
-                        {#each all_revisions as revision}
-                            <option value="{revision}">{format_revision_date(revision)}</option>
-                        {/each}
-            </select>
+            <!-- Select Revision (Plan Version) -->
+            <!-- <select bind:value={selected_revision}
+                on:change={() => {}}>
+                {#each all_revisions as revision}
+                    <option value="{revision}">{format_revision_date(revision)}</option>
+                {/each}
+            </select> -->
             {#if $current_page.substring(0, 4) === "plan"}
                 <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision/>
             {:else}
@@ -317,7 +308,7 @@
         {:else if $current_page === "contact"}
             <Contact />
         {:else}
-            <span>Seite nicht gefunden!</span>
+            <span class="responsive-text">Seite nicht gefunden!</span>
         {/if}
     {:else}
         <Authentication></Authentication>
