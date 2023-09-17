@@ -3,7 +3,7 @@
     import Lesson from './Lesson.svelte';
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
-    import { title, preferences } from './stores.js';
+    import { title, preferences, settings } from './stores.js';
     import {customFetch, navigate_page, should_date_be_cached, format_date} from "./utils.js";
 
     export let api_base;
@@ -257,7 +257,9 @@
                 {/each}
             </div>
             {/if}
-            <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+        {/if}
+        {#if $settings.show_plan_file_timestamps}
+            <div class="last-updated">Zeitstempel in Plandatei: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
         {/if}
     {/if}
 </div>
@@ -271,6 +273,9 @@
         Plan konnte nicht geladen werden.
     {:else}
         <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
+        {#if $settings.show_plan_file_timestamps}
+            <div class="last-updated">Zeitstempel in Plandatei: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+        {/if}
     {/if}
 </div>
 {/if}

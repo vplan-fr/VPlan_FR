@@ -287,18 +287,21 @@
                     }}>Raumübersicht</button>
                 </div>
             </div>
-            <!-- Select Revision (Plan Version) -->
-            <!-- <select bind:value={selected_revision}
-                on:change={() => {}}>
-                {#each all_revisions as revision}
-                    <option value="{revision}">{format_revision_date(revision)}</option>
-                {/each}
-            </select> -->
             {#if $current_page.substring(0, 4) === "plan"}
                 <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision/>
             {:else}
                 <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
             {/if}
+            <!-- Select Revision (Plan Version) -->
+            Zeitstempel des Planuploads:
+            <select bind:value={selected_revision}
+                    on:change={() => {}}>
+                {#each all_revisions as revision, ind}
+                    {#if ind !== 1}
+                        <option value="{revision}">{format_revision_date(revision, all_revisions[1])}</option>
+                    {/if}
+                {/each}
+            </select>
         {:else if $current_page === "school_manager"}
             <SchoolManager bind:school_num />
         {:else if $current_page === "about_us"}
