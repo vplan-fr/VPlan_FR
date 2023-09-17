@@ -255,7 +255,7 @@ def contact() -> Response:
     embed.add_embed_field("Nutzername:", current_user.get_field("nickname"), inline=False)
     embed.add_embed_field("Kontaktdaten:", f"```{contact_data}```", inline=False)
     embed.add_embed_field("Nachricht:", f"```{message}```", inline=False)
-    webhook_send("WEBHOOK_TEST", embeds=[embed])
+    webhook_send("WEBHOOK_CONTACT", embeds=[embed])
     return send_success()
 
 
