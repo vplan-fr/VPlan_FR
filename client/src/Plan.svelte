@@ -185,9 +185,11 @@
         refresh_plan_vars();
     });
 
-    let full_teacher_name = "";
+    let full_teacher_name = null;
+    let teacher_contact_link = null;
     $: if (plan_type === "teachers") {
-        full_teacher_name = all_meta["teachers"][plan_value]["surname"]
+        full_teacher_name = all_meta["teachers"][plan_value]["surname"] || null;
+        teacher_contact_link = all_meta["teachers"][plan_value]["contact_link"] || null;
     }
 
     let preferences_apply = true;

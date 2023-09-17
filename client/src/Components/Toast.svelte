@@ -1,7 +1,8 @@
 <script>
     import { flip } from 'svelte/animate';
     import { fly } from "svelte/transition";
-    import { notifications } from "../notifications.js";
+    import {removeNotification} from "../notifications.js";
+    import {notifications_list} from "../stores.js";
 
     export let themes = {
         danger: "#E26D69",
@@ -11,16 +12,11 @@
         default: "#aaaaaa",
     };
 
-    function removeNotification(id) {
-        const index = $notifications.findIndex((elem) => elem.id === id);
-        if (index > -1) {
-            $notifications.splice(index, 1);
-        }
-    }
+
 </script>
 
 <div class="notifications">
-    {#each $notifications as notification (notification.id)}
+    {#each $notifications_list as notification (notification.id)}
     <!-- svelte-ignore a11y-click-events-have-key-events -->    
         <div
             class="toast"

@@ -617,6 +617,7 @@ class Teacher:
     surname: str | None = None
     info: str | None = None
     subjects: list[str] = dataclasses.field(default_factory=list)
+    contact_link: str | None = None
 
     def serialize(self) -> dict:
         return {
@@ -624,7 +625,8 @@ class Teacher:
             "full_name": self.full_name,
             "surname": self.surname,
             "info": self.info,
-            "subjects": self.subjects
+            "subjects": self.subjects,
+            "contact_link": self.contact_link,
         }
 
     @classmethod
@@ -634,7 +636,8 @@ class Teacher:
             full_name=data["full_name"],
             surname=data["surname"],
             info=data["info"],
-            subjects=data["subjects"]
+            subjects=data["subjects"],
+            contact_link=data.get("contact_link"),
         )
 
     def merge(self, other: Teacher) -> Teacher:
@@ -643,7 +646,8 @@ class Teacher:
             surname=self.surname or other.surname,
             info=self.info or other.info,
             abbreviation=self.abbreviation or other.abbreviation,
-            subjects=list(set(self.subjects + other.subjects))
+            subjects=list(set(self.subjects + other.subjects)),
+            contact_link=self.contact_link or other.contact_link,
         )
 
     def surname_no_titles(self):

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 
 import requests
 from bs4 import BeautifulSoup
@@ -6,7 +7,7 @@ from bs4 import BeautifulSoup
 from backend.models import Teacher, Room
 
 
-def scrape_teachers():
+def scrape_teachers() -> List[Teacher]:
     r = requests.post("https://www.ostwaldgymnasium.de/index.php/schule/lehrer", data={"limit": "0"})
 
     soup = BeautifulSoup(r.text, features="html.parser")
@@ -16,6 +17,7 @@ def scrape_teachers():
     teacher_data = []
 
     for teacher in teachers:
+        teacher_link = teacher.find("a")["href"]
         """
         # very slow
         teacher_link = teacher.find("a")["href"]
@@ -27,6 +29,8 @@ def scrape_teachers():
         additional_info = teacher.find("div", {"class": "list-title"}).text.strip()
         kuerzel = teacher.find("div", {"class": "span3"}).text.strip()
 
+        if teacher_link:
+            teacher_link = f"https://www.ostwaldgymnasium.de{teacher_link}#display-form"
         teacher_data.append(
             Teacher(
                 full_name=None,
@@ -34,6 +38,7 @@ def scrape_teachers():
                 abbreviation=kuerzel,
                 subjects=faecher.replace("G/R/W", "GRW").split(" "),
                 info=additional_info,
+                contact_link=teacher_link
             )
         )
 
@@ -49,7 +54,7 @@ def scrape_teachers():
     return teacher_data
 
 
-def scrape_teacher(teacher_link: str):
+def scrape_teacher(teacher_link: str) -> Teacher:
     r = requests.get(teacher_link)
     soup = BeautifulSoup(r.text, features="html.parser")
     name_field = soup.find("span", {"class": "contact-name"}).text.strip()
@@ -72,7 +77,8 @@ def scrape_teacher(teacher_link: str):
         surname=name.replace("Madama", "Frau").replace("Monsieur", "Frau"),
         subjects=subjects,
         abbreviation=kuerzel,
-        info=additional_info
+        info=additional_info,
+        contact_link=f"{teacher_link}#display-form"
     )
 
 
