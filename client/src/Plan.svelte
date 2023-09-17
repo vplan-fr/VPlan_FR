@@ -51,7 +51,7 @@
                 data = JSON.parse(data);
                 rooms_data = data["rooms"];
                 if (plan_type !== "room_overview") {
-                    all_lessons = data[plan_key][plan_type][entity] || [];
+                    all_lessons = data[plan_key][plan_type] ? data[plan_key][plan_type][entity] || [] : [];
                 }
                 info = data["info"];
                 week_letter = info["week"];
@@ -87,7 +87,8 @@
                 loading = false;
             })
             .catch(error => {
-                if (data_from_cache) {
+                if (error.name === "AbortError") {
+                } else if (data_from_cache) {
                     loading_failed = false;
                     loading = false;
                     notifications.info("Plan aus Cache geladen", 2000);
@@ -191,7 +192,7 @@
     let teacher_contact_link = null;
     $: if (plan_type === "teachers") {
         full_teacher_name = all_meta["teachers"][plan_value]?.surname || null;
-        teacher_contact_link = all_meta["teachers"][plan_value]["contact_link"] || null;
+        teacher_contact_link = all_meta["teachers"][plan_value]?.contact_link || null;
     }
 
     let preferences_apply = true;
