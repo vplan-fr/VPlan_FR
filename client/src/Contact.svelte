@@ -46,7 +46,7 @@
     {"id": "head_teacher", "name": "Schulleiter"},
     {"id": "developer", "name": "Developer"},
     {"id": "else", "name": "Sonstige"}
-]} bind:selected_id={person}>Person</Select>
+]} bind:selected_id={person}>Absender</Select>
 
 <label for="contact_data">Deine Kontaktdaten (Discord/E-Mail/Telefon):</label>
 <input class="textfield" name="contact_data" type="text" bind:value={contact_data}>
