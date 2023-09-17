@@ -7,14 +7,15 @@
     export let plan_value;
     export let display_time = true;
 
-    $: teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers.length === 0 && lesson.takes_place
-    $: teachers = (lesson.takes_place && !teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers) || []
-    $: forms = (lesson.takes_place ? lesson.current_forms : lesson.scheduled_forms) || []
-    $: forms_str = lesson.takes_place ? lesson.current_forms_str : lesson.scheduled_forms_str
-    $: rooms = (lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms) || []
-    $: subject_changed = lesson.subject_changed && lesson.takes_place
-    $: teacher_changed = lesson.teacher_changed && lesson.takes_place
-    $: room_changed = lesson.room_changed && lesson.takes_place
+    $: teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers.length === 0 && lesson.takes_place;
+    $: teachers = (lesson.takes_place && !teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers) || [];
+    $: forms = (lesson.takes_place ? lesson.current_forms : lesson.scheduled_forms) || [];
+    $: forms_str = lesson.takes_place ? lesson.current_forms_str : lesson.scheduled_forms_str;
+    $: rooms = (lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms) || [];
+    $: subject_changed = lesson.subject_changed && lesson.takes_place;
+    $: teacher_changed = lesson.teacher_changed && lesson.takes_place;
+    $: room_changed = lesson.room_changed && lesson.takes_place;
+    // $: form_changed = lesson.form_changed && lesson.takes_place;
 
     function periods_to_block_label(periods) {
         periods.sort(function (a, b) {
