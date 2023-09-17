@@ -24,7 +24,7 @@ users = db.user
 
 
 def send_success(data=None) -> Response:
-    if not data:
+    if data is None:
         data = {}
     return jsonify({"success": True, "data": data})
 
