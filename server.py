@@ -59,7 +59,7 @@ def base() -> Response:
     return resp
 
 
-@app.route("/<path:path>", methods=["GET"])
+@app.route("/public/<path:path>", methods=["GET"])
 def home(path) -> Response:
     return send_from_directory('client/public', path)
 

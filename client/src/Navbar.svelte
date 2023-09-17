@@ -44,7 +44,7 @@
 
 <nav transition:fly={{y:-64}}>
     <button class="logo-button" on:click={() => {navigate_page("plan")}}>
-        <img class="logo" src="/base_static/images/better_vp_white.svg" alt="Better VPlan Logo">
+        <img class="logo" src="/public/base_static/images/better_vp_white.svg" alt="Better VPlan Logo">
     </button>
     <ul class="nav-element-wrapper">
         <li><button on:click={() => {navigate_page("about_us")}} class="nav-button">Über uns</button></li>
