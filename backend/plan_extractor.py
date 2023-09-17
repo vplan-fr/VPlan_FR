@@ -183,11 +183,13 @@ class PlanExtractor:
 
         return out
 
-    def info_data(self, parsed_forms: list[ParsedForm]) -> dict[str, typing.Any]:
+    def info_data(self, parsed_forms: list[ParsedForm], teacher_abbreviation_by_surname: dict[str, str]
+                  ) -> dict[str, typing.Any]:
         return {
             "additional_info": self.forms_plan.additional_info,
             "processed_additional_info": [
-                [i.serialize() for i in process_additional_info(text, parsed_forms, self.forms_plan.indiware_plan.date)]
+                [i.serialize() for i in process_additional_info(text, parsed_forms, teacher_abbreviation_by_surname,
+                                                                self.forms_plan.indiware_plan.date)]
                 for text in self.forms_plan.additional_info
             ],
             "timestamp": self.forms_plan.indiware_plan.timestamp.isoformat(),

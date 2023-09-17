@@ -670,15 +670,25 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
     return out
 
 
-def process_additional_info(text: str, parsed_existing_forms: list[ParsedForm], date: datetime.date
+def process_additional_info(text: str, parsed_existing_forms: list[ParsedForm],
+                            teacher_abbreviation_by_surname: dict[str, str], date: datetime.date
                             ) -> list[LessonInfoTextSegment]:
     if text is None:
         return []
-    # TODO: Dates, Teachers
+    # TODO: Dates
     # remove spaces after slashes like in 5/ 3
     text = re.sub(r"(?<=\w)/ ", "/", text)
 
-    return add_fuzzy_form_links(text, parsed_existing_forms, date)
+    segments = add_fuzzy_form_links(text, parsed_existing_forms, date)
+
+    new_segments = []
+    for segment in segments:
+        if segment.link is None:
+            new_segments += add_fuzzy_teachers(segment.text, teacher_abbreviation_by_surname, date)
+        else:
+            new_segments.append(segment)
+
+    return new_segments
 
 
 def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], date: datetime.date
@@ -715,6 +725,42 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
                 LessonInfoTextSegment(
                     parsed_forms_to_str(matched_forms),
                     link=LessonInfoTextSegmentLink("forms", [f.to_str() for f in matched_forms], date, None)
+                )
+            )
+        else:
+            segments[-1].text += match.group()
+
+    segments.append(LessonInfoTextSegment(
+        text=text[prev:]
+    ))
+
+    return segments
+
+
+def add_fuzzy_teachers(text: str, teacher_abbreviation_by_surname: dict[str, str], date: datetime.date):
+    abbreviations = set(teacher_abbreviation_by_surname.values())
+
+    segments = []
+
+    prev = 0
+    for match in re.finditer(r"\b\w+", text):
+        segments.append(LessonInfoTextSegment(text[prev:match.start()]))
+        prev = match.end()
+
+        teacher = match.group()
+
+        if teacher not in abbreviations and teacher in teacher_abbreviation_by_surname:
+            abbreviation = teacher_abbreviation_by_surname[teacher]
+        elif teacher in abbreviations:
+            abbreviation = teacher
+        else:
+            abbreviation = None
+
+        if abbreviation is not None:
+            segments.append(
+                LessonInfoTextSegment(
+                    teacher,
+                    link=LessonInfoTextSegmentLink("teachers", [abbreviation], date, None)
                 )
             )
         else:
