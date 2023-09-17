@@ -152,6 +152,18 @@ class PlanExtractor:
     def form_plan(self):
         return self.forms_lessons_grouped.make_plan("forms")
 
+    def grouped_form_plans(self) -> dict[str, dict[str, list]]:
+        return {
+            "forms": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_forms",
+                                                          "_grouped_form_plan_scheduled_forms"),
+            "rooms": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_rooms",
+                                                          "_grouped_form_plan_scheduled_rooms"),
+            "teachers": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_teachers",
+                                                             "_grouped_form_plan_scheduled_teachers"),
+            "course": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_course",
+                                                           "_grouped_form_plan_scheduled_course")
+        }
+
     def used_rooms_by_period(self) -> dict[int, set[str]]:
         out: dict[int, set[str]] = defaultdict(set)
 
