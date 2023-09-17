@@ -70,6 +70,7 @@
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.use_grouped_form_plans}>Lehrer/Raumpläne als umgeordnete Klassenpläne anzeigen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.day_switch_keys}>Pfeiltasten (Tastatur) zum Tag wechseln nutzen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.rainbow}>Regenbogen 🌈</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.filled_in_buttons}>Ausgefüllte Buttons (Bei Änderungen / Ausfall)</span>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.background_color}>Hintergrundfarbe</span>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.text_color}>Textfarbe</span>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.accent_color}>Akzentfarbe</span>
@@ -79,7 +80,7 @@
             <button on:click={reset_settings} class="button halfed">Einstellungen zurücksetzen</button>
             <button on:click={view_saved_data} class="button halfed">Gespeicherte Daten Einsehen</button>
         </div>
-        <button on:click={delete_account} class="button" style="background-color: rgb(226, 109, 105);">Account löschen</button>
+        <button on:click={delete_account} class="button" style="background-color: var(--cancelled-color);">Account löschen</button>
     </div>
     {:else}
     <span class="responsive-text">Einstellungen konnten nicht geladen werden.</span>

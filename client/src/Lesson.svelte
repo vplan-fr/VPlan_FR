@@ -1,5 +1,6 @@
 <script>
     import Dropdown from "./Components/Dropdown.svelte";
+    import {settings} from "./stores";
 
     export let lesson;
     export let date;
@@ -15,7 +16,7 @@
     $: subject_changed = lesson.subject_changed && lesson.takes_place;
     $: teacher_changed = lesson.teacher_changed && lesson.takes_place;
     $: room_changed = lesson.room_changed && lesson.takes_place;
-    // $: form_changed = lesson.form_changed && lesson.takes_place;
+    $: forms_changed = lesson.forms_changed && lesson.takes_place;
 
     function periods_to_block_label(periods) {
         periods.sort(function (a, b) {
@@ -50,7 +51,7 @@
         {/if}
         <div class="grid-align-wrapper" class:large_grid={plan_type !== "forms"}>
             <!-- Subject -->
-            <div class="subject max-width-center wide-area extra_padding" class:changed={subject_changed}>
+            <div class="subject max-width-center wide-area extra_padding" class:changed={subject_changed} class:changed_filled_in={$settings.filled_in_buttons && subject_changed}>
                 {lesson.current_class != null ? lesson.current_class : ""}
                 {#if lesson.takes_place}
                     {#if lesson.scheduled_class !== lesson.current_class && lesson.scheduled_class != null}
@@ -64,8 +65,8 @@
             </div>
             <!-- Teachers -->
             <div class="small-area vert-align">
-                <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed}
-                    class:teacher_absent={teacher_absent}>
+                <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed} class:changed_filled_in={$settings.filled_in_buttons && teacher_changed}
+                    class:teacher_absent={teacher_absent} class:cancelled_filled_in={$settings.filled_in_buttons && teacher_absent}>
                     {#each teachers as teacher}
                         <button on:click={() => {
                             plan_type = "teachers";
@@ -77,7 +78,7 @@
                 </div>
             </div>
             <!-- Rooms -->
-            <div class="rooms vert-align max-width-center info-element small-area second_of_type" class:changed={room_changed}>
+            <div class="rooms vert-align max-width-center info-element small-area second_of_type" class:changed={room_changed} class:changed_filled_in={$settings.filled_in_buttons && room_changed}>
                 {#each rooms as room}
                     <button on:click={() => {
                         plan_type = "rooms";
@@ -90,11 +91,11 @@
             <!-- Forms -->
             {#if plan_type !== "forms"}
                 {#if forms.length === 0}
-                    <div class="forms max-width-center wide-area second_of_type info-element">
+                    <div class="forms max-width-center wide-area second_of_type info-element" class:changed={forms_changed}>
                         <span class="extra_padding">-</span>
                     </div>
                 {:else if forms.length === 1}
-                <div class="forms max-width-center wide-area second_of_type info-element">
+                <div class="forms max-width-center wide-area second_of_type info-element" class:changed={forms_changed}>
                     <button on:click={() => {
                         plan_type = "forms";
                         plan_value = forms[0];
@@ -180,7 +181,7 @@
             </div>
         {/if}
         <!-- Subject -->
-        <div class="subject info-element max-width-center extra_padding" class:changed={subject_changed}>
+        <div class="subject info-element max-width-center extra_padding" class:changed={subject_changed} class:changed_filled_in={$settings.filled_in_buttons && subject_changed}>
             {lesson.current_class != null ? lesson.current_class : ""}
             {#if lesson.takes_place}
                 {#if lesson.scheduled_class !== lesson.current_class && lesson.scheduled_class != null}
@@ -194,8 +195,8 @@
         </div>
         <!-- Teachers -->
         {#if plan_type !== "teachers"}
-            <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed}
-                 class:teacher_absent={teacher_absent}>
+            <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed} class:changed_filled_in={$settings.filled_in_buttons && teacher_changed}
+                 class:teacher_absent={teacher_absent} class:cancelled_filled_in={$settings.filled_in_buttons && teacher_absent}>
                 {#each teachers as teacher}
                     <button on:click={() => {
                         plan_type = "teachers";
@@ -207,7 +208,7 @@
             </div>
         {/if}
         <!-- Rooms -->
-        <div class="rooms vert-align max-width-center info-element" class:changed={room_changed}>
+        <div class="rooms vert-align max-width-center info-element" class:changed={room_changed} class:changed_filled_in={$settings.filled_in_buttons && room_changed}>
             {#each rooms as room}
                 <button on:click={() => {
                     plan_type = "rooms";
@@ -220,11 +221,11 @@
         <!-- Forms -->
         {#if plan_type !== "forms"}
             {#if forms.length === 0}
-                <div class="forms max-width-center info-element vert-align">
+                <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
                     <span class="extra_padding">-</span>
                 </div>
             {:else if forms.length === 1}
-            <div class="forms max-width-center info-element vert-align">
+            <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
                 <button on:click={() => {
                     plan_type = "forms";
                     plan_value = forms[0];
@@ -448,6 +449,10 @@
         outline-offset: -3px;
     }
 
+    .changed_filled_in {
+        background: var(--accent-color) !important;
+    }
+
     .subject,
     .teachers button,
     .rooms button,
@@ -504,7 +509,11 @@
 
     .cancelled {
         outline: var(--cancelled-color) solid 3px;
-        outline-offset: -1.5px;
+        outline-offset: -3px;
+    }
+
+    .cancelled_filled_in {
+        background: var(--cancelled-color) !important;
     }
 
     .horizontal-align {

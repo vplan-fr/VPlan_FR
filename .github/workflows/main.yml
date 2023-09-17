@@ -1,0 +1,27 @@
+name: Remote SSH
+on:
+  push:
+    branches:
+        - production
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.IP }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          cd programming/VPlan_FR/
+          git checkout production
+          git pull
+          source venv/bin/activate.fish
+          pip install -r requirements.txt
+          cd client
+          npm run build
+          sudo service apache2 restart

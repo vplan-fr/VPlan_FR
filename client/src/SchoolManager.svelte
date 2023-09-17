@@ -125,7 +125,7 @@
         }}>
         <h1 class="responsive-heading">Schulauswahl</h1>
         <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
-        <Select data={schools_arr} icon_location="/base_static/images/school_icons" bind:selected_id={authorize_school_id}>Schule auswählen</Select>
+        <Select data={schools_arr} icon_location="/public/base_static/images/school_icons" bind:selected_id={authorize_school_id}>Schule auswählen</Select>
         <button class="button" type="submit">Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></button>
     </form>
     {:else}
@@ -135,12 +135,12 @@
         <span class="responsive-text">Trage hier die Zugangsdaten für deine Schule ein<br>(dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
         <label for="school_username">Nutzername</label>
         <div class="input_icon">
-            <img src="/base_static/images/user-solid-white.svg" alt="User Icon">
+            <img src="/public/base_static/images/user-solid-white.svg" alt="User Icon">
             <input disabled={!school_auth_visible} autocomplete="off" name="school_username" bind:value={username} type="text" required class="textfield" placeholder="Nutzername"/>
         </div>
         <label for="school_password">Passwort</label>
         <div class="input_icon">
-            <img src="/base_static/images/lock-solid-white.svg" alt="Lock Icon">
+            <img src="/public/base_static/images/lock-solid-white.svg" alt="Lock Icon">
             <input disabled={!school_auth_visible} autocomplete="off" name="school_password" bind:value={password} type="password" required class="textfield" placeholder="Passwort"/>
         </div>
         <button class="button" type="submit">Login</button>
