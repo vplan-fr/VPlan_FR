@@ -73,12 +73,12 @@
         <h1 class="responsive-heading">Login</h1>
         <label for="l_nickname">Nutzername</label>
         <div class="input_icon">
-            <img src="/base_static/images/user-solid.svg" alt="User Icon">
+            <img src="/public/base_static/images/user-solid.svg" alt="User Icon">
             <input disabled={register_visible} autocomplete="username" name="l_nickname" bind:value={l_nickname} minlength="3" maxlength="15" required class="textfield" placeholder="Nutzername"/>
         </div>
         <label for="l_password">Passwort</label>
         <div class="input_icon">
-            <img src="/base_static/images/lock-solid.svg" alt="Lock Icon">
+            <img src="/public/base_static/images/lock-solid.svg" alt="Lock Icon">
             <input disabled={register_visible} autocomplete="current-password" name="l_password" bind:value={l_password} type="password" minlength="1" required class="textfield" placeholder="Passwort"/>
         </div>
         <button class="link-button" id="forgot_password" type="button" on:click={() => {alert('Verkackt :D Aber da wir keine E-Mails zum Registrieren benutzen ist ein Passwort-Reset nicht möglich. Aber frag uns einfach und wir helfen dir beim wiederherstellen deiner Einstellungen & Präferenzen bei einem neuen Account.')}}>Passwort vergessen?</button>
@@ -92,12 +92,12 @@
         <h1 class="responsive-heading">Registrieren</h1>
         <label for="s_nickname">Nutzername</label>
         <div class="input_icon">
-            <img src="/base_static/images/user-solid.svg" alt="User Icon">
+            <img src="/public/base_static/images/user-solid.svg" alt="User Icon">
             <input disabled={!register_visible} autocomplete="username" name="s_nickname" bind:value={s_nickname} minlength="3" maxlength="15" required class="textfield" placeholder="Nutzername"/>
         </div>
         <label for="s_nickname">Passwort</label>
         <div class="input_icon">
-            <img src="/base_static/images/lock-solid.svg" alt="Lock Icon">
+            <img src="/public/base_static/images/lock-solid.svg" alt="Lock Icon">
             <input disabled={!register_visible} autocomplete="new-password" name="s_password" bind:value={s_password} type="password" minlength="10" required class="textfield" placeholder="Passwort"/>
         </div>
         <span class="extra-info">Mit dem Registrieren akzeptierst du alle unbedingt erforderlichen Cookies.</span>
@@ -127,7 +127,7 @@
         position: fixed;
         width: 100%;
         height: 100%;
-        background-image: url('/base_static/images/blurry_gradient_bg.svg');
+        background-image: url('/public/base_static/images/blurry_gradient_bg.svg');
         background-color: #906df5;
         background-repeat: no-repeat;
         background-size: cover;
@@ -155,7 +155,7 @@
 
         &::before {
             content: "";
-            background-image: url('/base_static/images/logo.svg');
+            background-image: url('/public/base_static/images/logo.svg');
             background-size: contain;
             width: 90px;
             aspect-ratio: 1;

@@ -16,15 +16,15 @@
         </p>
         <div class="third_wrapper">
             <div class="third" data-msg="Project Lead">
-                <img src="/base_static/images/about/_qrtrenH.webp" alt="_qrtrenH Profilbild">
+                <img src="/public/base_static/images/about/_qrtrenH.webp" alt="_qrtrenH Profilbild">
                 <span class="responsive-text bold">_qrtrenh</span>
             </div>
             <div class="third" data-msg="Frontend Dev">
-                <img src="/base_static/images/about/Brot.webp" alt="officialbrot Profilbild">
+                <img src="/public/base_static/images/about/Brot.webp" alt="officialbrot Profilbild">
                 <span class="responsive-text bold">officialbrot</span>
             </div>
             <div class="third" data-msg="Backend Dev">
-                <img src="/base_static/images/about/bela.webp" alt="belissimo_t Profilbild">
+                <img src="/public/base_static/images/about/bela.webp" alt="belissimo_t Profilbild">
                 <span class="responsive-text bold">belissimo_t</span>
             </div>
         </div>
@@ -35,15 +35,15 @@
         </p>
         <div class="third_wrapper">
             <div class="third">
-                <img src="/base_static/images/about/_qrtrenH.webp" alt="_qrtrenH Profilbild">
+                <img src="/public/base_static/images/about/_qrtrenH.webp" alt="_qrtrenH Profilbild">
                 <span class="responsive-text bold">_qrtrenh</span>
             </div>
             <div class="third">
-                <img src="/base_static/images/about/Brot.webp" alt="officialbrot Profilbild">
+                <img src="/public/base_static/images/about/Brot.webp" alt="officialbrot Profilbild">
                 <span class="responsive-text bold">officialbrot</span>
             </div>
             <div class="third">
-                <img src="/base_static/images/about/bela.webp" alt="belissimo_t Profilbild">
+                <img src="/public/base_static/images/about/bela.webp" alt="belissimo_t Profilbild">
                 <span class="responsive-text bold">belissimo_t</span>
             </div>
         </div>
