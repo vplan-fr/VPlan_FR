@@ -32,8 +32,10 @@
         "teachers": "Lehrer"
     };
     let controller = new AbortController();
-    
-    export function load_lessons(date, plan_type, entity, revision=".newest") {
+
+    export function load_lessons(date, plan_type, entity, use_grouped_form_plans, revision=".newest") {
+        let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans"
+
         controller.abort();
         if (date === null) {
             return
@@ -49,7 +51,7 @@
                 data = JSON.parse(data);
                 rooms_data = data["rooms"];
                 if (plan_type !== "room_overview") {
-                    all_lessons = data["plans"][plan_type][entity] || [];
+                    all_lessons = data[plan_key][plan_type][entity] || [];
                 }
                 info = data["info"];
                 week_letter = info["week"];
@@ -76,7 +78,7 @@
                 }
                 rooms_data = data["rooms"]
                 if (plan_type !== "room_overview") {
-                    all_lessons = data["plans"][plan_type][entity] || [];
+                    all_lessons = data[plan_key][plan_type][entity] || [];
                 }
                 info = data["info"];
                 week_letter = info["week"];
@@ -151,7 +153,7 @@
         return `${formattedDate}`;
     }
 
-    $: load_lessons(date, plan_type, plan_value, selected_revision);
+    $: load_lessons(date, plan_type, plan_value, $settings.use_grouped_form_plans, selected_revision);
 
     function gen_location_hash() {
         if(school_num && date && plan_type) {
