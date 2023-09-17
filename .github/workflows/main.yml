@@ -18,8 +18,8 @@ jobs:
         port: ${{ secrets.PORT }}
         script: |
           cd programming/VPlan_FR/
-          git pull
           git checkout production
+          git pull
           source venv/bin/activate.fish
           pip install -r requirements.txt
           cd client
