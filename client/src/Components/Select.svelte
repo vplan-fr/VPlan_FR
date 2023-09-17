@@ -30,7 +30,7 @@
 </svelte:head>
 
 <div class="select-wrapper">
-    <Dropdown let:toggle small_version={true} transform_origin="100% 0%">
+    <Dropdown let:toggle small_version={true} transform_origin_x="100%">
         <button type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
             {#if selected_elem && selected_id}
                 {selected_elem["name"]}

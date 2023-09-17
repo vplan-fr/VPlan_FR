@@ -52,6 +52,7 @@
         transform: translate(-50%, calc(-50% - 20px));
         margin: 0;
         opacity: 0;
+        visibility: hidden;
         padding: 0;
         pointer-events: none;
         border: none;
@@ -84,6 +85,7 @@
     dialog[open] {
         transform: translate(-50%, -50%);
         opacity: 1;
+        visibility: visible;
         pointer-events: all;
     }
     

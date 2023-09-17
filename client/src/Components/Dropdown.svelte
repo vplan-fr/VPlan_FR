@@ -3,7 +3,7 @@
 
     export let transitionFunction = scale;
     export let transitionOptions = {duration: 200, start: 0.3};
-    export let transform_origin = "100% 0%";
+    export let transform_origin_x = "100%";
     export let small_version = false;
     let open = false;
 
@@ -32,12 +32,12 @@
     }
 </script>
 
-<div class="dropdown-wrapper {small_version ? "small_version": ""} {open ? "open": ""}">
+<div class="dropdown-wrapper" class:small_version class:open>
     <div class="btn-wrapper" use:clickOutside={{ enabled: open, cb: () => open = false }}>
         <slot name="toggle_button" toggle={() => {open = !open}} />
     </div>
     {#if open}
-        <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="transform-origin: {transform_origin};">
+        <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="--transform-origin-x: {transform_origin_x}">
             <div class="height-limiter">
                 <slot />
             </div>
@@ -62,6 +62,7 @@
             right: 0;
             transform: translateY(100%);
             z-index: 999;
+            transform-origin: var(--transform-origin-x) 0%;
 
             display: flex;
             flex-direction: column;
@@ -84,6 +85,10 @@
             .height-limiter {
                 max-height: min(300px, 50vh);
                 overflow-y: auto;
+
+                @media only screen and (min-width: 1501px) {
+                    max-height: min(500px, 50vh);
+                }
             }
         }
 
@@ -97,6 +102,13 @@
                     border-radius: 8px;
                 }
                 overflow: hidden;
+
+                &.flipped_top {
+                    top: -10px;
+                    bottom: unset;
+                    transform: translateY(-100%);
+                    transform-origin: var(--transform-origin-x) 100%;
+                }
             }
         }
     }

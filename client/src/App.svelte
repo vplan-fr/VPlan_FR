@@ -141,7 +141,7 @@
                 let curr_day = curr_date.getDay();
                 let curr_hours = curr_date.getHours();
                 let emoji = "👋";
-                if(curr_day <= 5) {
+                if(curr_day <= 5 && curr_day > 0) {
                     emoji = choose(["👨‍🏫", "👩‍🏫"]);
                 }
                 if (curr_hours >= 4 && curr_hours < 8) {
@@ -192,6 +192,7 @@
     let form_arr = [];
     let teacher_arr = [];
     let room_arr = [];
+    let revision_arr = [];
 
     function gen_form_arr(grouped_forms) {
         form_arr = [];
@@ -222,6 +223,17 @@
         }
     }
 
+    function gen_revision_arr(all_revisions) {
+        revision_arr = [];
+        for(const [index, revision] of Object.entries(all_revisions)) {
+            if(index == 1) {continue;}
+            revision_arr.push({
+                "id": revision,
+                "name": format_revision_date(revision, all_revisions[1])
+            });
+        }
+    }
+
     function getDateDisabled(date) {
         return !enabled_dates.includes(`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`);
     }
@@ -238,6 +250,7 @@
     $: gen_teacher_arr(teacher_list);
     $: selected_room && set_plan("rooms", selected_room);
     $: gen_room_arr(grouped_rooms);
+    $: gen_revision_arr(all_revisions);
 </script>
 
 <svelte:head>
@@ -264,6 +277,8 @@
                         disableDatesFn={getDateDisabled}
                         initialDate={(date === null) ? new Date() : new Date(date)}
                         i18n={de}
+                        clearBtn={false}
+                        todayBtn={false}
                         bind:value={date}
                     />
                 </div>
@@ -292,15 +307,9 @@
                 <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
             {/if}
             <!-- Select Revision (Plan Version) -->
-            Zeitstempel des Planuploads:
-            <select bind:value={selected_revision}
-                    on:change={() => {}}>
-                {#each all_revisions as revision, ind}
-                    {#if ind !== 1}
-                        <option value="{revision}">{format_revision_date(revision, all_revisions[1])}</option>
-                    {/if}
-                {/each}
-            </select>
+            {#if $settings.show_revision_selector}
+            <Select data={revision_arr} bind:selected_id={selected_revision}>Zeitstempel des Planuploads auswählen</Select>
+            {/if}
         {:else if $current_page === "school_manager"}
             <SchoolManager bind:school_num />
         {:else if $current_page === "about_us"}
@@ -349,6 +358,29 @@
             &#c3 {grid-area: 2 / 2 / 3 / 3;}
             &#c4 {grid-area: 3 / 1 / 4 / 2;}
             &#c5 {grid-area: 3 / 2 / 4 / 3;}
+
+            &#c1 {
+                --sdt-bg-main: var(--background);
+                --sdt-shadow-color: var(--background);
+                --sdt-radius: 5px;
+                --sdt-color: var(--text-color);
+                --sdt-color-selected: var(--text-color);
+                --sdt-header-color: var(--text-color);
+                --sdt-primary: var(--accent-color);
+                --sdt-disabled-date: var(--cancelled-color);
+                --sdt-disabled-date-bg: var(--sdt-bg-main);
+                --sdt-btn-bg-hover: rgba(255, 255, 255, 0.2);
+                --sdt-btn-header-bg-hover: var(--sdt-btn-bg-hover);
+                --sdt-color-selected: var(--text-color);
+                --sdt-today-indicator: var(--sdt-bg-main);
+
+                :global(.std-calendar-wrap::before) {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(255, 255, 255, 0.05);
+                }
+            }
         }
 
         @media only screen and (min-width: 1501px) {
