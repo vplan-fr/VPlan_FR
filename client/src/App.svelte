@@ -279,6 +279,7 @@
                         i18n={de}
                         clearBtn={false}
                         todayBtn={false}
+                        inputClasses="datepicker-input"
                         bind:value={date}
                     />
                 </div>
@@ -345,7 +346,7 @@
         grid-template-rows: repeat(3, 1fr);
         grid-column-gap: 10px;
         grid-row-gap: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 40px;
 
         .control {
             & > :global(*) {
@@ -362,6 +363,7 @@
             &#c1 {
                 --sdt-bg-main: var(--background);
                 --sdt-shadow-color: var(--background);
+                --sdt-wrap-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
                 --sdt-radius: 5px;
                 --sdt-color: var(--text-color);
                 --sdt-color-selected: var(--text-color);
@@ -373,6 +375,24 @@
                 --sdt-btn-header-bg-hover: var(--sdt-btn-bg-hover);
                 --sdt-color-selected: var(--text-color);
                 --sdt-today-indicator: var(--sdt-bg-main);
+
+                :global(.datepicker-input) {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                    border-radius: 5px;
+                    background-color: rgba(255, 255, 255, 0.2);
+                    color: var(--text-color);
+                    font-size: var(--font-size-base);
+                    text-align: center;
+                }
+
+                :global(.std-calendar-wrap) {
+                    left: 50% !important;
+                    transform: translateX(-50%);
+                    border-radius: 5px;
+                    overflow: hidden;
+                }
 
                 :global(.std-calendar-wrap::before) {
                     content: "";
