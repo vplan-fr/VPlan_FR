@@ -192,6 +192,7 @@ class Lessons:
             scheduled_lessons = [lesson for lesson in lessons if lesson.is_scheduled]
             used_scheduled_lessons = []
             lessons.sort(key=lambda l: (
+                not l.subject_changed,
                 l.takes_place,
                 l.course if l.course else "",
             ), reverse=True)
@@ -204,16 +205,21 @@ class Lessons:
                 #     scheduled_lesson = scheduled_lessons[0]
                 # else:
                 for scheduled_lesson in scheduled_lessons:
-                    # if None is not scheduled_lesson.class_opt.number == current_lesson.class_opt.number is not None:
-                    #     break
-                    if (
-                            # scheduled_lesson.course is not None is not current_lesson.course and
-                            (scheduled_lesson.course != current_lesson.course) in (
-                    False, current_lesson.subject_changed)
-                    ):
-                        break
+                    if scheduled_lesson.class_opt.number is not None is not current_lesson.class_opt.number:
+                        if scheduled_lesson.class_opt.number == current_lesson.class_opt.number:
+                            break
                 else:
-                    scheduled_lesson = None
+                    for scheduled_lesson in scheduled_lessons:
+                        # if None is not scheduled_lesson.class_opt.number == current_lesson.class_opt.number is not None:
+                        #     break
+                        if (
+                                # scheduled_lesson.course is not None is not current_lesson.course and
+                                (scheduled_lesson.course != current_lesson.course) in (
+                        False, current_lesson.subject_changed)
+                        ):
+                            break
+                    else:
+                        scheduled_lesson = None
 
                 if not current_lesson.takes_place:
                     # try to find corresponding used scheduled lesson to drop this lesson
@@ -460,6 +466,7 @@ class Plan:
     def from_form_plan(cls, form_plan: indiware_mobil.IndiwareMobilPlan) -> Plan:
         lessons: list[Lesson] = []
         exams: dict[str, list[Exam]] = defaultdict(list)
+        all_classes = {number: class_ for form in form_plan.forms for number, class_ in form.classes.items()}
         for form in form_plan.forms:
             for lesson in form.lessons:
                 # lesson.information = "lesson information unavailable"  # TODO
@@ -467,8 +474,8 @@ class Plan:
                     lesson.information, form_plan.timestamp.year
                 ) if lesson.information is not None else ParsedLessonInfo([])
 
-                if lesson.class_number in form.classes:
-                    _class = form.classes[lesson.class_number]
+                if lesson.class_number in all_classes:
+                    _class = all_classes[lesson.class_number]
 
                     class_data = ClassData(
                         teacher=_class.teacher,
@@ -542,9 +549,9 @@ class Plan:
                 else:
                     current_lesson.takes_place = True
                     scheduled_lesson.takes_place = False
-
-                if current_lesson.subject_changed:
-                    scheduled_lesson.class_ = None
+                #
+                # if current_lesson.subject_changed:
+                #     scheduled_lesson.class_ = None
 
                 lessons.append(scheduled_lesson)
                 lessons.append(current_lesson)
