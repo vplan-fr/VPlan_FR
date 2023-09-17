@@ -1,6 +1,7 @@
 <script>
     import {customFetch} from "./utils.js";
     import {notifications} from "./notifications.js";
+    import Select from "./Components/Select.svelte";
 
     let category = "bug";
     let person = "student";
@@ -28,34 +29,31 @@
 
 </script>
 
-<h1>Kontaktiere uns</h1>
-<label for="category">Nachrichtenkategorie</label>
-<select name="category" id="" bind:value={category}>
-    <option value="bug">Bug</option>
-    <option value="enhancement">Feature-Request</option>
-    <option value="authorization">Schulauthorisierung</option>
-    <option value="advertisement">Werbung</option>
-    <option value="sponsoring">Sponsoren</option>
-    <option value="questions">Fragen zur Website</option>
-    <option value="else">Sonstiges</option>
-</select>
-<br>
-<label for="person"></label>
-<select name="person" id="" bind:value={person}>
-    <option value="student">Schüler</option>
-    <option value="teacher">Lehrer</option>
-    <option value="head_teacher">Schulleiter</option>
-    <option value="developer">Developer</option>
-    <option value="else">Sonstige</option>
-</select>
-<br>
-Deine Kontaktdaten: (Telefon/E-Mail)
+<h1 class="responsive-heading">Kontaktiere uns</h1>
+<Select data={[
+    {"id": "bug", "name": "Bug"},
+    {"id": "enhancement", "name": "Feature-Request"},
+    {"id": "authorization", "name": "Schulauthorisierung"},
+    {"id": "advertisement", "name": "Werbung"},
+    {"id": "sponsoring", "name": "Sponsoren"},
+    {"id": "questions", "name": "Fragen zur Website"},
+    {"id": "else", "name": "Sonstiges"},
+]} bind:selected_id={category}>Nachrichtenkategorie</Select>
+<Select data={[
+    {"id": "student", "name": "Schüler"},
+    {"id": "teacher", "name": "Lehrer"},
+    {"id": "head_teacher", "name": "Schulleiter"},
+    {"id": "developer", "name": "Developer"},
+    {"id": "else", "name": "Sonstige"}
+]} bind:selected_id={person}>Person</Select>
+<br><br>
+Deine Kontaktdaten: (Telefon/E-Mail)<br>
 <input type="text" bind:value={contact_data}>
-<br>
-Deine Nachricht:
+<br><br>
+Deine Nachricht:<br>
 <input type="text" bind:value={message}>
 <br>
-
+<br>
 <button on:click={send_message}>Absenden</button>
 
 <style lang="scss">
