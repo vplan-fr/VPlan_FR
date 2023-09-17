@@ -6,3 +6,4 @@ export const current_page = writable("plan");
 export const settings = writable({});
 export const preferences = writable({});
 export const active_modal = writable("");
+export const notifications_list = writable([]);
