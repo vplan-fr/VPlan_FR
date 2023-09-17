@@ -80,7 +80,7 @@
             <button on:click={reset_settings} class="button halfed">Einstellungen zurücksetzen</button>
             <button on:click={view_saved_data} class="button halfed">Gespeicherte Daten Einsehen</button>
         </div>
-        <button on:click={delete_account} class="button" style="background-color: rgb(226, 109, 105);">Account löschen</button>
+        <button on:click={delete_account} class="button" style="background-color: var(--cancelled-color);">Account löschen</button>
     </div>
     {:else}
     <span class="responsive-text">Einstellungen konnten nicht geladen werden.</span>
