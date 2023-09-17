@@ -35,7 +35,11 @@ export function group_rooms(rooms) {
     function get_category_name([house, floor]) {
         let out = "";
         if (house != null) {
-            out += `Haus ${house}`;
+            if (typeof house === "string") {
+                out += `${house} `;
+            } else {
+                out += `Haus ${house}`;
+            }
         }
         if (floor != null) {
             out += ` / Etage ${floor}`;
