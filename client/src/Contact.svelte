@@ -33,7 +33,7 @@
 <Select data={[
     {"id": "bug", "name": "Bug"},
     {"id": "enhancement", "name": "Feature-Request"},
-    {"id": "authorization", "name": "Schulauthorisierung"},
+    {"id": "authorization", "name": "Schulautorisierung"},
     {"id": "advertisement", "name": "Werbung"},
     {"id": "sponsoring", "name": "Sponsoren"},
     {"id": "questions", "name": "Fragen zur Website"},
