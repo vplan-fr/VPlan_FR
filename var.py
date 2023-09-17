@@ -39,6 +39,10 @@ SETTINGS = {
         "default": False,
         "type": "bool",
     },
+    "use_grouped_form_plans": {
+        "default": False,
+        "type": "bool",
+    },
     "background_color": {
         "default": "#121212",
         "type": "color",
