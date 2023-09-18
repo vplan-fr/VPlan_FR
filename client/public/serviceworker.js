@@ -58,13 +58,13 @@ self.addEventListener('activate', event => {
 
 self.addEventListener("fetch", event => {
     let tmp_url_obj = new URL(event.request.url);
-    if(!tmp_url_obj.pathname.startsWith("/api/") && !tmp_url_obj.pathname.startsWith("/auth/")) {
+    if(tmp_url_obj.pathname.startsWith("/public/") || tmp_url_obj.pathname === "/") {
         event.respondWith(
             fetch(event.request)
             .then((res) => {
                 return caches.open('cache')
                     .then(function(cache) {
-                        cache.put(tmp_url_obj.pathname.startsWith("/#") ? event.request.url.split("/#")[0] + "/" : event.request.url, res.clone());
+                        cache.put(event.request.url, res.clone());
                         return res;
                     })
             })
