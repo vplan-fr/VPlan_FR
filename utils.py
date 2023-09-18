@@ -151,7 +151,7 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
     if request:
         if os.getenv("WEBHOOK_META"):
             meta_webhook = DiscordWebhook(url=os.getenv(meta_env), content=message, username="VPlan-Bot", avatar_url="https://vplan.fr/static/images/icons/android-chrome-192x192.png")
-            meta_embed = DiscordEmbed(title="Metadaten", color="808080")
+            meta_embed = BetterEmbed(title="Metadaten", color="808080")
             if current_user:
                 meta_embed.add_embed_field("Username:", f"{current_user.get_field('nickname')}", inline=False)
             meta_embed.add_embed_field("IP-Adresse:", f"`{request.remote_addr}`\n more info at https://whatismyipaddress.com/ip/{request.remote_addr}", inline=False)
@@ -161,6 +161,16 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
 
     webhook.execute()
     return
+
+
+class BetterEmbed(DiscordEmbed):
+
+    def add_cleaned_field(self, name: str, value: str, inline: bool = True) -> None:
+        while "`" in name:
+            name = name.replace("`", "")
+        while "`" in value:
+            value = value.replace("`", "")
+        self.add_embed_field(name, value, inline)
 
 
 if __name__ == "__main__":
