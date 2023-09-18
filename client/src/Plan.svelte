@@ -184,6 +184,7 @@
         }
         location.hash = gen_location_hash();
         title.set("Plan");
+        // console.log("Mounted Plan.svelte");
     });
 
     window.addEventListener('popstate', (e) => {
@@ -222,7 +223,7 @@
 </script>
 
 {#if plan_type !== "room_overview"}
-<div class="plan" class:extra-height={extra_height}>
+<div class="plan" class:extra-height={extra_height && !loading && !loading_failed && plan_type}>
     {#if show_title && info}
         {#if plan_type === "forms" && (plan_value in $preferences)}
             <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
@@ -273,7 +274,7 @@
     {/if}
 </div>
 {:else}
-<div class:extra-height={extra_height}>
+<div class:extra-height={extra_height && !loading && !loading_failed && plan_type}>
     <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
     {#if info}
         <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>

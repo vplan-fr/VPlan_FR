@@ -79,7 +79,6 @@
 body {
     background: var(--background);
     color: var(--text-color);
-    width: 100vw;
-    margin-right: calc(100% - 100vw) !important;
     overflow-x: hidden;
+    width: 100vw;
 }
