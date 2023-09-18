@@ -1,7 +1,6 @@
+import threading
 from typing import List
 
-import os
-import re
 import pymongo
 from bson import ObjectId
 from werkzeug.security import safe_join
@@ -21,8 +20,10 @@ load_dotenv()
 
 db = pymongo.MongoClient(os.getenv("MONGO_URL") if os.getenv("MONGO_URL") else "", 27017).vplan
 users = db.user
+creds = db.creds
 
 
+# RESPONSE WRAPPERS
 def send_success(data=None) -> Response:
     if data is None:
         data = {}
@@ -33,6 +34,7 @@ def send_error(msg: str) -> Response:
     return jsonify({"success": False, "error": msg})
 
 
+# USER MANAGEMENT
 class User(UserMixin):
     def __init__(self, mongo_id: str):
         self.mongo_id = mongo_id
@@ -102,6 +104,13 @@ class User(UserMixin):
         return self.user.get("settings", {}).get(setting_key, DEFAULT_SETTINGS.get(setting_key, None))
 
 
+def get_user(user_id):
+    try:
+        return users.find_one({'_id': ObjectId(user_id)})
+    except Exception:
+        return
+
+
 class AddStaticFileHashFlask(Flask):
     def __init__(self, *args, **kwargs):
         super(AddStaticFileHashFlask, self).__init__(*args, **kwargs)
@@ -127,13 +136,55 @@ class AddStaticFileHashFlask(Flask):
                 values["h"] = h
 
 
-def get_user(user_id):
-    try:
-        return users.find_one({'_id': ObjectId(user_id)})
-    except Exception:
-        return
+# CREDS MANAGEMENT
+def json_to_mongo():
+    with open("creds.json", "r", encoding="utf-8") as f:
+        json_creds = json.load(f)
+    for very_short_name, elem in list(json_creds.items()):
+        elem["_id"] = elem["school_number"]
+        elem["short_name"] = very_short_name
+        creds.update_one(
+            {"_id": elem["_id"]},
+            {"$set": elem},
+            upsert=True
+        )
 
 
+def get_school_by_id(school_num: str):
+    result = creds.find_one(
+        {"_id": school_num}
+    )
+    return result
+
+
+def get_all_schools():
+    return list(creds.find({}))
+
+
+def get_all_schools_by_number():
+    return {elem["_id"]: elem for elem in get_all_schools()}
+
+
+def add_database_icons():
+    school_icons = os.listdir("client/public/base_static/images/school_icons")
+    for school_icon in school_icons:
+        cur_num = school_icon.split(".")[0]
+        creds.update_one(
+            {"_id": cur_num},
+            {"$set": {"icon": school_icon}}
+        )
+
+
+def run_in_background(func):
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper
+
+
+# WEBHOOKS
+@run_in_background
 def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None):
     meta_env = "WEBHOOK_META"
     if not request or request.host.startswith("127.0.0.1") or request.host.startswith("localhost"):
@@ -160,7 +211,6 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
             meta_webhook.execute()
 
     webhook.execute()
-    return
 
 
 class BetterEmbed(DiscordEmbed):
@@ -173,10 +223,13 @@ class BetterEmbed(DiscordEmbed):
         self.add_embed_field(name, value, inline)
 
 
+print("Updating icons...")
+add_database_icons()
 if __name__ == "__main__":
-    new_embed = DiscordEmbed(title="Moin again", description="Test", color="03b2f8")
-    new_embed.set_author("VPlan Bot")
-    webhook_send("WEBHOOK_TEST", "Hi guys")
+    # new_embed = DiscordEmbed(title="Moin again", description="Test", color="03b2f8")
+    # new_embed.set_author("VPlan Bot")
+    # webhook_send("WEBHOOK_TEST", "Hi guys")
+    print(get_all_schools())
 
 
 
