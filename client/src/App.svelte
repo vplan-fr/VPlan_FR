@@ -349,15 +349,15 @@
                     </div>
                     <!-- Select Form -->
                     <div class="control" id="c2">
-                        <Select data={form_arr} grouped={true} bind:selected_id={selected_form}>Klasse auswählen</Select>
+                        <Select data={form_arr} grouped={true} bind:selected_id={selected_form} data_name="Klassen">Klasse auswählen</Select>
                     </div>
                     <!-- Select Teacher -->
                     <div class="control" id="c3">
-                        <Select data={teacher_arr} bind:selected_id={selected_teacher}>Lehrer auswählen</Select>
+                        <Select data={teacher_arr} bind:selected_id={selected_teacher} data_name="Lehrer">Lehrer auswählen</Select>
                     </div>
                     <!-- Select Room -->
                     <div class="control" id="c4">
-                        <Select data={room_arr} grouped={true} bind:selected_id={selected_room}>Raum auswählen</Select>
+                        <Select data={room_arr} grouped={true} bind:selected_id={selected_room} data_name="Räume">Raum auswählen</Select>
                     </div>
                     <!-- Show room overview -->
                     <div class="control" id="c5">
@@ -373,7 +373,7 @@
                 {/if}
                 <!-- Select Revision (Plan Version) -->
                 {#if $settings.show_revision_selector}
-                <Select data={revision_arr} bind:selected_id={selected_revision}>Zeitstempel des Planuploads auswählen</Select>
+                <Select data={revision_arr} bind:selected_id={selected_revision} data_name="Revisions">Zeitstempel des Planuploads auswählen</Select>
                 {/if}
             {:else if $current_page === "school_manager"}
                 <SchoolManager bind:school_num />
@@ -397,6 +397,7 @@
         <button on:click={() => {navigate_page("impressum")}}>Impressum</button>
         <button on:click={() => {navigate_page("contact")}}>Kontakt</button>
         <button on:click={() => {navigate_page("about_us")}}>Über Uns</button>
+        {#if !$logged_in}<button on:click={() => {navigate_page("login")}}>Login</button>{/if}
     </Dropdown>
 </footer>
 
