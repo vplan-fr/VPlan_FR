@@ -1,5 +1,4 @@
-import {notifications} from "./notifications.js";
-import {preferences, settings, current_page} from "./stores.js";
+import {current_page, settings} from "./stores.js";
 
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
@@ -243,4 +242,22 @@ export function analyze_local_storage() {
     }
 
     checkAvailableStorage();
+}
+
+export function arraysEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length !== b.length) return false;
+
+    a.sort(function (a, b) {
+        return a - b;
+    });
+    b.sort(function (a, b) {
+        return a - b;
+    });
+
+    for (var i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 }
