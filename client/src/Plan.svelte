@@ -37,7 +37,7 @@
         let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans"
         
         controller.abort();
-        if (date === null || date === undefined || !plan_type || !entity) {
+        if (date === null || date === undefined || !plan_type) {
             return;
         }
         console.log("Loading lessons...", date, plan_type, entity);
@@ -237,7 +237,11 @@
         <span class="responsive-text">Plan konnte nicht geladen werden</span>
     {:else}
         {#if lessons.length === 0}
+        {#if plan_type}    
             <span class="responsive-text">Keine Stunden</span>
+        {:else}
+        <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus um einen Plan zu sehen.</span>
+        {/if}
         {:else}
         <div class="lessons-wrapper">
             {#if external_times}
