@@ -60,6 +60,7 @@
         background: var(--background);
         color: var(--text-color);
         overflow-y: hidden;
+        min-height: 50vh;
         max-height: calc((100% - 6px) - 2em);
         max-width: calc(100% - 6px - 2em);
         width: clamp(700px, 60vw, 1400px);
