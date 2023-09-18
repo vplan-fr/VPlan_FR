@@ -84,7 +84,3 @@ DEFAULT_SETTINGS = {
     key: value["default"] for key, value in SETTINGS.items()
 }
 
-
-with open("creds.json", "r", encoding="utf-8") as f:
-    CREDS = json.load(f)
-
