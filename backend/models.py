@@ -259,12 +259,15 @@ class Lessons:
                     current_teachers=current_lesson.teachers,
                     current_rooms=current_lesson.rooms,
                     current_course=current_lesson.course,
-                    class_number=current_lesson.class_opt.number,
+                    class_number=(
+                        (scheduled_lesson.class_opt.number or current_lesson.class_opt.number)
+                        if scheduled_lesson is not None else current_lesson.class_opt.number
+                    ),
                     subject_changed=current_lesson.subject_changed,
                     teacher_changed=current_lesson.teacher_changed,
                     room_changed=current_lesson.room_changed,
                     forms_changed=current_lesson.forms != scheduled_lesson.forms if scheduled_lesson is not None else True,
-                    parsed_info=current_lesson.parsed_info,  # TODO
+                    parsed_info=current_lesson.parsed_info,
                     takes_place=current_lesson.takes_place,
                     is_internal=current_lesson.is_internal,
                     _lesson_date=current_lesson._lesson_date
