@@ -64,5 +64,10 @@ def home(path) -> Response:
     return send_from_directory('client/public', path)
 
 
+@app.route("/serviceworker.js", methods=["GET"])
+def sw() -> Response:
+    return send_from_directory('client/public', 'serviceworker.js')
+
+
 if __name__ == "__main__":
     app.run(debug=DEBUG)
