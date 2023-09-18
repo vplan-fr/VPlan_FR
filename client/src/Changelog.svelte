@@ -1,6 +1,6 @@
 <script>
     import { customFetch } from "./utils";
-    import {active_modal} from './stores';
+    import {active_modal, logged_in} from './stores';
     import { notifications } from "./notifications";
     import Modal from "./Components/Modal.svelte";
     import SvelteMarkdown from 'svelte-markdown'
@@ -32,7 +32,7 @@
         changelog = changelog.filter(item => item[0] !== number)
     }
 
-    get_changelog();
+    $: $logged_in && get_changelog();
 </script>
 
 <Modal id="changelog">

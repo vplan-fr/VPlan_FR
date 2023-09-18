@@ -22,8 +22,8 @@
     let school_num = localStorage.getItem('school_num');
     let date = null;
     let all_revisions = [".newest"];
-    let plan_type = "forms";
-    let plan_value = "JG12";
+    let plan_type;
+    let plan_value;
     let teacher_list = [];
     let all_rooms;
     let grouped_forms = [];
@@ -34,10 +34,6 @@
     $logged_in = localStorage.getItem('logged_in') === 'true';
     check_login_status();
     clear_caches();
-    
-    if ($logged_in) {
-        get_settings();
-    }
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
 
@@ -245,9 +241,19 @@
         return !enabled_dates.includes(`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`);
     }
 
+    function logout() {
+        school_num = null;
+        date = null;
+        plan_type = null;
+        plan_value = null;
+        localStorage.clear();
+        localStorage.setItem('logged_in', `${$logged_in}`);
+    }
+
     $: $logged_in && get_settings();
     $: $logged_in && get_meta(api_base);
     $: $logged_in && get_greeting();
+    $: !$logged_in && logout();
     $: !$logged_in && close_modal();
     $: school_num, $logged_in && get_preferences();
     $: update_colors($settings);
