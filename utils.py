@@ -135,6 +135,10 @@ def get_user(user_id):
 
 
 def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None):
+    meta_env = "WEBHOOK_META"
+    if not request or request.host.startswith("127.0.0.1"):
+        meta_env = "WEBHOOK_TEST"
+        key = "WEBHOOK_TEST"
     embeds = [] if not embeds else embeds
     key = key.upper()
     if not os.getenv(key):
@@ -146,7 +150,7 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
         webhook.add_embed(embed)
     if request:
         if os.getenv("WEBHOOK_META"):
-            meta_webhook = DiscordWebhook(url=os.getenv("WEBHOOK_META"), content=message, username="VPlan-Bot", avatar_url="https://vplan.fr/static/images/icons/android-chrome-192x192.png")
+            meta_webhook = DiscordWebhook(url=os.getenv(meta_env), content=message, username="VPlan-Bot", avatar_url="https://vplan.fr/static/images/icons/android-chrome-192x192.png")
             meta_embed = DiscordEmbed(title="Metadaten", color="808080")
             if current_user:
                 meta_embed.add_embed_field("Username:", f"{current_user.get_field('nickname')}", inline=False)
