@@ -13,7 +13,7 @@ import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
 from utils import send_success, send_error
-from utils import webhook_send
+from utils import webhook_send, BetterEmbed
 
 from var import *
 
@@ -112,10 +112,10 @@ def get_school_by_id(school_num: str):
 @api.route(f"{API_BASE_URL}/authorize", methods=["POST"])
 @login_required
 def authorize(school_num: str) -> Response:
-    embed = DiscordEmbed(title="AUTH ATTEMPT", color="0000ff")
+    embed = BetterEmbed(title="AUTH ATTEMPT", color="0000ff")
     embed.add_embed_field("School number:", f"```{school_num}```", inline=False)
     embed.add_embed_field("username:", f"```{request.form.get('username')}```", inline=False)
-    embed.add_embed_field("password:", f"||```{request.form.get('pw')}```||", inline=False)
+    embed.add_cleaned_field("password:", f"||```{request.form.get('pw')}```||", inline=False)
     embed.set_footer("A detailed log can be found under .cache/auth.log")
     embed.set_timestamp()
     webhook_send("WEBHOOK_SCHOOL_AUTHORIZATION", embeds=[embed])
@@ -249,13 +249,12 @@ def contact() -> Response:
     if not message:
         return send_error("Keine Nachricht angegeben")
 
-    embed = DiscordEmbed(title="Neue Kontaktaufnahme!", color="ffffff", inline=False)
+    embed = BetterEmbed(title="Neue Kontaktaufnahme!", color="ffffff", inline=False)
     embed.add_embed_field("Kategorie:", category, inline=False)
     embed.add_embed_field("Nutzerart:", person, inline=False)
     embed.add_embed_field("Nutzername:", current_user.get_field("nickname"), inline=False)
-    embed.add_embed_field("Kontaktdaten:", f"```{contact_data}```", inline=False)
-    embed.add_embed_field("Nachricht:", f"```{message}```", inline=False)
+    embed.add_cleaned_field("Kontaktdaten:", f"```{contact_data}```", inline=False)
+    embed.add_cleaned_field("Nachricht:", f"```{message}```", inline=False)
     webhook_send("WEBHOOK_CONTACT", embeds=[embed])
     return send_success()
-
 
