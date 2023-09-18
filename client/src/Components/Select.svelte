@@ -6,6 +6,7 @@
     export let selected_id = null;
     export let icon_location = null;
     export let grouped = false;
+    export let data_name = "Elemente";
 
     function update_selected_id() {
         selected_id = selected_elem["id"];
@@ -63,11 +64,20 @@
                     {/if}
                 </button>
             {/if}
+        {:else}
+            <span class="no-options-placeholder">
+                Keine {data_name} vorhanden
+            </span>
         {/each}
     </Dropdown>
 </div>
 
 <style lang="scss">
+    .no-options-placeholder {
+        padding: 15px;
+        display: block;
+    }
+
     .heading {
         display: block;
         font-weight: 700;
