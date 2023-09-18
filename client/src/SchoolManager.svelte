@@ -124,7 +124,7 @@
         }}>
         <h1 class="responsive-heading">Schulauswahl</h1>
         <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
-        <Select data={schools_arr} icon_location="/public/base_static/images/school_icons" bind:selected_id={authorize_school_id}>Schule auswählen</Select>
+        <Select data={schools_arr} icon_location="/public/base_static/images/school_icons" bind:selected_id={authorize_school_id} data_name="Schulen">Schule auswählen</Select>
         <button class="button" type="submit">Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></button>
     </form>
     {:else}
