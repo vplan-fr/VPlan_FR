@@ -23,7 +23,7 @@
     let all_lessons = [];
     let rooms_data = {};
     let info;
-    let loading = true;
+    let loading = false;
     let loading_failed = false;
     let data_from_cache = false;
     let plan_type_map = {
@@ -35,11 +35,13 @@
 
     export function load_lessons(date, plan_type, entity, use_grouped_form_plans, revision=".newest") {
         let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans"
-
+        
         controller.abort();
-        if (date === null) {
-            return
+        if (date === null || date === undefined || !plan_type || !entity) {
+            return;
         }
+        console.log("Loading lessons...", date, plan_type, entity);
+
         loading = true;
         data_from_cache = false;
         loading_failed = false;
@@ -230,12 +232,12 @@
             </h1>
         {/if}
     {#if loading}
-        Lädt...
+        <span class="responsive-text">Lädt...</span>
     {:else if loading_failed}
-        Plan konnte nicht geladen werden.
+        <span class="responsive-text">Plan konnte nicht geladen werden</span>
     {:else}
         {#if lessons.length === 0}
-            Keine Stunden
+            <span class="responsive-text">Keine Stunden</span>
         {:else}
         <div class="lessons-wrapper">
             {#if external_times}
@@ -262,21 +264,25 @@
                     {/each}
                 </div>
             {/if}
+            <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
         {/if}
-        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
     {/if}
 </div>
 {:else}
 <div class:extra-height={extra_height}>
     <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
-    <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
+    {#if info}
+        <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
+    {/if}
     {#if loading}
-        Lädt...
+        <span class="responsive-text">Lädt...</span>
     {:else if loading_failed}
-        Plan konnte nicht geladen werden.
+        <span class="responsive-text">Plan konnte nicht geladen werden</span>
     {:else}
         <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
-        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+        {#if info}
+            <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+        {/if}
     {/if}
 </div>
 {/if}

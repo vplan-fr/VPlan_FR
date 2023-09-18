@@ -136,7 +136,7 @@ def get_user(user_id):
 
 def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None):
     meta_env = "WEBHOOK_META"
-    if not request or request.host.startswith("127.0.0.1"):
+    if not request or request.host.startswith("127.0.0.1") or request.host.startswith("localhost"):
         meta_env = "WEBHOOK_TEST"
         key = "WEBHOOK_TEST"
     embeds = [] if not embeds else embeds
