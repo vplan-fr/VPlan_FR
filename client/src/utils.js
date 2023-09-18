@@ -109,6 +109,7 @@ export function get_settings() {
 export function navigate_page(page_id) {
     current_page.set(page_id);
     location.hash = `#${page_id}`;
+    // console.log(`Changed Location to: "${page_id}"`);
 }
 
 export function update_colors(settings) {

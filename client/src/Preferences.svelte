@@ -137,6 +137,7 @@
         updateCourses();
         location.hash = "#preferences";
         title.set("Unterricht wählen");
+        // console.log("Mounted Preferences.svelte");
     });
 
     $: create_select_arr(grouped_forms)

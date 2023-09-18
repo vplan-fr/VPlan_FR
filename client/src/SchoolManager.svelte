@@ -12,6 +12,7 @@
         get_schools();
         get_authorized_schools();
         get_admin_status();
+        // console.log("Mounted SchoolManager.svelte");
     });
     
     export let school_num;

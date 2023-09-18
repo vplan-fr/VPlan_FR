@@ -7,9 +7,9 @@
     import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
     import SveltyPicker from 'svelty-picker';
-    import {get_settings, group_rooms, update_colors, analyze_local_storage} from "./utils.js";
+    import {get_settings, group_rooms, update_colors, analyze_local_storage, navigate_page} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, preferences, settings, active_modal} from './stores.js'
+    import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt} from './stores.js'
     import {customFetch, clear_caches, format_revision_date} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
@@ -18,6 +18,9 @@
     import Contact from "./Contact.svelte";
     import Impressum from "./Impressum.svelte";
     import { de } from 'svelty-picker/i18n';
+    import { onMount } from "svelte";
+    import PwaInstallHelper from "./PWAInstallHelper.svelte";
+    import Dropdown from "./Components/Dropdown.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -95,7 +98,8 @@
             })
             .catch(error => {
                 if (data_from_cache) {
-                    notifications.info("Metadaten aus Cache geladen", 2000);
+                    // notifications.info("Metadaten aus Cache geladen", 2000);
+                    console.log("Metadaten aus Cache geladen");
                 } else {
                     notifications.danger(error.message);
                 }
@@ -145,7 +149,7 @@
                 emoji = "😴";
             }
         }
-        if (curr_hours >= 18 || curr_hours < 4) {
+        if (curr_hours >= 20 || curr_hours < 4) {
             emoji = "😴";
             if(curr_day === 5 || curr_day === 6) {
                 emoji = choose(["🕺", "💃", "🎮", "🎧"]);
@@ -155,13 +159,19 @@
     }
 
     let emoji = get_emoji();
-    let greeting = `${emoji}`;
+    let greeting = "";
     function get_greeting() {
         customFetch("/auth/greeting")
             .then(data => {
-                greeting = `${emoji} ${data}`;
+                greeting = data;
             })
             .catch(error => {
+                greeting = choose([
+                    "Wir sind selbst offline hier für dich!",
+                    "Ahoi, du Offline-Abenteurer",
+                    "Off-the-Grid 😲, wie ist es da draußen?",
+                    "Schüler-WLAN tot?"
+                ]);
                 console.error("Begrüßung konnte nicht geladen werden.");
             })
     }
@@ -250,6 +260,11 @@
         localStorage.setItem('logged_in', `${$logged_in}`);
     }
 
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        $pwa_prompt = e;
+    });
+
     $: $logged_in && get_settings();
     $: $logged_in && get_meta(api_base);
     $: $logged_in && get_greeting();
@@ -265,6 +280,26 @@
     $: gen_room_arr(grouped_rooms);
     $: gen_revision_arr(all_revisions);
 
+    onMount(() => {
+        // console.log("Mounted App.svelte");
+    });
+
+    window.addEventListener('popstate', (e) => {
+        let new_location = location.hash.slice(1);
+        if((new_location === "login" || new_location === "register") && $logged_in) {
+            e.preventDefault();
+            history.go(1);
+            return;
+        }
+        if(new_location === "") {new_location = "plan";}
+        navigate_page(new_location);
+    });
+
+    let new_location = location.hash.slice(1);
+    if(!((new_location === "login" || new_location === "register") && $logged_in)) {
+        if(new_location === "") {new_location = "plan";}
+        navigate_page(new_location);
+    }
 
     //analyze_local_storage();
 </script>
@@ -280,73 +315,122 @@
 <Settings />
 <Changelog />
 
-<main>
-    {#if $logged_in}
-        {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
-            <h1 class="responsive-heading">{greeting}</h1>
-            <div class="controls-wrapper">
-                <!-- Datepicker -->
-                <div class="control" id="c1">
-                    <SveltyPicker
-                        format="yyyy-mm-dd"
-                        displayFormat="dd.mm.yyyy"
-                        disableDatesFn={getDateDisabled}
-                        initialDate={(date === null) ? new Date() : new Date(date)}
-                        i18n={de}
-                        clearBtn={false}
-                        todayBtn={false}
-                        inputClasses="datepicker-input"
-                        bind:value={date}
-                    />
-                </div>
-                <!-- Select Form -->
-                <div class="control" id="c2">
-                    <Select data={form_arr} grouped={true} bind:selected_id={selected_form}>Klasse auswählen</Select>
-                </div>
-                <!-- Select Teacher -->
-                <div class="control" id="c3">
-                    <Select data={teacher_arr} bind:selected_id={selected_teacher}>Lehrer auswählen</Select>
-                </div>
-                <!-- Select Room -->
-                <div class="control" id="c4">
-                    <Select data={room_arr} grouped={true} bind:selected_id={selected_room}>Raum auswählen</Select>
-                </div>
-                <!-- Show room overview -->
-                <div class="control" id="c5">
-                    <button class="button" on:click={() => {
-                        set_plan("room_overview", "");
-                    }}>Raumübersicht</button>
-                </div>
-            </div>
-            {#if $current_page.substring(0, 4) === "plan"}
-                <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision/>
-            {:else}
-                <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
-            {/if}
-            <!-- Select Revision (Plan Version) -->
-            {#if $settings.show_revision_selector}
-            <Select data={revision_arr} bind:selected_id={selected_revision}>Zeitstempel des Planuploads auswählen</Select>
-            {/if}
-        {:else if $current_page === "school_manager"}
-            <SchoolManager bind:school_num />
+<div id="page-container">
+    <main>
+        {#if $current_page === "contact"}
+            <Contact />
         {:else if $current_page === "about_us"}
             <AboutUs />
-        {:else if $current_page === "preferences"}
-            <Preferences bind:api_base bind:grouped_forms bind:course_lists bind:school_num />
-        {:else if $current_page === "contact"}
-            <Contact />
         {:else if $current_page === "impressum"}
             <Impressum />
+        {:else if $logged_in}
+            {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
+                <h1 class="responsive-heading">{emoji} {greeting}</h1>
+                <div class="controls-wrapper">
+                    <!-- Datepicker -->
+                    <div class="control" id="c1">
+                        <SveltyPicker
+                            format="yyyy-mm-dd"
+                            displayFormat="dd.mm.yyyy"
+                            disableDatesFn={getDateDisabled}
+                            initialDate={(date === null) ? new Date() : new Date(date)}
+                            i18n={de}
+                            clearBtn={false}
+                            todayBtn={false}
+                            inputClasses="datepicker-input"
+                            bind:value={date}
+                        />
+                    </div>
+                    <!-- Select Form -->
+                    <div class="control" id="c2">
+                        <Select data={form_arr} grouped={true} bind:selected_id={selected_form}>Klasse auswählen</Select>
+                    </div>
+                    <!-- Select Teacher -->
+                    <div class="control" id="c3">
+                        <Select data={teacher_arr} bind:selected_id={selected_teacher}>Lehrer auswählen</Select>
+                    </div>
+                    <!-- Select Room -->
+                    <div class="control" id="c4">
+                        <Select data={room_arr} grouped={true} bind:selected_id={selected_room}>Raum auswählen</Select>
+                    </div>
+                    <!-- Show room overview -->
+                    <div class="control" id="c5">
+                        <button class="button" on:click={() => {
+                            set_plan("room_overview", "");
+                        }}>Raumübersicht</button>
+                    </div>
+                </div>
+                {#if $current_page.substring(0, 4) === "plan"}
+                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision/>
+                {:else}
+                    <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
+                {/if}
+                <!-- Select Revision (Plan Version) -->
+                {#if $settings.show_revision_selector}
+                <Select data={revision_arr} bind:selected_id={selected_revision}>Zeitstempel des Planuploads auswählen</Select>
+                {/if}
+            {:else if $current_page === "school_manager"}
+                <SchoolManager bind:school_num />
+            {:else if $current_page === "preferences"}
+                <Preferences bind:api_base bind:grouped_forms bind:course_lists bind:school_num />
+            {:else if $current_page === "pwa_install"}
+                <PwaInstallHelper />
+            {:else}
+                <span class="responsive-text">Seite nicht gefunden!</span>
+            {/if}
         {:else}
-            <span class="responsive-text">Seite nicht gefunden!</span>
+            <Authentication></Authentication>
         {/if}
-    {:else}
-        <Authentication></Authentication>
-    {/if}
-</main>
-<Toast />
+    </main>
+    <Toast />
+</div>
+<footer>
+    <Dropdown let:toggle small_version={true} transform_origin_x="100%" flipped={true}>
+        <button slot="toggle_button" on:click={toggle}><span class="material-symbols-outlined">menu</span></button>
+        
+        <button on:click={() => {navigate_page("impressum")}}>Impressum</button>
+        <button on:click={() => {navigate_page("contact")}}>Kontakt</button>
+        <button on:click={() => {navigate_page("about_us")}}>Über Uns</button>
+    </Dropdown>
+</footer>
 
 <style lang="scss">
+    #page-container {
+        position: relative;
+        min-height: calc(100vh - 56px - var(--font-size-sm) * 2);
+
+        @media only screen and (min-width: 602px) {
+            min-height: calc(100vh - 64px - var(--font-size-sm) * 2);
+        }
+    }
+
+    footer {
+        float: right;
+        height: calc(var(--font-size-sm) * 2);
+        width: calc(var(--font-size-sm) * 2);
+        display: flex;
+        background: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        flex-direction: row;
+        justify-content: flex-start;
+
+        button {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            background: transparent;
+            font-size: var(--font-size-sm);
+            color: white;
+
+            span {
+                font-size: inherit;
+            }
+        }
+    }
+
     :global(.responsive-heading) {
         font-size: var(--font-size-xl);
         margin-bottom: 15px;

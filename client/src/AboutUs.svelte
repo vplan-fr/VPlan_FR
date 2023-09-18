@@ -5,6 +5,7 @@
     onMount(() => {
         location.hash = "#about_us";
         title.set("Über uns");
+        // console.log("Mounted AboutUs.svelte");
     });
 </script>
 
