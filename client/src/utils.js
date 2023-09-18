@@ -102,7 +102,7 @@ export function get_settings() {
             settings.set(data);
         })
         .catch(error => {
-            notifications.danger("Einstellungen konnten nicht geladen werden")
+            console.error("Einstellungen konnten nicht geladen werden.");
         })
 }
 
@@ -211,4 +211,35 @@ export function format_revision_date(date, latest) {
         return `${formatted_date} (Aktuellste)`
     }
     return formatted_date
+}
+
+export function analyze_local_storage() {
+    function calculateSizeInBytes(value) {
+        const str = JSON.stringify(value);
+    return new Blob([str]).size;
+    }
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const value = localStorage.getItem(key);
+        const sizeInBytes = calculateSizeInBytes(value);
+        console.log(`Key: ${key}, Size (bytes): ${sizeInBytes}`);
+    }
+    // Check available localStorage space in bytes
+    function checkAvailableStorage() {
+        if ('localStorage' in window && window['localStorage'] !== null) {
+            try {
+                const currentSize = JSON.stringify(localStorage).length;
+                const totalSize = (1024 * 1024) * 5; // 5 MB (adjust as needed)
+                const availableSpace = totalSize - currentSize;
+                console.log(`Available localStorage space: ${availableSpace} bytes`);
+            } catch (e) {
+                console.error('localStorage is not available or accessible.');
+            }
+        } else {
+            console.error('localStorage is not supported by this browser.');
+        }
+    }
+
+    checkAvailableStorage();
 }
