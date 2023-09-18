@@ -2,6 +2,7 @@
     import {customFetch, navigate_page} from "./utils.js";
     import {notifications} from "./notifications.js";
     import Select from "./Components/Select.svelte";
+    import { onMount } from "svelte";
 
     let category = "bug";
     let person = "student";
@@ -27,7 +28,10 @@
             })
     }
 
-
+    onMount(() => {
+        location.hash = "#contact";
+        title.set("Kontaktformular");
+    });
 </script>
 
 <h1 class="responsive-heading">Kontaktiere uns</h1>
