@@ -16,7 +16,7 @@
                 notifications.success("Einstellungen gespeichert")
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
     
@@ -30,7 +30,7 @@
                 notifications.success("Einstellungen zurückgesetzt");
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
 
@@ -48,7 +48,7 @@
                 $logged_in = false;
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
 

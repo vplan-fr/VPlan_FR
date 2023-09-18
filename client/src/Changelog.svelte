@@ -14,8 +14,7 @@
                 }
             })
             .catch(error => {
-                changelog = [];
-                console.error(error);
+                console.error("Changelog konnte nicht geladen werden.");
             })
     }
 
