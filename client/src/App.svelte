@@ -134,29 +134,34 @@
         return choices[index];
     }
 
-    let greeting = "";
+    function get_emoji() {
+        let curr_date = new Date();
+        let curr_day = curr_date.getDay();
+        let curr_hours = curr_date.getHours();
+        let emoji = "👋";
+        if(curr_day <= 5 && curr_day > 0) {
+            emoji = choose(["👨‍🏫", "👩‍🏫"]);
+        }
+        if (curr_hours >= 4 && curr_hours < 8) {
+            emoji = "🥱";
+            if(curr_day === 1) {
+                emoji = "😴";
+            }
+        }
+        if (curr_hours >= 18 || curr_hours < 4) {
+            emoji = "😴";
+            if(curr_day === 5 || curr_day === 6) {
+                emoji = choose(["🕺", "💃", "🎮", "🎧"]);
+            }
+        }
+        return emoji;
+    }
+
+    let emoji = get_emoji();
+    let greeting = `${emoji}`;
     function get_greeting() {
         customFetch("/auth/greeting")
             .then(data => {
-                let curr_date = new Date();
-                let curr_day = curr_date.getDay();
-                let curr_hours = curr_date.getHours();
-                let emoji = "👋";
-                if(curr_day <= 5 && curr_day > 0) {
-                    emoji = choose(["👨‍🏫", "👩‍🏫"]);
-                }
-                if (curr_hours >= 4 && curr_hours < 8) {
-                    emoji = "🥱";
-                    if(curr_day === 1) {
-                        emoji = "😴";
-                    }
-                }
-                if (curr_hours >= 18 || curr_hours < 4) {
-                    emoji = "😴";
-                    if(curr_day === 5 || curr_day === 6) {
-                        emoji = choose(["🕺", "💃", "🎮", "🎧"]);
-                    }
-                }
                 greeting = `${emoji} ${data}`;
             })
             .catch(error => {
