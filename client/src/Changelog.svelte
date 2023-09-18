@@ -1,6 +1,7 @@
 <script>
     import { customFetch } from "./utils";
     import {active_modal} from './stores';
+    import { notifications } from "./notifications";
     import Modal from "./Components/Modal.svelte";
     import SvelteMarkdown from 'svelte-markdown'
 

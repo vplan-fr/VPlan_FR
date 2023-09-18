@@ -3,6 +3,7 @@
     import {notifications} from "./notifications.js";
     import Select from "./Components/Select.svelte";
     import { onMount } from "svelte";
+    import { title } from "./stores.js";
 
     let category = "bug";
     let person = "student";
