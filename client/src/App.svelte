@@ -49,6 +49,12 @@
     let enabled_dates = [];
     let grouped_rooms = [];
     let course_lists = {};
+    let footer_padding = false;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+        footer_padding = entries[0].target.scrollHeight > entries[0].target.clientHeight
+    });
+    resizeObserver.observe(document.documentElement);
 
     $: if (all_rooms) {
         grouped_rooms = group_rooms(all_rooms);
@@ -384,7 +390,7 @@
     </main>
     <Toast />
 </div>
-<footer>
+<footer class:padding={footer_padding}>
     <Dropdown let:toggle small_version={true} transform_origin_x="100%" flipped={true}>
         <button slot="toggle_button" on:click={toggle}><span class="material-symbols-outlined">menu</span></button>
         
@@ -413,6 +419,10 @@
         align-items: center;
         flex-direction: row;
         justify-content: flex-start;
+
+        &.padding {
+            padding-right: 16px;
+        }
 
         button {
             width: 100%;
