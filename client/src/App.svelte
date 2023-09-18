@@ -7,7 +7,7 @@
     import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
     import SveltyPicker from 'svelty-picker';
-    import {get_settings, group_rooms, update_colors} from "./utils.js";
+    import {get_settings, group_rooms, update_colors, analyze_local_storage} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings, active_modal} from './stores.js'
     import {customFetch, clear_caches, format_revision_date} from "./utils.js";
@@ -16,6 +16,7 @@
     import Changelog from "./Changelog.svelte";
     import Select from "./Components/Select.svelte";
     import Contact from "./Contact.svelte";
+    import Impressum from "./Impressum.svelte";
     import { de } from 'svelty-picker/i18n';
 
     let school_num = localStorage.getItem('school_num');
@@ -100,7 +101,7 @@
                 if (data_from_cache) {
                     notifications.info("Metadaten aus Cache geladen", 2000);
                 } else {
-                    notifications.danger(error);
+                    notifications.danger(error.message);
                 }
             });
     }
@@ -114,7 +115,7 @@
             })
             .catch(error => {
                 //notifications.danger(error);
-                notifications.danger("Login-Status konnte nicht überprüft werden");
+                console.error("Login-Status konnte nicht überprüft werden");
             }
         );
     }
@@ -125,7 +126,7 @@
                 preferences.set(data);
             })
             .catch(error => {
-                notifications.danger(error)
+                console.error("Preferences konnten nicht geladen werden.");
             })
     }
 
@@ -165,7 +166,7 @@
                 greeting = `${emoji} ${data}`;
             })
             .catch(error => {
-                notifications.danger(error);
+                console.error("Begrüßung konnte nicht geladen werden.");
             })
     }
 
@@ -257,6 +258,9 @@
     $: selected_room && set_plan("rooms", selected_room);
     $: gen_room_arr(grouped_rooms);
     $: gen_revision_arr(all_revisions);
+
+
+    //analyze_local_storage();
 </script>
 
 <svelte:head>
@@ -325,6 +329,8 @@
             <Preferences bind:api_base bind:grouped_forms bind:course_lists bind:school_num />
         {:else if $current_page === "contact"}
             <Contact />
+        {:else if $current_page === "impressum"}
+            <Impressum />
         {:else}
             <span class="responsive-text">Seite nicht gefunden!</span>
         {/if}

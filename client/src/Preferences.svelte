@@ -83,7 +83,7 @@
                 notifications.success("Kurse gespeichert!", 2000);
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
 

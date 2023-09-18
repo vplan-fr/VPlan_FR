@@ -24,7 +24,7 @@
                 navigate_page("plan");
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
 

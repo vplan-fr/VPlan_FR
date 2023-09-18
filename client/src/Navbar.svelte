@@ -19,7 +19,7 @@
                 localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             });
     }
 
@@ -59,6 +59,7 @@
                 <button class="nav-button" on:click={() => navigate_page("preferences")}><span class="material-symbols-outlined">account_circle</span> Unterricht wählen</button>
                 <button class="nav-button" on:click={() => $active_modal = "changelog"}><span class="material-symbols-outlined">assignment</span> Changelog ✨</button>
                 <button class="nav-button" on:click={() => navigate_page("contact")}><span class="material-symbols-outlined">contact_page</span> Kontaktiere uns</button>
+                <button class="nav-button" on:click={() => navigate_page("impressum")}><span class="material-symbols-outlined">description</span> Impressum</button>
                 <button on:click={logout} class="nav-button"><span class="material-symbols-outlined">logout</span> Logout</button>
             </Dropdown>
         </li>

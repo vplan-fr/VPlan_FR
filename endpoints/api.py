@@ -97,7 +97,7 @@ def plan(school_num: str) -> Response:
     try:
         data = cache.get_all_json_plan_files(date, revision)
     except FileNotFoundError:
-        return send_error("Invalid revision.")
+        return send_error("Invalid date or revision.")
 
     return send_success(data)
 

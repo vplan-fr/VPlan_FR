@@ -35,7 +35,7 @@
                 // console.log(data);
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
 
@@ -45,7 +45,7 @@
                 authorized_school_ids = data;
             })
             .catch(error => {
-                notifications.danger(error)
+                console.error("Autorisierte Schulen konnten nicht ermittelt werden.");
             }
         );
     }
@@ -56,7 +56,7 @@
                 is_admin = data;
             })
             .catch(error => {
-                notifications.danger(error)
+                console.error("Admin-Status konnte nicht überprüft werden.");
             }
         );
     }
@@ -92,7 +92,7 @@
                 navigate_page('plan');
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             }
         );
     }
