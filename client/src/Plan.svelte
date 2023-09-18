@@ -1,10 +1,10 @@
 <script>
-    import { onMount } from 'svelte';
+    import {onMount} from 'svelte';
     import Lesson from './Lesson.svelte';
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
-    import { title, preferences, settings } from './stores.js';
-    import {customFetch, navigate_page, should_date_be_cached, format_date} from "./utils.js";
+    import {preferences, settings, title} from './stores.js';
+    import {arraysEqual, customFetch, format_date, navigate_page, should_date_be_cached} from "./utils.js";
 
     export let api_base;
     export let school_num;
@@ -118,20 +118,6 @@
         } else {
             return periods.map(p => periods_to_block_label([p])).join(", ");
         }
-    }
-
-    function arraysEqual(a, b) {
-        if (a === b) return true;
-        if (a == null || b == null) return false;
-        if (a.length !== b.length) return false;
-
-        a.sort(function (a, b) {  return a - b;  });
-        b.sort(function (a, b) {  return a - b;  });
-
-        for (var i = 0; i < a.length; ++i) {
-            if (a[i] !== b[i]) return false;
-        }
-        return true;
     }
 
     function sameBlock(a, b) {
