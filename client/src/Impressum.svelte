@@ -95,6 +95,8 @@ Impressum: <p><a href="https://vplan.fr/#impressum" target="_blank">https://vpla
         font-size: var(--font-size-base);
         line-height: normal;
         margin-bottom: 10px;
+        word-wrap: break-word;
+        hyphens: auto;
     }
 
     blockquote {
