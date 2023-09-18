@@ -32,7 +32,6 @@
         customFetch("/api/v69.420/schools")
             .then(data => {
                 schools = data;
-                // console.log(data);
             })
             .catch(error => {
                 notifications.danger(error.message);
@@ -100,11 +99,10 @@
     function update_schools_arr(schools) {
         schools_arr = [];
         for(let [school_id, content] of Object.entries(schools)) {
-            schools_arr.push({"id": school_id, "name": content["name"], "icon": content["icon"]});
+            schools_arr.push({"id": school_id, "name": content["display_name"], "icon": content["icon"]});
         }
     }
 
-    // $: console.log(schools);
     $: update_schools_arr(schools);
 </script>
 
@@ -131,7 +129,7 @@
     {:else}
     <form transition:fly|local={{x: 600}} on:submit|preventDefault={authorize_school}>
         <button on:click={() => {school_auth_visible = false;}} type="reset" id="back_button">←</button>
-        <h1 class="responsive-heading">{authorize_school_id ? schools[authorize_school_id]["name"] : "Schul"}-Login</h1>
+        <h1 class="responsive-heading">{authorize_school_id ? schools[authorize_school_id]["display_name"] : "Schul"}-Login</h1>
         <span class="responsive-text">Trage hier die Zugangsdaten für deine Schule ein<br>(dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
         <label for="school_username">Nutzername</label>
         <div class="input_icon">
