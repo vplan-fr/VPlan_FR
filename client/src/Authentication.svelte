@@ -31,7 +31,7 @@
             .catch(error => {
                 $logged_in = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
-                notifications.danger(error);
+                notifications.danger(error.message);
             }
         );
     }
@@ -51,7 +51,7 @@
             .catch(error => {
                 $logged_in = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
-                notifications.danger(error);
+                notifications.danger(error.message);
             }
         );
     }
