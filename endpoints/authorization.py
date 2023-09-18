@@ -48,6 +48,13 @@ def signup() -> Response:
     if len(password) < 10:
         return send_error("Passwort muss mindestens 10 Zeichen lang sein!")
 
+    forbidden_chars = ["`"]
+    for char in forbidden_chars:
+        if char in nickname:
+            return send_error("Verbotenes Zeichen in Nutzername")
+        if char in password:
+            return send_error("Verbotenes Zeichen in Passwort")
+
     tmp_id = users.insert_one({
         'nickname': nickname,
         'admin': False,
