@@ -12,7 +12,8 @@ from endpoints.authorization import school_authorized
 import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
-from utils import send_success, send_error
+from utils import send_success, send_error, get_all_schools_by_number
+from utils import get_school_by_id, get_all_schools
 from utils import webhook_send, BetterEmbed
 
 from var import *
@@ -23,22 +24,7 @@ api = Blueprint('api', __name__)
 @api.route(f"/api/v69.420/schools", methods=["GET"])
 @login_required
 def schools() -> Response:
-    school_list = [
-        {
-            k: v for k, v in elem.items() if k in ["school_number", "display_name"]
-        } for elem in CREDS.values()
-    ]
-    school_data = {
-        elem["school_number"]: {
-            "name": elem["display_name"],
-            "icon": ""
-        } for elem in school_list
-    }
-    school_icons = os.listdir("client/public/base_static/images/school_icons")
-    for school_icon in school_icons:
-        cur_num = school_icon.split(".")[0]
-        if cur_num in school_data:
-            school_data[cur_num]["icon"] = school_icon
+    school_data = get_all_schools_by_number()
     return send_success(school_data)
 
 
@@ -102,13 +88,6 @@ def plan(school_num: str) -> Response:
     return send_success(data)
 
 
-def get_school_by_id(school_num: str):
-    for school_data in CREDS.values():
-        if school_data.get("school_number") == school_num:
-            return school_data
-    return None
-
-
 @api.route(f"{API_BASE_URL}/authorize", methods=["POST"])
 @login_required
 def authorize(school_num: str) -> Response:
@@ -146,11 +125,12 @@ def instant_authorize(school_num: str) -> Response:
         return send_error("Nutzername benötigt")
     if "pw" not in request.args:
         return send_error("Passwort benötigt")
-    if school_num not in CREDS:
+    school_data = get_school_by_id(school_num)
+    if not school_data:
         return send_error("Schulnummer nicht gefunden")
     username = request.args.get("username")
     pw = request.args.get("username")
-    if username != CREDS[school_num]["username"] or pw != CREDS[school_num]["password"]:
+    if username != school_data["username"] or pw != school_data["password"]:
         return send_error("Nutzername oder Passwort falsch")
     current_user.authorize_school(school_num)
     return send_success()
