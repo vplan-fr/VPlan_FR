@@ -11,14 +11,14 @@
 
     $: only_teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers?.length === 0 && lesson.takes_place;
 
-    $: teachers = (lesson.takes_place && !only_teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers) || [];
-    $: s_teachers = !arraysEqual(lesson.scheduled_teachers, teachers) ? lesson.scheduled_teachers : []
+    $: teachers = lesson.takes_place && !only_teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers;
+    $: s_teachers = !arraysEqual(lesson.scheduled_teachers, teachers) ? lesson.scheduled_teachers : [];
 
     $: forms = (lesson.takes_place ? lesson.current_forms : lesson.scheduled_forms) || [];
     $: forms_str = lesson.takes_place ? lesson.current_forms_str : lesson.scheduled_forms_str;
 
-    $: rooms = (lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms) || [];
-    $: s_rooms = !arraysEqual(lesson.scheduled_rooms, rooms) ? lesson.scheduled_rooms : []
+    $: rooms = lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms;
+    $: s_rooms = !arraysEqual(lesson.scheduled_rooms, rooms) ? lesson.scheduled_rooms : [];
 
     $: subject_changed = lesson.subject_changed && lesson.takes_place;
     $: teacher_changed = lesson.teacher_changed && lesson.takes_place;
@@ -75,13 +75,13 @@
                 <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed} class:changed_filled_in={$settings.filled_in_buttons && teacher_changed}
                      class:teacher_absent={only_teacher_absent} class:cancelled_filled_in={$settings.filled_in_buttons && only_teacher_absent}>
                     {#if teachers.length !== 0 || s_teachers.length !== 0}
-                        {#each teachers as teacher}
+                        {#each teachers || [] as teacher}
                             <button on:click={() => {
                                 plan_type = "teachers";
                                 plan_value = teacher;
                             }}>{teacher}</button>
                         {/each}
-                        {#each s_teachers as teacher}
+                        {#each s_teachers || [] as teacher}
                             <button on:click={() => {
                                 plan_type = "teachers";
                                 plan_value = teacher;
@@ -223,13 +223,13 @@
             <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed} class:changed_filled_in={$settings.filled_in_buttons && teacher_changed}
                  class:teacher_absent={only_teacher_absent} class:cancelled_filled_in={$settings.filled_in_buttons && only_teacher_absent}>
                 {#if teachers.length !== 0 || s_teachers.length !== 0}
-                    {#each teachers as teacher}
+                    {#each teachers || [] as teacher}
                         <button on:click={() => {
                             plan_type = "teachers";
                             plan_value = teacher;
                         }}>{teacher}</button>
                     {/each}
-                    {#each s_teachers as teacher}
+                    {#each s_teachers || [] as teacher}
                         <button on:click={() => {
                             plan_type = "teachers";
                             plan_value = teacher;
@@ -243,7 +243,7 @@
         <!-- Rooms -->
         <div class="rooms vert-align max-width-center info-element" class:changed={room_changed} class:changed_filled_in={$settings.filled_in_buttons && room_changed}>
             {#if rooms.length !== 0 || s_rooms.length !== 0}
-                {#each rooms as room}
+                {#each rooms || [] as room}
                     <button on:click={() => {
                         plan_type = "rooms";
                         plan_value = room;
@@ -251,7 +251,7 @@
                 {:else}
                     <span class="extra_padding">-</span>
                 {/each}
-                {#each s_rooms as room}
+                {#each s_rooms || [] as room}
                     <button on:click={() => {
                         plan_type = "rooms";
                         plan_value = room;
