@@ -15,6 +15,7 @@
         customFetch('/auth/logout')
             .then(data => {
                 $logged_in = false;
+                localStorage.clear();
                 localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
