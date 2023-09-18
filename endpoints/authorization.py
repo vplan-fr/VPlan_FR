@@ -83,7 +83,6 @@ def account() -> Response:
             key: value for key, value in tmp_user.items() if key not in ["_id", "admin"]
         })
     elif request.method == "DELETE":
-        x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
         embed = DiscordEmbed(title="User deletion", color="ff0000")
         embed.add_embed_field("", f"```{tmp_user['nickname']}```", inline=False)
         if tmp_user.get("time_joined"):
@@ -91,7 +90,8 @@ def account() -> Response:
         embed.add_embed_field("Account deleted:", f"<t:{int(time.time())}:F>", inline=False)
         # embed.set_timestamp()
         webhook_send("WEBHOOK_USER_CREATION", "", embeds=[embed])
-        return send_success() if x.deleted_count == 1 else send_error("Account konnte nicht gelöscht werden, bitte wende dich an den support")
+        x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
+        return send_success() if x.deleted_count == 1 else send_error("Account konnte nicht gelöscht werden, bitte wende dich an den Support")
 
 
 @authorization.route(f"{AUTH_PATH}/settings", methods=['GET', 'DELETE', 'POST'])

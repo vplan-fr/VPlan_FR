@@ -150,7 +150,7 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
             meta_embed = DiscordEmbed(title="Metadaten", color="808080")
             if current_user:
                 meta_embed.add_embed_field("Username:", f"{current_user.get_field('nickname')}", inline=False)
-            meta_embed.add_embed_field("IP-Adresse:", f"`{request.host}`\n more info at https://whatismyipaddress.com/ip/{request.host}", inline=False)
+            meta_embed.add_embed_field("IP-Adresse:", f"`{request.remote_addr}`\n more info at https://whatismyipaddress.com/ip/{request.remote_addr}", inline=False)
             meta_embed.add_embed_field("User-Agent:", f"`{request.headers.get('user-agent')}`")
             meta_webhook.add_embed(meta_embed)
             meta_webhook.execute()
