@@ -56,7 +56,7 @@
 <label for="contact_data">Deine Kontaktdaten (Discord/E-Mail/Telefon):</label>
 <input class="textfield" name="contact_data" type="text" bind:value={contact_data}>
 <label for="message">Deine Nachricht:</label>
-<textarea class="textfield" name="message" bind:value={message} style="resize: vertical;"></textarea>
+<textarea class="textfield" name="message" bind:value={message} style="resize: vertical;" maxlength="1024"></textarea>
 <button class="button" on:click={send_message}>Absenden</button>
 
 <style lang="scss">
