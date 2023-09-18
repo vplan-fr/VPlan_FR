@@ -32,6 +32,7 @@
     onMount(() => {
         location.hash = "#contact";
         title.set("Kontaktformular");
+        // console.log("Mounted Contact.svelte");
     });
 </script>
 

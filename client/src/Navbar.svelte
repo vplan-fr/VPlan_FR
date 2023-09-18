@@ -1,15 +1,10 @@
 <script>
     import {notifications} from './notifications.js';
-    import {logged_in, current_page, active_modal} from './stores.js';
+    import {logged_in, active_modal} from './stores.js';
     import Dropdown from './Components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
     import { onMount } from 'svelte';
-    import {customFetch} from "./utils.js";
-
-    function navigate_page(page_id) {
-        $current_page = page_id;
-        location.hash = `#${page_id}`;
-    }
+    import {customFetch, navigate_page} from "./utils.js";
 
     function logout() {
         customFetch('/auth/logout')
@@ -21,23 +16,9 @@
             });
     }
 
-    window.addEventListener('popstate', (e) => {
-        let new_location = location.hash.slice(1);
-        if((new_location === "login" || new_location === "register") && logged_in) {
-            e.preventDefault();
-            history.go(1);
-            return;
-        }
-        navigate_page(new_location);
-    });
-
-    onMount(() => {
-        let new_location = location.hash.slice(1);
-        if((new_location === "login" || new_location === "register") && logged_in) {
-            return;
-        }
-        navigate_page(new_location);
-    });
+    // onMount(() => {
+    //     console.log("Mounted Navbar.svelte");
+    // });
 </script>
 
 <nav transition:fly={{y:-64}}>
@@ -57,7 +38,6 @@
                 <button class="nav-button" on:click={() => navigate_page("preferences")}><span class="material-symbols-outlined">account_circle</span> Unterricht wählen</button>
                 <button class="nav-button" on:click={() => $active_modal = "changelog"}><span class="material-symbols-outlined">assignment</span> Changelog ✨</button>
                 <button class="nav-button" on:click={() => navigate_page("contact")}><span class="material-symbols-outlined">contact_page</span> Kontaktiere uns</button>
-                <button class="nav-button" on:click={() => navigate_page("impressum")}><span class="material-symbols-outlined">description</span> Impressum</button>
                 <button on:click={logout} class="nav-button"><span class="material-symbols-outlined">logout</span> Logout</button>
             </Dropdown>
         </li>

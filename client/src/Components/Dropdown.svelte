@@ -5,6 +5,7 @@
     export let transitionOptions = {duration: 200, start: 0.3};
     export let transform_origin_x = "100%";
     export let small_version = false;
+    export let flipped = false;
     let open = false;
 
     function clickOutside(node, { enabled: initialEnabled, cb }) {
@@ -37,7 +38,7 @@
         <slot name="toggle_button" toggle={() => {open = !open}} />
     </div>
     {#if open}
-        <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="--transform-origin-x: {transform_origin_x}">
+        <div class="dropdown-content" transition:transitionFunction="{transitionOptions}" style="--transform-origin-x: {transform_origin_x}" class:flipped_top={flipped}>
             <div class="height-limiter">
                 <slot />
             </div>
@@ -104,7 +105,9 @@
                 overflow: hidden;
 
                 &.flipped_top {
-                    top: -10px;
+                    top: 0px;
+                    border-radius: 0px;
+                    width: fit-content;
                     bottom: unset;
                     transform: translateY(-100%);
                     transform-origin: var(--transform-origin-x) 100%;

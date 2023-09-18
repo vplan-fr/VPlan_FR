@@ -4,6 +4,7 @@
     import { notifications } from "./notifications";
     import Modal from "./Components/Modal.svelte";
     import SvelteMarkdown from 'svelte-markdown'
+    import { onMount } from "svelte";
 
     let changelog = [];
     function get_changelog() {
@@ -31,6 +32,10 @@
             })
         changelog = changelog.filter(item => item[0] !== number)
     }
+
+    // onMount(() => {
+    //     console.log("Mounted Changelog.svelte");
+    // });
 
     $: $logged_in && get_changelog();
 </script>

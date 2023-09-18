@@ -7,3 +7,4 @@ export const settings = writable({});
 export const preferences = writable({});
 export const active_modal = writable("");
 export const notifications_list = writable([]);
+export const pwa_prompt = writable();
