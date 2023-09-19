@@ -17,6 +17,8 @@
     let selection = {};
     let current_form_preferences = [];
     let select_arr = [];
+    // used to match every course that exists duplicated to one id -> see set_preferences
+    let duplicated_courses_match = {};
 
     // [("Überschrift", [{id: "", name: "", icon: ""}, {}]), (...)]
 
@@ -40,7 +42,22 @@
                 courses_by_subject[subject] = [];
             }
             class_data.class_number = class_number;
-            courses_by_subject[subject].push(class_data);
+            // this is for the duplicated forms
+            let object_exists = false;
+            for (const obj of courses_by_subject[subject]) {
+                if (
+                    Object.keys(class_data)
+                        .filter(key => key !== "class_number")
+                        .every(key => obj[key] === class_data[key])
+                ) {
+                    duplicated_courses_match[class_number] = obj.class_number;
+                    object_exists = true;
+                    break;
+                }
+            }
+            if (!object_exists) {
+                courses_by_subject[subject].push(class_data);
+            }
         });
 
         Object.values(courses_by_subject).map(class_datas => class_datas.sort((data1, data2) => data2.group?.localeCompare(data1.group)));
@@ -71,6 +88,9 @@
     }
 
     function setPreferences() {
+        for (const cur_key of Object.keys(duplicated_courses_match)) {
+            selection[cur_key] = selection[duplicated_courses_match[cur_key]]
+        }
         customFetch(`${api_base}/preferences?` + new URLSearchParams(
             {
                 "form": selected_form
