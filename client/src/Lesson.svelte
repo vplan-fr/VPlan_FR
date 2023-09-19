@@ -489,7 +489,7 @@
     .info-element {
         background: rgba(255, 255, 255, 0.08);
         border-radius: 5px;
-        min-height: 1.938rem;
+        min-height: 2rem;
 
         &.teacher_absent {
             background: rgba(255, 255, 255, 0.08);
