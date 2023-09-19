@@ -67,6 +67,10 @@ SETTINGS = {
         "default": False,
         "type": "bool",
     },
+    "swipe_day_change": {
+        "default": False,
+        "type": "bool",
+    },
 }
 
 TYPE_FUNCTIONS = {
