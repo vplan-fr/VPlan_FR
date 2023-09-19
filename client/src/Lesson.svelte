@@ -15,15 +15,18 @@
     $: s_teachers = !arraysEqual(lesson.scheduled_teachers, teachers) ? lesson.scheduled_teachers : [];
 
     $: forms = (lesson.takes_place ? lesson.current_forms : lesson.scheduled_forms) || [];
+    $: s_forms = !arraysEqual(lesson.scheduled_forms, forms) ? lesson.scheduled_forms : [];
     $: forms_str = lesson.takes_place ? lesson.current_forms_str : lesson.scheduled_forms_str;
+    $: s_forms_str = s_forms.length !== 0 ? lesson.scheduled_forms_str : ""
 
     $: rooms = lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms;
     $: s_rooms = !arraysEqual(lesson.scheduled_rooms, rooms) ? lesson.scheduled_rooms : [];
 
-    $: subject_changed = lesson.subject_changed && lesson.takes_place;
-    $: teacher_changed = lesson.teacher_changed && lesson.takes_place;
-    $: room_changed = lesson.room_changed && lesson.takes_place;
-    $: forms_changed = lesson.forms_changed && lesson.takes_place;
+
+    $: subject_changed = lesson.subject_changed && lesson.takes_place && !lesson.is_unplanned;
+    $: teacher_changed = lesson.teacher_changed && lesson.takes_place && !lesson.is_unplanned;
+    $: room_changed = lesson.room_changed && lesson.takes_place && !lesson.is_unplanned;
+    $: forms_changed = lesson.forms_changed && lesson.takes_place && !lesson.is_unplanned;
 
     function periods_to_block_label(periods) {
         periods.sort(function (a, b) {
@@ -46,7 +49,7 @@
     //$: console.log(lesson);
 </script>
 <!-- Desktop View -->
-<div class="card desktop-view" class:cancelled={!lesson.takes_place}>
+<div class="card desktop-view" class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>
     <div class="horizontal-align">
         <!-- Optional: Time -->
         {#if display_time}
@@ -119,26 +122,39 @@
                     <div class="forms max-width-center wide-area second_of_type info-element" class:changed={forms_changed}>
                         <span class="extra_padding">-</span>
                     </div>
-                {:else if forms.length === 1}
+                {:else if forms.length === 1 && s_forms.length === 0}
                 <div class="forms max-width-center wide-area second_of_type info-element" class:changed={forms_changed}>
                     <button on:click={() => {
                         plan_type = "forms";
                         plan_value = forms[0];
                     }}>{forms[0]}</button>
                 </div>
+                {:else if forms.length === 0 && s_forms.length === 1}
+                <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
+                    <button on:click={() => {
+                        plan_type = "forms";
+                        plan_value = s_forms[0];
+                    }}><s>{s_forms[0]}</s></button>
+                </div>
                 {:else}
                 <div class="forms max-width wide-area second_of_type">
                     <Dropdown let:toggle small_version={true} transform_origin_x="50%">
                         <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
-                            <span class="grow">{forms_str}</span>
+                            <span class="grow">{forms_str}&nbsp;<s>{s_forms_str}</s></span>
                             <span class="material-symbols-outlined dropdown-arrow centered_txt">arrow_drop_down</span>
                         </button>
-                        
+
                         {#each forms as form}
                             <button on:click={() => {
                                 plan_type = "forms";
                                 plan_value = form;
                             }}>{form}</button>
+                        {/each}
+                        {#each s_forms as form}
+                            <button on:click={() => {
+                                plan_type = "forms";
+                                plan_value = form;
+                            }}><s>{form}</s></button>
                         {/each}
                     </Dropdown>
                 </div>
@@ -196,7 +212,7 @@
     {/if}
 </div>
 <!-- Mobile View -->
-<div class="card mobile-view" class:cancelled={!lesson.takes_place}>
+<div class="card mobile-view" class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>
     <div class="horizontal-align">
         <!-- Optional: Time -->
         {#if display_time}
@@ -263,22 +279,29 @@
         </div>
         <!-- Forms -->
         {#if plan_type !== "forms"}
-            {#if forms.length === 0}
+            {#if forms.length === 0 && s_forms.length !== 0}
                 <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
                     <span class="extra_padding">-</span>
                 </div>
-            {:else if forms.length === 1}
+            {:else if forms.length === 1 && s_forms.length === 0}
             <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
                 <button on:click={() => {
                     plan_type = "forms";
                     plan_value = forms[0];
                 }}>{forms[0]}</button>
             </div>
+            {:else if forms.length === 0 && s_forms.length === 1}
+            <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
+                <button on:click={() => {
+                    plan_type = "forms";
+                    plan_value = s_forms[0];
+                }}><s>{s_forms[0]}</s></button>
+            </div>
             {:else}
             <div class="max-width">
                 <Dropdown let:toggle small_version={true} transform_origin_x="50%">
                     <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
-                        <span class="grow">{forms_str}</span>
+                        <span class="grow">{forms_str}&nbsp;<s>{s_forms_str}</s></span>
                         <span class="material-symbols-outlined dropdown-arrow centered_txt">arrow_drop_down</span>
                     </button>
                     
@@ -287,6 +310,12 @@
                             plan_type = "forms";
                             plan_value = form;
                         }}>{form}</button>
+                    {/each}
+                    {#each s_forms as form}
+                        <button on:click={() => {
+                            plan_type = "forms";
+                            plan_value = form;
+                        }}><s>{form}</s></button>
                     {/each}
                 </Dropdown>
             </div>
