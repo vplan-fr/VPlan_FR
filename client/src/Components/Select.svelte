@@ -1,4 +1,5 @@
 <script>
+    import { onMount } from "svelte";
     import Dropdown from "./Dropdown.svelte";
 
     export let data = [];
@@ -7,12 +8,86 @@
     export let icon_location = null;
     export let grouped = false;
     export let data_name = "Elemente";
+    let toggle_button;
+    let selected_index = null;
+    let grouped_length = null;
 
-    function update_selected_id() {
+    function keydown_handler(event) {
+        if(event.key === "ArrowDown" || event.key === "ArrowRight") {
+            event.preventDefault();
+            if(selected_index === null) {
+                selected_index = 0;
+                return;
+            }
+            change_index(1);
+        } else if(event.key === "ArrowUp" || event.key === "ArrowLeft") {
+            event.preventDefault();
+            if(selected_index === null) {
+                if(grouped) {
+                    selected_index = grouped_length-1;
+                } else {
+                    selected_index = data.length-1;
+                }
+                return;
+            }
+            change_index(-1);
+        }
+    }
+
+    onMount(() => {
+        toggle_button.addEventListener("keydown", keydown_handler);
+    });
+
+    function calc_grouped_length(data) {
+        let curr_length = 0;
+        for(let elem of data) {
+            curr_length += elem[1].length;
+        }
+        grouped_length = curr_length;
+    }
+
+    function change_index(direction) {
+        let tmp_result = selected_index + direction;
+        if(grouped) {
+            if((tmp_result < 0) || (tmp_result > (grouped_length-1))) {return;}
+        } else {
+            if((tmp_result < 0) || (tmp_result > (data.length-1))) {return;}
+        }
+        selected_index = tmp_result;
+    }
+
+    function get_by_oned_index(index) {
+        let tmp_indices_remaining = index;
+        for(let i = 0; i < data.length; i++) {
+            if(data[i][1].length <= tmp_indices_remaining) {
+                tmp_indices_remaining -= data[i][1].length;
+            } else {
+                return [i, tmp_indices_remaining];
+            }
+        }
+    }
+
+    function turn_to_oned_index(index1, index2) {
+        let curr_index = 0;
+        for(let i = 0; i < index1; i++) {
+            curr_index += data[i][1].length;
+        }
+        curr_index += index2
+        return curr_index;
+    }
+
+    function update_selected() {
+        if (grouped) {
+            let twod_index = get_by_oned_index(selected_index);
+            selected_elem = data[twod_index[0]][1][twod_index[1]];
+        } else {
+            selected_elem = data[selected_index];
+        }
         selected_id = selected_elem["id"];
     }
 
-    $: selected_elem && update_selected_id();
+    $: grouped && calc_grouped_length(data);
+    $: (selected_index !== null) && update_selected();
 </script>
 
 <!-- Preloading Icons -->
@@ -36,7 +111,7 @@
 
 <div class="select-wrapper">
     <Dropdown let:toggle small_version={true} transform_origin_x="100%">
-        <button type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
+        <button bind:this={toggle_button} type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
             {#if selected_elem && selected_id}
                 {selected_elem["name"]}
             {:else}
@@ -45,11 +120,11 @@
             <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
         </button>
 
-        {#each data as elem}
+        {#each data as elem, index1}
             {#if grouped}
                 <span class="heading">{elem[0]}</span>
-                {#each elem[1] as element}
-                    <button type="button" class="select-option indented {icon_location ? '' : 'no_icons'}" on:click={() => {selected_elem = element}}>
+                {#each elem[1] as element, index2}
+                    <button type="button" class="select-option indented {icon_location ? "" : "no_icons"}" on:click={() => {selected_index = turn_to_oned_index(index1, index2); toggle_button.focus();}}>
                         {element["name"]}
                         {#if icon_location && element["icon"]}
                             <img src="{icon_location}/{element["icon"]}" alt="Schul-Logo" class="school-logo">
@@ -57,7 +132,7 @@
                     </button>
                 {/each}
             {:else}
-                <button type="button" class="select-option {icon_location ? '' : 'no_icons'}" on:click={() => {selected_elem = elem}}>
+                <button type="button" class="select-option {icon_location ? "" : "no_icons"}" on:click={() => {selected_index = index1; toggle_button.focus();}}>
                     {elem["name"]}
                     {#if icon_location && elem["icon"]}
                         <img src="{icon_location}/{elem["icon"]}" alt="Schul-Logo" class="school-logo">
