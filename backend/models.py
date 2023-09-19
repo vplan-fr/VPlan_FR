@@ -471,7 +471,7 @@ class Lessons:
                 grouped[-1].forms |= lesson.forms
                 grouped[-1].parsed_info = grouped_additional_info
                 grouped[-1].begin = min(filter(lambda x: x, (grouped[-1].begin, lesson.begin)), default=None)
-                grouped[-1].end = min(filter(lambda x: x, (grouped[-1].end, lesson.end)), default=None)
+                grouped[-1].end = max(filter(lambda x: x, (grouped[-1].end, lesson.end)), default=None)
             else:
                 grouped.append(copy.deepcopy(lesson))
 
