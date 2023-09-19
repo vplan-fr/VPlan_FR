@@ -3,6 +3,7 @@
     import {notifications} from "./notifications.js";
     import Select from "./Components/Select.svelte";
     import { onMount } from "svelte";
+    import { title } from "./stores.js";
 
     let category = "bug";
     let person = "student";
@@ -24,13 +25,14 @@
                 navigate_page("plan");
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
 
     onMount(() => {
         location.hash = "#contact";
         title.set("Kontaktformular");
+        // console.log("Mounted Contact.svelte");
     });
 </script>
 
@@ -55,7 +57,7 @@
 <label for="contact_data">Deine Kontaktdaten (Discord/E-Mail/Telefon):</label>
 <input class="textfield" name="contact_data" type="text" bind:value={contact_data}>
 <label for="message">Deine Nachricht:</label>
-<textarea class="textfield" name="message" bind:value={message} style="resize: vertical;"></textarea>
+<textarea class="textfield" name="message" bind:value={message} style="resize: vertical;" maxlength="1024"></textarea>
 <button class="button" on:click={send_message}>Absenden</button>
 
 <style lang="scss">

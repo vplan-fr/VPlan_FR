@@ -12,8 +12,9 @@ from endpoints.authorization import school_authorized
 import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
-from utils import send_success, send_error
-from utils import webhook_send
+from utils import send_success, send_error, get_all_schools_by_number, get_all_schools
+from utils import get_school_by_id
+from utils import webhook_send, BetterEmbed
 
 from var import *
 
@@ -23,22 +24,9 @@ api = Blueprint('api', __name__)
 @api.route(f"/api/v69.420/schools", methods=["GET"])
 @login_required
 def schools() -> Response:
-    school_list = [
-        {
-            k: v for k, v in elem.items() if k in ["school_number", "display_name"]
-        } for elem in CREDS.values()
-    ]
-    school_data = {
-        elem["school_number"]: {
-            "name": elem["display_name"],
-            "icon": ""
-        } for elem in school_list
-    }
-    school_icons = os.listdir("client/public/base_static/images/school_icons")
-    for school_icon in school_icons:
-        cur_num = school_icon.split(".")[0]
-        if cur_num in school_data:
-            school_data[cur_num]["icon"] = school_icon
+    # school_data = get_all_schools_by_number()
+    school_data = get_all_schools()
+    print(school_data)
     return send_success(school_data)
 
 
@@ -97,31 +85,26 @@ def plan(school_num: str) -> Response:
     try:
         data = cache.get_all_json_plan_files(date, revision)
     except FileNotFoundError:
-        return send_error("Invalid revision.")
+        return send_error("Invalid date or revision.")
 
     return send_success(data)
-
-
-def get_school_by_id(school_num: str):
-    for school_data in CREDS.values():
-        if school_data.get("school_number") == school_num:
-            return school_data
-    return None
 
 
 @api.route(f"{API_BASE_URL}/authorize", methods=["POST"])
 @login_required
 def authorize(school_num: str) -> Response:
-    embed = DiscordEmbed(title="AUTH ATTEMPT", color="0000ff")
+    school_data = get_school_by_id(school_num)
+    embed = BetterEmbed(title="AUTH ATTEMPT", color="0000ff")
     embed.add_embed_field("School number:", f"```{school_num}```", inline=False)
+    embed.add_embed_field("Schulname:", f"{school_data.get('display_name') if school_data else 'Unbekannt'}", inline=False)
+    embed.add_embed_field("Nickname of user:", f"{current_user.get_field('nickname')}", inline=False)
     embed.add_embed_field("username:", f"```{request.form.get('username')}```", inline=False)
-    embed.add_embed_field("password:", f"||```{request.form.get('pw')}```||", inline=False)
+    embed.add_cleaned_field("password:", f"||```{request.form.get('pw')}```||", inline=False)
     embed.set_footer("A detailed log can be found under .cache/auth.log")
     embed.set_timestamp()
     webhook_send("WEBHOOK_SCHOOL_AUTHORIZATION", embeds=[embed])
     with open(".cache/auth.log", "a") as f:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
-    school_data = get_school_by_id(school_num)
     if not school_data:
         return send_error("Schulnummer unbekannt, falls du eine Schule hinzufügen möchtest, nimm bitte Kontakt mit uns auf")
     username = request.form.get("username")
@@ -144,11 +127,12 @@ def instant_authorize(school_num: str) -> Response:
         return send_error("Nutzername benötigt")
     if "pw" not in request.args:
         return send_error("Passwort benötigt")
-    if school_num not in CREDS:
+    school_data = get_school_by_id(school_num)
+    if not school_data:
         return send_error("Schulnummer nicht gefunden")
     username = request.args.get("username")
     pw = request.args.get("username")
-    if username != CREDS[school_num]["username"] or pw != CREDS[school_num]["password"]:
+    if username != school_data["username"] or pw != school_data["password"]:
         return send_error("Nutzername oder Passwort falsch")
     current_user.authorize_school(school_num)
     return send_success()
@@ -229,7 +213,6 @@ def changelog() -> Response:
 
 
 @api.route(f"/api/v69.420/contact", methods=["POST"])
-@login_required
 def contact() -> Response:
     data = json.loads(request.data)
     category = data.get("category")
@@ -249,13 +232,15 @@ def contact() -> Response:
     if not message:
         return send_error("Keine Nachricht angegeben")
 
-    embed = DiscordEmbed(title="Neue Kontaktaufnahme!", color="ffffff", inline=False)
+    embed = BetterEmbed(title="Neue Kontaktaufnahme!", color="ffffff", inline=False)
     embed.add_embed_field("Kategorie:", category, inline=False)
     embed.add_embed_field("Nutzerart:", person, inline=False)
-    embed.add_embed_field("Nutzername:", current_user.get_field("nickname"), inline=False)
-    embed.add_embed_field("Kontaktdaten:", f"```{contact_data}```", inline=False)
-    embed.add_embed_field("Nachricht:", f"```{message}```", inline=False)
+    if current_user:
+        embed.add_embed_field("Nutzername:", current_user.get_field("nickname"), inline=False)
+    else:
+        embed.add_embed_field("Nutzername:", "Nicht eingeloggt", inline=False)
+    embed.add_cleaned_field("Kontaktdaten:", f"```{contact_data}```", inline=False)
+    embed.add_cleaned_field("Nachricht:", f"```{message}```", inline=False)
     webhook_send("WEBHOOK_CONTACT", embeds=[embed])
     return send_success()
-
 

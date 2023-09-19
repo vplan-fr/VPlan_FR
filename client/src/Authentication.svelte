@@ -3,7 +3,7 @@
     import {notifications} from './notifications.js';
     import { fly, fade } from 'svelte/transition';
     import { logged_in, title } from './stores.js';
-    import {customFetch} from "./utils.js";
+    import {customFetch, navigate_page} from "./utils.js";
 
     let l_nickname;
     let l_password;
@@ -14,6 +14,7 @@
     onMount(() => {
         location.hash = "#login";
         title.set("Login");
+        // console.log("Mounted Authentication.svelte");
     });
 
     function login() {
@@ -27,11 +28,12 @@
             .then(data => {
                 $logged_in = true;
                 localStorage.setItem('logged_in', `${$logged_in}`);
+                navigate_page("plan");
             })
             .catch(error => {
                 $logged_in = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
-                notifications.danger(error);
+                notifications.danger(error.message);
             }
         );
     }
@@ -47,11 +49,12 @@
             .then(data => {
                 $logged_in = true;
                 localStorage.setItem('logged_in', `${$logged_in}`);
+                navigate_page("pwa_install");
             })
             .catch(error => {
                 $logged_in = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
-                notifications.danger(error);
+                notifications.danger(error.message);
             }
         );
     }

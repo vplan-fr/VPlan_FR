@@ -6,6 +6,7 @@
     export let selected_id = null;
     export let icon_location = null;
     export let grouped = false;
+    export let data_name = "Elemente";
 
     function update_selected_id() {
         selected_id = selected_elem["id"];
@@ -20,10 +21,14 @@
         {#each data as elem}
             {#if grouped}
                 {#each elem[1] as element}
-                    <link rel="preload" as="image" href="{icon_location}/{element["icon"]}" />
+                    {#if element["icon"]}
+                        <link rel="preload" as="image" href="{icon_location}/{element["icon"]}" />
+                    {/if}
                 {/each}
             {:else}
-                <link rel="preload" as="image" href="{icon_location}/{elem["icon"]}" />
+                {#if elem["icon"]}
+                    <link rel="preload" as="image" href="{icon_location}/{elem["icon"]}" />
+                {/if}
             {/if}
         {/each}
     {/if}
@@ -44,26 +49,35 @@
             {#if grouped}
                 <span class="heading">{elem[0]}</span>
                 {#each elem[1] as element}
-                    <button type="button" class="select-option indented {icon_location ? "" : "no_icons"}" on:click={() => {selected_elem = element}}>
+                    <button type="button" class="select-option indented {icon_location ? '' : 'no_icons'}" on:click={() => {selected_elem = element}}>
                         {element["name"]}
-                        {#if icon_location}
+                        {#if icon_location && element["icon"]}
                             <img src="{icon_location}/{element["icon"]}" alt="Schul-Logo" class="school-logo">
                         {/if}
                     </button>
                 {/each}
             {:else}
-                <button type="button" class="select-option {icon_location ? "" : "no_icons"}" on:click={() => {selected_elem = elem}}>
+                <button type="button" class="select-option {icon_location ? '' : 'no_icons'}" on:click={() => {selected_elem = elem}}>
                     {elem["name"]}
-                    {#if icon_location}
+                    {#if icon_location && elem["icon"]}
                         <img src="{icon_location}/{elem["icon"]}" alt="Schul-Logo" class="school-logo">
                     {/if}
                 </button>
             {/if}
+        {:else}
+            <span class="no-options-placeholder">
+                Keine {data_name} vorhanden
+            </span>
         {/each}
     </Dropdown>
 </div>
 
 <style lang="scss">
+    .no-options-placeholder {
+        padding: 15px;
+        display: block;
+    }
+
     .heading {
         display: block;
         font-weight: 700;

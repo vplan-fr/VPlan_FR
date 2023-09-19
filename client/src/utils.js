@@ -1,5 +1,4 @@
-import {notifications} from "./notifications.js";
-import {preferences, settings, current_page} from "./stores.js";
+import {current_page, settings} from "./stores.js";
 
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
@@ -102,13 +101,14 @@ export function get_settings() {
             settings.set(data);
         })
         .catch(error => {
-            notifications.danger("Einstellungen konnten nicht geladen werden")
+            console.error("Einstellungen konnten nicht geladen werden.");
         })
 }
 
 export function navigate_page(page_id) {
     current_page.set(page_id);
     location.hash = `#${page_id}`;
+    // console.log(`Changed Location to: "${page_id}"`);
 }
 
 export function update_colors(settings) {
@@ -211,4 +211,53 @@ export function format_revision_date(date, latest) {
         return `${formatted_date} (Aktuellste)`
     }
     return formatted_date
+}
+
+export function analyze_local_storage() {
+    function calculateSizeInBytes(value) {
+        const str = JSON.stringify(value);
+    return new Blob([str]).size;
+    }
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const value = localStorage.getItem(key);
+        const sizeInBytes = calculateSizeInBytes(value);
+        console.log(`Key: ${key}, Size (bytes): ${sizeInBytes}`);
+    }
+    // Check available localStorage space in bytes
+    function checkAvailableStorage() {
+        if ('localStorage' in window && window['localStorage'] !== null) {
+            try {
+                const currentSize = JSON.stringify(localStorage).length;
+                const totalSize = (1024 * 1024) * 5; // 5 MB (adjust as needed)
+                const availableSpace = totalSize - currentSize;
+                console.log(`Available localStorage space: ${availableSpace} bytes`);
+            } catch (e) {
+                console.error('localStorage is not available or accessible.');
+            }
+        } else {
+            console.error('localStorage is not supported by this browser.');
+        }
+    }
+
+    checkAvailableStorage();
+}
+
+export function arraysEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length !== b.length) return false;
+
+    a.sort(function (a, b) {
+        return a - b;
+    });
+    b.sort(function (a, b) {
+        return a - b;
+    });
+
+    for (var i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 }

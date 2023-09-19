@@ -3,6 +3,7 @@
     import {logged_in, settings, active_modal} from './stores.js';
     import {customFetch, update_colors} from "./utils.js";
     import Modal from "./Components/Modal.svelte";
+    import { onMount } from "svelte";
 
     let temp_settings;
 
@@ -16,7 +17,7 @@
                 notifications.success("Einstellungen gespeichert")
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
     
@@ -30,7 +31,7 @@
                 notifications.success("Einstellungen zurückgesetzt");
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
 
@@ -48,13 +49,17 @@
                 $logged_in = false;
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
 
     function view_saved_data() {
         window.open("/auth/account", "_blank");
     }
+
+    // onMount(() => {
+    //     console.log("Mounted Settings.svelte");
+    // });
 
     $: $active_modal, cancel_setting_changes();
     $: update_colors(temp_settings);

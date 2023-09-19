@@ -1,44 +1,24 @@
 <script>
     import {notifications} from './notifications.js';
-    import {logged_in, current_page, active_modal} from './stores.js';
+    import {logged_in, active_modal} from './stores.js';
     import Dropdown from './Components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
     import { onMount } from 'svelte';
-    import {customFetch} from "./utils.js";
-
-    function navigate_page(page_id) {
-        $current_page = page_id;
-        location.hash = `#${page_id}`;
-    }
+    import {customFetch, navigate_page} from "./utils.js";
 
     function logout() {
         customFetch('/auth/logout')
             .then(data => {
                 $logged_in = false;
-                localStorage.setItem('logged_in', `${$logged_in}`);
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             });
     }
 
-    window.addEventListener('popstate', (e) => {
-        let new_location = location.hash.slice(1);
-        if((new_location === "login" || new_location === "register") && logged_in) {
-            e.preventDefault();
-            history.go(1);
-            return;
-        }
-        navigate_page(new_location);
-    });
-
-    onMount(() => {
-        let new_location = location.hash.slice(1);
-        if((new_location === "login" || new_location === "register") && logged_in) {
-            return;
-        }
-        navigate_page(new_location);
-    });
+    // onMount(() => {
+    //     console.log("Mounted Navbar.svelte");
+    // });
 </script>
 
 <nav transition:fly={{y:-64}}>

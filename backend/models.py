@@ -126,6 +126,7 @@ class PlanLesson:
     teacher_changed: bool
     room_changed: bool
     forms_changed: bool
+    is_unplanned: bool  # True iff lesson is inserted
 
     parsed_info: ParsedLessonInfo
 
@@ -154,12 +155,101 @@ class PlanLesson:
             "teacher_changed": self.teacher_changed,
             "room_changed": self.room_changed,
             "forms_changed": self.forms_changed,
+            "is_unplanned": self.is_unplanned,
             # "info": self.info,
             "info": self.parsed_info.serialize(self._lesson_date),
             "begin": self.begin.strftime("%H:%M") if self.begin else None,
             "takes_place": self.takes_place,
             "end": self.end.strftime("%H:%M") if self.end else None,
         }
+
+    @classmethod
+    def create(cls, current_lesson: Lesson | None, scheduled_lesson: Lesson | None) -> PlanLesson:
+        assert not (current_lesson is None is scheduled_lesson)
+
+        if current_lesson is None:
+            _current_lesson = Lesson(
+                periods=scheduled_lesson.periods,
+                begin=scheduled_lesson.begin,
+                end=scheduled_lesson.end,
+                forms=set(),
+                teachers=set(),
+                rooms=set(),
+                course=None,
+                parsed_info=ParsedLessonInfo([]),
+                class_=None,
+                subject_changed=True,
+                teacher_changed=True,
+                room_changed=True,
+                is_scheduled=False,
+                takes_place=False,
+                _lesson_date=scheduled_lesson._lesson_date
+            )
+        else:
+            _current_lesson = current_lesson
+
+        if scheduled_lesson is None:
+            _scheduled_lesson = Lesson(
+                periods=current_lesson.periods,
+                begin=current_lesson.begin,
+                end=current_lesson.end,
+                forms=set(),
+                teachers=set(),
+                rooms=set(),
+                course=None,
+                parsed_info=ParsedLessonInfo([]),
+                class_=None,
+                subject_changed=False,
+                teacher_changed=False,
+                room_changed=False,
+                is_scheduled=True,
+                takes_place=False,
+                _lesson_date=current_lesson._lesson_date
+            )
+        else:
+            _scheduled_lesson = scheduled_lesson
+
+        plan_lesson = PlanLesson(
+            periods=set(_current_lesson.periods),
+            begin=_current_lesson.begin,
+            end=_current_lesson.end,
+            scheduled_forms=_scheduled_lesson.forms,
+            scheduled_teachers=_scheduled_lesson.teachers,
+            scheduled_rooms=_scheduled_lesson.rooms,
+            scheduled_course=_scheduled_lesson.course,
+            current_forms=_current_lesson.forms,
+            current_teachers=_current_lesson.teachers,
+            current_rooms=_current_lesson.rooms,
+            current_course=_current_lesson.course,
+            class_number=(
+                (_scheduled_lesson.class_opt.number or _current_lesson.class_opt.number)
+                if _scheduled_lesson is not None else _current_lesson.class_opt.number
+            ),
+            subject_changed=_current_lesson.subject_changed,
+            teacher_changed=_current_lesson.teacher_changed,
+            room_changed=_current_lesson.room_changed,
+            forms_changed=_current_lesson.forms != _scheduled_lesson.forms if _scheduled_lesson is not None else True,
+            parsed_info=_current_lesson.parsed_info,
+            takes_place=_current_lesson.takes_place,
+            is_internal=_current_lesson.is_internal,
+            is_unplanned=_current_lesson.takes_place and scheduled_lesson is None,
+            _lesson_date=_current_lesson._lesson_date
+        )
+
+        if not plan_lesson.takes_place and scheduled_lesson is not None:
+            plan_lesson.current_forms = set()
+            plan_lesson.current_teachers = set()
+            plan_lesson.current_rooms = set()
+            plan_lesson.current_course = None
+            # plan_lesson.parsed_info.paragraphs.append(
+            #     LessonInfoParagraph([LessonInfoMessage(lesson_info.Cancelled(
+            #         course=scheduled_lesson.course,
+            #         plan_type=
+            #
+            #     ), -1)], -1)
+            # )
+
+        return plan_lesson
 
 
 @dataclasses.dataclass
@@ -187,6 +277,66 @@ class Lessons:
         return {attribute: Lessons(sorted(lessons, key=lambda x: list(x.periods)[0]))
                 for attribute, lessons in grouped.items()}
 
+    def _to_plan_lessons(self, lessons: list[Lesson]) -> list[PlanLesson]:
+        out = []
+
+        scheduled_lessons = [lesson for lesson in lessons if lesson.is_scheduled]
+        used_scheduled_lessons = []
+        lessons.sort(key=lambda l: (
+            not l.subject_changed,
+            l.takes_place,
+            l.course if l.course else "",
+        ), reverse=True)
+
+        for current_lesson in lessons:
+            if current_lesson.is_scheduled:
+                continue
+
+            for scheduled_lesson in scheduled_lessons:
+                if scheduled_lesson.class_opt.number is not None is not current_lesson.class_opt.number:
+                    if scheduled_lesson.class_opt.number == current_lesson.class_opt.number:
+                        break
+            else:
+                for scheduled_lesson in scheduled_lessons:
+
+                    if (
+                            (scheduled_lesson.course != current_lesson.course) in
+                            (False, current_lesson.subject_changed)
+                    ):
+                        break
+                else:
+                    scheduled_lesson = None
+
+            if not current_lesson.takes_place:
+                # try to find corresponding used scheduled lesson to drop this cancelled lesson
+                found = False
+                for used_scheduled_lesson in used_scheduled_lessons:
+                    if (
+                            used_scheduled_lesson.course == current_lesson.course and
+                            used_scheduled_lesson.teachers == current_lesson.teachers and
+                            used_scheduled_lesson.forms == current_lesson.forms
+                    ):
+                        found = True
+                        break
+
+                if found:
+                    continue
+
+            if scheduled_lesson is not None:
+                scheduled_lessons.remove(scheduled_lesson)
+                used_scheduled_lessons.append(scheduled_lesson)
+
+            out.append(
+                PlanLesson.create(current_lesson, scheduled_lesson)
+            )
+
+        for scheduled_lesson in scheduled_lessons:
+            out.append(
+                PlanLesson.create(None, scheduled_lesson)
+            )
+
+        return out
+
     def to_plan_lessons(self) -> list[PlanLesson]:
 
         lessons_by_periods: dict[frozenset[int], list[Lesson]] = defaultdict(list)
@@ -196,112 +346,7 @@ class Lessons:
         out: list[PlanLesson] = []
 
         for periods, lessons in lessons_by_periods.items():
-            scheduled_lessons = [lesson for lesson in lessons if lesson.is_scheduled]
-            used_scheduled_lessons = []
-            lessons.sort(key=lambda l: (
-                not l.subject_changed,
-                l.takes_place,
-                l.course if l.course else "",
-            ), reverse=True)
-
-            for current_lesson in lessons:
-                if current_lesson.is_scheduled:
-                    continue
-
-                # if len(scheduled_lessons) == 1 and scheduled_lessons[0].course is not None:
-                #     scheduled_lesson = scheduled_lessons[0]
-                # else:
-                for scheduled_lesson in scheduled_lessons:
-                    if scheduled_lesson.class_opt.number is not None is not current_lesson.class_opt.number:
-                        if scheduled_lesson.class_opt.number == current_lesson.class_opt.number:
-                            break
-                else:
-                    for scheduled_lesson in scheduled_lessons:
-                        # if None is not scheduled_lesson.class_opt.number == current_lesson.class_opt.number is not None:
-                        #     break
-                        if (
-                                # scheduled_lesson.course is not None is not current_lesson.course and
-                                (scheduled_lesson.course != current_lesson.course) in (
-                                False, current_lesson.subject_changed)
-                        ):
-                            break
-                    else:
-                        scheduled_lesson = None
-
-                if not current_lesson.takes_place:
-                    # try to find corresponding used scheduled lesson to drop this lesson
-                    found = False
-                    for used_scheduled_lesson in used_scheduled_lessons:
-                        if (
-                                used_scheduled_lesson.course == current_lesson.course and
-                                used_scheduled_lesson.teachers == current_lesson.teachers and
-                                used_scheduled_lesson.forms == current_lesson.forms
-                        ):
-                            found = True
-                            break
-
-                    if found:
-                        continue
-
-                if scheduled_lesson is not None:
-                    scheduled_lessons.remove(scheduled_lesson)
-                    used_scheduled_lessons.append(scheduled_lesson)
-
-                plan_lesson = PlanLesson(
-                    periods=set(periods),
-                    begin=current_lesson.begin,
-                    end=current_lesson.end,
-                    scheduled_forms=scheduled_lesson.forms if scheduled_lesson is not None else None,
-                    scheduled_teachers=scheduled_lesson.teachers if scheduled_lesson is not None else None,
-                    scheduled_rooms=scheduled_lesson.rooms if scheduled_lesson is not None else None,
-                    scheduled_course=scheduled_lesson.course if scheduled_lesson is not None else None,
-                    current_forms=current_lesson.forms,
-                    current_teachers=current_lesson.teachers,
-                    current_rooms=current_lesson.rooms,
-                    current_course=current_lesson.course,
-                    class_number=current_lesson.class_opt.number,
-                    subject_changed=current_lesson.subject_changed,
-                    teacher_changed=current_lesson.teacher_changed,
-                    room_changed=current_lesson.room_changed,
-                    forms_changed=current_lesson.forms != scheduled_lesson.forms if scheduled_lesson is not None else True,
-                    parsed_info=current_lesson.parsed_info,  # TODO
-                    takes_place=current_lesson.takes_place,
-                    is_internal=current_lesson.is_internal,
-                    _lesson_date=current_lesson._lesson_date
-                )
-
-                if not plan_lesson.takes_place and scheduled_lesson is not None:
-                    plan_lesson.current_forms = set()
-                    plan_lesson.current_teachers = set()
-                    plan_lesson.current_rooms = set()
-                    plan_lesson.current_course = None
-
-                out.append(plan_lesson)
-
-            # convert remaining scheduled lessons
-            for scheduled_lesson in scheduled_lessons:
-                out.append(PlanLesson(
-                    periods=set(periods),
-                    begin=scheduled_lesson.begin,
-                    end=scheduled_lesson.end,
-                    scheduled_forms=scheduled_lesson.forms,
-                    scheduled_teachers=scheduled_lesson.teachers,
-                    scheduled_rooms=scheduled_lesson.rooms,
-                    scheduled_course=scheduled_lesson.course,
-                    current_forms=set(),
-                    current_teachers=set(),
-                    current_rooms=set(),
-                    current_course=None,
-                    class_number=scheduled_lesson.class_opt.number,
-                    subject_changed=False,
-                    teacher_changed=False,
-                    room_changed=False,
-                    forms_changed=False,
-                    parsed_info=scheduled_lesson.parsed_info,
-                    takes_place=False,
-                    is_internal=scheduled_lesson.is_internal,
-                    _lesson_date=scheduled_lesson._lesson_date
-                ))
+            out += self._to_plan_lessons(lessons)
 
         return out
 

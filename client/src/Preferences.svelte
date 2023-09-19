@@ -83,7 +83,7 @@
                 notifications.success("Kurse gespeichert!", 2000);
             })
             .catch(error => {
-                notifications.danger(error);
+                notifications.danger(error.message);
             })
     }
 
@@ -137,6 +137,7 @@
         updateCourses();
         location.hash = "#preferences";
         title.set("Unterricht wählen");
+        // console.log("Mounted Preferences.svelte");
     });
 
     $: create_select_arr(grouped_forms)
@@ -144,7 +145,7 @@
 </script>
 
 <h1 class="responsive-heading">Unterrichtswahl</h1>
-<Select data={select_arr} grouped={true} bind:selected_id={selected_form}>Klasse auswählen</Select>
+<Select data={select_arr} grouped={true} bind:selected_id={selected_form} data_name="Klassen">Klasse auswählen</Select>
 {#if selected_form != null}
     <ul class="responsive-text">
         {#each Object.entries(class_groups_by_subject).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}

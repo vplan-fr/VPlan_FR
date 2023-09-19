@@ -1,8 +1,10 @@
 <script>
     import { customFetch } from "./utils";
-    import {active_modal} from './stores';
+    import {active_modal, logged_in} from './stores';
+    import { notifications } from "./notifications";
     import Modal from "./Components/Modal.svelte";
     import SvelteMarkdown from 'svelte-markdown'
+    import { onMount } from "svelte";
 
     let changelog = [];
     function get_changelog() {
@@ -13,8 +15,7 @@
                 }
             })
             .catch(error => {
-                changelog = [];
-                console.error(error);
+                console.error("Changelog konnte nicht geladen werden.");
             })
     }
 
@@ -32,7 +33,11 @@
         changelog = changelog.filter(item => item[0] !== number)
     }
 
-    get_changelog();
+    // onMount(() => {
+    //     console.log("Mounted Changelog.svelte");
+    // });
+
+    $: $logged_in && get_changelog();
 </script>
 
 <Modal id="changelog">

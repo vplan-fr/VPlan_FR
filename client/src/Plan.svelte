@@ -1,10 +1,10 @@
 <script>
-    import { onMount } from 'svelte';
+    import {onMount} from 'svelte';
     import Lesson from './Lesson.svelte';
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
-    import { title, preferences, settings } from './stores.js';
-    import {customFetch, navigate_page, should_date_be_cached, format_date} from "./utils.js";
+    import {preferences, settings, title} from './stores.js';
+    import {arraysEqual, customFetch, format_date, navigate_page, should_date_be_cached} from "./utils.js";
 
     export let api_base;
     export let school_num;
@@ -23,7 +23,7 @@
     let all_lessons = [];
     let rooms_data = {};
     let info;
-    let loading = true;
+    let loading = false;
     let loading_failed = false;
     let data_from_cache = false;
     let plan_type_map = {
@@ -35,11 +35,13 @@
 
     export function load_lessons(date, plan_type, entity, use_grouped_form_plans, revision=".newest") {
         let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans"
-
+        
         controller.abort();
-        if (date === null) {
-            return
+        if (date === null || date === undefined || !plan_type) {
+            return;
         }
+        console.log("Loading lessons...", date, plan_type, entity);
+
         loading = true;
         data_from_cache = false;
         loading_failed = false;
@@ -118,20 +120,6 @@
         }
     }
 
-    function arraysEqual(a, b) {
-        if (a === b) return true;
-        if (a == null || b == null) return false;
-        if (a.length !== b.length) return false;
-
-        a.sort(function (a, b) {  return a - b;  });
-        b.sort(function (a, b) {  return a - b;  });
-
-        for (var i = 0; i < a.length; ++i) {
-            if (a[i] !== b[i]) return false;
-        }
-        return true;
-    }
-
     function sameBlock(a, b) {
         return a.includes(b[0]) || a.includes(b[1])
     }
@@ -182,6 +170,7 @@
         }
         location.hash = gen_location_hash();
         title.set("Plan");
+        // console.log("Mounted Plan.svelte");
     });
 
     window.addEventListener('popstate', (e) => {
@@ -220,7 +209,7 @@
 </script>
 
 {#if plan_type !== "room_overview"}
-<div class="plan" class:extra-height={extra_height}>
+<div class="plan" class:extra-height={extra_height && !loading && !loading_failed && plan_type}>
     {#if show_title && info}
         {#if plan_type === "forms" && (plan_value in $preferences)}
             <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
@@ -230,12 +219,16 @@
             </h1>
         {/if}
     {#if loading}
-        Lädt...
+        <span class="responsive-text">Lädt...</span>
     {:else if loading_failed}
-        Plan konnte nicht geladen werden.
+        <span class="responsive-text">Plan konnte nicht geladen werden</span>
     {:else}
         {#if lessons.length === 0}
-            Keine Stunden
+        {#if plan_type}    
+            <span class="responsive-text">Keine Stunden</span>
+        {:else}
+        <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus um einen Plan zu sehen.</span>
+        {/if}
         {:else}
         <div class="lessons-wrapper">
             {#if external_times}
@@ -262,21 +255,25 @@
                     {/each}
                 </div>
             {/if}
+            <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
         {/if}
-        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
     {/if}
 </div>
 {:else}
-<div class:extra-height={extra_height}>
+<div class:extra-height={extra_height && !loading && !loading_failed && plan_type}>
     <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
-    <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
+    {#if info}
+        <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
+    {/if}
     {#if loading}
-        Lädt...
+        <span class="responsive-text">Lädt...</span>
     {:else if loading_failed}
-        Plan konnte nicht geladen werden.
+        <span class="responsive-text">Plan konnte nicht geladen werden</span>
     {:else}
         <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
-        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+        {#if info}
+            <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+        {/if}
     {/if}
 </div>
 {/if}
