@@ -111,7 +111,6 @@
                 }
             });
     }
-    $: all_revisions = [".newest"].concat((all_meta.dates || {})[date] || []);
 
     function check_login_status() {
         customFetch('/auth/check_login')
@@ -202,11 +201,12 @@
     function set_plan(new_plan_type, new_plan_value) {
         plan_type = new_plan_type;
         plan_value = new_plan_value;
-        ("forms" !== plan_type) && (selected_form = null);
-        ("teachers" !== plan_type) && (selected_teacher = null);
-        ("rooms" !== plan_type) && (selected_room = null);
         scrollTo(document.getElementsByClassName("plan-heading")[0]);
     }
+
+    $: ("forms" !== plan_type) && (selected_form = null);
+    $: ("teachers" !== plan_type) && (selected_teacher = null);
+    $: ("rooms" !== plan_type) && (selected_room = null);
 
     let form_arr = [];
     let teacher_arr = [];
@@ -273,6 +273,7 @@
 
     $: $logged_in && get_settings();
     $: $logged_in && get_meta(api_base);
+    $: all_revisions = [".newest"].concat((all_meta?.dates || {})[date] || []);
     $: $logged_in && get_greeting();
     $: !$logged_in && logout();
     $: !$logged_in && close_modal();
@@ -367,7 +368,7 @@
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
-                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision/>
+                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision bind:enabled_dates />
                 {:else}
                     <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
                 {/if}
