@@ -1,4 +1,5 @@
 import {current_page, settings} from "./stores.js";
+import {notifications} from "./notifications.js";
 
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
@@ -101,6 +102,8 @@ export function get_settings() {
             settings.set(data);
         })
         .catch(error => {
+            settings.set(JSON.parse(localStorage.getItem("settings")));
+            notifications.info("Einstellungen aus cache geladen");
             console.error("Einstellungen konnten nicht geladen werden.");
         })
 }
