@@ -229,4 +229,8 @@
         color: white;
         font-size: var(--font-size-md);
     }
+
+    span, h1, label {
+        color: white !important;
+    }
 </style>

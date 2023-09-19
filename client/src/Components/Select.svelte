@@ -41,7 +41,6 @@
     function calc_grouped_length(data) {
         let curr_length = 0;
         for(let elem of data) {
-            console.log(elem);
             curr_length += elem[1].length;
         }
         grouped_length = curr_length;
@@ -88,7 +87,6 @@
     }
 
     $: grouped && calc_grouped_length(data);
-    $: console.log(grouped_length);
     $: (selected_index !== null) && update_selected();
 </script>
 
