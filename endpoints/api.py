@@ -12,8 +12,8 @@ from endpoints.authorization import school_authorized
 import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
-from utils import send_success, send_error, get_all_schools_by_number
-from utils import get_school_by_id, get_all_schools
+from utils import send_success, send_error, get_all_schools_by_number, get_all_schools
+from utils import get_school_by_id
 from utils import webhook_send, BetterEmbed
 
 from var import *
@@ -24,7 +24,9 @@ api = Blueprint('api', __name__)
 @api.route(f"/api/v69.420/schools", methods=["GET"])
 @login_required
 def schools() -> Response:
-    school_data = get_all_schools_by_number()
+    # school_data = get_all_schools_by_number()
+    school_data = get_all_schools()
+    print(school_data)
     return send_success(school_data)
 
 
@@ -211,7 +213,6 @@ def changelog() -> Response:
 
 
 @api.route(f"/api/v69.420/contact", methods=["POST"])
-@login_required
 def contact() -> Response:
     data = json.loads(request.data)
     category = data.get("category")
@@ -234,7 +235,10 @@ def contact() -> Response:
     embed = BetterEmbed(title="Neue Kontaktaufnahme!", color="ffffff", inline=False)
     embed.add_embed_field("Kategorie:", category, inline=False)
     embed.add_embed_field("Nutzerart:", person, inline=False)
-    embed.add_embed_field("Nutzername:", current_user.get_field("nickname"), inline=False)
+    if current_user:
+        embed.add_embed_field("Nutzername:", current_user.get_field("nickname"), inline=False)
+    else:
+        embed.add_embed_field("Nutzername:", "Nicht eingeloggt", inline=False)
     embed.add_cleaned_field("Kontaktdaten:", f"```{contact_data}```", inline=False)
     embed.add_cleaned_field("Nachricht:", f"```{message}```", inline=False)
     webhook_send("WEBHOOK_CONTACT", embeds=[embed])

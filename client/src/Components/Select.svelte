@@ -49,7 +49,7 @@
             {#if grouped}
                 <span class="heading">{elem[0]}</span>
                 {#each elem[1] as element}
-                    <button type="button" class="select-option indented {icon_location ? "" : "no_icons"}" on:click={() => {selected_elem = element}}>
+                    <button type="button" class="select-option indented {icon_location ? '' : 'no_icons'}" on:click={() => {selected_elem = element}}>
                         {element["name"]}
                         {#if icon_location && element["icon"]}
                             <img src="{icon_location}/{element["icon"]}" alt="Schul-Logo" class="school-logo">
@@ -57,7 +57,7 @@
                     </button>
                 {/each}
             {:else}
-                <button type="button" class="select-option {icon_location ? "" : "no_icons"}" on:click={() => {selected_elem = elem}}>
+                <button type="button" class="select-option {icon_location ? '' : 'no_icons'}" on:click={() => {selected_elem = elem}}>
                     {elem["name"]}
                     {#if icon_location && elem["icon"]}
                         <img src="{icon_location}/{elem["icon"]}" alt="Schul-Logo" class="school-logo">
