@@ -57,7 +57,7 @@ class User(UserMixin):
 
     def get_authorized_schools(self):
         self.get_user()
-        return self.user.get("authorized_schools")
+        return self.user.get("authorized_schools", [])
 
     def authorize_school(self, school_num: str):
         self.get_user()
