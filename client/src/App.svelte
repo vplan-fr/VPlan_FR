@@ -272,6 +272,7 @@
     });
 
     $: $logged_in && get_settings();
+    $: localStorage.setItem("settings", `${JSON.stringify($settings)}`)
     $: $logged_in && get_meta(api_base);
     $: all_revisions = [".newest"].concat((all_meta?.dates || {})[date] || []);
     $: $logged_in && get_greeting();
