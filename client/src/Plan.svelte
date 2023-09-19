@@ -360,6 +360,7 @@
             position: relative;
             opacity: 1;
             transition: opacity .2s ease;
+            box-shadow: 0px 0px 5px var(--background);
             
             &.hidden {
                 opacity: 0;
