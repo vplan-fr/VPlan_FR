@@ -110,8 +110,8 @@
     $: schools, authorized_schools = schools.filter(obj => authorized_school_ids.includes(obj.id));
     $: schools, unauthorized_schools = schools.filter(obj => !authorized_school_ids.includes(obj.id));
     $: schools_categorized = [
-        ["autorisiert", authorized_schools],
-        ["unautorisiert", unauthorized_schools]
+        ["Autorisiert", authorized_schools],
+        ["Unautorisiert", unauthorized_schools]
     ]
 
     function get_school_name_by_id(school_id) {
