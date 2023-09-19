@@ -150,15 +150,31 @@ def json_to_mongo():
         )
 
 
+# gets the passwords as well
 def get_school_by_id(school_num: str):
     result = creds.find_one(
-        {"_id": school_num}
+        {"_id": school_num},
     )
     return result
 
 
+# doesn't get the passwords
 def get_all_schools():
-    return list(creds.find({}))
+    pipeline = [
+        {
+            "$sort": {"count": pymongo.DESCENDING}
+        },
+        {
+            "$project": {
+                #"_id": False,
+                "count": False,
+                "hosting": False,
+                "comment": False,
+            }
+        }
+    ]
+
+    return list(creds.aggregate(pipeline))
 
 
 def get_all_schools_by_number():
@@ -172,6 +188,41 @@ def add_database_icons():
         creds.update_one(
             {"_id": cur_num},
             {"$set": {"icon": school_icon}}
+        )
+
+
+def update_school_authorization_count():
+    pipeline = [
+        {
+            "$unwind": "$authorized_schools"
+        },
+        {
+            "$group": {
+                "_id": "$authorized_schools",
+                "count": {"$sum": 1}
+            }
+        },
+        {
+            "$lookup": {
+                "from": "creds",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "school_info"
+            }
+        },
+        {
+            "$unwind": "$school_info"
+        }
+    ]
+
+    results = list(users.aggregate(pipeline))
+    results = [
+        {k: v for k, v in elem.items() if k not in ["school_info"]} for elem in results
+    ]
+    for result in results:
+        creds.update_one(
+            {"_id": result["_id"]},
+            {"$set": {"count": result["count"]}}
         )
 
 
@@ -225,11 +276,11 @@ class BetterEmbed(DiscordEmbed):
 
 print("Updating icons...")
 add_database_icons()
+print("Updating school authorization count...")
+update_school_authorization_count()
 if __name__ == "__main__":
-    # new_embed = DiscordEmbed(title="Moin again", description="Test", color="03b2f8")
-    # new_embed.set_author("VPlan Bot")
-    # webhook_send("WEBHOOK_TEST", "Hi guys")
-    print(get_all_schools())
+    # json_to_mongo()
+    ...
 
 
 
