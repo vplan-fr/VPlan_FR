@@ -3,8 +3,10 @@
     import Lesson from './Lesson.svelte';
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
+    import { swipe } from 'svelte-gestures';
     import {preferences, settings, title} from './stores.js';
     import {arraysEqual, customFetch, format_date, navigate_page, should_date_be_cached} from "./utils.js";
+    import { fade } from 'svelte/transition';
 
     export let api_base;
     export let school_num;
@@ -235,10 +237,26 @@
         }
     }
 
+    function swipe_handler(event) {
+        if($settings.swipe_day_change) {
+            if(event.detail.direction === "right") {
+                change_day(-1);
+            } else if(event.detail.direction === "left") {
+                change_day(1);
+            }
+        }
+    }
+
+    let show_left_key = true;
+    let show_right_key = true;
+    $: date, show_left_key = enabled_dates.indexOf(date) > 0;
+    $: date, show_right_key = enabled_dates.indexOf(date) < (enabled_dates.length - 1);
+
     $: preferences_apply, lessons = render_lessons(all_lessons);
 </script>
 
-<svelte:window on:keydown={keydown_handler} />
+<svelte:window on:keydown={keydown_handler}/>
+<svelte:body use:swipe={{ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' }} on:swipe={swipe_handler} />
 
 {#if plan_type !== "room_overview"}
 <div class="plan" class:extra-height={extra_height && !loading && !loading_failed && plan_type}>
@@ -309,8 +327,69 @@
     {/if}
 </div>
 {/if}
+<div class="day-controls">
+    <button tabindex="-1" on:click={() => {change_day(-1);}} class:hidden={!show_left_key}><span class="material-symbols-outlined left">arrow_back_ios_new</span></button>
+    <button tabindex="-1" on:click={() => {change_day(1);}} class:hidden={!show_right_key}><span class="material-symbols-outlined right">arrow_forward_ios</span></button>
+</div>
 
 <style lang="scss">
+    .day-controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        display: flex;
+        justify-content: space-between;
+        padding: 20px;
+        box-sizing: border-box;
+        pointer-events: none;
+
+        button {
+            pointer-events: all;
+            border: none;
+            border-radius: 999vw;
+            background: var(--background);
+            color: var(--text-color);
+            width: calc(var(--font-size-lg) * 2);
+            aspect-ratio: 1;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            opacity: 1;
+            transition: opacity .2s ease;
+            
+            &.hidden {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            &::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.1);
+                pointer-events: none;
+            }
+
+            span {
+                position: absolute;
+                font-size: var(--font-size-lg);
+
+                // Visually Centering Arrows
+                &.left {
+                    margin-left: -4px;
+                }
+                
+                &.right {
+                    margin-right: -4px;
+                }
+            }
+        }
+    }
+
     .plan-heading {
         font-size: var(--font-size-lg);
         line-height: 1.6;
