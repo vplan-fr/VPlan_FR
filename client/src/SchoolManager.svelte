@@ -23,16 +23,24 @@
     let authorize_school_id;
     let username = "schueler";
     let password = "";
-    let schools = {};
+    let schools = [];
+    let authorized_schools = [];
+    let unauthorized_schools = [];
+    let schools_categorized = {};
     let authorized_school_ids = [];
     let school_auth_visible = false;
     let is_admin = false;
-    let schools_arr = [];
+    let school_id_arr = [];
 
     function get_schools() {
         customFetch("/api/v69.420/schools")
             .then(data => {
                 schools = data;
+                // put schools into form that works with the Select
+                schools = schools.map(obj => {
+                    const { _id, display_name, ...rest } = obj;
+                    return { id: _id, name: display_name, ...rest };
+                });
             })
             .catch(error => {
                 notifications.danger(error.message);
@@ -64,7 +72,7 @@
     function authorize_school() {
         get_authorized_schools();
         console.log(username, password);
-        if (!isObjectInList(authorize_school_id, Object.keys(schools))) {
+        if (!isObjectInList(authorize_school_id, school_id_arr)) {
             notifications.danger("Schule unbekannt (kontaktiere uns, um deine Schule hinzuzufügen)")
             return
         }
@@ -97,14 +105,23 @@
         );
     }
 
-    function update_schools_arr(schools) {
-        schools_arr = [];
-        for(let [school_id, content] of Object.entries(schools)) {
-            schools_arr.push({"id": school_id, "name": content["display_name"], "icon": content["icon"]});
-        }
-    }
 
-    $: update_schools_arr(schools);
+    $: schools, school_id_arr = schools.map(obj => obj.id);
+    $: schools, authorized_schools = schools.filter(obj => authorized_school_ids.includes(obj.id));
+    $: schools, unauthorized_schools = schools.filter(obj => !authorized_school_ids.includes(obj.id));
+    $: schools_categorized = [
+        ["autorisiert", authorized_schools],
+        ["unautorisiert", unauthorized_schools]
+    ]
+
+    function get_school_name_by_id(school_id) {
+        for (let school of schools) {
+            if (school["id"] === school_id.toString()) {
+                return school["name"]
+            }
+        }
+        return ""
+    }
 </script>
 
 <main>
@@ -124,13 +141,13 @@
         }}>
         <h1 class="responsive-heading">Schulauswahl</h1>
         <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
-        <Select data={schools_arr} icon_location="/public/base_static/images/school_icons" bind:selected_id={authorize_school_id} data_name="Schulen">Schule auswählen</Select>
+        <Select data={schools_categorized} grouped={true} icon_location="/public/base_static/images/school_icons" bind:selected_id={authorize_school_id} data_name="Schulen">Schule auswählen</Select>
         <button class="button" type="submit">Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></button>
     </form>
     {:else}
     <form transition:fly|local={{x: 600}} on:submit|preventDefault={authorize_school}>
         <button on:click={() => {school_auth_visible = false;}} type="reset" id="back_button">←</button>
-        <h1 class="responsive-heading">{authorize_school_id ? schools[authorize_school_id]["display_name"] : "Schul"}-Login</h1>
+        <h1 class="responsive-heading">{authorize_school_id ? get_school_name_by_id(authorize_school_id) : "Schul"}-Login</h1>
         <span class="responsive-text">Trage hier die Zugangsdaten für deine Schule ein<br>(dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
         <label for="school_username">Nutzername</label>
         <div class="input_icon">
