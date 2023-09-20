@@ -84,7 +84,7 @@
             }
 
             .height-limiter {
-                max-height: min(300px, 50vh);
+                max-height: min(350px, 50vh);
                 overflow-y: auto;
 
                 @media only screen and (min-width: 1501px) {
