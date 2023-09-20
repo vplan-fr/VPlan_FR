@@ -47,171 +47,6 @@
     }
     //$: console.log(lesson);
 </script>
-<!-- Desktop View -->
-<div class="card desktop-view" class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>
-    <div class="horizontal-align">
-        <!-- Optional: Time -->
-        {#if display_time}
-        <div class="vert-align lesson-time-info">
-            <span class="lesson-time">{lesson.begin}</span>
-            <span class="lesson-period">{periods_to_block_label(lesson.periods)}</span>
-            <span class="lesson-time">{lesson.end}</span>
-        </div>
-        {/if}
-        <div class="grid-align-wrapper" class:large_grid={plan_type !== "forms"}>
-            <!-- Subject -->
-            <div class="subject max-width-center wide-area extra_padding" class:changed={subject_changed} class:changed_filled_in={$settings.filled_in_buttons && subject_changed}>
-                {lesson.current_class != null ? lesson.current_class : ""}
-                {#if lesson.takes_place}
-                    {#if lesson.scheduled_class !== lesson.current_class && lesson.scheduled_class != null}
-                        {#if lesson.current_class != null}&nbsp;{/if}
-                        <s>{lesson.scheduled_class}</s>
-                    {/if}
-                {:else}
-                    {lesson.scheduled_class}
-                {/if}
-                {#if lesson.scheduled_class == null && lesson.current_class == null}-{/if}
-            </div>
-            <!-- Teachers -->
-            <div class="small-area vert-align">
-                <div class="teachers vert-align max-width-center info-element first_half" class:changed={teacher_changed} class:changed_filled_in={$settings.filled_in_buttons && teacher_changed}
-                     class:teacher_absent={only_teacher_absent} class:cancelled_filled_in={$settings.filled_in_buttons && only_teacher_absent}>
-                    {#if teachers.length !== 0 || s_teachers.length !== 0}
-                        {#each teachers || [] as teacher}
-                            <button on:click={() => {
-                                plan_type = "teachers";
-                                plan_value = teacher;
-                            }}>{teacher}</button>
-                        {/each}
-                        {#each s_teachers || [] as teacher}
-                            <button on:click={() => {
-                                plan_type = "teachers";
-                                plan_value = teacher;
-                            }}><s>{teacher}</s></button>
-                        {/each}
-                    {:else}
-                        <span class="extra_padding">-</span>
-                    {/if}
-                </div>
-            </div>
-            <!-- Rooms -->
-            <div class="rooms vert-align max-width-center info-element small-area second_of_type" class:changed={room_changed} class:changed_filled_in={$settings.filled_in_buttons && room_changed}>
-                {#if rooms.length !== 0 || s_rooms.length !== 0}
-                    {#each rooms as room}
-                        <button on:click={() => {
-                            plan_type = "rooms";
-                            plan_value = room;
-                        }}>{room}</button>
-                    {:else}
-                        <span class="extra_padding">-</span>
-                    {/each}
-                    {#each s_rooms as room}
-                        <button on:click={() => {
-                            plan_type = "rooms";
-                            plan_value = room;
-                        }}><s>{room}</s></button>
-                    {/each}
-                {:else}
-                    <span class="extra_padding">-</span>
-                {/if}
-            </div>
-            <!-- Forms -->
-            {#if plan_type !== "forms"}
-                {#if forms.length === 0}
-                    <div class="forms max-width-center wide-area second_of_type info-element" class:changed={forms_changed}>
-                        <span class="extra_padding">-</span>
-                    </div>
-                {:else if forms.length === 1 && s_forms.length === 0}
-                <div class="forms max-width-center wide-area second_of_type info-element" class:changed={forms_changed}>
-                    <button on:click={() => {
-                        plan_type = "forms";
-                        plan_value = forms[0];
-                    }}>{forms[0]}</button>
-                </div>
-                {:else if forms.length === 0 && s_forms.length === 1}
-                <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
-                    <button on:click={() => {
-                        plan_type = "forms";
-                        plan_value = s_forms[0];
-                    }}><s>{s_forms[0]}</s></button>
-                </div>
-                {:else}
-                <div class="forms max-width wide-area second_of_type">
-                    <Dropdown let:toggle small={true} transform_origin_x="50%">
-                        <button slot="toggle_button" on:click={toggle} class="toggle-button center-align" class:changed={forms_changed}>
-                            <span class="grow">{forms_str}&nbsp;<s>{s_forms_str}</s></span>
-                            <span class="material-symbols-outlined dropdown-arrow centered_txt">arrow_drop_down</span>
-                        </button>
-
-                        {#each forms as form}
-                            <button on:click={() => {
-                                plan_type = "forms";
-                                plan_value = form;
-                            }}>{form}</button>
-                        {/each}
-                        {#each s_forms as form}
-                            <button on:click={() => {
-                                plan_type = "forms";
-                                plan_value = form;
-                            }}><s>{form}</s></button>
-                        {/each}
-                    </Dropdown>
-                </div>
-                {/if}
-            {/if}
-        </div>
-    </div>
-    <!-- Additional Infos -->
-    {#if (lesson.info.length > 0) || (plan_type === "forms" && (forms.length > 1))}
-        <div class="info-element lesson-info">
-            <ul>
-                {#each lesson.info as elem}
-                    {#each elem as element}
-                        <li>
-                            <div class="horizontal_wrapper">
-                                {#each element.text_segments as text_segment}
-                                    {#if text_segment.link !== null}
-                                        <button class="no-btn-visuals" on:click={() => {
-                                            date = text_segment.link.date;
-                                            plan_type = text_segment.link.type;
-                                            plan_value = text_segment.link.value;
-                                        }}>
-                                            <div class="clickable">{text_segment["text"]}</div>
-                                        </button>
-                                    {:else}
-                                        <button class="no-btn-visuals">{text_segment["text"]}</button>
-                                    {/if}
-                                {/each}
-                            </div>
-                        </li>
-                    {/each}
-                {/each}
-                {#if plan_type === "forms" && (forms.length > 1)}
-                <li>
-                    <div class="horizontal_wrapper">
-                        Beteiligte Klassen:
-                        <div class="fit-content-width">
-                            <Dropdown let:toggle small={true} transform_origin_x="50%">
-                                <button slot="toggle_button" on:click={toggle} class="toggle-button">
-                                    <span class="grow">{forms_str}</span>
-                                    <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
-                                </button>
-
-                                {#each forms as form}
-                                    <button on:click={() => {
-                                        plan_type = "forms";
-                                        plan_value = form;
-                                    }}>{form}</button>
-                                {/each}
-                            </Dropdown>
-                        </div>
-                    </div>
-                </li>
-                {/if}
-            </ul>
-        </div>
-    {/if}
-</div>
 <!-- Mobile View -->
 <div class="card mobile-view" class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>
     <div class="horizontal-align">
@@ -357,7 +192,7 @@
                                             </Dropdown>
                                         </div>
                                     {:else}
-                                        <button class="no-btn-visuals">{text_segment["text"]}</button>
+                                        <button class="no-btn-visuals">{text_segment.text}</button>
                                     {/if}
                                 {/each}
                             </div>
@@ -454,7 +289,7 @@
         color: var(--text-color);
         transition: background-color .2s ease;
         width: 100%;
-        padding: 2px 0px 2px 5px;
+        padding: 5px;
         font-size: inherit;
         line-height: 1.313;
 
@@ -506,6 +341,10 @@
             &:hover, &:focus-visible {
                 background-color: rgba(255, 255, 255, 0.2);
             }
+        }
+
+        .fit-content-width .dropdown-wrapper button, .max-width .dropdown-wrapper button {
+            padding: 2px 0px 2px 5px;
         }
     }
 
@@ -578,10 +417,7 @@
     }
 
     .mobile-view {
-        display: none;
-        @media only screen and (max-width: 1500px) {
-           display: block;
-        }
+        display: block;
 
         .lesson-period {
             font-size: 0.875rem;
@@ -671,83 +507,5 @@
                grid-area: 2 / 2 / 3 / 3;
            }
        }
-    }
-    .desktop-view {
-        .fit-content-width .dropdown-wrapper button, .max-width .dropdown-wrapper button {
-            font-size: 1.875rem;
-            &.toggle-button {
-                border-radius: 8px;
-            }
-            padding: 6px 0px 6px 16px;
-            line-height: 1;
-        }
-
-        .no-btn-visuals {
-            font-size: inherit;
-            margin: 0;
-        }
-
-        .lesson-info {
-            margin-top: 20px;
-            padding: 15px !important;
-            ul {
-                gap: 8px;
-            }
-
-            .clickable {
-                border-radius: 8px;
-                padding: 10px;
-            }
-        }
-
-        display: none;
-        @media only screen and (min-width: 1501px) {
-            display: block;
-        }
-        .horizontal-align {
-            gap: 0;
-            justify-content: space-between;
-        }
-        .lesson-time-info {
-            padding: 0px 40px 0px 30px;
-        }
-        .info-element {
-            line-height: 1;
-            & > button {
-                padding: 16px;
-                line-height: 1;
-                border-radius: 0px;
-                &:nth-of-type(1) {
-                    border-top-left-radius: 8px;
-                    border-top-right-radius: 8px;
-                }
-                &:nth-last-of-type(1) {
-                    border-bottom-left-radius: 8px;
-                    border-bottom-right-radius: 8px;
-                }
-            }
-            border-radius: 8px;
-        }
-
-        .extra_padding {
-            padding: 16px 0px;
-            line-height: 1;
-            border-radius: 8px;
-        }
-        .lesson-period {
-            font-size: 1.625rem;
-            font-weight: 400;
-        }
-        .lesson-time {
-            font-size: 1.25rem;
-            font-weight: 400;
-        }
-        .subject, .info-element, .info-element > button {
-            font-size: 1.875rem;
-        }
-        .forms, .rooms {
-            flex-direction: column;
-            align-items: center;
-        }
     }
 </style>
