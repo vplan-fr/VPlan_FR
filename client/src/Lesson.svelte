@@ -407,10 +407,14 @@
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 5px;
             overflow: hidden;
             text-align: left;
+            font-weight: inherit;
+            font-size: 0.875rem;
+            line-height: 1.313rem;
+            color: var(--text-color);
 
             span.grow {
                 flex: 1;
@@ -422,7 +426,7 @@
             }
 
             &:hover, &:focus-visible {
-                background-color: rgba(255, 255, 255, 0.2);
+                background-color: rgba(255, 255, 255, 0.15);
             }
         }
 
@@ -475,7 +479,7 @@
         }
 
         .clickable {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 5px;
             padding: 0px 5px;
             transition: background-color 0.2s ease;
@@ -489,7 +493,7 @@
     .info-element {
         background: rgba(255, 255, 255, 0.08);
         border-radius: 5px;
-        min-height: 1.975rem;
+        min-height: 1.943rem;
 
         &.teacher_absent {
             background: rgba(255, 255, 255, 0.08);
@@ -542,7 +546,7 @@
         transition: background-color .2s ease;
 
         &:hover, &:focus-visible {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
         }
     }
 

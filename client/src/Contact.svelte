@@ -4,6 +4,7 @@
     import Select from "./Components/Select.svelte";
     import { onMount } from "svelte";
     import { title } from "./stores.js";
+    import Button from "./Components/Button.svelte";
 
     let category = "bug";
     let person = "student";
@@ -58,7 +59,7 @@
 <input class="textfield" name="contact_data" type="text" bind:value={contact_data}>
 <label for="message">Deine Nachricht:</label>
 <textarea class="textfield" name="message" bind:value={message} style="resize: vertical;" maxlength="1024"></textarea>
-<button class="button" on:click={send_message}>Absenden</button>
+<Button background="var(--accent-color)" on:click={send_message}>Absenden</Button>
 
 <style lang="scss">
     label {
@@ -77,20 +78,5 @@
         background-color: rgba(255, 255, 255, 0.1);
         color: var(--text-color);
         border-radius: 5px;
-    }
-
-    .button {
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        background-color: var(--accent-color);
-        color: var(--text-color);
-        border-radius: 5px;
-        padding: .5em;
-        margin: 3px;
-        font-size: var(--font-size-base);
-        position: relative;
     }
 </style>
