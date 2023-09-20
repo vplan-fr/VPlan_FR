@@ -418,7 +418,7 @@
         margin-bottom: 15px;
 
         @media only screen and (min-width: 1501px) {
-            font-size: var(--font-size-xl);
+            font-size: var(--font-size-lg);
         }
     }
 
@@ -517,10 +517,7 @@
             width: max-content;
             border-radius: 0px 8px 8px 0px;
         
-            font-size: 2rem;
-            @media only screen and (max-width: 1500px) {
-                font-size: 1.3rem;
-            }
+            font-size: 1.3rem;
 
             padding: 1rem;
             line-height: 1;
