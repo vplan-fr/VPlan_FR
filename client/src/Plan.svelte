@@ -186,8 +186,8 @@
             plan_value = decodeURI(tmp_variables[4]);
         }
     }
-
     refresh_plan_vars();
+
     if(!school_num) {
         navigate_page('school_manager');
     }
@@ -238,7 +238,6 @@
             notifications.danger("Für dieses Datum existiert kein Vertretungsplan!");
             return;
         }
-        // let new_date = new Date(Date.parse(`${tmp_date.substring(0, 4)}-${tmp_date.substring(4, 6)}-${tmp_date.substring(6, 8)}`));
         date = tmp_date;
     }
 

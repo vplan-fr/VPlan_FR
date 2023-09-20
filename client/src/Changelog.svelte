@@ -5,6 +5,7 @@
     import Modal from "./Components/Modal.svelte";
     import SvelteMarkdown from 'svelte-markdown'
     import { onMount } from "svelte";
+    import Button from "./Components/Button.svelte";
 
     let changelog = [];
     let unread_changelogs = [];
@@ -61,7 +62,7 @@
                         <span class="title">{changelog_entry[2]["title"]}</span>
                         <span class="version custom-badge">{changelog_entry[2]["version"]}</span>
                     </div>
-                    <button on:click={() => {read_changelog(changelog_entry[0])}} class="button btn-small mark-read-btn"><span class="material-symbols-outlined">done</span></button>
+                    <Button on:click={() => {read_changelog(changelog_entry[0])}} small_btn={true} class="mark-read-btn"><span class="material-symbols-outlined">done</span></Button>
                 </header>
                 <div class="content">
                     <SvelteMarkdown source={changelog_entry[2]["content"]} />
@@ -93,7 +94,7 @@
         {/each}
     </div>
     <svelte:fragment slot="footer">
-        <button class="button btn-small" on:click={() => {$active_modal = ""}}>Schließen</button>
+        <Button on:click={() => {$active_modal = ""}} small_btn={true}>Schließen</Button>
     </svelte:fragment>
 </Modal>
 
@@ -252,31 +253,6 @@
                     font-weight: 600;
                 }
             }
-        }
-    }
-
-    .button {
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        background-color: rgba(255, 255, 255, 0.2);
-        color: var(--text-color);
-        border-radius: 5px;
-        padding: .5em;
-        margin: 3px;
-        font-size: var(--font-size-base);
-        position: relative;
-
-        &.btn-small {
-            font-size: var(--font-size-sm);
-        }
-
-        .material-symbols-outlined {
-            font-size: 1.3em;
-            float: right;
-            margin-left: .2em;
         }
     }
 </style>

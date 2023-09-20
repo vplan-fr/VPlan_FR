@@ -5,6 +5,7 @@
     import {customFetch, navigate_page} from "./utils.js";
     import Select from "./Components/Select.svelte";
     import { fly } from 'svelte/transition';
+    import Button from './Components/Button.svelte';
 
     onMount(() => {
         location.hash = "#school_manager";
@@ -142,7 +143,7 @@
         <h1 class="responsive-heading">Schulauswahl</h1>
         <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
         <Select data={schools_categorized} grouped={true} icon_location="/public/base_static/images/school_icons" bind:selected_id={authorize_school_id} data_name="Schulen">Schule auswählen</Select>
-        <button class="button" type="submit">Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></button>
+        <Button type="submit" background="var(--accent-color)">Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></Button>
     </form>
     {:else}
     <form transition:fly|local={{x: 600}} on:submit|preventDefault={authorize_school}>
@@ -159,7 +160,7 @@
             <img src="/public/base_static/images/lock-solid-white.svg" alt="Lock Icon">
             <input disabled={!school_auth_visible} autocomplete="off" name="school_password" bind:value={password} type="password" required class="textfield" placeholder="Passwort"/>
         </div>
-        <button class="button" type="submit">Login</button>
+        <Button type="submit" background="var(--accent-color)">Login</Button>
     </form>
     {/if}
 </main>
@@ -221,27 +222,6 @@
     .responsive-text {
         display: block;
         margin-bottom: 15px;
-    }
-
-    .button {
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        background-color: var(--accent-color);
-        color: var(--text-color);
-        border-radius: 5px;
-        padding: .5em;
-        margin: 1px;
-        margin-top: 15px;
-        font-size: var(--font-size-base);
-        position: relative;
-        .material-symbols-outlined {
-            font-size: 1.3em;
-            float: right;
-            margin-left: .2em;
-        }
     }
 
     #back_button {
