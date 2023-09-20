@@ -83,7 +83,7 @@
         } else {
             selected_elem = data[selected_index];
         }
-        selected_id = selected_elem["id"];
+        selected_id = selected_elem.id;
     }
 
     $: grouped && calc_grouped_length(data);
@@ -96,13 +96,13 @@
         {#each data as elem}
             {#if grouped}
                 {#each elem[1] as element}
-                    {#if element["icon"]}
-                        <link rel="preload" as="image" href="{icon_location}/{element["icon"]}" />
+                    {#if element.icon}
+                        <link rel="preload" as="image" href="{icon_location}/{element.icon}" />
                     {/if}
                 {/each}
             {:else}
-                {#if elem["icon"]}
-                    <link rel="preload" as="image" href="{icon_location}/{elem["icon"]}" />
+                {#if elem.icon}
+                    <link rel="preload" as="image" href="{icon_location}/{elem.icon}" />
                 {/if}
             {/if}
         {/each}
@@ -113,7 +113,7 @@
     <Dropdown let:toggle small={true} transform_origin_x="100%">
         <button bind:this={toggle_button} type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
             {#if selected_elem && selected_id}
-                {selected_elem["name"]}
+                {selected_elem.display_name}
             {:else}
                 <slot></slot>
             {/if}
@@ -125,17 +125,17 @@
                 <span class="heading">{elem[0]}</span>
                 {#each elem[1] as element, index2}
                     <button type="button" class="select-option indented {icon_location ? "" : "no_icons"}" on:click={() => {selected_index = turn_to_oned_index(index1, index2); toggle_button.focus();}}>
-                        {element["name"]}
-                        {#if icon_location && element["icon"]}
-                            <img src="{icon_location}/{element["icon"]}" alt="Schul-Logo" class="school-logo">
+                        {element.display_name}
+                        {#if icon_location && element.icon}
+                            <img src="{icon_location}/{element.icon}" alt="Schul-Logo" class="school-logo">
                         {/if}
                     </button>
                 {/each}
             {:else}
                 <button type="button" class="select-option {icon_location ? "" : "no_icons"}" on:click={() => {selected_index = index1; toggle_button.focus();}}>
-                    {elem["name"]}
-                    {#if icon_location && elem["icon"]}
-                        <img src="{icon_location}/{elem["icon"]}" alt="Schul-Logo" class="school-logo">
+                    {elem.display_name}
+                    {#if icon_location && elem.icon}
+                        <img src="{icon_location}/{elem.icon}" alt="Schul-Logo" class="school-logo">
                     {/if}
                 </button>
             {/if}

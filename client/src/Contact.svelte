@@ -39,20 +39,20 @@
 
 <h1 class="responsive-heading">Kontaktiere uns</h1>
 <Select data={[
-    {"id": "bug", "name": "Bug"},
-    {"id": "enhancement", "name": "Feature-Request"},
-    {"id": "authorization", "name": "Schulautorisierung"},
-    {"id": "advertisement", "name": "Werbung"},
-    {"id": "sponsoring", "name": "Sponsoren"},
-    {"id": "questions", "name": "Fragen zur Website"},
-    {"id": "else", "name": "Sonstiges"},
+    {"id": "bug", "display_name": "Bug"},
+    {"id": "enhancement", "display_name": "Feature-Request"},
+    {"id": "authorization", "display_name": "Schulautorisierung"},
+    {"id": "advertisement", "display_name": "Werbung"},
+    {"id": "sponsoring", "display_name": "Sponsoren"},
+    {"id": "questions", "display_name": "Fragen zur Website"},
+    {"id": "else", "display_name": "Sonstiges"},
 ]} bind:selected_id={category}>Nachrichtenkategorie</Select>
 <Select data={[
-    {"id": "student", "name": "Schüler"},
-    {"id": "teacher", "name": "Lehrer"},
-    {"id": "head_teacher", "name": "Schulleiter"},
-    {"id": "developer", "name": "Developer"},
-    {"id": "else", "name": "Sonstige"}
+    {"id": "student", "display_name": "Schüler"},
+    {"id": "teacher", "display_name": "Lehrer"},
+    {"id": "head_teacher", "display_name": "Schulleiter"},
+    {"id": "developer", "display_name": "Developer"},
+    {"id": "else", "display_name": "Sonstige"}
 ]} bind:selected_id={person}>Absender</Select>
 
 <label for="contact_data">Deine Kontaktdaten (Discord/E-Mail/Telefon):</label>

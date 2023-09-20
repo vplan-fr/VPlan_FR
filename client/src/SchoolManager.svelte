@@ -40,7 +40,7 @@
                 // put schools into form that works with the Select
                 schools = schools.map(obj => {
                     const { _id, display_name, ...rest } = obj;
-                    return { id: _id, name: display_name, ...rest };
+                    return { id: _id, display_name: display_name, ...rest };
                 });
             })
             .catch(error => {
@@ -117,8 +117,8 @@
 
     function get_school_name_by_id(school_id) {
         for (let school of schools) {
-            if (school["id"] === school_id.toString()) {
-                return school["name"]
+            if (school.id === school_id.toString()) {
+                return school.name
             }
         }
         return ""
