@@ -47,8 +47,8 @@
     }
     //$: console.log(lesson);
 </script>
-<!-- Mobile View -->
-<div class="card mobile-view" class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>
+
+<div class="card" class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>
     <div class="horizontal-align">
         <!-- Optional: Time -->
         {#if display_time}
@@ -416,26 +416,21 @@
         white-space: nowrap;
     }
 
-    .mobile-view {
-        display: block;
+    .lesson-period {
+        font-size: 0.875rem;
+        font-weight: 400;
+    }
 
-        .lesson-period {
-            font-size: 0.875rem;
-            font-weight: 400;
-        }
+    .lesson-time {
+        font-size: 0.75rem;
+        font-weight: 400;
+    }
 
-        .lesson-time {
-            font-size: 0.75rem;
-            font-weight: 400;
-        }
-
-        .subject,
-        .info-element,
-        .info-element>button,
-        .extra_padding {
-            font-size: 0.875rem;
-        }
-
+    .subject,
+    .info-element,
+    .info-element>button,
+    .extra_padding {
+        font-size: 0.875rem;
     }
 
     .cancelled {
