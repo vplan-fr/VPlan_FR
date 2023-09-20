@@ -171,7 +171,7 @@
                                         <button class="no-btn-visuals" on:click={() => {
                                             date = text_segment.link.date;
                                             plan_type = text_segment.link.type;
-                                            plan_value = text_segment.link.value;
+                                            plan_value = text_segment.link.value[0];
                                         }}>
                                             <div class="clickable">{text_segment.text}</div>
                                         </button>
@@ -185,6 +185,7 @@
 
                                                 {#each text_segment.link.value as item}
                                                     <button on:click={() => {
+                                                        date=text_segment.link.date;
                                                         plan_type = text_segment.link.type;
                                                         plan_value = item;
                                                     }}>{item}</button>
