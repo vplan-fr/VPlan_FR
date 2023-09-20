@@ -22,6 +22,7 @@
     import PwaInstallHelper from "./PWAInstallHelper.svelte";
     import Dropdown from "./Components/Dropdown.svelte";
     import { animateScroll } from 'svelte-scrollto-element';
+    import Button from "./Components/Button.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -363,9 +364,9 @@
                     </div>
                     <!-- Show room overview -->
                     <div class="control" id="c5">
-                        <button class="button" on:click={() => {
+                        <Button on:click={() => {
                             set_plan("room_overview", "");
-                        }}>Raumübersicht</button>
+                        }}>Raumübersicht</Button>
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
@@ -533,21 +534,6 @@
                 &#c5 {grid-area: 2 / 4 / 3 / 5;}
             }
         }
-    }
-
-    .button {
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        background-color: rgba(255, 255, 255, 0.2);
-        color: var(--text-color);
-        border-radius: 5px;
-        padding: .5em;
-        margin: 3px;
-        font-size: var(--font-size-base);
-        position: relative;
     }
 
     main {

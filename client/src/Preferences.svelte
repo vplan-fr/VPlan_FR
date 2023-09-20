@@ -1,4 +1,5 @@
 <script>
+    import Button from "./Components/Button.svelte";
     import Select from "./Components/Select.svelte";
     import {notifications} from "./notifications.js";
     import {preferences, title} from './stores.js';
@@ -19,8 +20,6 @@
     let select_arr = [];
     // used to match every course that exists duplicated to one id -> see set_preferences
     let duplicated_courses_match = {};
-
-    // [("Überschrift", [{id: "", name: "", icon: ""}, {}]), (...)]
 
     function create_select_arr(grouped_forms) {
         select_arr = []
@@ -107,30 +106,6 @@
             })
     }
 
-    function select_all() {
-        for (const key in selection) {
-            if (selection.hasOwnProperty(key)) {
-                selection[key] = true;
-            }
-        }
-    }
-
-    function select_none() {
-        for (const key in selection) {
-            if (selection.hasOwnProperty(key)) {
-                selection[key] = false;
-            }
-        }
-    }
-
-    function reverse_selection() {
-        for (const key in selection) {
-            if (selection.hasOwnProperty(key)) {
-                selection[key] = !selection[key];
-            }
-        }
-    }
-
     function select_all_part(courses) {
         for (const course in courses) {
             let key = courses[course].class_number;
@@ -185,8 +160,8 @@
                 <li>
                     {subject}
                     {#if courses.length > 2}
-                    <button on:click={() => {select_all_part(courses)}} class="button">Alle auswählen</button>
-                    <button on:click={() => {select_none_part(courses)}} class="button">Keinen auswählen</button>
+                    <Button class="inline-flex" on:click={() => {select_all_part(courses)}}>Alle Auswählen</Button>
+                    <Button class="inline-flex" on:click={() => {select_none_part(courses)}}>Keinen Auswählen</Button>
                     {/if}
                 </li>
                 <ul>
@@ -210,22 +185,11 @@
     </ul>
 {/if}
 {#if selected_form != null}
-    <button on:click={setPreferences} class="button" style="background: var(--accent-color);">Speichern</button>
+    <Button on:click={setPreferences} background="var(--accent-color)">Speichern</Button>
 {/if}
 
 <style lang="scss">
-    .button {
-        overflow: hidden;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        background-color: rgba(255, 255, 255, 0.2);
-        color: var(--text-color);
-        border-radius: 5px;
-        padding: .5em;
-        margin: 3px;
-        font-size: 1rem;
-        position: relative;
+    :global(.inline-flex) {
+        display: inline-flex !important;
     }
 </style>
