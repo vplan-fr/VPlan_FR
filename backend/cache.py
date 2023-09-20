@@ -51,9 +51,23 @@ class Cache:
     def get_plan_file(self,
                       day: datetime.date,
                       timestamp: datetime.datetime | str,
-                      filename: str) -> str:
+                      filename: str,
+                      newest_before: bool = False) -> str:
         """Return the contents of a plan file from the cache."""
         # self._logger.debug(f"get_plan_file({day!r}, {timestamp!r}, {filename!r})")
+
+        if newest_before:
+            timestamps = self.get_timestamps(day)
+            if not isinstance(timestamp, str):
+                timestamps = [t for t in timestamps if t <= timestamp]
+
+            for timestamp in timestamps:
+                try:
+                    return self.get_plan_file(day, timestamp, filename, newest_before=False)
+                except OSError:
+                    pass
+            else:
+                raise FileNotFoundError
 
         path = self.get_plan_path(day, timestamp) / filename
 
