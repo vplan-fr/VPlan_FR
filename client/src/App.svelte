@@ -21,6 +21,7 @@
     import { onMount } from "svelte";
     import PwaInstallHelper from "./PWAInstallHelper.svelte";
     import Dropdown from "./Components/Dropdown.svelte";
+    import { animateScroll } from 'svelte-scrollto-element';
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -189,13 +190,8 @@
         // Disable on Desktop (aspect ratio > 1)
         if ((window.innerWidth > window.innerHeight) || !element) {return;}
         var headerOffset = window.innerWidth > 601 ? 74 : 66;
-        var elementPosition = element.getBoundingClientRect().top;
-        var offsetPosition = elementPosition + window.scrollY - headerOffset;
     
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: "smooth"
-        });
+        animateScroll.scrollTo({element: element, offset: headerOffset, duration: 200});
     }
 
     function set_plan(new_plan_type, new_plan_value) {
@@ -421,6 +417,7 @@
         float: right;
         height: calc(var(--font-size-sm) * 2);
         width: calc(var(--font-size-sm) * 2);
+        margin-top: calc(var(--font-size-sm) * -2);
         display: flex;
         background: rgba(0, 0, 0, 0.5);
         align-items: center;
@@ -569,6 +566,7 @@
         @media only screen and (max-width: 601px) {
             margin: 56px auto;
         }
+        margin-bottom: 0px !important;
 
         max-width: 1280px;
         width: 90%;
