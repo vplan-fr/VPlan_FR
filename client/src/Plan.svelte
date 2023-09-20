@@ -92,7 +92,7 @@
         params.append("revision", revision);
         customFetch(`${api_base}/plan?${params.toString()}`, {signal: controller.signal})
             .then(data => {
-                if (should_date_be_cached(date) && revision === ".newest") {
+                if (Object.keys(data).length !== 0 && should_date_be_cached(date) && revision === ".newest") {
                     try {
                         localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
                     } catch (error) {
