@@ -238,7 +238,7 @@ def run_in_background(func):
 @run_in_background
 def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None):
     meta_env = "WEBHOOK_META"
-    if not request or request.host.startswith("127.0.0.1") or request.host.startswith("localhost"):
+    if os.getenv("PRODUCTION") is None or os.getenv("PRODUCTION") == "False":
         meta_env = "WEBHOOK_TEST"
         key = "WEBHOOK_TEST"
     embeds = [] if not embeds else embeds
