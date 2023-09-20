@@ -59,15 +59,15 @@
             <div class="changelog_entry_content">
                 <header>
                     <div>
-                        <span class="title">{changelog_entry[2]["title"]}</span>
-                        <span class="version custom-badge">{changelog_entry[2]["version"]}</span>
+                        <span class="title">{changelog_entry[2].title}</span>
+                        <span class="version custom-badge">{changelog_entry[2].version}</span>
                     </div>
                     <Button on:click={() => {read_changelog(changelog_entry[0])}} small={true} class="mark-read-btn"><span class="material-symbols-outlined">done</span></Button>
                 </header>
                 <div class="content">
-                    <SvelteMarkdown source={changelog_entry[2]["content"]} />
+                    <SvelteMarkdown source={changelog_entry[2].content} />
                 </div>
-                <span class="date">{changelog_entry[2]["date"]}</span>
+                <span class="date">{changelog_entry[2].date}</span>
             </div>
         </div>
         {:else}
@@ -79,14 +79,14 @@
                 <div class="changelog_entry_content">
                     <header>
                         <div>
-                            <span class="title">{changelog_entry[2]["title"]}</span>
-                            <span class="version custom-badge">{changelog_entry[2]["version"]}</span>
+                            <span class="title">{changelog_entry[2].title}</span>
+                            <span class="version custom-badge">{changelog_entry[2].version}</span>
                         </div>
                     </header>
                     <div class="content">
-                        <SvelteMarkdown source={changelog_entry[2]["content"]} />
+                        <SvelteMarkdown source={changelog_entry[2].content} />
                     </div>
-                    <span class="date">{changelog_entry[2]["date"]}</span>
+                    <span class="date">{changelog_entry[2].date}</span>
                 </div>
             </div>
         {:else}
