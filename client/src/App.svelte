@@ -369,7 +369,7 @@
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
-                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision bind:enabled_dates />
+                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision bind:enabled_dates external_times={$settings.external_times} />
                 {:else}
                     <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
                 {/if}
