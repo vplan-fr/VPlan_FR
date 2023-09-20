@@ -406,10 +406,10 @@
 <style lang="scss">
     #page-container {
         position: relative;
-        min-height: calc(100vh - 56px - var(--font-size-sm) * 2);
+        min-height: calc(100vh - 56px);
 
         @media only screen and (min-width: 602px) {
-            min-height: calc(100vh - 64px - var(--font-size-sm) * 2);
+            min-height: calc(100vh - 64px);
         }
     }
 
