@@ -250,15 +250,16 @@ class PlanLesson:
                 ((_current_lesson.course != _scheduled_lesson.course and _current_lesson.subject_changed) or
                  (current_other_info_value != scheduled_other_info_value and other_info_value_changed))
         ):
-            paragraphs.append(
-                LessonInfoParagraph([LessonInfoMessage(lesson_info.InsteadOfCourse(
-                    course=_scheduled_lesson.course,
-                    plan_type=plan_type,
-                    plan_value=plan_value,
-                    other_info_value=scheduled_other_info_value,
-                    periods=_scheduled_lesson.periods,
-                ), -1), ], -1)
-            )
+            if _current_lesson._origin_plan_type != plan_type:
+                paragraphs.append(
+                    LessonInfoParagraph([LessonInfoMessage(lesson_info.InsteadOfCourse(
+                        course=_scheduled_lesson.course,
+                        plan_type=plan_type,
+                        plan_value=plan_value,
+                        other_info_value=scheduled_other_info_value,
+                        periods=_scheduled_lesson.periods,
+                    ), -1), ], -1)
+                )
 
         plan_lesson = PlanLesson(
             periods=set(_current_lesson.periods),
@@ -280,7 +281,7 @@ class PlanLesson:
             teacher_changed=_current_lesson.teacher_changed,
             room_changed=_current_lesson.room_changed,
             forms_changed=(_current_lesson.forms != _scheduled_lesson.forms) if _scheduled_lesson is not None else True,
-            parsed_info=_current_lesson.parsed_info + _scheduled_lesson.parsed_info + ParsedLessonInfo(paragraphs),
+            parsed_info=_current_lesson.parsed_info + ParsedLessonInfo(paragraphs),
             takes_place=_current_lesson.takes_place,
             is_internal=_current_lesson.is_internal,
             is_unplanned=_current_lesson.takes_place and scheduled_lesson is None,
