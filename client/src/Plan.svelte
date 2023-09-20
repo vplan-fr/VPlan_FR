@@ -60,7 +60,7 @@
         if((plan_type === "rooms" || plan_type === "teachers") && (!Object.keys(all_meta[plan_type]).includes(entity))) {
             reset_plan_vars();
             return;
-        } else if((plan_type === "forms") && !Object.keys(all_meta["forms"]["forms"]).includes(entity)) {
+        } else if((plan_type === "forms") && !Object.keys(all_meta.forms.forms).includes(entity)) {
             reset_plan_vars();
             return;
         }
@@ -76,12 +76,12 @@
             let data = localStorage.getItem(`${school_num}_${date}`);
             if (data !== "undefined" && data) {
                 data = JSON.parse(data);
-                rooms_data = data["rooms"];
+                rooms_data = data.rooms;
                 if (c_plan_type !== "room_overview") {
                     all_lessons = data[plan_key][c_plan_type] ? data[plan_key][c_plan_type][entity] || [] : [];
                 }
-                info = data["info"];
-                week_letter = info["week"];
+                info = data.info;
+                week_letter = info.week;
 
                 data_from_cache = true;
                 loading = false;
@@ -92,7 +92,7 @@
         params.append("revision", revision);
         customFetch(`${api_base}/plan?${params.toString()}`, {signal: controller.signal})
             .then(data => {
-                if (should_date_be_cached(date) && revision === ".newest") {
+                if (Object.keys(data).length !== 0 && should_date_be_cached(date) && revision === ".newest") {
                     try {
                         localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
                     } catch (error) {
@@ -103,12 +103,12 @@
                         }
                     }
                 }
-                rooms_data = data["rooms"]
+                rooms_data = data.rooms;
                 if (c_plan_type !== "room_overview") {
                     all_lessons = data[plan_key][c_plan_type][entity] || [];
                 }
-                info = data["info"];
-                week_letter = info["week"];
+                info = data.info;
+                week_letter = info.week;
                 //console.log(lessons);
                 
                 loading = false;
@@ -186,8 +186,8 @@
             plan_value = decodeURI(tmp_variables[4]);
         }
     }
-
     refresh_plan_vars();
+
     if(!school_num) {
         navigate_page('school_manager');
     }
@@ -205,8 +205,8 @@
     let full_teacher_name = null;
     let teacher_contact_link = null;
     $: if (plan_type === "teachers") {
-        full_teacher_name = all_meta["teachers"][plan_value]?.surname || null;
-        teacher_contact_link = all_meta["teachers"][plan_value]?.contact_link || null;
+        full_teacher_name = all_meta.teachers[plan_value]?.surname || null;
+        teacher_contact_link = all_meta.teachers[plan_value]?.contact_link || null;
     }
 
     let preferences_apply = true;
@@ -224,7 +224,7 @@
         let cur_preferences = $preferences[plan_value] || [];
         let new_lessons = [];
         for (const lesson of lessons) {
-            if (!(cur_preferences.includes(lesson["class_number"]))) {
+            if (!(cur_preferences.includes(lesson.class_number))) {
                 new_lessons.push(lesson);
             }
         }
@@ -238,7 +238,6 @@
             notifications.danger("Für dieses Datum existiert kein Vertretungsplan!");
             return;
         }
-        // let new_date = new Date(Date.parse(`${tmp_date.substring(0, 4)}-${tmp_date.substring(4, 6)}-${tmp_date.substring(6, 8)}`));
         date = tmp_date;
     }
 
@@ -363,6 +362,7 @@
         padding: 20px;
         box-sizing: border-box;
         pointer-events: none;
+        z-index: 1;
 
         button {
             pointer-events: all;
@@ -418,7 +418,7 @@
         margin-bottom: 15px;
 
         @media only screen and (min-width: 1501px) {
-            font-size: var(--font-size-xl);
+            font-size: var(--font-size-lg);
         }
     }
 
@@ -517,10 +517,7 @@
             width: max-content;
             border-radius: 0px 8px 8px 0px;
         
-            font-size: 2rem;
-            @media only screen and (max-width: 1500px) {
-                font-size: 1.3rem;
-            }
+            font-size: 1.3rem;
 
             padding: 1rem;
             line-height: 1;

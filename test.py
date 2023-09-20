@@ -41,6 +41,6 @@ if __name__ == "__main__":
         "ostwald2",
         "10001329",
         "schueler",
-        "WOGLeipzig@22"
+        "testpasswort"
     ).test()
     print(i)

@@ -4,6 +4,7 @@
     import {customFetch, update_colors} from "./utils.js";
     import Modal from "./Components/Modal.svelte";
     import { onMount } from "svelte";
+    import Button from "./Components/Button.svelte";
 
     let temp_settings;
 
@@ -71,7 +72,7 @@
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.normal_greetings}>Normale Begrüßungen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.chatgpt_greetings}>ChatGPT Begrüßungen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.show_revision_selector}>Planversion auswählbar machen</span>
-        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.use_grouped_form_plans}>Lehrer/Raumpläne als umgeordnete Klassenpläne anzeigen</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.use_grouped_form_plans}>Lehrer/Raumpläne nur als umgeordnete Klassenpläne anzeigen. (Bsp.: Lehreränderung bei Klassenplan wird nicht zu Ausfall im Lehrerplan des ursprünglichen Lehrers)</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.day_switch_keys}>Pfeiltasten (Tastatur) zum Tag wechseln nutzen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.rainbow}>Regenbogen 🌈</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.filled_in_buttons}>Ausgefüllte Buttons (Bei Änderungen / Ausfall)</span>
@@ -83,17 +84,17 @@
         <span class="responsive-text"><input type="color" bind:value={temp_settings.cancelled_color}>Ausfallfarbe</span>
         <br>
         <div class="horizontal-container">
-            <button on:click={reset_settings} class="button halfed">Einstellungen zurücksetzen</button>
-            <button on:click={view_saved_data} class="button halfed">Gespeicherte Daten Einsehen</button>
+            <Button on:click={reset_settings} class="halfed">Einstellungen zurücksetzen</Button>
+            <Button on:click={view_saved_data} class="halfed">Gespeicherte Daten einsehen</Button>
         </div>
-        <button on:click={delete_account} class="button" style="background-color: var(--cancelled-color);">Account löschen</button>
+        <Button on:click={delete_account} background="var(--cancelled-color)">Account löschen</Button>
     </div>
     {:else}
     <span class="responsive-text">Einstellungen konnten nicht geladen werden.</span>
     {/if}
     <svelte:fragment slot="footer">
-        <button class="button btn-small" on:click={() => {change_settings(); $active_modal = ""}} style="background: var(--accent-color);">Speichern</button>
-        <button class="button btn-small" on:click={() => {$active_modal = ""}}>Abbrechen</button>
+        <Button on:click={() => {change_settings(); $active_modal = ""}} background="var(--accent-color)" small={true}>Speichern</Button>
+        <Button on:click={() => {$active_modal = ""}} small={true}>Abbrechen</Button>
     </svelte:fragment>
 </Modal>
 
@@ -106,7 +107,7 @@
         display: flex;
         flex-direction: row;
         
-        .halfed {
+        :global(.halfed) {
             flex: 1;
         }
     }
@@ -128,24 +129,5 @@
     }
     input[type="color"]::-webkit-color-swatch {
         border: none;
-    }
-
-    .button {
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        background-color: rgba(255, 255, 255, 0.2);
-        color: var(--text-color);
-        border-radius: 5px;
-        padding: .5em;
-        margin: 3px;
-        font-size: var(--font-size-base);
-        position: relative;
-
-        &.btn-small {
-            font-size: var(--font-size-sm);
-        }
     }
 </style>

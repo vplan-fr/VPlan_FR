@@ -22,6 +22,7 @@
     import PwaInstallHelper from "./PWAInstallHelper.svelte";
     import Dropdown from "./Components/Dropdown.svelte";
     import { animateScroll } from 'svelte-scrollto-element';
+    import Button from "./Components/Button.svelte";
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -214,7 +215,7 @@
         for (const [form_group, forms] of Object.entries(grouped_forms)) {
             let converted_forms = [];
             for(let form of forms) {
-                converted_forms.push({"id": form, "name": form});
+                converted_forms.push({"id": form, "display_name": form});
             }
             form_arr.push([form_group, converted_forms]);
         }
@@ -223,7 +224,7 @@
     function gen_teacher_arr(teacher_list) {
         teacher_arr = [];
         for(let teacher of teacher_list) {
-            teacher_arr.push({"id": teacher, "name": teacher});
+            teacher_arr.push({"id": teacher, "display_name": teacher});
         }
     }
     
@@ -232,7 +233,7 @@
         for (let room_group of grouped_rooms) {
             let converted_rooms = [];
             for(let room of room_group[1]) {
-                converted_rooms.push({"id": room, "name": room});
+                converted_rooms.push({"id": room, "display_name": room});
             }
             room_arr.push([room_group[0], converted_rooms]);
         }
@@ -244,7 +245,7 @@
             if(index == 1) {continue;}
             revision_arr.push({
                 "id": revision,
-                "name": format_revision_date(revision, all_revisions[1])
+                "display_name": format_revision_date(revision, all_revisions[1])
             });
         }
     }
@@ -363,9 +364,9 @@
                     </div>
                     <!-- Show room overview -->
                     <div class="control" id="c5">
-                        <button class="button" on:click={() => {
+                        <Button on:click={() => {
                             set_plan("room_overview", "");
-                        }}>Raumübersicht</button>
+                        }}>Raumübersicht</Button>
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
@@ -393,7 +394,7 @@
     <Toast />
 </div>
 <footer class:padding={footer_padding}>
-    <Dropdown let:toggle small_version={true} transform_origin_x="100%" flipped={true}>
+    <Dropdown let:toggle small={true} transform_origin_x="100%" flipped={true}>
         <button slot="toggle_button" on:click={toggle}><span class="material-symbols-outlined">menu</span></button>
         
         <button on:click={() => {navigate_page("impressum")}}>Impressum</button>
@@ -533,21 +534,6 @@
                 &#c5 {grid-area: 2 / 4 / 3 / 5;}
             }
         }
-    }
-
-    .button {
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        background-color: rgba(255, 255, 255, 0.2);
-        color: var(--text-color);
-        border-radius: 5px;
-        padding: .5em;
-        margin: 3px;
-        font-size: var(--font-size-base);
-        position: relative;
     }
 
     main {

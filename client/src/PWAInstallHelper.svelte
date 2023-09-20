@@ -3,6 +3,7 @@
     import { pwa_prompt, title } from "./stores";
     import { notifications } from "./notifications";
     import { navigate_page } from "./utils";
+    import Button from "./Components/Button.svelte";
 
     async function try_install() {
         $pwa_prompt.prompt();
@@ -31,7 +32,7 @@
     <span class="responsive-text">
         Um <b>online</b> und <b>offline</b> schnell an deinen Stundenplan zu kommen, lade die Website als <b>App</b> herunter:
     </span>
-    <button class="button" on:click={try_install}>Installieren <span class="material-symbols-outlined">install_mobile</span></button>
+    <Button on:click={try_install} id="pwa-install-btn" background="var(--accent-color)">Installieren <span class="material-symbols-outlined">install_mobile</span></Button>
     <button class="skip-btn" on:click={() => {navigate_page('plan')}}>Weiter</button>
     {:else}
     <span class="responsive-text">
@@ -51,7 +52,7 @@
             <li>Klicke in der Suchleiste (rechts) auf <div class="custom-badge">Better VPlan installieren <span class="material-symbols-outlined">install_desktop</span></div></li>
         </ul>
     </span>
-    <button class="button" on:click={() => {navigate_page('plan')}} style="margin: 30px 0px 0px 15px;">Weiter <span class="material-symbols-outlined">chevron_right</span></button>
+    <Button on:click={() => {navigate_page('plan')}} background="var(--accent-color)" id="pwa-continue-btn">Weiter <span class="material-symbols-outlined">chevron_right</span></Button>
     {/if}
 </main>
 
@@ -70,26 +71,14 @@
         font-size: var(--font-size-base);
     }
 
-    .button {
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        background-color: var(--accent-color);
-        color: var(--text-color);
-        border-radius: 5px;
-        padding: .5em;
-        margin: 15px auto;
-        font-size: var(--font-size-base);
-        position: relative;
-
-        .material-symbols-outlined {
-            font-size: 1.3em;
-            float: right;
-            margin-left: .2em;
-        }
+    :global(#pwa-install-btn) {
+        margin: 15px auto !important;
     }
+    
+    :global(#pwa-continue-btn) {
+        margin: 30px 0px 0px 15px;
+    }
+
     .custom-badge {
         background: rgba(255, 255, 255, 0.07);
         padding: 10px 7px;
