@@ -28,7 +28,7 @@
             margin-left: .2em;
         }
 
-        &.btn-small {
+        &.small {
             font-size: var(--font-size-sm);
         }
     }
