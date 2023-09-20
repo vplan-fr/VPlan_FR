@@ -148,11 +148,5 @@
         &.btn-small {
             font-size: var(--font-size-sm);
         }
-
-        .material-symbols-outlined {
-            font-size: 1.3em;
-            float: right;
-            margin-left: .2em;
-        }
     }
 </style>

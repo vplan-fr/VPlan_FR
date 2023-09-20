@@ -75,21 +75,6 @@ Impressum: <p><a href="https://vplan.fr/#impressum" target="_blank">https://vpla
         font-weight: 600;
         margin-top: 15px;
     }
-    h4 {
-        font-size: var(--font-size-lg);
-        font-weight: 600;
-        margin-top: 15px;
-    }
-    h5 {
-        font-size: var(--font-size-md);
-        font-weight: 600;
-        margin-top: 15px;
-    }
-    h6 {
-        font-size: var(--font-size-base);
-        font-weight: 600;
-        margin-top: 15px;
-    }
 
     * {
         font-size: var(--font-size-base);
@@ -99,41 +84,11 @@ Impressum: <p><a href="https://vplan.fr/#impressum" target="_blank">https://vpla
         hyphens: auto;
     }
 
-    blockquote {
-        background-color: rgba(255, 255, 255, 0.05);
-        border-left: 4px solid rgba(255, 255, 255, 0.2);
-        padding-left: 10px;
-        border-radius: 0px 5px 5px 0px;
-    }
-
-    hr {
-        border-radius: 5px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    ol {
-        list-style: auto !important;
-    }
-
     a {
         color: var(--accent-color);
-    }
-    
-    img[alt=center] {
-        margin: 10px auto;
-        display: block;
     }
 
     strong {
         font-weight: 700;
     }
-
-    em {
-        font-style: italic;
-    }
-
-    del {
-        text-decoration-thickness: 2px;
-    }
-
 </style>
