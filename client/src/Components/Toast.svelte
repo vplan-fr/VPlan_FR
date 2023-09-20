@@ -2,7 +2,7 @@
     import { flip } from 'svelte/animate';
     import { fly } from "svelte/transition";
     import {removeNotification} from "../notifications.js";
-    import {notifications_list} from "../stores.js";
+    import {notifications_list, logged_in} from "../stores.js";
 
     export let themes = {
         danger: "#E26D69",
@@ -15,7 +15,7 @@
 
 </script>
 
-<div class="notifications">
+<div class="notifications" class:navbar_visible={$logged_in}>
     {#each $notifications_list as notification (notification.id)}
     <!-- svelte-ignore a11y-click-events-have-key-events -->    
         <div
@@ -35,9 +35,12 @@
 <style lang="scss">
     .notifications {
         position: fixed;
-        top: 61px;
-        @media only screen and (min-width: 602px) {
-            top: 69px;
+        top: 5px;
+        &.navbar_visible {
+            top: 61px;
+            @media only screen and (min-width: 602px) {
+                top: 69px;
+            }
         }
         right: 0;
         margin: 0 auto;
