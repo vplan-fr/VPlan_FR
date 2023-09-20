@@ -11,16 +11,16 @@
 
     $: only_teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers?.length === 0 && lesson.takes_place;
 
-    $: teachers = lesson.takes_place && !only_teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers;
-    $: s_teachers = !arraysEqual(lesson.scheduled_teachers, teachers) ? lesson.scheduled_teachers : [];
+    $: teachers = (lesson.takes_place && !only_teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers) || [];
+    $: s_teachers = !arraysEqual(lesson.scheduled_teachers, teachers) ? lesson.scheduled_teachers?.filter(t => !teachers.includes(t)) : [];
 
     $: forms = (lesson.takes_place ? lesson.current_forms : lesson.scheduled_forms) || [];
-    $: s_forms = !arraysEqual(lesson.scheduled_forms, forms) ? lesson.scheduled_forms : [];
+    $: s_forms = !arraysEqual(lesson.scheduled_forms, forms) ? lesson.scheduled_forms?.filter(f => !forms.includes(f)) : [];
     $: forms_str = lesson.takes_place ? lesson.current_forms_str : lesson.scheduled_forms_str;
-    $: s_forms_str = s_forms.length !== 0 ? lesson.scheduled_forms_str : ""
+    $: s_forms_str = s_forms.length !== 0 ? lesson.scheduled_forms_str : "";
 
-    $: rooms = lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms;
-    $: s_rooms = !arraysEqual(lesson.scheduled_rooms, rooms) ? lesson.scheduled_rooms : [];
+    $: rooms = (lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms) || [];
+    $: s_rooms = !arraysEqual(lesson.scheduled_rooms, rooms) ? lesson.scheduled_rooms?.filter(r => !rooms.includes(r)) : [];
 
 
     $: subject_changed = lesson.subject_changed && lesson.takes_place && !lesson.is_unplanned;
