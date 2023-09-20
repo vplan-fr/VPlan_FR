@@ -61,7 +61,7 @@
     }
 
     function get_meta(api_base) {
-        if (!$logged_in) {
+        if (!$logged_in || !school_num) {
             return;
         }
         if (school_num === null || school_num === "") {

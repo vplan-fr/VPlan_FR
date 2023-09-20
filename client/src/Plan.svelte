@@ -266,9 +266,12 @@
 
     let show_left_key = true;
     let show_right_key = true;
-    $: date, show_left_key = enabled_dates.indexOf(date) > 0;
-    $: date, show_right_key = enabled_dates.indexOf(date) < (enabled_dates.length - 1);
-
+    function update_date_btns() {
+        show_left_key = enabled_dates.indexOf(date) > 0;
+        show_right_key = enabled_dates.indexOf(date) < (enabled_dates.length - 1);
+    }
+    
+    $: date && enabled_dates && update_date_btns();
     $: preferences_apply, lessons = render_lessons(all_lessons);
 </script>
 
