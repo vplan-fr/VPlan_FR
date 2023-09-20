@@ -4,7 +4,7 @@
     export let transitionFunction = scale;
     export let transitionOptions = {duration: 200, start: 0.3};
     export let transform_origin_x = "100%";
-    export let small_version = false;
+    export let small = false;
     export let flipped = false;
     let open = false;
 
@@ -33,7 +33,7 @@
     }
 </script>
 
-<div class="dropdown-wrapper" class:small_version class:open>
+<div class="dropdown-wrapper" class:small class:open>
     <div class="btn-wrapper" use:clickOutside={{ enabled: open, cb: () => open = false }}>
         <slot name="toggle_button" toggle={() => {open = !open}} />
     </div>
@@ -93,7 +93,7 @@
             }
         }
 
-        &.small_version {
+        &.small {
             .dropdown-content {
                 bottom: -10px;
                 box-shadow: 0 4px 4px -1px rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.14), 0 10px 10px 0 rgba(0, 0, 0, 0.12);

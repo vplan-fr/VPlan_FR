@@ -93,8 +93,8 @@
     <span class="responsive-text">Einstellungen konnten nicht geladen werden.</span>
     {/if}
     <svelte:fragment slot="footer">
-        <Button on:click={() => {change_settings(); $active_modal = ""}} background="var(--accent-color)" small_btn={true}>Speichern</Button>
-        <Button on:click={() => {$active_modal = ""}} small_btn={true}>Abbrechen</Button>
+        <Button on:click={() => {change_settings(); $active_modal = ""}} background="var(--accent-color)" small={true}>Speichern</Button>
+        <Button on:click={() => {$active_modal = ""}} small={true}>Abbrechen</Button>
     </svelte:fragment>
 </Modal>
 

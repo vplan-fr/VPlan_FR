@@ -138,7 +138,7 @@
                 </div>
                 {:else}
                 <div class="forms max-width wide-area second_of_type">
-                    <Dropdown let:toggle small_version={true} transform_origin_x="50%">
+                    <Dropdown let:toggle small={true} transform_origin_x="50%">
                         <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
                             <span class="grow">{forms_str}&nbsp;<s>{s_forms_str}</s></span>
                             <span class="material-symbols-outlined dropdown-arrow centered_txt">arrow_drop_down</span>
@@ -190,7 +190,7 @@
                     <div class="horizontal_wrapper">
                         Beteiligte Klassen:
                         <div class="fit-content-width">
-                            <Dropdown let:toggle small_version={true} transform_origin_x="50%">
+                            <Dropdown let:toggle small={true} transform_origin_x="50%">
                                 <button slot="toggle_button" on:click={toggle} class="toggle-button">
                                     <span class="grow">{forms_str}</span>
                                     <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
@@ -299,7 +299,7 @@
             </div>
             {:else}
             <div class="max-width">
-                <Dropdown let:toggle small_version={true} transform_origin_x="50%">
+                <Dropdown let:toggle small={true} transform_origin_x="50%">
                     <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
                         <span class="grow">{forms_str}&nbsp;<s>{s_forms_str}</s></span>
                         <span class="material-symbols-outlined dropdown-arrow centered_txt">arrow_drop_down</span>
@@ -350,7 +350,7 @@
                     <div class="horizontal_wrapper">
                         Beteiligte Klassen:
                         <div class="fit-content-width">
-                            <Dropdown let:toggle small_version={true} transform_origin_x="50%">
+                            <Dropdown let:toggle small={true} transform_origin_x="50%">
                                 <button slot="toggle_button" on:click={toggle} class="toggle-button">
                                     <span class="grow">{forms_str}</span>
                                     <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>

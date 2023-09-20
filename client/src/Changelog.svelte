@@ -62,7 +62,7 @@
                         <span class="title">{changelog_entry[2]["title"]}</span>
                         <span class="version custom-badge">{changelog_entry[2]["version"]}</span>
                     </div>
-                    <Button on:click={() => {read_changelog(changelog_entry[0])}} small_btn={true} class="mark-read-btn"><span class="material-symbols-outlined">done</span></Button>
+                    <Button on:click={() => {read_changelog(changelog_entry[0])}} small={true} class="mark-read-btn"><span class="material-symbols-outlined">done</span></Button>
                 </header>
                 <div class="content">
                     <SvelteMarkdown source={changelog_entry[2]["content"]} />
@@ -94,7 +94,7 @@
         {/each}
     </div>
     <svelte:fragment slot="footer">
-        <Button on:click={() => {$active_modal = ""}} small_btn={true}>Schließen</Button>
+        <Button on:click={() => {$active_modal = ""}} small={true}>Schließen</Button>
     </svelte:fragment>
 </Modal>
 
