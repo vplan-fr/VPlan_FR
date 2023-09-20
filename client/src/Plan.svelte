@@ -362,6 +362,7 @@
         padding: 20px;
         box-sizing: border-box;
         pointer-events: none;
+        z-index: 1;
 
         button {
             pointer-events: all;

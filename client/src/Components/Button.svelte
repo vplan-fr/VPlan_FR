@@ -1,10 +1,10 @@
 <script>
     export let background = "rgba(255, 255, 255, 0.2)";
-    export let small_btn = false;
+    export let small = false;
     export let type = "button";
 </script>
 
-<button on:click class={$$props.class} id={$$props.id} class:btn-small={small_btn} style="background: {background}" type={type}>
+<button on:click class={$$props.class} id={$$props.id} class:small style="background: {background}" type={type}>
     <slot>Button</slot>
 </button>
 
