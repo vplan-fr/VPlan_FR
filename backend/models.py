@@ -10,8 +10,8 @@ import typing
 from stundenplan24_py import indiware_mobil
 import stundenplan24_py
 
-from .lesson_info import ParsedLessonInfo, MovedFrom, MovedTo, LessonInfoParagraph, LessonInfoMessage
-from . import vplan_utils
+from .lesson_info import ParsedLessonInfo, LessonInfoParagraph, LessonInfoMessage
+from . import vplan_utils, lesson_info
 
 
 @dataclasses.dataclass
@@ -40,6 +40,7 @@ class Lesson:
     is_internal: bool = False
     _lesson_date: datetime.date = None
 
+    _origin_plan_type: typing.Literal["forms", "teachers", "rooms"] = None
     _grouped_form_plan_current_course: str = None
     _grouped_form_plan_current_teachers: set[str] = None
     _grouped_form_plan_current_rooms: set[str] = None
@@ -58,7 +59,7 @@ class Lesson:
             return self.class_
 
     @classmethod
-    def create_internal(cls, date: datetime.date):
+    def create_internal(cls, date: datetime.date, plan_type: typing.Literal["forms", "teachers", "rooms"] = "forms"):
         return cls(
             periods=set(),
             forms=set(),
@@ -76,6 +77,7 @@ class Lesson:
             is_internal=True,
             is_scheduled=False,
             _lesson_date=date,
+            _origin_plan_type=plan_type,
         )
 
     def serialize(self) -> dict:
@@ -95,6 +97,7 @@ class Lesson:
             "is_scheduled": self.is_scheduled,
             "class_data": repr(self.class_),
             "info": self.parsed_info.serialize(self._lesson_date),
+            "origin_plan_type": self._origin_plan_type,
         }
 
 
@@ -164,7 +167,9 @@ class PlanLesson:
         }
 
     @classmethod
-    def create(cls, current_lesson: Lesson | None, scheduled_lesson: Lesson | None) -> PlanLesson:
+    def create(cls, current_lesson: Lesson | None, scheduled_lesson: Lesson | None,
+               plan_type: typing.Literal["forms", "teachers", "rooms"],
+               plan_value: set[str]) -> PlanLesson:
         assert not (current_lesson is None is scheduled_lesson)
 
         if current_lesson is None:
@@ -183,7 +188,8 @@ class PlanLesson:
                 room_changed=True,
                 is_scheduled=False,
                 takes_place=False,
-                _lesson_date=scheduled_lesson._lesson_date
+                _lesson_date=scheduled_lesson._lesson_date,
+                _origin_plan_type=scheduled_lesson._origin_plan_type,
             )
         else:
             _current_lesson = current_lesson
@@ -204,10 +210,55 @@ class PlanLesson:
                 room_changed=False,
                 is_scheduled=True,
                 takes_place=False,
-                _lesson_date=current_lesson._lesson_date
+                _lesson_date=current_lesson._lesson_date,
+                _origin_plan_type=current_lesson._origin_plan_type,
             )
         else:
             _scheduled_lesson = scheduled_lesson
+
+        paragraphs = []
+
+        other_info_value_type = (
+            lesson_info.AbstractParsedLessonInfoMessageWithCourseInfo.get_other_info_type_of_plan_type(plan_type)
+        )
+
+        if not _current_lesson.takes_place and plan_type != _scheduled_lesson._origin_plan_type:
+            scheduled_other_info_value = getattr(_scheduled_lesson, other_info_value_type)
+
+            if (scheduled_other_info_value is not None and
+                    not (_scheduled_lesson.course is None and _current_lesson.course is None)):
+                paragraphs.append(
+                    LessonInfoParagraph([LessonInfoMessage(lesson_info.Cancelled(
+                        course=_scheduled_lesson.course or _current_lesson.course,
+                        plan_type=plan_type,
+                        plan_value=plan_value,
+                        other_info_value=scheduled_other_info_value,
+                        periods=_scheduled_lesson.periods,
+                    ), -1), ], -1)
+                )
+
+        scheduled_other_info_value = getattr(_scheduled_lesson, other_info_value_type)
+        current_other_info_value = getattr(_current_lesson, other_info_value_type)
+        other_info_value_changed = {
+            "forms": True,
+            "teachers": _current_lesson.teacher_changed,
+            "rooms": _current_lesson.room_changed,
+        }[other_info_value_type]
+        if (
+                _scheduled_lesson.course is not None is not _current_lesson.course and
+                _scheduled_lesson.teachers is not None is not _current_lesson.teachers and
+                ((_current_lesson.course != _scheduled_lesson.course and _current_lesson.subject_changed) or
+                 (current_other_info_value != scheduled_other_info_value and other_info_value_changed))
+        ):
+            paragraphs.append(
+                LessonInfoParagraph([LessonInfoMessage(lesson_info.InsteadOfCourse(
+                    course=_scheduled_lesson.course,
+                    plan_type=plan_type,
+                    plan_value=plan_value,
+                    other_info_value=scheduled_other_info_value,
+                    periods=_scheduled_lesson.periods,
+                ), -1), ], -1)
+            )
 
         plan_lesson = PlanLesson(
             periods=set(_current_lesson.periods),
@@ -225,11 +276,11 @@ class PlanLesson:
                 (_scheduled_lesson.class_opt.number or _current_lesson.class_opt.number)
                 if _scheduled_lesson is not None else _current_lesson.class_opt.number
             ),
-            subject_changed=_current_lesson.subject_changed,
+            subject_changed=_current_lesson.subject_changed if _current_lesson._origin_plan_type == plan_type else (_current_lesson.course != _scheduled_lesson.course),
             teacher_changed=_current_lesson.teacher_changed,
             room_changed=_current_lesson.room_changed,
-            forms_changed=_current_lesson.forms != _scheduled_lesson.forms if _scheduled_lesson is not None else True,
-            parsed_info=_current_lesson.parsed_info,
+            forms_changed=(_current_lesson.forms != _scheduled_lesson.forms) if _scheduled_lesson is not None else True,
+            parsed_info=_current_lesson.parsed_info + _scheduled_lesson.parsed_info + ParsedLessonInfo(paragraphs),
             takes_place=_current_lesson.takes_place,
             is_internal=_current_lesson.is_internal,
             is_unplanned=_current_lesson.takes_place and scheduled_lesson is None,
@@ -278,7 +329,8 @@ class Lessons:
                 for attribute, lessons in grouped.items()}
 
     @staticmethod
-    def _to_plan_lessons(lessons: list[Lesson]) -> list[PlanLesson]:
+    def _to_plan_lessons(lessons: list[Lesson], plan_type: typing.Literal["forms", "teachers", "rooms"],
+                         plan_value: set[str]) -> list[PlanLesson]:
         out = []
 
         scheduled_lessons = [lesson for lesson in lessons if lesson.is_scheduled]
@@ -328,17 +380,18 @@ class Lessons:
                 used_scheduled_lessons.append(scheduled_lesson)
 
             out.append(
-                PlanLesson.create(current_lesson, scheduled_lesson)
+                PlanLesson.create(current_lesson, scheduled_lesson, plan_type, plan_value)
             )
 
         for scheduled_lesson in scheduled_lessons:
             out.append(
-                PlanLesson.create(None, scheduled_lesson)
+                PlanLesson.create(None, scheduled_lesson, plan_type, plan_value)
             )
 
         return out
 
-    def to_plan_lessons(self) -> list[PlanLesson]:
+    def to_plan_lessons(self, plan_type: typing.Literal["forms", "teachers", "rooms"], plan_value: set[str]
+                        ) -> list[PlanLesson]:
 
         lessons_by_periods: dict[frozenset[int], list[Lesson]] = defaultdict(list)
         for lesson in self:
@@ -347,16 +400,16 @@ class Lessons:
         out: list[PlanLesson] = []
 
         for periods, lessons in lessons_by_periods.items():
-            out += self._to_plan_lessons(lessons)
+            out += self._to_plan_lessons(lessons, plan_type, plan_value)
 
         return out
 
-    def make_plan(self, plan_type: str,
-                  *additional_attrs: str) -> dict[str, list[PlanLesson]]:
-        grouped_lessons = self.group_by(plan_type, *additional_attrs)
+    def make_plan(self, *group_attrs: str, plan_type: typing.Literal["forms", "teachers", "rooms"]
+                  ) -> dict[str, list[PlanLesson]]:
+        grouped_lessons = self.group_by(*group_attrs)
 
         return {
-            group: lessons.to_plan_lessons()
+            group: lessons.to_plan_lessons(plan_type, {group})
             for group, lessons in grouped_lessons.items()
         }
 
@@ -391,13 +444,13 @@ class Lessons:
                 # info string not the same but periods may be groupable
                 # noinspection PyTypeChecker
                 parsed1, parsed2 = message1.parsed, message2.parsed
-                if isinstance(parsed1, (MovedFrom, MovedTo)):
-                    parsed2: MovedFrom | MovedTo
+                if isinstance(parsed1, (lesson_info.MovedFrom, lesson_info.MovedTo)):
+                    parsed2: lesson_info.MovedFrom | lesson_info.MovedTo
 
                     if parsed1.is_groupable(parsed2):
                         new_message = copy.deepcopy(message1)
                         # noinspection PyTypeHints
-                        new_message.parsed: MovedFrom | MovedTo
+                        new_message.parsed: lesson_info.MovedFrom | lesson_info.MovedTo
                         new_message.parsed.periods += parsed2.periods
                         new_message.parsed.original_messages += parsed2.original_messages
                         new_message.parsed.plan_value |= parsed2.plan_value
@@ -551,7 +604,7 @@ class Plan:
                     rooms=set(lesson.room().split(" ")) if lesson.room() else set(),
                     course=lesson.subject(),
 
-                    parsed_info=None,
+                    parsed_info=ParsedLessonInfo([]),
 
                     class_=class_data,
                     subject_changed=lesson.subject.was_changed,
@@ -616,6 +669,8 @@ class Plan:
                     l._grouped_form_plan_scheduled_teachers = scheduled_lesson.teachers
                     l._grouped_form_plan_scheduled_rooms = scheduled_lesson.rooms
                     l._grouped_form_plan_scheduled_forms = scheduled_lesson.forms
+
+                    l._origin_plan_type = "forms"
 
                 lessons.append(scheduled_lesson)
                 lessons.append(current_lesson)
