@@ -726,9 +726,6 @@
         .subject, .info-element, .info-element > button {
             font-size: 1.875rem;
         }
-        .cancelled {
-            grid-area: 1 / 1 / 3 / 3;
-        }
         .forms, .rooms {
             flex-direction: column;
             align-items: center;
