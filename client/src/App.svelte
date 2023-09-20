@@ -215,7 +215,7 @@
         for (const [form_group, forms] of Object.entries(grouped_forms)) {
             let converted_forms = [];
             for(let form of forms) {
-                converted_forms.push({"id": form, "name": form});
+                converted_forms.push({"id": form, "display_name": form});
             }
             form_arr.push([form_group, converted_forms]);
         }
@@ -224,7 +224,7 @@
     function gen_teacher_arr(teacher_list) {
         teacher_arr = [];
         for(let teacher of teacher_list) {
-            teacher_arr.push({"id": teacher, "name": teacher});
+            teacher_arr.push({"id": teacher, "display_name": teacher});
         }
     }
     
@@ -233,7 +233,7 @@
         for (let room_group of grouped_rooms) {
             let converted_rooms = [];
             for(let room of room_group[1]) {
-                converted_rooms.push({"id": room, "name": room});
+                converted_rooms.push({"id": room, "display_name": room});
             }
             room_arr.push([room_group[0], converted_rooms]);
         }
@@ -245,7 +245,7 @@
             if(index == 1) {continue;}
             revision_arr.push({
                 "id": revision,
-                "name": format_revision_date(revision, all_revisions[1])
+                "display_name": format_revision_date(revision, all_revisions[1])
             });
         }
     }

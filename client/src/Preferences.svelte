@@ -12,7 +12,7 @@
     export let school_num;
     let selected_form = null;
     let class_groups_by_subject = [];
-    $: class_groups_by_subject = selected_form != null ? sort_courses_by_subject(course_lists[selected_form]["class_groups"]) : [];
+    $: class_groups_by_subject = selected_form != null ? sort_courses_by_subject(course_lists[selected_form].class_groups) : [];
 
     let allItems = [];
     let selection = {};
@@ -26,7 +26,7 @@
         for (const [form_group, forms] of Object.entries(grouped_forms)) {
             let converted_forms = [];
             for(let form of forms) {
-                converted_forms.push({"id": form, "name": form});
+                converted_forms.push({"id": form, "display_name": form});
             }
             select_arr.push([form_group, converted_forms]);
         }
@@ -78,7 +78,7 @@
         if (selected_form === null) {
             return
         }
-        allItems = Object.keys(course_lists[selected_form]["class_groups"]);
+        allItems = Object.keys(course_lists[selected_form].class_groups);
         current_form_preferences = $preferences[selected_form] || [];
         selection = {};
         for (const item of allItems) {
