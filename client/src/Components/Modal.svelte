@@ -2,6 +2,8 @@
     import {active_modal} from '../stores.js';
 
     export let id;
+    export let onopen = () => {};
+    export let onclose = () => {};
     let dialog;
     let open = false;
 
@@ -17,6 +19,7 @@
                 document.documentElement.style.position = 'fixed';
             }
             dialog.showModal();
+            onopen();
         } else if (open) {
             open = false;
             dialog.close();
@@ -31,7 +34,7 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
-<dialog bind:this={dialog} on:close={() => {$active_modal = ""}} on:click|self={() => {dialog.close()}}>
+<dialog bind:this={dialog} on:close={() => {$active_modal = ""; onclose();}} on:click|self={() => {dialog.close()}}>
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div on:click|stopPropagation class="content-scroll">
         <slot />
