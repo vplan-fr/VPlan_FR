@@ -43,24 +43,42 @@
 <Modal id="changelog">
     <h1 class="responsive-heading">Changelog</h1>
     <div class="changelog">
-        {#each changelog.reverse() as changelog_entry, index (index)}
+        <span>Ungelesen:</span>
+        {#each changelog.reverse().filter(cur_changelog => cur_changelog[1] === false) as changelog_entry, index (index)}
         <div class="changelog_entry">
             <div class="changelog_entry_content">
                 <header>
                     <div>
-                        <span class="title">{changelog_entry[1]["title"]}</span>
-                        <span class="version custom-badge">{changelog_entry[1]["version"]}</span>
+                        <span class="title">{changelog_entry[2]["title"]}</span>
+                        <span class="version custom-badge">{changelog_entry[2]["version"]}</span>
                     </div>
                     <button on:click={() => {read_changelog(changelog_entry[0])}} class="button btn-small mark-read-btn"><span class="material-symbols-outlined">close</span></button>
                 </header>
                 <div class="content">
-                    <SvelteMarkdown source={changelog_entry[1]["content"]} />
+                    <SvelteMarkdown source={changelog_entry[2]["content"]} />
                 </div>
-                <span class="date">{changelog_entry[1]["date"]}</span>
+                <span class="date">{changelog_entry[2]["date"]}</span>
             </div>
         </div>
         {:else}
         <span class="responsive-text">Keine neuen Änderungen vorhanden.</span>
+        {/each}
+        <span>Gelesen:</span>
+        {#each changelog.reverse().filter(cur_changelog => cur_changelog[1] === true) as changelog_entry, index (index)}
+            <div class="changelog_entry">
+                <div class="changelog_entry_content">
+                    <header>
+                        <div>
+                            <span class="title">{changelog_entry[2]["title"]}</span>
+                            <span class="version custom-badge">{changelog_entry[2]["version"]}</span>
+                        </div>
+                    </header>
+                    <div class="content">
+                        <SvelteMarkdown source={changelog_entry[2]["content"]} />
+                    </div>
+                    <span class="date">{changelog_entry[2]["date"]}</span>
+                </div>
+            </div>
         {/each}
     </div>
     <svelte:fragment slot="footer">
