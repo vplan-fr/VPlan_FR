@@ -71,6 +71,10 @@ SETTINGS = {
         "default": False,
         "type": "bool",
     },
+    "external_times": {
+        "default": True,
+        "type": "bool",
+    },
 }
 
 TYPE_FUNCTIONS = {
