@@ -476,7 +476,7 @@
     }
 
     .last-updated {
-        font-size: clamp(0.875rem, 2.8vmin, 1.75rem);
+        font-size: var(--font-size-base);
         line-height: 1.5;
         margin-top: 20px;
         display: block !important;
