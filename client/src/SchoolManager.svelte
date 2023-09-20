@@ -214,13 +214,6 @@
         border-radius: 5px;
     }
 
-    .absolute-position {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-    }
-
     .responsive-heading {
         margin-bottom: 10px;
     }
@@ -244,11 +237,6 @@
         margin-top: 15px;
         font-size: var(--font-size-base);
         position: relative;
-
-        &.btn-small {
-            font-size: var(--font-size-sm);
-        }
-
         .material-symbols-outlined {
             font-size: 1.3em;
             float: right;
