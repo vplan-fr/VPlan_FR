@@ -137,7 +137,6 @@ class PlanDownloader:
                 self.cache.store_plan_file(date, revision, plan_response.content, plan_filename)
                 self.cache.store_plan_file(date, revision, json.dumps(downloaded_file.serialize()),
                                            plan_filename + ".json")
-                self.complete_revision(date, revision)
 
                 new.add((date, revision, downloaded_file))
         return new
@@ -239,41 +238,8 @@ class PlanDownloader:
 
             self.cache.store_plan_file(date, revision, plan_response.content, plan_filename)
             self.cache.store_plan_file(date, revision, json.dumps(downloaded_file.serialize()), plan_filename + ".json")
-            self.complete_revision(date, revision)
 
             return {(date, revision, downloaded_file)}
-
-    def complete_revision(self, date: datetime.date, revision: datetime.datetime):
-        if self.cache.plan_file_exists(date, revision, ".complete"):
-            self._logger.debug(f"=> Revision {revision!s} for date {date!s} already completed.")
-            return
-
-        self._logger.debug(f"=> Completing revision {revision!s} for date {date!s}.")
-
-        try:
-            timestamps = [t for t in self.cache.get_timestamps(date) if t < revision]
-            latest_revision = timestamps[0]  # before `revision`
-        except IndexError:
-            self._logger.debug(f" -> No previous revision found for date {date!s}.")
-            self.cache.store_plan_file(date, revision, "", ".complete")
-            return
-
-        for file in self.cache.get_plan_path(date, latest_revision).iterdir():
-            if not (file.name.endswith(".xml") or file.name.endswith(".xml.json")) or file.name.startswith(("_", ".")):
-                continue
-
-            if self.cache.plan_file_exists(date, revision, file.name, links_allowed=False):
-                self._logger.debug(f" -> Skipping file {file.name!r}. Already exists.")
-                continue
-
-            self._logger.debug(f" -> Creating symlink for file {file.name!r}.")
-            self.cache.store_plan_file_link(
-                date,
-                revision, file.name,
-                latest_revision, file.name
-            )
-
-        self.cache.store_plan_file(date, revision, "", ".complete")
 
     def migrate_all(self):
         self._logger.debug(f"* Migrating cache ({self.__class__.__name__})...")
@@ -283,4 +249,3 @@ class PlanDownloader:
 
             for revision in reversed(self.cache.get_timestamps(day)):
                 self._logger.debug(f"=> Date: {day!s}, Revision: {revision!s}.")
-                self.complete_revision(day, revision)
