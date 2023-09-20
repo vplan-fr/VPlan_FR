@@ -103,7 +103,6 @@ export function get_settings() {
         })
         .catch(error => {
             settings.set(JSON.parse(localStorage.getItem("settings")));
-            notifications.info("Einstellungen aus cache geladen");
             console.error("Einstellungen konnten nicht geladen werden.");
         })
 }
