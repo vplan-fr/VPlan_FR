@@ -22,7 +22,6 @@
     $: rooms = (lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms) || [];
     $: s_rooms = !arraysEqual(lesson.scheduled_rooms, rooms) ? lesson.scheduled_rooms?.filter(r => !rooms.includes(r)) : [];
 
-
     $: subject_changed = lesson.subject_changed && lesson.takes_place && !lesson.is_unplanned;
     $: teacher_changed = lesson.teacher_changed && lesson.takes_place && !lesson.is_unplanned;
     $: room_changed = lesson.room_changed && lesson.takes_place && !lesson.is_unplanned;
@@ -139,7 +138,7 @@
                 {:else}
                 <div class="forms max-width wide-area second_of_type">
                     <Dropdown let:toggle small={true} transform_origin_x="50%">
-                        <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
+                        <button slot="toggle_button" on:click={toggle} class="toggle-button center-align" class:changed={forms_changed}>
                             <span class="grow">{forms_str}&nbsp;<s>{s_forms_str}</s></span>
                             <span class="material-symbols-outlined dropdown-arrow centered_txt">arrow_drop_down</span>
                         </button>
@@ -300,7 +299,7 @@
             {:else}
             <div class="max-width">
                 <Dropdown let:toggle small={true} transform_origin_x="50%">
-                    <button slot="toggle_button" on:click={toggle} class="toggle-button center-align">
+                    <button slot="toggle_button" on:click={toggle} class="toggle-button center-align" class:changed={forms_changed}>
                         <span class="grow">{forms_str}&nbsp;<s>{s_forms_str}</s></span>
                         <span class="material-symbols-outlined dropdown-arrow centered_txt">arrow_drop_down</span>
                     </button>
