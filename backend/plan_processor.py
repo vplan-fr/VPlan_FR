@@ -13,7 +13,7 @@ from .vplan_utils import group_forms, ParsedForm
 
 
 class PlanProcessor:
-    VERSION = "65"
+    VERSION = "66"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -65,12 +65,12 @@ class PlanProcessor:
 
     def compute_plans(self, date: datetime.date, timestamp: datetime.datetime):
         try:
-            plan_kl = self.cache.get_plan_file(date, timestamp, "PlanKl.xml")
+            plan_kl = self.cache.get_plan_file(date, timestamp, "PlanKl.xml", newest_before=True)
         except FileNotFoundError:
             self._logger.warning(f"=> Could not find Indiware form plan for date {date!s} and timestamp {timestamp!s}.")
         else:
             try:
-                vplan_kl = self.cache.get_plan_file(date, timestamp, "VPlanKl.xml")
+                vplan_kl = self.cache.get_plan_file(date, timestamp, "VPlanKl.xml", newest_before=True)
             except FileNotFoundError:
                 vplan_kl = None
             plan_extractor = PlanExtractor(plan_kl, vplan_kl, self.teachers.abbreviation_by_surname(),
