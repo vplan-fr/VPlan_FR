@@ -121,7 +121,7 @@ class Cache:
         out = {}
 
         for file in self.get_plan_path(day, timestamp).iterdir():
-            if file.suffix == ".json" and not file.name.startswith(".") and not file.stem.endswith(".xml"):
+            if file.suffix == ".json" and not file.name.startswith((".", "_")) and not file.stem.endswith(".xml"):
                 with open(file, "r", encoding="utf-8") as f:
                     out[file.stem] = json.load(f)
 
