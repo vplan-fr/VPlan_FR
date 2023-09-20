@@ -233,16 +233,14 @@ class SubPlanExtractor:
                     # self._logger.debug(f" -> Could not extrapolate end time for a lesson, no previous block found.")
 
     def plan(self):
-        return self.forms_lessons_grouped.make_plan(self.plan_type)
+        return self.forms_lessons_grouped.make_plan(self.plan_type, plan_type=self.plan_type)
 
     def grouped_form_plans(self) -> dict[str, dict[str, list]]:
         return {
             "forms": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_forms",
-                                                          "_grouped_form_plan_scheduled_forms"),
+                                                          "_grouped_form_plan_scheduled_forms", plan_type="forms"),
             "rooms": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_rooms",
-                                                          "_grouped_form_plan_scheduled_rooms"),
+                                                          "_grouped_form_plan_scheduled_rooms", plan_type="rooms"),
             "teachers": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_teachers",
-                                                             "_grouped_form_plan_scheduled_teachers"),
-            "course": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_course",
-                                                           "_grouped_form_plan_scheduled_course")
+                                                             "_grouped_form_plan_scheduled_teachers", plan_type="teachers"),
         }
