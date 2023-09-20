@@ -394,7 +394,7 @@
     <Toast />
 </div>
 <footer class:padding={footer_padding}>
-    <Dropdown let:toggle small_version={true} transform_origin_x="100%" flipped={true}>
+    <Dropdown let:toggle small={true} transform_origin_x="100%" flipped={true}>
         <button slot="toggle_button" on:click={toggle}><span class="material-symbols-outlined">menu</span></button>
         
         <button on:click={() => {navigate_page("impressum")}}>Impressum</button>
