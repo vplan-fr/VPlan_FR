@@ -168,19 +168,21 @@
                 {#each lesson.info as elem}
                     {#each elem as element}
                         <li>
-                            {#each element.text_segments as text_segment}
-                                {#if text_segment.link !== null}
-                                    <button class="no-btn-visuals" on:click={() => {
-                                        date = text_segment.link.date;
-                                        plan_type = text_segment.link.type;
-                                        plan_value = text_segment.link.value;
-                                    }}>
-                                        <div class="clickable">{text_segment["text"]}</div>
-                                    </button>
-                                {:else}
-                                    <button class="no-btn-visuals">{text_segment["text"]}</button>
-                                {/if}
-                            {/each}
+                            <div class="horizontal_wrapper">
+                                {#each element.text_segments as text_segment}
+                                    {#if text_segment.link !== null}
+                                        <button class="no-btn-visuals" on:click={() => {
+                                            date = text_segment.link.date;
+                                            plan_type = text_segment.link.type;
+                                            plan_value = text_segment.link.value;
+                                        }}>
+                                            <div class="clickable">{text_segment["text"]}</div>
+                                        </button>
+                                    {:else}
+                                        <button class="no-btn-visuals">{text_segment["text"]}</button>
+                                    {/if}
+                                {/each}
+                            </div>
                         </li>
                     {/each}
                 {/each}
@@ -325,22 +327,40 @@
     {#if (lesson.info.length > 0) || (plan_type === "forms" && (forms.length > 1))}
         <div class="info-element lesson-info">
             <ul>
-                {#each lesson.info as elem}
-                    {#each elem as element}
+                {#each lesson.info as info_paragraph}
+                    {#each info_paragraph as info_message}
                         <li>
-                            {#each element.text_segments as text_segment}
-                                {#if text_segment.link !== null}
-                                    <button class="no-btn-visuals" on:click={() => {
-                                        date = text_segment.link.date;
-                                        plan_type = text_segment.link.type;
-                                        plan_value = text_segment.link.value;
-                                    }}>
-                                        <div class="clickable">{text_segment["text"]}</div>
-                                    </button>
-                                {:else}
-                                    <button class="no-btn-visuals">{text_segment["text"]}</button>
-                                {/if}
-                            {/each}
+                            <div class="horizontal_wrapper">
+                                {#each info_message.text_segments as text_segment}
+                                    {#if text_segment.link?.value.length === 1}
+                                        <button class="no-btn-visuals" on:click={() => {
+                                            date = text_segment.link.date;
+                                            plan_type = text_segment.link.type;
+                                            plan_value = text_segment.link.value;
+                                        }}>
+                                            <div class="clickable">{text_segment.text}</div>
+                                        </button>
+                                    {:else if text_segment.link?.value.length >= 2}
+                                        <div class="fit-content-width">
+                                            <Dropdown let:toggle small_version={true} transform_origin_x="50%">
+                                                <button slot="toggle_button" on:click={toggle} class="toggle-button">
+                                                    <span class="grow">{text_segment.text}</span>
+                                                    <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                                                </button>
+
+                                                {#each text_segment.link.value as item}
+                                                    <button on:click={() => {
+                                                        plan_type = text_segment.link.type;
+                                                        plan_value = item;
+                                                    }}>{item}</button>
+                                                {/each}
+                                            </Dropdown>
+                                        </div>
+                                    {:else}
+                                        <button class="no-btn-visuals">{text_segment["text"]}</button>
+                                    {/if}
+                                {/each}
+                            </div>
                         </li>
                     {/each}
                 {/each}
@@ -434,7 +454,7 @@
         color: var(--text-color);
         transition: background-color .2s ease;
         width: 100%;
-        padding: 5px;
+        padding: 2px 0px 2px 5px;
         font-size: inherit;
         line-height: 1.313;
 
@@ -447,7 +467,7 @@
         border: 0;
         background: none;
         padding: 0;
-        margin: 0 .3rem 0 0;
+        margin: 0;
         text-align: start;
     }
 
@@ -455,7 +475,7 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 10px;
+        gap: .3em;
     }
 
     .lesson-info {
@@ -658,17 +678,13 @@
             &.toggle-button {
                 border-radius: 8px;
             }
-            padding: 16px;
+            padding: 6px 0px 6px 16px;
             line-height: 1;
         }
 
         .no-btn-visuals {
             font-size: inherit;
-            margin: 0 .3rem 0 0;
-        }
-
-        .horizontal_wrapper {
-            gap: 20px;
+            margin: 0;
         }
 
         .lesson-info {
