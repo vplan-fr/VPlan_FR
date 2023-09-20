@@ -52,7 +52,7 @@
             return;
         }
         // Check the validity of the plan type
-        if(!enabled_dates.includes(date) || !["forms", "rooms", "teachers", "free_rooms"].includes(c_plan_type)) {
+        if(!enabled_dates.includes(date) || !["forms", "rooms", "teachers", "room_overview"].includes(c_plan_type)) {
             reset_plan_vars();
             return;
         }
@@ -279,7 +279,7 @@
 <svelte:body use:swipe={{ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' }} on:swipe={swipe_handler} />
 
 {#if plan_type !== "room_overview"}
-<div class="plan" class:extra-height={extra_height && !loading && !loading_failed && plan_type}>
+<div class="plan" class:extra-height={extra_height}>
     {#if show_title && info}
         {#if plan_type === "forms" && (plan_value in $preferences)}
             <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
@@ -330,7 +330,7 @@
     {/if}
 </div>
 {:else}
-<div class:extra-height={extra_height && !loading && !loading_failed && plan_type}>
+<div class:extra-height={extra_height}>
     <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
     {#if info}
         <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
@@ -412,7 +412,7 @@
     }
 
     .plan-heading {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-md);
         line-height: 1.6;
         font-weight: 700;
         margin-bottom: 15px;
@@ -461,10 +461,10 @@
     }
 
     .extra-height {
-        min-height: calc(100vh - 56px);
+        min-height: calc(100vh - 66px);
 
         @media only screen and (min-width: 1501px) {
-            min-height: calc(100vh - 64px);
+            min-height: calc(100vh - 74px);
         }
     }
 

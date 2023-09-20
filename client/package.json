@@ -25,6 +25,7 @@
     "sirv-cli": "^2.0.0",
     "svelte-gestures": "^1.5.2",
     "svelte-markdown": "^0.4.0",
+    "svelte-scrollto-element": "^0.7.0",
     "svelty-picker": "^4.1.4"
   }
 }

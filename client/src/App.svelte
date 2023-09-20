@@ -21,6 +21,7 @@
     import { onMount } from "svelte";
     import PwaInstallHelper from "./PWAInstallHelper.svelte";
     import Dropdown from "./Components/Dropdown.svelte";
+    import { animateScroll } from 'svelte-scrollto-element';
 
     let school_num = localStorage.getItem('school_num');
     let date = null;
@@ -189,13 +190,8 @@
         // Disable on Desktop (aspect ratio > 1)
         if ((window.innerWidth > window.innerHeight) || !element) {return;}
         var headerOffset = window.innerWidth > 601 ? 74 : 66;
-        var elementPosition = element.getBoundingClientRect().top;
-        var offsetPosition = elementPosition + window.scrollY - headerOffset;
     
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: "smooth"
-        });
+        animateScroll.scrollTo({element: element, offset: headerOffset, duration: 200});
     }
 
     function set_plan(new_plan_type, new_plan_value) {
@@ -373,7 +369,7 @@
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
-                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision bind:enabled_dates />
+                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision bind:enabled_dates external_times={$settings.external_times} />
                 {:else}
                     <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
                 {/if}
@@ -421,6 +417,7 @@
         float: right;
         height: calc(var(--font-size-sm) * 2);
         width: calc(var(--font-size-sm) * 2);
+        margin-top: calc(var(--font-size-sm) * -2);
         display: flex;
         background: rgba(0, 0, 0, 0.5);
         align-items: center;
@@ -551,16 +548,6 @@
         margin: 3px;
         font-size: var(--font-size-base);
         position: relative;
-
-        &.btn-small {
-            font-size: var(--font-size-sm);
-        }
-
-        .material-symbols-outlined {
-            font-size: 1.3em;
-            float: right;
-            margin-left: .2em;
-        }
     }
 
     main {
@@ -569,6 +556,7 @@
         @media only screen and (max-width: 601px) {
             margin: 56px auto;
         }
+        margin-bottom: 0px !important;
 
         max-width: 1280px;
         width: 90%;

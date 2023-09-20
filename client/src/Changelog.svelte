@@ -1,12 +1,13 @@
 <script>
     import { customFetch } from "./utils";
-    import {active_modal, logged_in} from './stores';
+    import {active_modal, logged_in, new_changelogs_available} from './stores';
     import { notifications } from "./notifications";
     import Modal from "./Components/Modal.svelte";
     import SvelteMarkdown from 'svelte-markdown'
     import { onMount } from "svelte";
 
     let changelog = [];
+    let unread_changelogs = [];
     function get_changelog() {
         customFetch("/api/v69.420/changelog")
             .then(data => {
@@ -16,7 +17,7 @@
             })
             .catch(error => {
                 console.error("Changelog konnte nicht geladen werden.");
-            })
+            });
     }
 
     function read_changelog(number) {
@@ -30,7 +31,13 @@
             .catch(error => {
                 notifications.danger("Log konnte nicht als gelesen markiert werden")
             })
-        changelog = changelog.filter(item => item[0] !== number)
+        for(let log_entry of changelog) {
+            if(log_entry[0] === number) {
+                log_entry[1] = true;
+                break;
+            }
+        }
+        changelog = changelog;
     }
 
     // onMount(() => {
@@ -38,29 +45,51 @@
     // });
 
     $: $logged_in && get_changelog();
+    $: unread_changelogs = changelog.reverse().filter(cur_changelog => cur_changelog[1] === false)
+    $: $new_changelogs_available = unread_changelogs.length > 0;
 </script>
 
 <Modal id="changelog">
     <h1 class="responsive-heading">Changelog</h1>
     <div class="changelog">
-        {#each changelog.reverse() as changelog_entry, index (index)}
+        <span class="read-section-heading">Ungelesen:</span>
+        {#each unread_changelogs as changelog_entry, index (index)}
         <div class="changelog_entry">
             <div class="changelog_entry_content">
                 <header>
                     <div>
-                        <span class="title">{changelog_entry[1]["title"]}</span>
-                        <span class="version custom-badge">{changelog_entry[1]["version"]}</span>
+                        <span class="title">{changelog_entry[2]["title"]}</span>
+                        <span class="version custom-badge">{changelog_entry[2]["version"]}</span>
                     </div>
-                    <button on:click={() => {read_changelog(changelog_entry[0])}} class="button btn-small mark-read-btn"><span class="material-symbols-outlined">close</span></button>
+                    <button on:click={() => {read_changelog(changelog_entry[0])}} class="button btn-small mark-read-btn"><span class="material-symbols-outlined">done</span></button>
                 </header>
                 <div class="content">
-                    <SvelteMarkdown source={changelog_entry[1]["content"]} />
+                    <SvelteMarkdown source={changelog_entry[2]["content"]} />
                 </div>
-                <span class="date">{changelog_entry[1]["date"]}</span>
+                <span class="date">{changelog_entry[2]["date"]}</span>
             </div>
         </div>
         {:else}
-        <span class="responsive-text">Keine neuen Änderungen vorhanden.</span>
+            <span class="responsive-text">Keine neuen Änderungen vorhanden.</span>
+        {/each}
+        <span class="read-section-heading">Gelesen:</span>
+        {#each changelog.reverse().filter(cur_changelog => cur_changelog[1] === true) as changelog_entry, index (index)}
+            <div class="changelog_entry">
+                <div class="changelog_entry_content">
+                    <header>
+                        <div>
+                            <span class="title">{changelog_entry[2]["title"]}</span>
+                            <span class="version custom-badge">{changelog_entry[2]["version"]}</span>
+                        </div>
+                    </header>
+                    <div class="content">
+                        <SvelteMarkdown source={changelog_entry[2]["content"]} />
+                    </div>
+                    <span class="date">{changelog_entry[2]["date"]}</span>
+                </div>
+            </div>
+        {:else}
+            <span class="responsive-text">Noch nichts als gelesen markiert.</span>
         {/each}
     </div>
     <svelte:fragment slot="footer">
@@ -69,6 +98,12 @@
 </Modal>
 
 <style lang="scss">
+    .read-section-heading {
+        font-size: var(--font-size-md);
+        font-weight: 500;
+        margin-top: 10px;
+    }
+
     .custom-badge {
         background: rgba(255, 255, 255, 0.07);
         padding: 2px 7px;

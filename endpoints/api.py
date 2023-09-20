@@ -195,7 +195,7 @@ def changelog() -> Response:
         all_changelog[ind] = value
     if request.method == "GET":
         all_changelog = [[ind, value] for ind, value in enumerate(all_changelog)]
-        user_changelog = [[ind in read_changelog, value] for ind, value in all_changelog]
+        user_changelog = [[ind, ind in read_changelog, value] for ind, value in all_changelog]
         return send_success(user_changelog)
     if request.method == "POST":
         try:
