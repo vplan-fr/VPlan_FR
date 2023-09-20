@@ -32,14 +32,17 @@
     {/each}
 </div>
 
-<style>
+<style lang="scss">
     .notifications {
         position: fixed;
-        top: 0;
+        top: 61px;
+        @media only screen and (min-width: 602px) {
+            top: 69px;
+        }
         right: 0;
         margin: 0 auto;
         padding: 5px;
-        z-index: 9999;
+        z-index: 9998;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;

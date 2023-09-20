@@ -3,6 +3,7 @@
     import Lesson from './Lesson.svelte';
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
+    import { swipe } from 'svelte-gestures';
     import {preferences, settings, title} from './stores.js';
     import {arraysEqual, customFetch, format_date, navigate_page, should_date_be_cached} from "./utils.js";
 
@@ -18,6 +19,7 @@
     export let external_times = true;
     export let all_rooms;
     export let selected_revision;
+    export let enabled_dates;
     let used_rooms_hidden = true;
 
     let all_lessons = [];
@@ -33,14 +35,37 @@
     };
     let controller = new AbortController();
 
-    export function load_lessons(date, plan_type, entity, use_grouped_form_plans, revision=".newest") {
-        let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans"
-        
+    function reset_plan_vars() {
+        info = null;
+        all_lessons = [];
+        rooms_data = null;
+        plan_type = null;
+        plan_value = null;
+    }
+
+    export function load_lessons(date, c_plan_type, entity, use_grouped_form_plans, revision=".newest") {
+        let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans";
         controller.abort();
-        if (date === null || date === undefined || !plan_type) {
+        // Check the presence of necessary variables
+        if (date === null || date === undefined || !c_plan_type || ((c_plan_type !== "room_overview") && !entity)) {
+            reset_plan_vars();
             return;
         }
-        console.log("Loading lessons...", date, plan_type, entity);
+        // Check the validity of the plan type
+        if(!enabled_dates.includes(date) || !["forms", "rooms", "teachers", "free_rooms"].includes(c_plan_type)) {
+            reset_plan_vars();
+            return;
+        }
+        // Check the validity of the plan value
+        if((plan_type === "rooms" || plan_type === "teachers") && (!Object.keys(all_meta[plan_type]).includes(entity))) {
+            reset_plan_vars();
+            return;
+        } else if((plan_type === "forms") && !Object.keys(all_meta["forms"]["forms"]).includes(entity)) {
+            reset_plan_vars();
+            return;
+        }
+
+        console.log("Loading lessons...", date, c_plan_type, entity);
 
         loading = true;
         data_from_cache = false;
@@ -52,8 +77,8 @@
             if (data !== "undefined" && data) {
                 data = JSON.parse(data);
                 rooms_data = data["rooms"];
-                if (plan_type !== "room_overview") {
-                    all_lessons = data[plan_key][plan_type] ? data[plan_key][plan_type][entity] || [] : [];
+                if (c_plan_type !== "room_overview") {
+                    all_lessons = data[plan_key][c_plan_type] ? data[plan_key][c_plan_type][entity] || [] : [];
                 }
                 info = data["info"];
                 week_letter = info["week"];
@@ -79,8 +104,8 @@
                     }
                 }
                 rooms_data = data["rooms"]
-                if (plan_type !== "room_overview") {
-                    all_lessons = data[plan_key][plan_type][entity] || [];
+                if (c_plan_type !== "room_overview") {
+                    all_lessons = data[plan_key][c_plan_type][entity] || [];
                 }
                 info = data["info"];
                 week_letter = info["week"];
@@ -162,12 +187,12 @@
         }
     }
 
+    refresh_plan_vars();
+    if(!school_num) {
+        navigate_page('school_manager');
+    }
+
     onMount(() => {
-        refresh_plan_vars();
-        if(!school_num) {
-            navigate_page('school_manager');
-            return;
-        }
         location.hash = gen_location_hash();
         title.set("Plan");
         // console.log("Mounted Plan.svelte");
@@ -205,8 +230,50 @@
         }
         return new_lessons;
     }
+
+    function change_day(day_amount) {
+        let tmp_date;
+        tmp_date = enabled_dates[(enabled_dates.indexOf(date)+day_amount)];
+        if (typeof tmp_date === 'undefined') {
+            notifications.danger("Für dieses Datum existiert kein Vertretungsplan!");
+            return;
+        }
+        // let new_date = new Date(Date.parse(`${tmp_date.substring(0, 4)}-${tmp_date.substring(4, 6)}-${tmp_date.substring(6, 8)}`));
+        date = tmp_date;
+    }
+
+    function keydown_handler(event) {
+        if($settings.day_switch_keys) {
+            if(event.key === "ArrowLeft") {
+                event.preventDefault();
+                change_day(-1);
+            } else if(event.key === "ArrowRight") {
+                event.preventDefault();
+                change_day(1);
+            }
+        }
+    }
+
+    function swipe_handler(event) {
+        if($settings.swipe_day_change) {
+            if(event.detail.direction === "right") {
+                change_day(-1);
+            } else if(event.detail.direction === "left") {
+                change_day(1);
+            }
+        }
+    }
+
+    let show_left_key = true;
+    let show_right_key = true;
+    $: date, show_left_key = enabled_dates.indexOf(date) > 0;
+    $: date, show_right_key = enabled_dates.indexOf(date) < (enabled_dates.length - 1);
+
     $: preferences_apply, lessons = render_lessons(all_lessons);
 </script>
+
+<svelte:window on:keydown={keydown_handler}/>
+<svelte:body use:swipe={{ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' }} on:swipe={swipe_handler} />
 
 {#if plan_type !== "room_overview"}
 <div class="plan" class:extra-height={extra_height && !loading && !loading_failed && plan_type}>
@@ -215,7 +282,7 @@
             <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
         {/if}
             <h1 class="plan-heading">
-                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{/if}</span> am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
             </h1>
         {/if}
     {#if loading}
@@ -277,8 +344,70 @@
     {/if}
 </div>
 {/if}
+<div class="day-controls">
+    <button tabindex="-1" on:click={() => {change_day(-1);}} class:hidden={!show_left_key}><span class="material-symbols-outlined left">arrow_back_ios_new</span></button>
+    <button tabindex="-1" on:click={() => {change_day(1);}} class:hidden={!show_right_key}><span class="material-symbols-outlined right">arrow_forward_ios</span></button>
+</div>
 
 <style lang="scss">
+    .day-controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        display: flex;
+        justify-content: space-between;
+        padding: 20px;
+        box-sizing: border-box;
+        pointer-events: none;
+
+        button {
+            pointer-events: all;
+            border: none;
+            border-radius: 999vw;
+            background: var(--background);
+            color: var(--text-color);
+            width: calc(var(--font-size-lg) * 2);
+            aspect-ratio: 1;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            opacity: 1;
+            transition: opacity .2s ease;
+            box-shadow: 0px 0px 5px var(--background);
+            
+            &.hidden {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            &::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.1);
+                pointer-events: none;
+            }
+
+            span {
+                position: absolute;
+                font-size: var(--font-size-lg);
+
+                // Visually Centering Arrows
+                &.left {
+                    margin-left: -4px;
+                }
+                
+                &.right {
+                    margin-right: -4px;
+                }
+            }
+        }
+    }
+
     .plan-heading {
         font-size: var(--font-size-lg);
         line-height: 1.6;

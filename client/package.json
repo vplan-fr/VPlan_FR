@@ -23,6 +23,7 @@
   "dependencies": {
     "postcss": "^8.4.24",
     "sirv-cli": "^2.0.0",
+    "svelte-gestures": "^1.5.2",
     "svelte-markdown": "^0.4.0",
     "svelty-picker": "^4.1.4"
   }
