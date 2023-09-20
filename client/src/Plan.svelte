@@ -6,7 +6,6 @@
     import { swipe } from 'svelte-gestures';
     import {preferences, settings, title} from './stores.js';
     import {arraysEqual, customFetch, format_date, navigate_page, should_date_be_cached} from "./utils.js";
-    import { fade } from 'svelte/transition';
 
     export let api_base;
     export let school_num;
@@ -36,18 +35,36 @@
     };
     let controller = new AbortController();
 
+    function reset_plan_vars() {
+        info = null;
+        all_lessons = [];
+        rooms_data = null;
+        plan_type = null;
+        plan_value = null;
+    }
+
     export function load_lessons(date, c_plan_type, entity, use_grouped_form_plans, revision=".newest") {
-        let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans"
-        
+        let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans";
         controller.abort();
+        // Check the presence of necessary variables
         if (date === null || date === undefined || !c_plan_type || ((c_plan_type !== "room_overview") && !entity)) {
-            info = null;
-            all_lessons = [];
-            rooms_data = null;
-            plan_type = null;
-            plan_value = null;
+            reset_plan_vars();
             return;
         }
+        // Check the validity of the plan type
+        if(!enabled_dates.includes(date) || !["forms", "rooms", "teachers", "free_rooms"].includes(c_plan_type)) {
+            reset_plan_vars();
+            return;
+        }
+        // Check the validity of the plan value
+        if((plan_type === "rooms" || plan_type === "teachers") && (!Object.keys(all_meta[plan_type]).includes(entity))) {
+            reset_plan_vars();
+            return;
+        } else if((plan_type === "forms") && !Object.keys(all_meta["forms"]["forms"]).includes(entity)) {
+            reset_plan_vars();
+            return;
+        }
+
         console.log("Loading lessons...", date, c_plan_type, entity);
 
         loading = true;

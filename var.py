@@ -36,7 +36,7 @@ SETTINGS = {
         "type": "bool",
     },
     "day_switch_keys": {
-        "default": False,
+        "default": True,
         "type": "bool",
     },
     "use_grouped_form_plans": {
