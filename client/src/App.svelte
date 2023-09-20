@@ -259,11 +259,14 @@
 
     function logout() {
         school_num = null;
+        localStorage.clear();
+        localStorage.setItem('logged_in', `${$logged_in}`);
+    }
+
+    function reset_plan_vars() {
         date = null;
         plan_type = null;
         plan_value = null;
-        localStorage.clear();
-        localStorage.setItem('logged_in', `${$logged_in}`);
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -271,6 +274,7 @@
         $pwa_prompt = e;
     });
 
+    $: school_num, reset_plan_vars();
     $: $logged_in && get_settings();
     $: localStorage.setItem("settings", `${JSON.stringify($settings)}`)
     $: $logged_in && get_meta(api_base);
