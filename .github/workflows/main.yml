@@ -19,16 +19,10 @@ jobs:
         script: |
           cd programming/VPlan_FR/
           
-          kill -INT (lsof -t nohup.out)
-          
           git checkout production
           git pull
           source venv/bin/activate.fish
           pip install -r requirements.txt
-          
-          rm nohup.out
-          nohup venv/bin/python3 -m backend.load_plans --ignore-exceptions --never-raise-out-of-proxies -l 8 &
-          disown (lsof -t nohup.out)
           
           cd client
           npm install --force
