@@ -61,11 +61,10 @@
     //     console.log("Mounted Settings.svelte");
     // });
 
-    $: $active_modal, cancel_setting_changes();
     $: update_colors(temp_settings);
 </script>
 
-<Modal id="settings">
+<Modal id="settings" onopen={cancel_setting_changes} onclose={cancel_setting_changes}>
     <h1 class="responsive-heading">Einstellungen</h1>
     {#if temp_settings}
     <div class="settings-container">
