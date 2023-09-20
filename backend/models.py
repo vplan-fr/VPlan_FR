@@ -277,11 +277,12 @@ class Lessons:
         return {attribute: Lessons(sorted(lessons, key=lambda x: list(x.periods)[0]))
                 for attribute, lessons in grouped.items()}
 
-    def _to_plan_lessons(self, lessons: list[Lesson]) -> list[PlanLesson]:
+    @staticmethod
+    def _to_plan_lessons(lessons: list[Lesson]) -> list[PlanLesson]:
         out = []
 
         scheduled_lessons = [lesson for lesson in lessons if lesson.is_scheduled]
-        used_scheduled_lessons = []
+        used_scheduled_lessons: list[Lesson] = []
         lessons.sort(key=lambda l: (
             not l.subject_changed,
             l.takes_place,
