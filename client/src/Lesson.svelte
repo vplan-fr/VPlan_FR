@@ -176,10 +176,10 @@
                                         plan_type = text_segment.link.type;
                                         plan_value = text_segment.link.value;
                                     }}>
-                                        <div class="clickable">{text_segment["text"]}</div>
+                                        <div class="clickable">{text_segment.text}</div>
                                     </button>
                                 {:else}
-                                    <button class="no-btn-visuals">{text_segment["text"]}</button>
+                                    <button class="no-btn-visuals">{text_segment.text}</button>
                                 {/if}
                             {/each}
                         </li>
@@ -336,10 +336,10 @@
                                         plan_type = text_segment.link.type;
                                         plan_value = text_segment.link.value;
                                     }}>
-                                        <div class="clickable">{text_segment["text"]}</div>
+                                        <div class="clickable">{text_segment.text}</div>
                                     </button>
                                 {:else}
-                                    <button class="no-btn-visuals">{text_segment["text"]}</button>
+                                    <button class="no-btn-visuals">{text_segment.text}</button>
                                 {/if}
                             {/each}
                         </li>

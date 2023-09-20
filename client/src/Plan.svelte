@@ -60,7 +60,7 @@
         if((plan_type === "rooms" || plan_type === "teachers") && (!Object.keys(all_meta[plan_type]).includes(entity))) {
             reset_plan_vars();
             return;
-        } else if((plan_type === "forms") && !Object.keys(all_meta["forms"]["forms"]).includes(entity)) {
+        } else if((plan_type === "forms") && !Object.keys(all_meta.forms.forms).includes(entity)) {
             reset_plan_vars();
             return;
         }
@@ -76,12 +76,12 @@
             let data = localStorage.getItem(`${school_num}_${date}`);
             if (data !== "undefined" && data) {
                 data = JSON.parse(data);
-                rooms_data = data["rooms"];
+                rooms_data = data.rooms;
                 if (c_plan_type !== "room_overview") {
                     all_lessons = data[plan_key][c_plan_type] ? data[plan_key][c_plan_type][entity] || [] : [];
                 }
-                info = data["info"];
-                week_letter = info["week"];
+                info = data.info;
+                week_letter = info.week;
 
                 data_from_cache = true;
                 loading = false;
@@ -103,12 +103,12 @@
                         }
                     }
                 }
-                rooms_data = data["rooms"]
+                rooms_data = data.rooms;
                 if (c_plan_type !== "room_overview") {
                     all_lessons = data[plan_key][c_plan_type][entity] || [];
                 }
-                info = data["info"];
-                week_letter = info["week"];
+                info = data.info;
+                week_letter = info.week;
                 //console.log(lessons);
                 
                 loading = false;
@@ -205,8 +205,8 @@
     let full_teacher_name = null;
     let teacher_contact_link = null;
     $: if (plan_type === "teachers") {
-        full_teacher_name = all_meta["teachers"][plan_value]?.surname || null;
-        teacher_contact_link = all_meta["teachers"][plan_value]?.contact_link || null;
+        full_teacher_name = all_meta.teachers[plan_value]?.surname || null;
+        teacher_contact_link = all_meta.teachers[plan_value]?.contact_link || null;
     }
 
     let preferences_apply = true;
@@ -224,7 +224,7 @@
         let cur_preferences = $preferences[plan_value] || [];
         let new_lessons = [];
         for (const lesson of lessons) {
-            if (!(cur_preferences.includes(lesson["class_number"]))) {
+            if (!(cur_preferences.includes(lesson.class_number))) {
                 new_lessons.push(lesson);
             }
         }
