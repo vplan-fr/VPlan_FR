@@ -201,10 +201,6 @@
         scrollTo(document.getElementsByClassName("plan-heading")[0]);
     }
 
-    $: ("forms" !== plan_type) && (selected_form = null);
-    $: ("teachers" !== plan_type) && (selected_teacher = null);
-    $: ("rooms" !== plan_type) && (selected_room = null);
-
     let form_arr = [];
     let teacher_arr = [];
     let room_arr = [];
@@ -266,6 +262,12 @@
         plan_value = null;
     }
 
+    function reset_selects() {
+        ("forms" !== plan_type) && (selected_form = null);
+        ("teachers" !== plan_type) && (selected_teacher = null);
+        ("rooms" !== plan_type) && (selected_room = null);
+    }
+
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         $pwa_prompt = e;
@@ -288,6 +290,7 @@
     $: selected_room && set_plan("rooms", selected_room);
     $: gen_room_arr(grouped_rooms);
     $: gen_revision_arr(all_revisions);
+    $: plan_type, reset_selects();
 
     onMount(() => {
         // console.log("Mounted App.svelte");
@@ -323,6 +326,7 @@
 
 <Settings />
 <Changelog />
+<Preferences bind:api_base bind:grouped_forms bind:course_lists bind:school_num />
 
 <div id="page-container">
     <main>
@@ -380,8 +384,6 @@
                 {/if}
             {:else if $current_page === "school_manager"}
                 <SchoolManager bind:school_num />
-            {:else if $current_page === "preferences"}
-                <Preferences bind:api_base bind:grouped_forms bind:course_lists bind:school_num />
             {:else if $current_page === "pwa_install"}
                 <PwaInstallHelper />
             {:else}
@@ -511,6 +513,10 @@
                     transform: translateX(-50%);
                     border-radius: 5px;
                     overflow: hidden;
+                }
+
+                :global(.is-selected) {
+                    pointer-events: none;
                 }
 
                 :global(.std-calendar-wrap::before) {

@@ -1,8 +1,9 @@
 <script>
     import Button from "./Components/Button.svelte";
+    import Modal from "./Components/Modal.svelte";
     import Select from "./Components/Select.svelte";
     import {notifications} from "./notifications.js";
-    import {preferences, title} from './stores.js';
+    import {preferences, title, active_modal} from './stores.js';
     import {customFetch, navigate_page} from "./utils.js";
     import { onMount } from "svelte";
 
@@ -124,69 +125,72 @@
         }
     }
 
-    onMount(() => {
+    function onopen() {
         if(!school_num) {
+            $active_modal = "";
             navigate_page('school_manager');
             return;
         }
         updateCourses();
-        location.hash = "#preferences";
-        title.set("Unterricht wählen");
-        // console.log("Mounted Preferences.svelte");
-    });
+    }
 
     $: create_select_arr(grouped_forms)
     $: selected_form, updateCourses();
 </script>
 
-<h1 class="responsive-heading">Unterrichtswahl</h1>
-<Select data={select_arr} grouped={true} bind:selected_id={selected_form} data_name="Klassen">Klasse auswählen</Select>
-{#if selected_form != null}
-    <ul class="responsive-text">
-        {#each Object.entries(class_groups_by_subject).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}
-            {#if courses.length === 1}
-                <li>{subject}:<input
-                        type="checkbox"
-                        bind:checked={selection[courses[0].class_number]}
-                />
-                    {courses[0].class_number}
-                    {courses[0].teacher} |
-                    {courses[0].subject}
-                    {#if courses[0].group != null}
-                        ({courses[0].group})
-                    {/if}
-                </li>
-            {:else}
-                <li>
-                    {subject}
-                    {#if courses.length > 2}
-                    <Button class="inline-flex" on:click={() => {select_all_part(courses)}}>Alle Auswählen</Button>
-                    <Button class="inline-flex" on:click={() => {select_none_part(courses)}}>Keinen Auswählen</Button>
-                    {/if}
-                </li>
-                <ul>
-                    {#each courses as course}
-                        <li>
-                            <input
-                                type="checkbox"
-                                bind:checked={selection[course.class_number]}
-                            />
-                            {course.class_number}
-                            {course.teacher} |
-                            {course.subject}
-                            {#if course.group != null}
-                                ({course.group})
-                            {/if}
-                        </li>
-                    {/each}
-                </ul>
-            {/if}
-        {/each}
-    </ul>
-{/if}
-{#if selected_form != null}
-    <Button on:click={setPreferences} background="var(--accent-color)">Speichern</Button>
-{/if}
+<Modal id="preferences" onopen={onopen} full_height={true} onclose={() => {selected_form = null;}}>
+    <h1 class="responsive-heading">Unterrichtswahl</h1>
+    <Select data={select_arr} grouped={true} bind:selected_id={selected_form} data_name="Klassen">Klasse auswählen</Select>
+    {#if selected_form != null}
+        <ul class="responsive-text">
+            {#each Object.entries(class_groups_by_subject).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}
+                {#if courses.length === 1}
+                    <li>{subject}:<input
+                            type="checkbox"
+                            bind:checked={selection[courses[0].class_number]}
+                    />
+                        {courses[0].class_number}
+                        {courses[0].teacher} |
+                        {courses[0].subject}
+                        {#if courses[0].group != null}
+                            ({courses[0].group})
+                        {/if}
+                    </li>
+                {:else}
+                    <li>
+                        {subject}
+                        {#if courses.length > 2}
+                        <Button class="inline-flex" on:click={() => {select_all_part(courses)}}>Alle Auswählen</Button>
+                        <Button class="inline-flex" on:click={() => {select_none_part(courses)}}>Keinen Auswählen</Button>
+                        {/if}
+                    </li>
+                    <ul>
+                        {#each courses as course}
+                            <li>
+                                <input
+                                    type="checkbox"
+                                    bind:checked={selection[course.class_number]}
+                                />
+                                {course.class_number}
+                                {course.teacher} |
+                                {course.subject}
+                                {#if course.group != null}
+                                    ({course.group})
+                                {/if}
+                            </li>
+                        {/each}
+                    </ul>
+                {/if}
+            {/each}
+        </ul>
+    {/if}
+    <svelte:fragment slot="footer">
+        {#if selected_form != null}
+            <Button on:click={setPreferences} background="var(--accent-color)" small={true}>Speichern</Button>
+        {/if}
+        <Button on:click={() => {$active_modal = ""}} small={true}>Abbrechen</Button>
+    </svelte:fragment>
+</Modal>
 
 <style lang="scss">
     :global(.inline-flex) {
