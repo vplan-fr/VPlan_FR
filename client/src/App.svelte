@@ -79,12 +79,6 @@
     }
 
     function get_meta() {
-        if (!$logged_in || !school_num) {
-            return;
-        }
-        if (school_num === null || school_num === "") {
-            return;
-        }
         let data_from_cache = false;
         let data = localStorage.getItem(`${school_num}_meta`);
         if (data !== "undefined" && data) {
@@ -260,10 +254,10 @@
     }
 
     function logout() {
-        init_vars();
         close_modal();
         localStorage.clear();
         localStorage.setItem('logged_in', `${$logged_in}`);
+        init_vars();
     }
 
     function reset_plan_vars() {
@@ -282,17 +276,19 @@
     check_login_status();
     clear_caches();
 
-    $: api_base = `/api/v69.420/${school_num}`;
-    $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
-    $: school_num, reset_plan_vars();
-    $: api_base && $logged_in && get_meta();
-    $: $logged_in && get_settings();
-    $: localStorage.setItem("settings", `${JSON.stringify($settings)}`)
-    $: all_revisions = [".newest"].concat((all_meta?.dates || {})[date] || []);
-    $: $logged_in && get_greeting();
     $: !$logged_in && logout();
-    $: api_base && school_num && $logged_in && get_preferences();
+    $: school_num && (api_base = `/api/v69.420/${school_num}`);
+    $: school_num && reset_plan_vars();
+    $: school_num && get_meta();
+    $: all_revisions = [".newest"].concat((all_meta?.dates || {})[date] || []);
+    $: school_num && get_preferences();
+    $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
+    $: $logged_in && get_settings();
+    $: localStorage.setItem("settings", `${JSON.stringify($settings)}`);
     $: update_colors($settings);
+    $: $logged_in && get_greeting();
+    $: plan_type, reset_selects();
+
     $: selected_form && set_plan("forms", selected_form);
     $: gen_form_arr(grouped_forms);
     $: selected_teacher && set_plan("teachers", selected_teacher);
@@ -300,7 +296,6 @@
     $: selected_room && set_plan("rooms", selected_room);
     $: gen_room_arr(grouped_rooms);
     $: gen_revision_arr(all_revisions);
-    $: plan_type, reset_selects();
 
     const resizeObserver = new ResizeObserver((entries) => {
         footer_padding = entries[0].target.scrollHeight > entries[0].target.clientHeight
@@ -360,7 +355,6 @@
                             format="yyyy-mm-dd"
                             displayFormat="dd.mm.yyyy"
                             disableDatesFn={getDateDisabled}
-                            initialDate={(date === null) ? new Date() : new Date(date)}
                             i18n={de}
                             clearBtn={false}
                             todayBtn={false}
