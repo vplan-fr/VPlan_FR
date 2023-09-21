@@ -86,6 +86,7 @@
         selected_id = selected_elem.id;
     }
 
+    $: !selected_id && (selected_index = null);
     $: grouped && calc_grouped_length(data);
     $: (selected_index !== null) && update_selected();
 </script>

@@ -4,6 +4,7 @@
     export let id;
     export let onopen = () => {};
     export let onclose = () => {};
+    export let full_height = false;
     let dialog;
     let open = false;
 
@@ -34,9 +35,8 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
-<dialog bind:this={dialog} on:close={() => {$active_modal = ""; onclose();}} on:click|self={() => {dialog.close()}}>
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div on:click|stopPropagation class="content-scroll">
+<dialog bind:this={dialog} on:close={() => {$active_modal = ""; onclose();}} on:click|self={() => {dialog.close()}} class:full_height>
+    <div class="content-scroll">
         <slot />
     </div>
     <div class="footer">
@@ -68,6 +68,10 @@
         max-width: calc(100% - 6px - 2em);
         width: clamp(700px, 60vw, 1400px);
         z-index: 9999;
+
+        &.full_height {
+            height: calc((100% - 6px) - 2em);
+        }
 
         .content-scroll {
             overflow-y: auto;
