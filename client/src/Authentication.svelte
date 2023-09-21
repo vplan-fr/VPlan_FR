@@ -11,12 +11,6 @@
     let s_password;
     let register_visible = false;
 
-    onMount(() => {
-        location.hash = "#login";
-        title.set("Login");
-        // console.log("Mounted Authentication.svelte");
-    });
-
     function login() {
         let formData = new FormData();
         formData.append('nickname', l_nickname);
@@ -28,7 +22,7 @@
             .then(data => {
                 $logged_in = true;
                 localStorage.setItem('logged_in', `${$logged_in}`);
-                navigate_page("plan");
+                navigate_page("school_manager");
             })
             .catch(error => {
                 $logged_in = false;
@@ -62,6 +56,12 @@
     function toggle_form() {
         location.hash = location.hash === "#register" ? "#login" : "#register";
     }
+
+    onMount(() => {
+        location.hash = "#login";
+        title.set("Login");
+        // console.log("Mounted Authentication.svelte");
+    });
 
     window.addEventListener('popstate', () => {
         register_visible = !(location.hash !== "#register");
