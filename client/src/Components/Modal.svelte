@@ -12,8 +12,8 @@
         return document.documentElement.scrollHeight > document.documentElement.clientHeight;
     }
 
-    function toggle_modal(active_modal) {
-        if(active_modal === id) {
+    function toggle_modal() {
+        if($active_modal === id) {
             open = true;
             if(scrollbar_visible()) {
                 document.documentElement.style.top = `-${window.scrollY}px`;
@@ -21,7 +21,8 @@
             }
             dialog.showModal();
             onopen();
-        } else if (open) {
+        } 
+        if ($active_modal !== id && open) {
             open = false;
             dialog.close();
             const scrollY = document.documentElement.style.top;
@@ -31,7 +32,7 @@
         }
     }
 
-    $: dialog && toggle_modal($active_modal);
+    $: $active_modal, dialog && toggle_modal();
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->

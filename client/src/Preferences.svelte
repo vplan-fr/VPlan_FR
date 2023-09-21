@@ -3,9 +3,8 @@
     import Modal from "./Components/Modal.svelte";
     import Select from "./Components/Select.svelte";
     import {notifications} from "./notifications.js";
-    import {preferences, title, active_modal} from './stores.js';
+    import {preferences, active_modal} from './stores.js';
     import {customFetch, navigate_page} from "./utils.js";
-    import { onMount } from "svelte";
 
     export let api_base;
     export let grouped_forms;
@@ -127,8 +126,9 @@
 
     function onopen() {
         if(!school_num) {
-            $active_modal = "";
+            notifications.danger("Du musst eine Schule auswählen um deinen Unterricht zu wählen!");
             navigate_page('school_manager');
+            $active_modal = "";
             return;
         }
         updateCourses();
