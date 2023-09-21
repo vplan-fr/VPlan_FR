@@ -7,7 +7,7 @@
     import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
     import SveltyPicker from 'svelty-picker';
-    import {get_settings, group_rooms, update_colors, analyze_local_storage, navigate_page} from "./utils.js";
+    import {get_settings, group_rooms, update_colors, navigate_page} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt} from './stores.js'
     import {customFetch, clear_caches, format_revision_date} from "./utils.js";
@@ -18,51 +18,67 @@
     import Contact from "./Contact.svelte";
     import Impressum from "./Impressum.svelte";
     import { de } from 'svelty-picker/i18n';
-    import { onMount } from "svelte";
     import PwaInstallHelper from "./PWAInstallHelper.svelte";
     import Dropdown from "./Components/Dropdown.svelte";
     import { animateScroll } from 'svelte-scrollto-element';
     import Button from "./Components/Button.svelte";
 
-    let school_num = localStorage.getItem('school_num');
-    let date = null;
-    let all_revisions = [".newest"];
+    const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
+    let school_num;
+    let date;
+    let all_revisions;
     let plan_type;
     let plan_value;
-    let teacher_list = [];
+    let teacher_list;
     let all_rooms;
-    let grouped_forms = [];
+    let grouped_forms;
     let api_base;
-
-
-    $: api_base = `/api/v69.420/${school_num}`;
-    $logged_in = localStorage.getItem('logged_in') === 'true';
-    check_login_status();
-    clear_caches();
-
-    const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
-
+    let selected_revision;
+    let meta;
+    let all_meta;
+    let enabled_dates;
+    let grouped_rooms;
+    let course_lists;
     let selected_teacher;
     let selected_room;
     let selected_form;
-    let selected_revision = ".newest";
-    let meta = {};
-    let all_meta = {};
-    let enabled_dates = [];
-    let grouped_rooms = [];
-    let course_lists = {};
-    let footer_padding = false;
+    let footer_padding;
+    let emoji;
+    let greeting;
+    let form_arr;
+    let teacher_arr;
+    let room_arr;
+    let revision_arr;
 
-    const resizeObserver = new ResizeObserver((entries) => {
-        footer_padding = entries[0].target.scrollHeight > entries[0].target.clientHeight
-    });
-    resizeObserver.observe(document.documentElement);
-
-    $: if (all_rooms) {
-        grouped_rooms = group_rooms(all_rooms);
+    function init_vars() {
+        school_num = localStorage.getItem('school_num');
+        date = null;
+        all_revisions = [".newest"];
+        plan_type = null;
+        plan_value = null;
+        teacher_list = [];
+        all_rooms = null;
+        grouped_forms = [];
+        api_base = null;
+        selected_revision = ".newest";
+        meta = {};
+        all_meta = {};
+        enabled_dates = [];
+        grouped_rooms = [];
+        course_lists = {};
+        selected_teacher = null;
+        selected_room = null;
+        selected_form = null;
+        footer_padding = false;
+        emoji = get_emoji();
+        greeting = "";
+        form_arr = [];
+        teacher_arr = [];
+        room_arr = [];
+        revision_arr = [];
     }
 
-    function get_meta(api_base) {
+    function get_meta() {
         if (!$logged_in || !school_num) {
             return;
         }
@@ -165,8 +181,6 @@
         return emoji;
     }
 
-    let emoji = get_emoji();
-    let greeting = "";
     function get_greeting() {
         customFetch("/auth/greeting")
             .then(data => {
@@ -200,11 +214,6 @@
         plan_value = new_plan_value;
         scrollTo(document.getElementsByClassName("plan-heading")[0]);
     }
-
-    let form_arr = [];
-    let teacher_arr = [];
-    let room_arr = [];
-    let revision_arr = [];
 
     function gen_form_arr(grouped_forms) {
         form_arr = [];
@@ -251,13 +260,13 @@
     }
 
     function logout() {
-        school_num = null;
+        init_vars();
+        close_modal();
         localStorage.clear();
         localStorage.setItem('logged_in', `${$logged_in}`);
     }
 
     function reset_plan_vars() {
-        date = null;
         plan_type = null;
         plan_value = null;
     }
@@ -268,20 +277,21 @@
         ("rooms" !== plan_type) && (selected_room = null);
     }
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        $pwa_prompt = e;
-    });
+    $logged_in = localStorage.getItem('logged_in') === 'true';
+    init_vars();
+    check_login_status();
+    clear_caches();
 
+    $: api_base = `/api/v69.420/${school_num}`;
+    $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
     $: school_num, reset_plan_vars();
+    $: api_base && $logged_in && get_meta();
     $: $logged_in && get_settings();
     $: localStorage.setItem("settings", `${JSON.stringify($settings)}`)
-    $: $logged_in && get_meta(api_base);
     $: all_revisions = [".newest"].concat((all_meta?.dates || {})[date] || []);
     $: $logged_in && get_greeting();
     $: !$logged_in && logout();
-    $: !$logged_in && close_modal();
-    $: school_num, $logged_in && get_preferences();
+    $: api_base && school_num && $logged_in && get_preferences();
     $: update_colors($settings);
     $: selected_form && set_plan("forms", selected_form);
     $: gen_form_arr(grouped_forms);
@@ -292,8 +302,14 @@
     $: gen_revision_arr(all_revisions);
     $: plan_type, reset_selects();
 
-    onMount(() => {
-        // console.log("Mounted App.svelte");
+    const resizeObserver = new ResizeObserver((entries) => {
+        footer_padding = entries[0].target.scrollHeight > entries[0].target.clientHeight
+    });
+    resizeObserver.observe(document.documentElement);
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        $pwa_prompt = e;
     });
 
     window.addEventListener('popstate', (e) => {
@@ -312,8 +328,6 @@
         if(new_location === "") {new_location = "plan";}
         navigate_page(new_location);
     }
-
-    //analyze_local_storage();
 </script>
 
 <svelte:head>
