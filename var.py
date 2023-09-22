@@ -17,7 +17,7 @@ def validate_bool(elem):
 
 
 def validate_color(elem):
-    if not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', elem):
+    if not re.fullmatch(r'^#(?:[0-9a-fA-F]{3}){1,2}$', elem):
         return False
     return True
 
