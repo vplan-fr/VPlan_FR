@@ -90,11 +90,7 @@
         for (const cur_key of Object.keys(duplicated_courses_match)) {
             selection[cur_key] = selection[duplicated_courses_match[cur_key]]
         }
-        customFetch(`${api_base}/preferences?` + new URLSearchParams(
-            {
-                "form": selected_form
-            }
-        ), {
+        customFetch(`${api_base}/preferences?` + new URLSearchParams({"form": selected_form}), {
             method: "POST",
             body: JSON.stringify(getFalse(selection))
         })
