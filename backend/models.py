@@ -489,24 +489,19 @@ class Lessons:
 
         grouped: list[Lesson] = []
 
-        previous_lesson: Lesson | None = None
         for lesson in sorted_lessons:
-            can_get_grouped = (
-                    previous_lesson is not None and
-                    lesson.rooms == previous_lesson.rooms and
-                    lesson.course == previous_lesson.course and
-                    lesson.teachers == previous_lesson.teachers and
-                    lesson.class_opt.number == previous_lesson.class_opt.number
-            )
+            for previous_lesson in grouped[-1:-3:-1]:  # go through last 2 lessons
+                can_get_grouped = (
+                        lesson.rooms == previous_lesson.rooms and
+                        lesson.course == previous_lesson.course and
+                        lesson.teachers == previous_lesson.teachers and
+                        lesson.class_opt.number == previous_lesson.class_opt.number
+                )
 
-            if previous_lesson is not None:
                 grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info)
 
                 can_get_grouped &= grouped_additional_info is not None
-            else:
-                grouped_additional_info = None
 
-            if previous_lesson is not None:
                 if (
                         # both lessons have no form
                         (not lesson.forms and not grouped[-1].forms)
@@ -521,16 +516,15 @@ class Lessons:
                     # lesson is duplicated for each form -> periods must be the same ("spacial" grouping)
                     can_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
 
-            if can_get_grouped:
-                grouped[-1].periods |= lesson.periods
-                grouped[-1].forms |= lesson.forms
-                grouped[-1].parsed_info = grouped_additional_info
-                grouped[-1].begin = min(filter(lambda x: x, (grouped[-1].begin, lesson.begin)), default=None)
-                grouped[-1].end = max(filter(lambda x: x, (grouped[-1].end, lesson.end)), default=None)
+                if can_get_grouped:
+                    previous_lesson.periods |= lesson.periods
+                    previous_lesson.forms |= lesson.forms
+                    previous_lesson.parsed_info = grouped_additional_info
+                    previous_lesson.begin = min(filter(lambda x: x, (grouped[-1].begin, lesson.begin)), default=None)
+                    previous_lesson.end = max(filter(lambda x: x, (grouped[-1].end, lesson.end)), default=None)
+                    break
             else:
                 grouped.append(copy.deepcopy(lesson))
-
-            previous_lesson = lesson
 
         return Lessons(sorted(grouped, key=lambda x: x.periods))
 
