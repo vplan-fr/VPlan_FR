@@ -5,8 +5,8 @@ import argparse
 import asyncio
 import logging
 from pathlib import Path
-import json
 
+from backend.creds_provider import creds_provider_factory
 from stundenplan24_py import (
     IndiwareStundenplanerClient, Hosting, proxies
 )
@@ -55,9 +55,8 @@ class PlanCrawler:
 
 async def get_clients(session: aiohttp.ClientSession | None = None,
                       proxy_provider: proxies.ProxyProvider | None = None) -> dict[str, PlanCrawler]:
-    # parse credentials
-    with open("creds.json", "r", encoding="utf-8") as f:
-        _creds = json.load(f)
+    creds_provider = creds_provider_factory(Path("creds.json"))
+    _creds = creds_provider.get_creds()
 
     clients = {}
 
