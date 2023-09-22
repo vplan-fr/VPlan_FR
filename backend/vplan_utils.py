@@ -96,27 +96,27 @@ def group_forms(forms: list[str]) -> dict[str, list[str]]:
     return {k: v for k, v in sorted(groups.items(), key=lambda x: form_sort_key(x[0]))}
 
 
-def _form_minor_to_int(minor: str) -> int | None:
+def _form_minor_to_int(minor: str) -> tuple[int | None, int | None]:
     try:
-        return int(minor)
+        return int(minor), 0  # 0 = numeric
     except ValueError:
         pass
 
     if minor.isalpha() and len(minor) == 1:
-        return ord(minor.lower()) - ord("a") + 1
+        return ord(minor.lower()) - ord("a") + 1, 1  # 1 = alpha
 
-    return None
+    return None, None
 
 
-def form_minor_to_int(minor: str) -> int | None:
-    minor_int = _form_minor_to_int(minor)
+def form_minor_to_int(minor: str) -> tuple[int | None, int | None]:
+    minor_int, minor_type = _form_minor_to_int(minor)
 
     if minor_int is None:
-        return None
+        return None, None
     elif not 1 <= minor_int <= 13:
-        return None
+        return None, None
     else:
-        return minor_int
+        return minor_int, minor_type
 
 
 def _increasing_sequences(seq: typing.Iterable, key=lambda x: x) -> list[list]:
@@ -125,6 +125,10 @@ def _increasing_sequences(seq: typing.Iterable, key=lambda x: x) -> list[list]:
     last = None
 
     for elem in seq:
+        if last == elem:
+            # fallback if something bad happens
+            return [[elem] for elem in seq]
+
         if last is None or key(elem) == key(last) + 1:
             current_seq.append(elem)
         else:
@@ -139,23 +143,38 @@ def _increasing_sequences(seq: typing.Iterable, key=lambda x: x) -> list[list]:
 
 
 def _group_form_minors(first_part: str, minors: list[str]) -> list[str]:
-    _parsed_minors = {minor: form_minor_to_int(minor) for minor in minors}
-    _non_invalid_parsed_minors = {k: v for k, v in _parsed_minors.items() if v is not None}
-    invalid_minors = [k for k, v in _parsed_minors.items() if v is None]
-    parsed_minors = {k: v for k, v in sorted(_non_invalid_parsed_minors.items(), key=lambda x: x[1])}
+    _parsed_minors: dict[str, tuple[int | None, int | None]] = {minor: form_minor_to_int(minor) for minor in minors}
+    _valid_parsed_minors = {
+        k: (minor_int, minor_type) for k, (minor_int, minor_type) in _parsed_minors.items() if minor_int is not None
+    }
+    invalid_minors = [k for k, (minor_int, minor_type) in _parsed_minors.items() if minor_int is None]
+    parsed_minors_by_minor_type: dict[str, list[tuple[int, int]]] = defaultdict(list)
+    for minor, (minor_int, minor_type) in _valid_parsed_minors.items():
+        parsed_minors_by_minor_type[minor_type].append((minor, minor_int))
 
-    seqs = _increasing_sequences(parsed_minors.keys(), key=lambda x: parsed_minors[x])
+    # sort by minor int
+    parsed_minors_by_minor_type = {
+        minor_type: sorted(parsed_minors, key=lambda x: x[1])
+        for minor_type, parsed_minors in parsed_minors_by_minor_type.items()
+    }
+
+    # sort by minor type
+    parsed_minors_by_minor_type = dict(sorted(parsed_minors_by_minor_type.items(), key=lambda x: x[0]))
 
     out = []
-    for seq in seqs:
-        if not seq:
-            continue
 
-        if len(seq) < 3:
-            for minor in seq:
-                out.append(minor)
-        else:
-            out.append(f"{seq[0]}-{seq[-1]}")
+    for minor_type, parsed_minors in parsed_minors_by_minor_type.items():
+        seqs = _increasing_sequences(parsed_minors, key=lambda x: x[1])
+
+        for seq in seqs:
+            if not seq:
+                continue
+
+            if len(seq) < 3:
+                for minor_str, minor_int in seq:
+                    out.append(minor_str)
+            else:
+                out.append(f"{seq[0][0]}-{seq[-1][0]}")
 
     out += invalid_minors
 
