@@ -16,7 +16,7 @@ from . import models
 
 
 class _InfoParsers:
-    _teacher_name = r"[A-ZÄÖÜ][a-zäöüß]+(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)+"
+    _teacher_name = r"[A-ZÄÖÜ][a-zäöüß]+(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+|\.)?)+"
     _teacher_abbreviation = r"[A-ZÄÖÜ][A-ZÄÖÜa-zäöüß]*"
     _teacher = fr"(?:{_teacher_name})|(?:{_teacher_abbreviation})"
 
