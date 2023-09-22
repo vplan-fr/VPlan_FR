@@ -17,10 +17,10 @@
     import Select from "./Components/Select.svelte";
     import Contact from "./Contact.svelte";
     import Impressum from "./Impressum.svelte";
-    import { de } from 'svelty-picker/i18n';
+    import {de} from 'svelty-picker/i18n';
     import PwaInstallHelper from "./PWAInstallHelper.svelte";
     import Dropdown from "./Components/Dropdown.svelte";
-    import { animateScroll } from 'svelte-scrollto-element';
+    import {animateScroll} from 'svelte-scrollto-element';
     import Button from "./Components/Button.svelte";
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
@@ -157,7 +157,7 @@
         let curr_day = curr_date.getDay();
         let curr_hours = curr_date.getHours();
         let emoji = "👋";
-        if(curr_day <= 5 && curr_day > 0) {
+        if(curr_day <= 5 && curr_day > 0 && curr_hours <= 17) {
             emoji = choose(["👨‍🏫", "👩‍🏫"]);
         }
         if (curr_hours >= 4 && curr_hours < 8) {
@@ -168,9 +168,13 @@
         }
         if (curr_hours >= 20 || curr_hours < 4) {
             emoji = "😴";
-            if(curr_day === 5 || curr_day === 6) {
-                emoji = choose(["🕺", "💃", "🎮", "🎧"]);
-            }
+        }
+        if(
+            (curr_day === 5 && curr_hours >= 20) ||
+            (curr_day === 6 && (curr_hours >= 20 || curr_hours < 4)) ||
+            (curr_day === 0 && curr_hours < 4)
+        ) {
+            emoji = choose(["🕺", "💃", "🎮", "🎧"]);
         }
         return emoji;
     }
@@ -198,7 +202,7 @@
     function scrollTo(element) {
         // Disable on Desktop (aspect ratio > 1)
         if ((window.innerWidth > window.innerHeight) || !element) {return;}
-        var headerOffset = window.innerWidth > 601 ? 74 : 66;
+        var headerOffset = window.innerWidth > 601 ? -74 : -66;
     
         animateScroll.scrollTo({element: element, offset: headerOffset, duration: 200});
     }
@@ -206,7 +210,7 @@
     function set_plan(new_plan_type, new_plan_value) {
         plan_type = new_plan_type;
         plan_value = new_plan_value;
-        scrollTo(document.getElementsByClassName("plan-heading")[0]);
+        scrollTo(document.getElementsByClassName("plan")[0]);
     }
 
     function gen_form_arr(grouped_forms) {
@@ -265,10 +269,10 @@
         plan_value = null;
     }
 
-    function reset_selects() {
-        ("forms" !== plan_type) && (selected_form = null);
-        ("teachers" !== plan_type) && (selected_teacher = null);
-        ("rooms" !== plan_type) && (selected_room = null);
+    function reset_selects(plan_type) {
+        (plan_type !== "forms") && (selected_form = null);
+        (plan_type !== "teachers") && (selected_teacher = null);
+        (plan_type !== "rooms") && (selected_room = null);
     }
 
     $logged_in = localStorage.getItem('logged_in') === 'true';
@@ -287,8 +291,7 @@
     $: localStorage.setItem("settings", `${JSON.stringify($settings)}`);
     $: update_colors($settings);
     $: $logged_in && get_greeting();
-    $: plan_type, reset_selects();
-
+    
     $: selected_form && set_plan("forms", selected_form);
     $: gen_form_arr(grouped_forms);
     $: selected_teacher && set_plan("teachers", selected_teacher);
@@ -296,6 +299,7 @@
     $: selected_room && set_plan("rooms", selected_room);
     $: gen_room_arr(grouped_rooms);
     $: gen_revision_arr(all_revisions);
+    $: reset_selects(plan_type);
 
     const resizeObserver = new ResizeObserver((entries) => {
         footer_padding = entries[0].target.scrollHeight > entries[0].target.clientHeight
@@ -407,10 +411,10 @@
     <Dropdown let:toggle small={true} transform_origin_x="100%" flipped={true}>
         <button slot="toggle_button" on:click={toggle}><span class="material-symbols-outlined">menu</span></button>
         
+        {#if !$logged_in}<button on:click={() => {navigate_page("login")}}>Login</button>{/if}
         <button on:click={() => {navigate_page("impressum")}}>Impressum</button>
         <button on:click={() => {navigate_page("contact")}}>Kontakt</button>
         <button on:click={() => {navigate_page("about_us")}}>Über Uns</button>
-        {#if !$logged_in}<button on:click={() => {navigate_page("login")}}>Login</button>{/if}
     </Dropdown>
 </footer>
 
