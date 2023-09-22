@@ -277,7 +277,11 @@ class PlanLesson:
                 (_scheduled_lesson.class_opt.number or _current_lesson.class_opt.number)
                 if _scheduled_lesson is not None else _current_lesson.class_opt.number
             ),
-            subject_changed=_current_lesson.subject_changed if _current_lesson._origin_plan_type == plan_type else (_current_lesson.course != _scheduled_lesson.course),
+            subject_changed=(
+                _current_lesson.subject_changed
+                if _current_lesson._origin_plan_type == plan_type
+                else (_current_lesson.course != _scheduled_lesson.course)
+            ),
             teacher_changed=_current_lesson.teacher_changed,
             room_changed=_current_lesson.room_changed,
             forms_changed=(_current_lesson.forms != _scheduled_lesson.forms) if _scheduled_lesson is not None else True,
@@ -618,13 +622,16 @@ class Plan:
                     end=lesson.end,
 
                     forms={form.short_name},
-                    teachers={class_data.teacher} if class_data is not None else None,
+                    teachers=(
+                        (current_lesson.teachers if not current_lesson.teacher_changed else None)
+                        or ({class_data.teacher} if class_data is not None else None)
+                    ),
                     rooms=current_lesson.rooms if not current_lesson.room_changed else None,
                     course=(
                             lesson.course2
+                            or (current_lesson.course if not current_lesson.subject_changed else None)
                             or (class_data.group if class_data is not None else None)
                             or (class_data.subject if class_data is not None else None)
-                            or (current_lesson.course if not current_lesson.room_changed else None)
                     ),
                     parsed_info=current_lesson.parsed_info,
 
