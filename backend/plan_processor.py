@@ -13,7 +13,7 @@ from .vplan_utils import group_forms, ParsedForm
 
 
 class PlanProcessor:
-    VERSION = "68"
+    VERSION = "69"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger

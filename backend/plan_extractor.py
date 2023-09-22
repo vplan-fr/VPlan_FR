@@ -240,7 +240,7 @@ class SubPlanExtractor:
             "forms": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_forms",
                                                           "_grouped_form_plan_scheduled_forms", plan_type="forms"),
             "rooms": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_rooms",
-                                                          "_grouped_form_plan_scheduled_rooms", plan_type="rooms"),
+                                                          "_grouped_form_plan_scheduled_rooms", plan_type="forms"),
             "teachers": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_teachers",
-                                                             "_grouped_form_plan_scheduled_teachers", plan_type="teachers"),
+                                                             "_grouped_form_plan_scheduled_teachers", plan_type="forms")
         }
