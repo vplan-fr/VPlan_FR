@@ -86,7 +86,12 @@
         selected_id = selected_elem.id;
     }
 
-    $: !selected_id && (selected_index = null);
+    function unselect() {
+        selected_index = null;
+        selected_elem = null;
+    }
+
+    $: (selected_id === null) && unselect();
     $: grouped && calc_grouped_length(data);
     $: (selected_index !== null) && update_selected();
 </script>
@@ -113,7 +118,7 @@
 <div class="select-wrapper">
     <Dropdown let:toggle small={true} transform_origin_x="100%">
         <button bind:this={toggle_button} type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
-            {#if selected_elem && selected_id}
+            {#if selected_elem}
                 {selected_elem.display_name}
             {:else}
                 <slot></slot>

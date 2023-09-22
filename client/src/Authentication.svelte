@@ -1,5 +1,4 @@
 <script>
-    import { onMount } from 'svelte';
     import {notifications} from './notifications.js';
     import { fly, fade } from 'svelte/transition';
     import { logged_in, title } from './stores.js';
@@ -9,7 +8,7 @@
     let l_password;
     let s_nickname;
     let s_password;
-    let register_visible = false;
+    let register_visible = location.hash === "#register";
 
     function login() {
         let formData = new FormData();
@@ -56,18 +55,14 @@
     function toggle_form() {
         location.hash = location.hash === "#register" ? "#login" : "#register";
     }
-
-    onMount(() => {
-        location.hash = "#login";
-        title.set("Login");
-        // console.log("Mounted Authentication.svelte");
-    });
+    
+    location.hash = register_visible ? "#register" : "#login";
+    title.set(register_visible ? "Registrieren" : "Login");
 
     window.addEventListener('popstate', () => {
-        register_visible = !(location.hash !== "#register");
+        register_visible = location.hash === "#register";
     });
 
-    $: register_visible = !(location.hash !== "#register");
     $: title.set(register_visible ? "Registrieren" : "Login");
 </script>
 <main transition:fade>
@@ -140,7 +135,7 @@
     }
 
     #forgot_password {
-        text-align: right;
+        margin-left: auto;
     }
 
     form {
