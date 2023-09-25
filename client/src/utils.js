@@ -1,5 +1,6 @@
 import {current_page, settings} from "./stores.js";
 import {notifications} from "./notifications.js";
+import { get } from "svelte/store";
 
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
@@ -108,6 +109,7 @@ export function get_settings() {
 }
 
 export function navigate_page(page_id) {
+    if(page_id === "plan" && get(current_page).startsWith("plan")) {return;}
     current_page.set(page_id);
     location.hash = `#${page_id}`;
     console.log(`Changed Location to: "${page_id}"`);

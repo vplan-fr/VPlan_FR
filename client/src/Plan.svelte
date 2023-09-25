@@ -35,6 +35,7 @@
         "teachers": "Lehrer"
     };
     let controller = new AbortController();
+    let signal = controller.signal;
 
     function reset_plan_vars() {
         info = null;
@@ -45,8 +46,10 @@
     }
 
     export function load_lessons(date, c_plan_type, entity, use_grouped_form_plans, revision=".newest") {
-        let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans";
-        controller.abort();
+        // Check if settings are loaded already (to prevent multiple requests)
+        if(use_grouped_form_plans === undefined) {
+            return;
+        }
         // Check the presence of necessary variables
         if (date === null || date === undefined || !c_plan_type || ((c_plan_type !== "room_overview") && !entity)) {
             reset_plan_vars();
@@ -66,12 +69,15 @@
             return;
         }
 
-        console.log("Loading lessons...", date, c_plan_type, entity);
+        console.log("Loading lessons...", date, c_plan_type, entity, use_grouped_form_plans, revision);
 
+        let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans";
         loading = true;
         data_from_cache = false;
         loading_failed = false;
+        controller.abort();
         controller = new AbortController();
+        signal = controller.signal;
         //console.log("getting lesson plan", school_num, date);
         if (should_date_be_cached(date) && revision === ".newest") {
             let data = localStorage.getItem(`${school_num}_${date}`);
@@ -91,7 +97,7 @@
         let params = new URLSearchParams();
         params.append("date", date);
         params.append("revision", revision);
-        customFetch(`${api_base}/plan?${params.toString()}`, {signal: controller.signal})
+        customFetch(`${api_base}/plan?${params.toString()}`, {signal: signal})
             .then(data => {
                 if (Object.keys(data).length !== 0 && should_date_be_cached(date) && revision === ".newest") {
                     try {
@@ -127,7 +133,6 @@
                 }
         });
         location.hash = gen_location_hash();
-        console.log(info);
     }
 
     function periods_to_block_label(periods) {
@@ -179,17 +184,6 @@
         }
     }
 
-    function refresh_plan_vars() {
-        let tmp_variables = location.hash.split("|");
-        if (tmp_variables.length === 5) {
-            school_num = decodeURI(tmp_variables[1]);
-            date = decodeURI(tmp_variables[2]);
-            plan_type = decodeURI(tmp_variables[3]);
-            plan_value = decodeURI(tmp_variables[4]);
-        }
-    }
-    refresh_plan_vars();
-
     if(!school_num) {
         navigate_page('school_manager');
     }
@@ -198,10 +192,6 @@
         location.hash = gen_location_hash();
         title.set("Plan");
         // console.log("Mounted Plan.svelte");
-    });
-
-    window.addEventListener('popstate', (e) => {
-        refresh_plan_vars();
     });
 
     let full_teacher_name = null;
@@ -366,7 +356,7 @@
 <div class:extra-height={extra_height}>
     <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
     {#if info}
-        <h1 class="plan-heading">Raumübersicht am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
+        <h1 class="plan-heading">Freie Räume am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
     {/if}
     {#if loading}
         <span class="responsive-text">Lädt...</span>
@@ -623,7 +613,6 @@
         border: clamp(1px, .3vmax, 3px) solid rgba(255, 255, 255, 0.2);
         padding: 10px;
         padding-top: calc(10px + var(--font-size-md) / 2);
-        padding-bottom: calc(5px + var(--font-size-md) / 2);
         margin-top: 30px;
         border-radius: 5px;
 

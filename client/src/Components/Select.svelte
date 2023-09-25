@@ -136,6 +136,10 @@
                             <img src="{icon_location}/{element.icon}" alt="Schul-Logo" class="school-logo">
                         {/if}
                     </button>
+                {:else}
+                    <span class="no-options-placeholder">
+                        Keine {data_name} vorhanden
+                    </span>
                 {/each}
             {:else}
                 <button type="button" class="select-option {icon_location ? "" : "no_icons"}" on:click={() => {selected_index = index1; toggle_button.focus();}}>
