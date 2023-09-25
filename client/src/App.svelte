@@ -86,7 +86,9 @@
             teacher_list = Object.keys(data.teachers);
             grouped_forms = data.forms.grouped_forms;
             enabled_dates = Object.keys(data.dates);
-            date = data.date;
+            if(!date) {
+                date = data.date;
+            }
             course_lists = data.forms.forms;
             data_from_cache = true;
         }
@@ -107,7 +109,9 @@
                 teacher_list = Object.keys(data.teachers);
                 grouped_forms = data.forms.grouped_forms;
                 enabled_dates = Object.keys(data.dates);
-                date = data.date;
+                if(!date) {
+                    date = data.date;
+                }
                 course_lists = data.forms.forms;
             })
             .catch(error => {
@@ -123,8 +127,10 @@
     function check_login_status() {
         customFetch('/auth/check_login')
             .then(data => {
-                $logged_in = data["logged_in"];
-                localStorage.setItem('logged_in', `${$logged_in}`);
+                if(data["logged_in"] !== $logged_in) {
+                    $logged_in = data["logged_in"];
+                    localStorage.setItem('logged_in', `${$logged_in}`);
+                }
             })
             .catch(error => {
                 //notifications.danger(error);
@@ -260,31 +266,40 @@
         init_vars();
     }
 
-    function reset_plan_vars() {
-        plan_type = null;
-        plan_value = null;
-    }
-
     function reset_selects(plan_type) {
         (plan_type !== "forms") && (selected_form = null);
         (plan_type !== "teachers") && (selected_teacher = null);
         (plan_type !== "rooms") && (selected_room = null);
     }
 
+    function refresh_plan_vars() {
+        let tmp_variables = location.hash.split("|");
+        if (tmp_variables.length === 5) {
+            school_num = decodeURI(tmp_variables[1]);
+            date = decodeURI(tmp_variables[2]);
+            plan_type = decodeURI(tmp_variables[3]);
+            plan_value = decodeURI(tmp_variables[4]);
+        } else {
+            date = null;
+            plan_type = null;
+            plan_value = null;
+        }
+    }
+
     $logged_in = localStorage.getItem('logged_in') === 'true';
     init_vars();
     check_login_status();
     clear_caches();
+    refresh_plan_vars();
 
     $: !$logged_in && logout();
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
-    $: school_num && reset_plan_vars();
     $: school_num && get_meta();
     $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
     $: school_num && get_preferences();
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
     $: $logged_in && get_settings();
-    $: localStorage.setItem("settings", `${JSON.stringify($settings)}`);
+    $: (Object.keys($settings).length !== 0) && localStorage.setItem("settings", `${JSON.stringify($settings)}`);
     $: update_colors($settings);
     $: $logged_in && get_greeting();
     
@@ -316,6 +331,9 @@
         }
         if(new_location === "") {new_location = "plan";}
         navigate_page(new_location);
+        if(new_location.startsWith("plan")) {
+            refresh_plan_vars();
+        }
     });
 
     let new_location = location.hash.slice(1);
@@ -378,7 +396,7 @@
                     <div class="control" id="c5">
                         <Button on:click={() => {
                             set_plan("room_overview", "");
-                        }}>Raumübersicht</Button>
+                        }}>Freie Räume</Button>
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
@@ -572,10 +590,11 @@
     }
     :global {
         ul, ol {
-            padding-left: 40px !important;
-            @media only screen and (max-width: 1501px) {
-                padding-left: 22px !important;
-            }
+            padding-left: 22px !important;
+            // padding-left: 40px !important;
+            // @media only screen and (max-width: 1501px) {
+            //     padding-left: 22px !important;
+            // }
             list-style-type: disc !important;
         }
     }
