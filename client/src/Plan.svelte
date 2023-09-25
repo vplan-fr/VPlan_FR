@@ -6,6 +6,7 @@
     import { swipe } from 'svelte-gestures';
     import {preferences, settings, title} from './stores.js';
     import {arraysEqual, customFetch, format_date, navigate_page, should_date_be_cached} from "./utils.js";
+    import Dropdown from './Components/Dropdown.svelte';
 
     export let api_base;
     export let school_num;
@@ -126,6 +127,7 @@
                 }
         });
         location.hash = gen_location_hash();
+        console.log(info);
     }
 
     function periods_to_block_label(periods) {
@@ -316,11 +318,43 @@
         {#if info}
             {#if info.additional_info.length > 0}
                 <div class="additional-info">
-                    {#each info.additional_info as cur_info}
-                        {#if cur_info !== null}
-                            {cur_info}
+                    {#each info.processed_additional_info as info_paragraph}
+                        {#if info_paragraph.length > 0}
+                            <div class="inline-wrapper">
+                                {#each info_paragraph as text_segment}
+                                    {#if text_segment.link?.value.length === 1}
+                                        <button class="no-btn-visuals" on:click={() => {
+                                            date = text_segment.link.date;
+                                            plan_type = text_segment.link.type;
+                                            plan_value = text_segment.link.value[0];
+                                        }}>
+                                            <div class="clickable">{text_segment.text}</div>
+                                        </button>
+                                    {:else if text_segment.link?.value.length >= 2}
+                                        <div class="fit-content-width">
+                                            <Dropdown let:toggle small={true} transform_origin_x="50%">
+                                                <button slot="toggle_button" on:click={toggle} class="toggle-button">
+                                                    <span class="grow">{text_segment.text}</span>
+                                                    <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                                                </button>
+    
+                                                {#each text_segment.link.value as item}
+                                                    <button on:click={() => {
+                                                        date=text_segment.link.date;
+                                                        plan_type = text_segment.link.type;
+                                                        plan_value = item;
+                                                    }}>{item}</button>
+                                                {/each}
+                                            </Dropdown>
+                                        </div>
+                                    {:else}
+                                        <button class="no-btn-visuals">{text_segment.text}</button>
+                                    {/if}
+                                {/each}
+                            </div>
+                        {:else}
+                            <div class="info-spacer"></div>
                         {/if}
-                        <br>
                     {/each}
                 </div>
             {/if}
@@ -352,6 +386,106 @@
 </div>
 
 <style lang="scss">
+    .inline-wrapper {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        row-gap: .1em;
+    }
+
+    .info-spacer {
+        height: 5px;
+    }
+
+    .dropdown-arrow {
+        font-size: 1.4em;
+        display: block;
+        transition: transform .2s ease;
+        pointer-events: none;
+
+        @media only screen and (min-width: 1501px) {
+            font-size: 1em;
+            margin-left: .2em;
+         
+            &.centered_txt {
+                position: absolute;
+                right: 10px;
+            }
+        }
+    }
+
+    :global(.open) .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
+    .fit-content-width {
+        width: fit-content;
+    }
+
+    .fit-content-width .dropdown-wrapper button, .max-width .dropdown-wrapper button {
+        border: none;
+        background: transparent;
+        color: var(--text-color);
+        transition: background-color .2s ease;
+        width: 100%;
+        padding: 2px 0px 2px 5px;
+        font-size: inherit;
+
+        &:hover, &:focus-visible {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        &.toggle-button {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 5px;
+            overflow: hidden;
+            text-align: left;
+            font-size: inherit;
+            font-weight: inherit;
+            color: var(--text-color);
+
+            span.grow {
+                flex: 1;
+                white-space: nowrap;
+            }
+            
+            &.center-align {
+                text-align: center;
+            }
+
+            &:hover, &:focus-visible {
+                background-color: rgba(255, 255, 255, 0.15);
+            }
+        }
+    }
+
+    .no-btn-visuals {
+        border: 0;
+        background: none;
+        padding: 0;
+        margin: 0;
+        text-align: start;
+        font-size: inherit;
+        color: var(--text-color);
+        white-space: pre;
+        word-break: break-all;
+    }
+
+    .clickable {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 5px;
+        padding: 2px 5px;
+        transition: background-color 0.2s ease;
+
+        &:hover, &:focus-visible {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    }
+
     .day-controls {
         position: fixed;
         bottom: 0;
@@ -484,16 +618,18 @@
 
     .additional-info {
         position: relative;
-        font-size: clamp(0.938rem, 3vmin, 1.875rem);
+        font-size: var(--font-size-base);
         line-height: 1.5;
         border: clamp(1px, .3vmax, 3px) solid rgba(255, 255, 255, 0.2);
         padding: 10px;
-        padding-top: calc(1vmax + .5rem);
+        padding-top: calc(10px + var(--font-size-md) / 2);
+        padding-bottom: calc(5px + var(--font-size-md) / 2);
         margin-top: 30px;
         border-radius: 5px;
 
         &::before {
             content: "Informationen";
+            font-size: var(--font-size-md);
             color: rgba(255, 255, 255, 0.2);
             background: var(--background);
             padding: 0px 5px;
