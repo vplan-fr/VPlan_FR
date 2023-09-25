@@ -90,9 +90,6 @@ class MetaExtractor:
                     try:
                         plan_kl = self.cache.get_plan_file(day, timestamp, "PlanKl.xml")
                     except FileNotFoundError:
-                        self._logger.warning(
-                            f"Timestamp {timestamp!s} for day {day!s} has no PlanKl.xml file."
-                        )
                         continue
 
                     extractor = DailyMetaExtractor(plan_kl)
