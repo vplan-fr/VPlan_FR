@@ -13,14 +13,14 @@
     let grouped_length = null;
 
     function keydown_handler(event) {
-        if(event.key === "ArrowDown" || event.key === "ArrowRight") {
+        if(event.key === "ArrowDown") {
             event.preventDefault();
             if(selected_index === null) {
                 selected_index = 0;
                 return;
             }
             change_index(1);
-        } else if(event.key === "ArrowUp" || event.key === "ArrowLeft") {
+        } else if(event.key === "ArrowUp") {
             event.preventDefault();
             if(selected_index === null) {
                 if(grouped) {

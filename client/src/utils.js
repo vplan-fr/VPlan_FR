@@ -138,42 +138,27 @@ export function update_colors(settings) {
     }
 }
 
-
-function get_cache_keys() {
-    let cache_keys = [];
-    for ( var i = 0, len = localStorage.length; i < len; ++i ) {
-        cache_keys.push(localStorage.key(i))
+export function delete_oldest_plan_before(date) {
+    let oldest_item = Object.keys(localStorage).filter(x => x.endsWith("plan")).sort((a, b) => Date.parse(a.split("_")[1]) - Date.parse(b.split("_")[1]))[0];
+    if(date > oldest_item.split("_")[1]) {
+        localStorage.removeItem(oldest_item);
+        return true;
     }
-    return cache_keys
+    return false;
 }
 
-export function should_date_be_cached(date) {
-    const dateParts = date.split("-");
-    const year = parseInt(dateParts[0]);
-    const month = parseInt(dateParts[1]) - 1;
-    const day = parseInt(dateParts[2]);
-    const parsedDate = new Date(year, month, day);
-
-    const currentDate = new Date();
-
-    const currentDay = currentDate.getDay();
-    const daysUntilLastSaturday = currentDay === 6 ? 1 : currentDay + 1; // Adjust for Saturday being the start of the week
-    const lastSaturday = new Date(currentDate);
-    lastSaturday.setDate(currentDate.getDate() - daysUntilLastSaturday);
-
-    return parsedDate >= lastSaturday;
-}
-
-export function clear_caches() {
-    let cache_keys = get_cache_keys();
-    for (const ind in cache_keys) {
-        let cache_key = cache_keys[ind];
-        if (cache_key === "logged_in" || cache_key === "school_num" || cache_key === "settings" || cache_key.endsWith("_meta")) {
-            continue;
-        }
-        let cur_date = cache_key.split("_")[1];
-        if (!should_date_be_cached(cur_date)) {
-            localStorage.removeItem(cache_key);
+export function cache_plan(school_num, date, data) {
+    try {
+        localStorage.setItem(`${school_num}_${date}_plan`, JSON.stringify(data));
+    } catch (error) {
+        if (error.name === 'QuotaExceededError' ) {
+            if(!delete_oldest_plan_before(date)) {
+                notifications.danger("Der aktuelle Plan konnte nicht gecached werden.")
+                return;
+            }
+            cache_plan(school_num, date, data);
+        } else {
+            throw error;
         }
     }
 }
@@ -223,7 +208,7 @@ export function analyze_local_storage() {
     return new Blob([str]).size;
     }
 
-    for (let i = 0; i < localStorage.length; i++) {
+    for (let i = 0; i < to.length; i++) {
         const key = localStorage.key(i);
         const value = localStorage.getItem(key);
         const sizeInBytes = calculateSizeInBytes(value);
