@@ -12,7 +12,7 @@
     export let date;
     export let plan_type;
     export let plan_value;
-    export let all_meta;
+    export let meta;
     export let show_title = true;
     export let extra_height = true;
     export let week_letter = "";
@@ -57,10 +57,10 @@
             return;
         }
         // Check the validity of the plan value
-        if((plan_type === "rooms" || plan_type === "teachers") && (!Object.keys(all_meta[plan_type]).includes(entity))) {
+        if((plan_type === "rooms" || plan_type === "teachers") && (!Object.keys(meta[plan_type]).includes(entity))) {
             reset_plan_vars();
             return;
-        } else if((plan_type === "forms") && !Object.keys(all_meta.forms.forms).includes(entity)) {
+        } else if((plan_type === "forms") && !Object.keys(meta.forms.forms).includes(entity)) {
             reset_plan_vars();
             return;
         }
@@ -205,8 +205,8 @@
     let full_teacher_name = null;
     let teacher_contact_link = null;
     $: if (plan_type === "teachers") {
-        full_teacher_name = all_meta.teachers[plan_value]?.surname || null;
-        teacher_contact_link = all_meta.teachers[plan_value]?.contact_link || null;
+        full_teacher_name = meta.teachers[plan_value]?.surname || null;
+        teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
     }
 
     let preferences_apply = true;

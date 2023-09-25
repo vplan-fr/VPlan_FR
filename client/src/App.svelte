@@ -35,7 +35,6 @@
     let api_base;
     let selected_revision;
     let meta;
-    let all_meta;
     let enabled_dates;
     let grouped_rooms;
     let course_lists;
@@ -62,7 +61,6 @@
         api_base = null;
         selected_revision = ".newest";
         meta = {};
-        all_meta = {};
         enabled_dates = [];
         grouped_rooms = [];
         course_lists = {};
@@ -83,8 +81,7 @@
         let data = localStorage.getItem(`${school_num}_meta`);
         if (data !== "undefined" && data) {
             data = JSON.parse(data);
-            all_meta = data;
-            meta = data.meta;
+            meta = data;
             all_rooms = data.rooms;
             teacher_list = Object.keys(data.teachers);
             grouped_forms = data.forms.grouped_forms;
@@ -105,8 +102,7 @@
                         throw error;
                     }
                 }
-                all_meta = data;
-                meta = data.meta;
+                meta = data;
                 all_rooms = data.rooms;
                 teacher_list = Object.keys(data.teachers);
                 grouped_forms = data.forms.grouped_forms;
@@ -284,7 +280,7 @@
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
     $: school_num && reset_plan_vars();
     $: school_num && get_meta();
-    $: all_revisions = [".newest"].concat((all_meta?.dates || {})[date] || []);
+    $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
     $: school_num && get_preferences();
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
     $: $logged_in && get_settings();
@@ -386,7 +382,7 @@
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
-                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:all_meta bind:selected_revision bind:enabled_dates external_times={$settings.external_times} />
+                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:selected_revision bind:enabled_dates external_times={$settings.external_times} />
                 {:else}
                     <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
                 {/if}
