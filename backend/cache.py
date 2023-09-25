@@ -56,23 +56,22 @@ class Cache:
         """Return the contents of a plan file from the cache."""
         # self._logger.debug(f"get_plan_file({day!r}, {timestamp!r}, {filename!r})")
 
-        if newest_before:
+        if newest_before and not isinstance(timestamp, str):
             timestamps = self.get_timestamps(day)
-            if not isinstance(timestamp, str):
-                timestamps = [t for t in timestamps if t <= timestamp]
+            timestamps = [t for t in timestamps if t <= timestamp]
 
-            for timestamp in timestamps:
+            for older_timestamp in timestamps:
                 try:
-                    return self.get_plan_file(day, timestamp, filename, newest_before=False)
+                    return self.get_plan_file(day, older_timestamp, filename, newest_before=False)
                 except OSError:
                     pass
             else:
                 raise FileNotFoundError
+        else:
+            path = self.get_plan_path(day, timestamp) / filename
 
-        path = self.get_plan_path(day, timestamp) / filename
-
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
 
     def store_meta_file(self, content: str, filename: str):
         """Store a meta file in the cache such as "meta.json"."""
