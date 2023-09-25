@@ -10,7 +10,7 @@
     import {get_settings, group_rooms, update_colors, navigate_page} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt} from './stores.js'
-    import {customFetch, clear_caches, format_revision_date} from "./utils.js";
+    import {customFetch, format_revision_date} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
     import Changelog from "./Changelog.svelte";
@@ -279,17 +279,12 @@
             date = decodeURI(tmp_variables[2]);
             plan_type = decodeURI(tmp_variables[3]);
             plan_value = decodeURI(tmp_variables[4]);
-        } else {
-            date = null;
-            plan_type = null;
-            plan_value = null;
         }
     }
 
     $logged_in = localStorage.getItem('logged_in') === 'true';
     init_vars();
     check_login_status();
-    clear_caches();
     refresh_plan_vars();
 
     $: !$logged_in && logout();
@@ -409,7 +404,7 @@
                 <Select data={revision_arr} bind:selected_id={selected_revision} data_name="Revisions">Zeitstempel des Planuploads auswählen</Select>
                 {/if}
             {:else if $current_page === "school_manager"}
-                <SchoolManager bind:school_num />
+                <SchoolManager bind:school_num bind:date bind:plan_type bind:plan_value />
             {:else if $current_page === "pwa_install"}
                 <PwaInstallHelper />
             {:else}
