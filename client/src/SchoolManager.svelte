@@ -118,7 +118,7 @@
     function get_school_name_by_id(school_id) {
         for (let school of schools) {
             if (school.id === school_id.toString()) {
-                return school["display_name"]
+                return school.display_name
             }
         }
         return ""
