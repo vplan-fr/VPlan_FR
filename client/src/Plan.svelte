@@ -5,7 +5,7 @@
     import {notifications} from './notifications.js';
     import { swipe } from 'svelte-gestures';
     import {preferences, settings, title} from './stores.js';
-    import {arraysEqual, customFetch, format_date, navigate_page, should_date_be_cached} from "./utils.js";
+    import {arraysEqual, cache_plan, customFetch, format_date, navigate_page} from "./utils.js";
     import Dropdown from './Components/Dropdown.svelte';
 
     export let api_base;
@@ -46,7 +46,7 @@
     }
 
     export function load_lessons(date, c_plan_type, entity, use_grouped_form_plans, revision=".newest") {
-        // Check if settings are loaded already (to prevent multiple requests)
+        // Check if settings are loaded
         if(use_grouped_form_plans === undefined) {
             return;
         }
@@ -78,9 +78,8 @@
         controller.abort();
         controller = new AbortController();
         signal = controller.signal;
-        //console.log("getting lesson plan", school_num, date);
-        if (should_date_be_cached(date) && revision === ".newest") {
-            let data = localStorage.getItem(`${school_num}_${date}`);
+        if (revision === ".newest") {
+            let data = localStorage.getItem(`${school_num}_${date}_plan`);
             if (data !== "undefined" && data) {
                 data = JSON.parse(data);
                 rooms_data = data.rooms;
@@ -99,16 +98,8 @@
         params.append("revision", revision);
         customFetch(`${api_base}/plan?${params.toString()}`, {signal: signal})
             .then(data => {
-                if (Object.keys(data).length !== 0 && should_date_be_cached(date) && revision === ".newest") {
-                    try {
-                        localStorage.setItem(`${school_num}_${date}`, JSON.stringify(data));
-                    } catch (error) {
-                        if (error.name === 'QuotaExceededError' ) {
-                            notifications.danger("Der aktuelle Plan konnte nicht gecached werden.")
-                        } else {
-                            throw error;
-                        }
-                    }
+                if (Object.keys(data).length !== 0 && revision === ".newest") {
+                    cache_plan(school_num, date, data);
                 }
                 rooms_data = data.rooms;
                 if (c_plan_type !== "room_overview") {
@@ -174,8 +165,6 @@
         return `${formattedDate}`;
     }
 
-    $: load_lessons(date, plan_type, plan_value, $settings.use_grouped_form_plans, selected_revision);
-
     function gen_location_hash() {
         if(school_num && date && plan_type) {
             return `#plan|${school_num}|${date}|${plan_type}|${plan_value}`;
@@ -183,6 +172,8 @@
             return "#plan";
         }
     }
+
+    $: load_lessons(date, plan_type, plan_value, $settings.use_grouped_form_plans, selected_revision);
 
     if(!school_num) {
         navigate_page('school_manager');
@@ -288,7 +279,7 @@
         {#if plan_type}    
             <span class="responsive-text">Keine Stunden</span>
         {:else}
-        <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus um einen Plan zu sehen.</span>
+        <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus, um einen Plan zu sehen.</span>
         {/if}
         {:else}
         <div class="lessons-wrapper">
