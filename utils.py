@@ -250,7 +250,7 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
 
     for embed in embeds:
         webhook.add_embed(embed)
-    if request:
+    """if request:
         if os.getenv("WEBHOOK_META"):
             meta_webhook = DiscordWebhook(url=os.getenv(meta_env), content=message, username="VPlan-Bot", avatar_url="https://vplan.fr/static/images/icons/android-chrome-192x192.png")
             meta_embed = BetterEmbed(title="Metadaten", color="808080")
@@ -259,7 +259,7 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
             meta_embed.add_embed_field("IP-Adresse:", f"`{request.remote_addr}`\n more info at https://whatismyipaddress.com/ip/{request.remote_addr}", inline=False)
             meta_embed.add_embed_field("User-Agent:", f"`{request.headers.get('user-agent')}`")
             meta_webhook.add_embed(meta_embed)
-            meta_webhook.execute()
+            meta_webhook.execute()"""
 
     webhook.execute()
 
