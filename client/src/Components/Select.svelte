@@ -121,8 +121,6 @@
         <button bind:this={toggle_button} type="button" slot="toggle_button" on:click={toggle} class="toggle-btn">
             {#if selected_elem}
                 {selected_elem.display_name}
-            {:else}
-                <span></span>
             {/if}
             <div class="label" class:small={selected_elem}>
                 <slot></slot>
@@ -163,13 +161,14 @@
 
 <style lang="scss">
     .label {
-        position: absolute;
         transition: all .2s ease;
-
         &.small {
-            transform: translate(-10px, calc(-100% - 5px));
+            position: absolute;
+            top: 0;
+            left: 0;
             font-size: 0.8em;
             filter: brightness(0.5);
+            transform: translateY(-25%);
         }
     }
 
@@ -209,7 +208,7 @@
         width: 100%;
         height: 100%;
         font-size: var(--font-size-base);
-        padding: 10px 10px 5px 10px;
+        padding: 15px 10px 5px 10px;
         text-align: left;
         border: none;
         border-bottom: 2px solid rgba(255, 255, 255, 0.2);
