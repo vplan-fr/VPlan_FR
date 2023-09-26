@@ -79,14 +79,7 @@ class PlanExtractor:
         for teacher_str in self.substitution_plan.absent_teachers:
             teacher_name, periods = parse_absent_element(teacher_str)
 
-            try:
-                teacher_abbreviation = self.teacher_abbreviation_by_surname[teacher_name]
-            except KeyError:
-                self._logger.warning(f"Could not resolve teacher abbreviation for {teacher_name!r}.")
-                if " " not in teacher_name:
-                    teacher_abbreviation = teacher_name
-                else:
-                    continue
+            teacher_abbreviation = self.teacher_abbreviation_by_surname.get(teacher_name, teacher_name)
 
             for period in periods or range(1, 11):
                 info = f"{teacher_name}{' den ganzen Tag' if not periods else ''} abwesend laut Vertretungsplan"
