@@ -424,6 +424,7 @@
         <button on:click={() => {navigate_page("impressum")}}>Impressum</button>
         <button on:click={() => {navigate_page("contact")}}>Kontakt</button>
         <button on:click={() => {navigate_page("about_us")}}>Über Uns</button>
+        <button on:click={() => {navigate_page("pwa_install")}}>Installieren</button>
     </Dropdown>
 </footer>
 
