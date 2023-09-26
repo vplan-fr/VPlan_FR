@@ -162,6 +162,7 @@ cython_debug/
 
 
 client/node_modules
+backend/schools/private_data
 creds.json
 proxies.json
 
