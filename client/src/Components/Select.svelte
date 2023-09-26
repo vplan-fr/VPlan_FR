@@ -8,8 +8,9 @@
     export let icon_location = null;
     export let grouped = false;
     export let data_name = "Elemente";
+    export let preselect = null;
     let toggle_button;
-    let selected_index = null;
+    let selected_index = (preselect !== null) ? preselect : null;
     let grouped_length = null;
 
     function keydown_handler(event) {
@@ -121,8 +122,11 @@
             {#if selected_elem}
                 {selected_elem.display_name}
             {:else}
-                <slot></slot>
+                <span></span>
             {/if}
+            <div class="label" class:small={selected_elem}>
+                <slot></slot>
+            </div>
             <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
         </button>
 
@@ -130,7 +134,7 @@
             {#if grouped}
                 <span class="heading">{elem[0]}</span>
                 {#each elem[1] as element, index2}
-                    <button type="button" class="select-option indented {icon_location ? "" : "no_icons"}" on:click={() => {selected_index = turn_to_oned_index(index1, index2); toggle_button.focus();}}>
+                    <button type="button" class="select-option indented" class:no_icons={!icon_location} on:click={() => {selected_index = turn_to_oned_index(index1, index2); toggle_button.focus();}}>
                         {element.display_name}
                         {#if icon_location && element.icon}
                             <img src="{icon_location}/{element.icon}" alt="Schul-Logo" class="school-logo">
@@ -142,7 +146,7 @@
                     </span>
                 {/each}
             {:else}
-                <button type="button" class="select-option {icon_location ? "" : "no_icons"}" on:click={() => {selected_index = index1; toggle_button.focus();}}>
+                <button type="button" class="select-option" class:no_icons={!icon_location} on:click={() => {selected_index = index1; toggle_button.focus();}}>
                     {elem.display_name}
                     {#if icon_location && elem.icon}
                         <img src="{icon_location}/{elem.icon}" alt="Schul-Logo" class="school-logo">
@@ -158,6 +162,17 @@
 </div>
 
 <style lang="scss">
+    .label {
+        position: absolute;
+        transition: all .2s ease;
+
+        &.small {
+            transform: translate(-10px, calc(-100% - 5px));
+            font-size: 0.8em;
+            filter: brightness(0.5);
+        }
+    }
+
     .no-options-placeholder {
         padding: 15px;
         display: block;
@@ -194,7 +209,7 @@
         width: 100%;
         height: 100%;
         font-size: var(--font-size-base);
-        padding: 10px;
+        padding: 10px 10px 5px 10px;
         text-align: left;
         border: none;
         border-bottom: 2px solid rgba(255, 255, 255, 0.2);
