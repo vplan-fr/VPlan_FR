@@ -9,6 +9,8 @@
     let s_nickname;
     let s_password;
     let register_visible = location.hash === "#register";
+    let login_password_visible = false;
+    let register_password_visible = false;
 
     function login() {
         let formData = new FormData();
@@ -75,9 +77,12 @@
             <input disabled={register_visible} autocomplete="username" name="l_nickname" bind:value={l_nickname} minlength="3" maxlength="15" required class="textfield" placeholder="Nutzername"/>
         </div>
         <label for="l_password">Passwort</label>
-        <div class="input_icon">
+        <div class="input_icon password_field">
             <img src="/public/base_static/images/lock-solid.svg" alt="Lock Icon">
-            <input disabled={register_visible} autocomplete="current-password" name="l_password" bind:value={l_password} type="password" minlength="1" required class="textfield" placeholder="Passwort"/>
+            <button type="button" on:click={() => {login_password_visible = !login_password_visible}}>
+                <span class="material-symbols-outlined">{login_password_visible ? "visibility_off" : "visibility"}</span>
+            </button>
+            <input disabled={register_visible} autocomplete="current-password" name="l_password" on:input={(event) => {l_password = event.target.value}} type={login_password_visible ? "text" : "password"} minlength="1" required class="textfield" placeholder="Passwort"/>
         </div>
         <button class="link-button" id="forgot_password" type="button" on:click={() => {alert('Verkackt :D Aber da wir keine E-Mails zum Registrieren benutzen ist ein Passwort-Reset nicht möglich. Aber frag uns einfach und wir helfen dir beim wiederherstellen deiner Einstellungen & Präferenzen bei einem neuen Account.')}}>Passwort vergessen?</button>
         <button class="default-button" type="submit">Login</button>
@@ -94,9 +99,12 @@
             <input disabled={!register_visible} autocomplete="username" name="s_nickname" bind:value={s_nickname} minlength="3" maxlength="15" required class="textfield" placeholder="Nutzername"/>
         </div>
         <label for="s_nickname">Passwort</label>
-        <div class="input_icon">
+        <div class="input_icon password_field">
             <img src="/public/base_static/images/lock-solid.svg" alt="Lock Icon">
-            <input disabled={!register_visible} autocomplete="new-password" name="s_password" bind:value={s_password} type="password" minlength="10" required class="textfield" placeholder="Passwort"/>
+            <button type="button" on:click={() => {register_password_visible = !register_password_visible}}>
+                <span class="material-symbols-outlined">{register_password_visible ? "visibility_off" : "visibility"}</span>
+            </button>
+            <input disabled={!register_visible} autocomplete="new-password" name="s_password" on:input={(event) => {s_password = event.target.value}} type={register_password_visible ? "text" : "password"} minlength="10" required class="textfield" placeholder="Passwort"/>
         </div>
         <span class="extra-info">Mit dem Registrieren akzeptierst du alle unbedingt erforderlichen Cookies.</span>
         <button class="default-button" type="submit">Registrieren</button>
@@ -166,9 +174,11 @@
 
     .input_icon {
         position: relative;
+        
         .textfield {
             padding-left: 40px;
         }
+        
         img {
             position: absolute;
             top: 14px;
@@ -177,6 +187,35 @@
             height: 20px;
             background-size: contain;
             z-index: 1;
+        }
+    }
+
+    .password_field {
+        .textfield {
+            padding-right: 40px;
+        }
+
+        button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 48px;
+            z-index: 1;
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 5.5px;
+
+            .material-symbols-outlined {
+                color: black !important;
+                font-size: 25px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
         }
     }
 

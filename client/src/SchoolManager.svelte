@@ -35,6 +35,7 @@
     let school_auth_visible = false;
     let is_admin = false;
     let school_id_arr = [];
+    let password_visible = false;
 
     function get_schools() {
         customFetch("/api/v69.420/schools")
@@ -169,9 +170,12 @@
             <input disabled={!school_auth_visible} autocomplete="off" name="school_username" bind:value={username} type="text" required class="textfield" placeholder="Nutzername"/>
         </div>
         <label for="school_password">Passwort</label>
-        <div class="input_icon">
+        <div class="input_icon password_field">
             <img src="/public/base_static/images/lock-solid-white.svg" alt="Lock Icon">
-            <input disabled={!school_auth_visible} autocomplete="off" name="school_password" bind:value={password} type="password" required class="textfield" placeholder="Passwort"/>
+            <button type="button" on:click={() => {password_visible = !password_visible}}>
+                <span class="material-symbols-outlined">{password_visible ? "visibility_off" : "visibility"}</span>
+            </button>
+            <input disabled={!school_auth_visible} autocomplete="off" name="school_password" on:input={(event) => {password = event.target.value}} type={password_visible ? "text" : "password"} required class="textfield" placeholder="Passwort"/>
         </div>
         <Button type="submit" background="var(--accent-color)">Login</Button>
     </form>
@@ -179,6 +183,35 @@
 </main>
 
 <style lang="scss">
+    .password_field {
+        .textfield {
+            padding-right: 40px;
+        }
+
+        button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 48px;
+            z-index: 1;
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 5.5px;
+
+            .material-symbols-outlined {
+                color: var(--text-color);
+                font-size: 25px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+    }
+
     form {
         position: absolute;
         top: 50%;
