@@ -16,8 +16,9 @@ from . import models
 
 
 class _InfoParsers:
-    _teacher_name = r"[A-ZÄÖÜ][a-zäöüß]+(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+|\.)?)+"
-    _teacher_abbreviation = r"[A-ZÄÖÜ][A-ZÄÖÜa-zäöüß]*"
+    _teacher_name = (r"[A-ZÄÖÜ][a-zäöüß]+(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?\.?)*"
+                     r"(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)")
+    _teacher_abbreviation = r"[A-ZÄÖÜ][A-ZÄÖÜa-zäöüß]{2,}"
     _teacher = fr"(?:{_teacher_name})|(?:{_teacher_abbreviation})"
 
     # teacher a,teacher b
@@ -819,7 +820,7 @@ def add_fuzzy_teachers(text: str, teacher_abbreviation_by_surname: dict[str, str
     segments = []
 
     prev = 0
-    for match in re.finditer(r"\b\w+", text):
+    for match in re.finditer(rf"{_InfoParsers._teacher}|\b\w+", text):
         segments.append(LessonInfoTextSegment(text[prev:match.start()]))
         prev = match.end()
 
