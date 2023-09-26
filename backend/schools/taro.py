@@ -9,7 +9,7 @@ def parse_room(room_str: str) -> Room:
     Ein raum im Hauptgebäude wäre also 307 (Dritte Etage, Raum 07)
     Im Anbau: E307 (Anbau, Dritte Etage, Raum 07)
     """
-    exceptions = "SH", "TH", "HTWK"
+    exceptions = "SH", "TH", "HTWK", "AUL"
 
     for exception in exceptions:
         if room_str.startswith(exception):
