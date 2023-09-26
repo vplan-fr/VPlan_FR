@@ -1,6 +1,8 @@
 <script>
     import { onMount } from "svelte";
     import { title } from "./stores";
+    import Button from "./Components/Button.svelte";
+    import {navigate_page} from "./utils.js";
 
     onMount(() => {
         location.hash = "#about_us";
@@ -33,6 +35,7 @@
             Man kann uns per Mail unter <a href="mailto:elanus4506@gmail.com">elanus4506@gmail.com</a> erreichen.
             <br>
             Hier ist außerdem unser <a href="https://github.com/ArtrenH/VPlan_FR">Github-Repository</a>.
+            <Button on:click={() => navigate_page("contact")}>Hier kann man uns eine Nachricht schreiben</Button>
         </p>
     </div>
 </main>

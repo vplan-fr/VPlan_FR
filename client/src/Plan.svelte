@@ -187,9 +187,15 @@
 
     let full_teacher_name = null;
     let teacher_contact_link = null;
+    let teacher_image_path = null;
     $: if (plan_type === "teachers") {
         full_teacher_name = meta.teachers[plan_value]?.surname || null;
         teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
+        teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
+        teacher_image_path = meta.teachers[plan_value]?.image_path || null;
+        if (teacher_image_path) {
+            teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
+        }
     }
 
     let preferences_apply = true;
@@ -267,7 +273,7 @@
             <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
         {/if}
             <h1 class="plan-heading">
-                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{#if teacher_image_path !== null}<img class="teacher-img" src="{teacher_image_path}" alt="">{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
             </h1>
         {/if}
     {#if loading}
