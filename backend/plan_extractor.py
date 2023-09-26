@@ -158,10 +158,12 @@ class PlanExtractor:
         return {
             "additional_info": self.forms_plan.additional_info,
             "processed_additional_info": [
-                [i.serialize() for i in
-                 process_additional_info(text, parsed_forms, self.teacher_abbreviation_by_surname,
-                                         self.forms_plan.indiware_plan.date)]
-                for text in self.forms_plan.additional_info
+                [i.serialize() for i in line]
+                for line in process_additional_info(
+                    self.forms_plan.additional_info, parsed_forms,
+                    self.teacher_abbreviation_by_surname,
+                    self.forms_plan.indiware_plan.date
+                )
             ],
             "timestamp": self.forms_plan.indiware_plan.timestamp.isoformat(),
             "week": self.forms_plan.week_letter()

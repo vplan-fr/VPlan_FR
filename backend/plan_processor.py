@@ -14,7 +14,7 @@ from .stats import LessonsStatistics
 
 
 class PlanProcessor:
-    VERSION = "77"
+    VERSION = "78"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger

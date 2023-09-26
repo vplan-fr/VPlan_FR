@@ -727,9 +727,22 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
     return out
 
 
-def process_additional_info(text: str, parsed_existing_forms: list[ParsedForm],
+def process_additional_info(info: list[str], parsed_existing_forms: list[ParsedForm],
                             teacher_abbreviation_by_surname: dict[str, str], date: datetime.date
-                            ) -> list[LessonInfoTextSegment]:
+                            ) -> list[list[LessonInfoTextSegment]]:
+    info = info.copy()
+    while info and not info[-1]:
+        info.pop()
+
+    return [
+        process_additional_info_line(line, parsed_existing_forms, teacher_abbreviation_by_surname, date)
+        for line in info
+    ]
+
+
+def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedForm],
+                                 teacher_abbreviation_by_surname: dict[str, str], date: datetime.date
+                                 ) -> list[LessonInfoTextSegment]:
     if text is None:
         return []
     # TODO: Dates, Rooms
