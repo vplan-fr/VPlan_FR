@@ -734,7 +734,7 @@ def process_additional_info(text: str, parsed_existing_forms: list[ParsedForm],
         return []
     # TODO: Dates, Rooms
     # remove spaces after slashes like in 5/ 3
-    text = re.sub(r"(?<=\w)/ ", "/", text)
+    text = re.sub(r"(?<=\w)/ ", "/", text.strip())
 
     funcs = (
         lambda s: add_fuzzy_teachers(s, teacher_abbreviation_by_surname, date),
