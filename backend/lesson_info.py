@@ -8,7 +8,7 @@ import re
 import typing
 
 from .vplan_utils import periods_to_block_label, parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str, \
-    MajorMinorParsedForm, AlphanumParsedForm, forms_to_str
+    MajorMinorParsedForm, AlphanumParsedForm, forms_to_str, _loose_parse_form_pattern
 from . import models
 
 
@@ -751,7 +751,7 @@ def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedFo
     text = re.sub(r"(?<=\w)/ ", "/", text.strip())
 
     funcs = (
-        lambda s: add_fuzzy_teachers(s, teacher_abbreviation_by_surname, date),
+        lambda s: add_fuzzy_teacher_links(s, teacher_abbreviation_by_surname, date),
         lambda s: add_fuzzy_form_links(s, parsed_existing_forms, date)
     )
 
@@ -772,10 +772,13 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
                          ) -> list[LessonInfoTextSegment]:
     segments = []
 
-    prev = 0
-    for match in re.finditer(_parse_form_pattern, text):
-        segments.append(LessonInfoTextSegment(text[prev:match.start()]))
-        prev = match.end()
+    i = 0
+    while i < len(text):
+        match = re.search(_loose_parse_form_pattern, text[i:])
+
+        if match is None:
+            segments.append(LessonInfoTextSegment(text=text[i:]))
+            break
 
         parsed_forms = ParsedForm.from_form_match(match)
 
@@ -798,23 +801,22 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
                 matched_forms.append(form_match)
 
         if matched_forms:
+            segments.append(LessonInfoTextSegment(text[i:i+match.start()]))
             segments.append(
                 LessonInfoTextSegment(
                     parsed_forms_to_str(matched_forms),
                     link=LessonInfoTextSegmentLink("forms", [f.to_str() for f in matched_forms], date, None)
                 )
             )
+            i += match.end()
         else:
-            segments[-1].text += match.group()
-
-    segments.append(LessonInfoTextSegment(
-        text=text[prev:]
-    ))
+            segments.append(LessonInfoTextSegment(text[i]))
+            i += 1
 
     return segments
 
 
-def add_fuzzy_teachers(text: str, teacher_abbreviation_by_surname: dict[str, str], date: datetime.date):
+def add_fuzzy_teacher_links(text: str, teacher_abbreviation_by_surname: dict[str, str], date: datetime.date):
     abbreviations = set(teacher_abbreviation_by_surname.values())
 
     segments = []
