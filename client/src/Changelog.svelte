@@ -46,7 +46,7 @@
     // });
 
     $: $logged_in && get_changelog();
-    $: unread_changelogs = changelog.reverse().filter(cur_changelog => cur_changelog[1] === false)
+    $: unread_changelogs = changelog.filter(cur_changelog => cur_changelog[1] === false)
     $: $new_changelogs_available = unread_changelogs.length > 0;
 </script>
 
@@ -74,7 +74,7 @@
             <span class="responsive-text">Keine neuen Änderungen vorhanden.</span>
         {/each}
         <span class="read-section-heading">Gelesen:</span>
-        {#each changelog.reverse().filter(cur_changelog => cur_changelog[1] === true) as changelog_entry, index (index)}
+        {#each changelog.filter(cur_changelog => cur_changelog[1] === true).reverse() as changelog_entry, index (index)}
             <div class="changelog_entry">
                 <div class="changelog_entry_content">
                     <header>
