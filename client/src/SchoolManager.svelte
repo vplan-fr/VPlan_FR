@@ -98,9 +98,11 @@
         })
             .then(data => {
                 notifications.success("Schule wurde autorisiert");
-                date = null;
-                plan_type = null;
-                plan_value = null;
+                if(school_num !== authorize_school_id) {
+                    date = null;
+                    plan_type = null;
+                    plan_value = null;
+                }
                 school_num = authorize_school_id;
                 localStorage.setItem("school_num", school_num);
                 authorized_school_ids = [...authorized_school_ids, authorize_school_id];
@@ -136,9 +138,11 @@
     <form transition:fly|local={{x: -600}} on:submit|preventDefault={() => {
             if (authorize_school_id) {
                 if(isObjectInList(authorize_school_id, authorized_school_ids) || is_admin) {
-                    date = null;
-                    plan_type = null;
-                    plan_value = null;
+                    if(school_num !== authorize_school_id) {
+                        date = null;
+                        plan_type = null;
+                        plan_value = null;
+                    }
                     school_num = authorize_school_id;
                     localStorage.setItem("school_num", school_num);
                     navigate_page("plan");
