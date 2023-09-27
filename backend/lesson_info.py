@@ -417,7 +417,7 @@ def resolve_teacher_abbreviations(surnames: list[str], abbreviation_by_surname: 
 
 
 def __parse_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoMessage, re.Match | None]:
-    if match := _InfoParsers.substitution.search(info):
+    if match := _InfoParsers.substitution.match(info):
         return InsteadOfCourse(
             plan_type="forms",
             plan_value=lesson.forms,
@@ -426,21 +426,21 @@ def __parse_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoM
             periods=lesson.periods,
             _teachers=set(match.group("teachers").split(",")),
         ), match
-    elif match := _InfoParsers.moved_from.search(info):
+    elif match := _InfoParsers.moved_from.match(info):
         return MovedFrom(
             plan_type="forms",
             plan_value=lesson.forms,
             periods=[int(match.group("period_begin"))],
             date=None
         ), match
-    elif match := _InfoParsers.instead_of.search(info):
+    elif match := _InfoParsers.instead_of.match(info):
         return MovedFrom(
             plan_type="forms",
             plan_value=lesson.forms,
             periods=parse_periods(match.group("periods")),
             date=datetime.datetime.strptime(f'{match.group("date")}{lesson._lesson_date.year}', "%d.%m.%Y").date()
         ), match
-    elif match := _InfoParsers.held_at.search(info):
+    elif match := _InfoParsers.held_at.match(info):
         return MovedTo(
             plan_type="forms",
             plan_value=lesson.forms,
@@ -450,7 +450,7 @@ def __parse_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoM
             date=datetime.datetime.strptime(f'{match.group("date")}{lesson._lesson_date.year}', "%d.%m.%Y").date(),
             periods=parse_periods(match.group("periods"))
         ), match
-    elif match := _InfoParsers.moved_to.search(info):
+    elif match := _InfoParsers.moved_to.match(info):
         return MovedTo(
             plan_type="forms",
             plan_value=lesson.forms,
@@ -460,7 +460,7 @@ def __parse_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoM
             date=None,
             periods=parse_periods(match.group("periods")),
         ), match
-    elif match := _InfoParsers.moved_to_date.search(info):
+    elif match := _InfoParsers.moved_to_date.match(info):
         return MovedTo(
             plan_type="forms",
             plan_value=lesson.forms,
@@ -470,7 +470,7 @@ def __parse_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoM
             date=datetime.datetime.strptime(f'{match.group("date")}{lesson._lesson_date.year}', "%d.%m.%Y").date(),
             periods=parse_periods(match.group("periods")),
         ), match
-    elif match := _InfoParsers.cancelled.search(info):
+    elif match := _InfoParsers.cancelled.match(info):
         return Cancelled(
             plan_type="forms",
             plan_value=lesson.forms,
