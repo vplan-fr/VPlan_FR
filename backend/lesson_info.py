@@ -748,7 +748,7 @@ def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedFo
         return []
     # TODO: Dates, Rooms
     # remove spaces after slashes like in 5/ 3
-    text = re.sub(r"(?<=\w)/ ", "/", text.strip())
+    text = re.sub(r"(?<=\w)/ {1,3}", "/", text.strip())
 
     funcs = (
         lambda s: add_fuzzy_teacher_links(s, teacher_abbreviation_by_surname, date),
@@ -768,18 +768,38 @@ def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedFo
     return segments
 
 
-def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], date: datetime.date
-                         ) -> list[LessonInfoTextSegment]:
+def add_fuzzy_with_validator(text: str, patterns: list[str | typing.Pattern[str]],
+                             validator: typing.Callable[[re.Match], list[LessonInfoTextSegment] | None]
+                             ) -> list[LessonInfoTextSegment]:
     segments = []
 
     i = 0
     while i < len(text):
-        match = re.search(_loose_parse_form_pattern, text[i:])
+        matches = [re.match(pattern, text[i:]) for pattern in patterns]
 
-        if match is None:
-            segments.append(LessonInfoTextSegment(text=text[i:]))
+        for match in matches:
+            if match is None:
+                continue
+
+            new_segments = validator(match)
+
+            if new_segments is None:
+                continue
+
+            segments.append(LessonInfoTextSegment(text[i:i + match.start()]))
+            segments += new_segments
+            i += match.end()
             break
+        else:
+            segments.append(LessonInfoTextSegment(text[i]))
+            i += 1
 
+    return segments
+
+
+def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], date: datetime.date
+                         ) -> list[LessonInfoTextSegment]:
+    def validator(match: re.Match) -> list[LessonInfoTextSegment] | None:
         parsed_forms = ParsedForm.from_form_match(match)
 
         matched_forms: list[ParsedForm] = []
@@ -789,7 +809,7 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
 
             for existing_form in parsed_existing_forms:
                 if AlphanumParsedForm == type(parsed_form) == type(existing_form):
-                    if parsed_form[0] == existing_form[0]:
+                    if (not existing_form[0].isnumeric()) and parsed_form[0] == existing_form[0]:
                         form_match = existing_form
                         break
                 elif MajorMinorParsedForm == type(parsed_form) == type(existing_form):
@@ -801,55 +821,42 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
                 matched_forms.append(form_match)
 
         if matched_forms:
-            segments.append(LessonInfoTextSegment(text[i:i+match.start()]))
-            segments.append(
+            return [
                 LessonInfoTextSegment(
                     parsed_forms_to_str(matched_forms),
                     link=LessonInfoTextSegmentLink("forms", [f.to_str() for f in matched_forms], date, None)
                 )
-            )
-            i += match.end()
+            ]
         else:
-            segments.append(LessonInfoTextSegment(text[i]))
-            i += 1
+            return None
 
-    return segments
+    return add_fuzzy_with_validator(text, [_loose_parse_form_pattern], validator)
 
 
 def add_fuzzy_teacher_links(text: str, teacher_abbreviation_by_surname: dict[str, str], date: datetime.date):
     abbreviations = set(teacher_abbreviation_by_surname.values())
 
-    segments = []
+    def validator(match: re.Match) -> list[LessonInfoTextSegment] | None:
+        surname_or_abbreviation = match.group()
 
-    prev = 0
-    for match in re.finditer(rf"{_InfoParsers._teacher}|\b\w+", text):
-        segments.append(LessonInfoTextSegment(text[prev:match.start()]))
-        prev = match.end()
-
-        teacher = match.group()
-
-        if teacher not in abbreviations and teacher in teacher_abbreviation_by_surname:
-            abbreviation = teacher_abbreviation_by_surname[teacher]
-        elif teacher in abbreviations:
-            abbreviation = teacher
+        if surname_or_abbreviation not in abbreviations and surname_or_abbreviation in teacher_abbreviation_by_surname:
+            abbreviation = teacher_abbreviation_by_surname[surname_or_abbreviation]
+        elif surname_or_abbreviation in abbreviations:
+            abbreviation = surname_or_abbreviation
         else:
             abbreviation = None
 
         if abbreviation is not None:
-            segments.append(
+            return [
                 LessonInfoTextSegment(
-                    teacher,
+                    surname_or_abbreviation,
                     link=LessonInfoTextSegmentLink("teachers", [abbreviation], date, None)
                 )
-            )
+            ]
         else:
-            segments[-1].text += match.group()
+            return None
 
-    segments.append(LessonInfoTextSegment(
-        text=text[prev:]
-    ))
-
-    return segments
+    return add_fuzzy_with_validator(text, [_InfoParsers._teacher, "\b\w+"], validator)
 
 
 def group_text_segments(segments: list[LessonInfoTextSegment]) -> list[LessonInfoTextSegment]:
