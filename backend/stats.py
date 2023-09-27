@@ -18,7 +18,8 @@ class LessonsStatistics:
         teacher_is_absent = defaultdict(lambda: True)
 
         for lesson in lessons:
-            if lesson.is_scheduled:
+            # TODO
+            if lesson._is_scheduled:
                 continue
 
             out.count += 1
