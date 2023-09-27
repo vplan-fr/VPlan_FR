@@ -56,7 +56,7 @@
     }
 
     function load_lessons(data, c_plan_type, entity, use_grouped_form_plans) {
-        // Check if settings and tata are loaded
+        // Check if settings and data are loaded
         if(use_grouped_form_plans === undefined || data === undefined) {
             return;
         }
