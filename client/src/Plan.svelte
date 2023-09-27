@@ -21,6 +21,7 @@
     export let all_rooms;
     export let selected_revision;
     export let enabled_dates;
+    export let available_plan_version;
     let used_rooms_hidden = true;
 
     let plan_data;
@@ -47,6 +48,7 @@
     let show_left_key = true;
     let show_right_key = true;
     let last_updated;
+    let caching_successful;
 
     function reset_plan_vars() {
         all_lessons = [];
@@ -101,6 +103,7 @@
         data_from_cache = false;
         cache_loading_failed = false;
         network_loading_failed = false;
+        caching_successful = false;
         controller.abort();
         controller = new AbortController();
         signal = controller.signal;
@@ -127,7 +130,7 @@
         customFetch(`${api_base}/plan?${params.toString()}`, {signal: signal})
             .then(data => {
                 if (Object.keys(data).length !== 0 && revision === ".newest") {
-                    cache_plan(school_num, date, data);
+                    cache_plan(school_num, date, data, () => {caching_successful = true;});
                 }
                 load_plan_data(data);
                 
@@ -249,9 +252,7 @@
 
     function load_lessons_check_plan(plan_data, plan_type, plan_value, use_grouped_form_plans) {
         let curr_time = new Date();
-        // only if 30s passed, load plan
         if(!last_updated || curr_time - last_updated > 30_000) {
-            console.log("Loading Plan...");
             load_plan(date, selected_revision);
             last_updated = new Date();
         }
@@ -284,6 +285,7 @@
     $: date && enabled_dates && update_date_btns();
     $: preferences_apply, lessons = render_lessons(all_lessons);
     $: loading_failed = (cache_loading_failed && network_loading_failed && !loading);
+    $: available_plan_version = data_from_cache ? "cached" : !network_loading_failed ? caching_successful ? "network_cached" : "network_uncached" : null;
     $: location.hash = gen_location_hash(school_num, date, plan_type, plan_value);
 </script>
 

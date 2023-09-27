@@ -22,6 +22,7 @@
     import Dropdown from "./Components/Dropdown.svelte";
     import {animateScroll} from 'svelte-scrollto-element';
     import Button from "./Components/Button.svelte";
+    import { fade } from "svelte/transition";
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
     let school_num;
@@ -48,6 +49,12 @@
     let teacher_arr;
     let room_arr;
     let revision_arr;
+    let available_plan_version;
+    const available_plan_version_map = {
+        "cached": "Offline Plan",
+        "network_cached": "Aktueller Plan",
+        "network_uncached": "Online only Plan"
+    }
 
     function init_vars() {
         school_num = localStorage.getItem('school_num');
@@ -279,6 +286,8 @@
         if (tmp_variables.length >= 3) {
             school_num = decodeURI(tmp_variables[1]);
             date = decodeURI(tmp_variables[2]);
+            plan_type = null;
+            plan_value = null;
         }
         if (tmp_variables.length === 5) {
             plan_type = decodeURI(tmp_variables[3]);
@@ -379,6 +388,12 @@
                             inputClasses="datepicker-input"
                             bind:value={date}
                         />
+                        {#if available_plan_version}
+                            <div class="plan-status" transition:fade|local={{duration: 200}}>
+                                <span class="material-symbols-outlined" data-plan-type={available_plan_version}>check_circle</span>
+                                <span class="status-label">{available_plan_version_map[available_plan_version]}</span>
+                            </div>
+                        {/if}
                     </div>
                     <!-- Select Form -->
                     <div class="control" id="c2">
@@ -400,7 +415,7 @@
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
-                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:selected_revision bind:enabled_dates external_times={$settings.external_times} />
+                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:selected_revision bind:enabled_dates bind:available_plan_version external_times={$settings.external_times} />
                 {:else}
                     <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
                 {/if}
@@ -434,6 +449,44 @@
 </footer>
 
 <style lang="scss">
+    .plan-status {
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        left: 15px;
+        bottom: 0;
+        width: min(30%, 175px) !important;
+        display: flex;
+        gap: 5px;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+
+        .material-symbols-outlined {
+            font-size: var(--font-size-md);
+            transition: all .2s ease;
+
+            &[data-plan-type=cached] {
+                color: rgba(255, 255, 255, 0.5);
+            }
+            
+            &[data-plan-type=network_cached] {
+                color: #00db00;
+            }
+            
+            &[data-plan-type=network_uncached] {
+                color: #dbae00;
+            }
+        }
+
+        .status-label {
+            font-size: var(--font-size-sm);
+            color: rgba(255, 255, 255, 0.5);
+            hyphens: auto;
+            text-align: left;
+        }
+    }
+
     #page-container {
         position: relative;
         min-height: calc(100vh - 56px);
@@ -510,6 +563,7 @@
             &#c5 {grid-area: 3 / 2 / 4 / 3;}
 
             &#c1 {
+                position: relative;
                 --sdt-bg-main: var(--background);
                 --sdt-shadow-color: var(--background);
                 --sdt-wrap-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
