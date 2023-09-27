@@ -93,26 +93,28 @@
             </div>
         {/if}
         <!-- Rooms -->
-        <div class="rooms vert-align max-width-center info-element" class:changed={room_changed} class:changed_filled_in={$settings.filled_in_buttons && room_changed}>
-            {#if rooms.length !== 0 || s_rooms.length !== 0}
-                {#each rooms || [] as room}
-                    <button on:click={() => {
-                        plan_type = "rooms";
-                        plan_value = room;
-                    }}>{room}</button>
+        {#if plan_type !== "rooms"}
+            <div class="rooms vert-align max-width-center info-element" class:changed={room_changed} class:changed_filled_in={$settings.filled_in_buttons && room_changed}>
+                {#if rooms.length !== 0 || s_rooms.length !== 0}
+                    {#each rooms || [] as room}
+                        <button on:click={() => {
+                            plan_type = "rooms";
+                            plan_value = room;
+                        }}>{room}</button>
+                    {:else}
+                        <span class="extra_padding">-</span>
+                    {/each}
+                    {#each s_rooms || [] as room}
+                        <button on:click={() => {
+                            plan_type = "rooms";
+                            plan_value = room;
+                        }}><s>{room}</s></button>
+                    {/each}
                 {:else}
                     <span class="extra_padding">-</span>
-                {/each}
-                {#each s_rooms || [] as room}
-                    <button on:click={() => {
-                        plan_type = "rooms";
-                        plan_value = room;
-                    }}><s>{room}</s></button>
-                {/each}
-            {:else}
-                <span class="extra_padding">-</span>
-            {/if}
-        </div>
+                {/if}
+            </div>
+        {/if}
         <!-- Forms -->
         {#if plan_type !== "forms"}
             {#if forms.length === 0 && s_forms.length !== 0}
@@ -159,7 +161,7 @@
         {/if}
     </div>
     <!-- Additional Infos -->
-    {#if (lesson.info.length > 0) || (plan_type === "forms" && (forms.length > 1))}
+    {#if (lesson.info.length > 0) || (plan_type === "forms" && (forms.length > 1)) || (plan_type === "teachers" && (teachers.length > 1)) || (plan_type === "rooms" && (rooms.length > 1))}
         <div class="info-element lesson-info">
             <ul>
                 {#each lesson.info as info_paragraph}
@@ -216,6 +218,50 @@
                                         plan_type = "forms";
                                         plan_value = form;
                                     }}>{form}</button>
+                                {/each}
+                            </Dropdown>
+                        </div>
+                    </div>
+                </li>
+                {/if}
+                {#if plan_type === "teachers" && (teachers.length > 1)}
+                <li>
+                    <div class="horizontal_wrapper">
+                        Beteiligte Lehrer:
+                        <div class="fit-content-width">
+                            <Dropdown let:toggle small={true} transform_origin_x="50%">
+                                <button slot="toggle_button" on:click={toggle} class="toggle-button">
+                                    <span class="grow">{teachers.join(', ')}</span>
+                                    <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                                </button>
+                                
+                                {#each teachers as teacher}
+                                    <button on:click={() => {
+                                        plan_type = "teachers";
+                                        plan_value = teacher;
+                                    }}>{teacher}</button>
+                                {/each}
+                            </Dropdown>
+                        </div>
+                    </div>
+                </li>
+                {/if}
+                {#if plan_type === "rooms" && (rooms.length > 1)}
+                <li>
+                    <div class="horizontal_wrapper">
+                        In Räumen:
+                        <div class="fit-content-width">
+                            <Dropdown let:toggle small={true} transform_origin_x="50%">
+                                <button slot="toggle_button" on:click={toggle} class="toggle-button">
+                                    <span class="grow">{rooms.join(', ')}</span>
+                                    <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                                </button>
+                                
+                                {#each rooms as room}
+                                    <button on:click={() => {
+                                        plan_type = "rooms";
+                                        plan_value = room;
+                                    }}>{room}</button>
                                 {/each}
                             </Dropdown>
                         </div>
