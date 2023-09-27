@@ -216,25 +216,29 @@ export function get_school_plan_count(school_num, callback) {
     };
 }
 
-export function cache_plan(school_num, date, data) {
+export function cache_plan(school_num, date, data, callback) {
     if(!get(indexed_db)) {
         return;
     }
 
     get_from_db(school_num, date, () => {
         _indexed_db_add(school_num, date, data);
+        callback();
     }, () => {
         get_school_plan_count(school_num, count => {
             if(count >= MAX_CACHED_PLANS) {
                 delete_oldest_plan_before(school_num, date, result => {
                     if(result) {
                         _indexed_db_add(school_num, date, data);
+                        callback();
                     } else {
-                        notifications.danger("Plan konnte nicht gecached werden!")
+                        // console.log("Couldn't cache plan.")
+                        //notifications.danger("Plan konnte nicht gecached werden!")
                     }
                 });
             } else {
                 _indexed_db_add(school_num, date, data);
+                callback();
             }
         });
     });
