@@ -21,6 +21,7 @@
         margin: 3px;
         font-size: var(--font-size-base);
         position: relative;
+        hyphens: auto;
 
         .material-symbols-outlined {
             font-size: 1.3em;
