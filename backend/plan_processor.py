@@ -169,7 +169,7 @@ class PlanProcessor:
         self._logger.info("* Scraping teachers...")
 
         if self.school_number not in schools.teacher_scrapers:
-            self._logger.warning("=> No teacher scraper available for this school.")
+            self._logger.debug("=> No teacher scraper available for this school.")
             scraped_teachers = {}
         else:
             self._logger.info("=> Scraping teachers...")
