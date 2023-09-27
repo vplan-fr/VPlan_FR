@@ -8,7 +8,7 @@ from flask_compress import Compress
 from endpoints.authorization import authorization
 from endpoints.api import api
 
-from utils import User, AddStaticFileHashFlask, get_user, send_success, send_error
+from utils import User, AddStaticFileHashFlask, get_user, send_error, update_database
 from var import *
 
 
@@ -70,4 +70,5 @@ def sw() -> Response:
 
 
 if __name__ == "__main__":
+    update_database()
     app.run(debug=DEBUG)
