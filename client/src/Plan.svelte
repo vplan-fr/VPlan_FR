@@ -538,7 +538,7 @@
 
     .plan-heading {
         font-size: var(--font-size-md);
-        line-height: 1.6;
+        line-height: 1.8;
         font-weight: 700;
         margin-bottom: 15px;
 

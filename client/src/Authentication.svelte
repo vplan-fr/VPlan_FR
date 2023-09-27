@@ -91,7 +91,9 @@
     {/if}
     {#if register_visible}
     <form on:submit|preventDefault={signup} transition:fly|local={{x:500}}>
-        <button on:click={toggle_form} type="reset" id="back_button">←</button>
+        <button on:click={toggle_form} type="reset" id="back_button">
+            <span class="material-symbols-outlined">keyboard_backspace</span>
+        </button>
         <h1 class="responsive-heading">Registrieren</h1>
         <label for="s_nickname">Nutzername</label>
         <div class="input_icon">
@@ -256,8 +258,9 @@
 
     #back_button {
         position: absolute;
-        top: 0px;
+        top: 5px;
         left: 5px;
+        padding: 0;
         border: 0;
         background: none;
         color: white;

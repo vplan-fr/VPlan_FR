@@ -161,9 +161,11 @@
     </form>
     {:else}
     <form transition:fly|local={{x: 600}} on:submit|preventDefault={authorize_school}>
-        <button on:click={() => {school_auth_visible = false;}} type="reset" id="back_button">←</button>
+        <button on:click={() => {school_auth_visible = false;}} type="reset" id="back_button">
+            <span class="material-symbols-outlined">keyboard_backspace</span>
+        </button>
         <h1 class="responsive-heading">{authorize_school_id ? get_school_name_by_id(authorize_school_id) : "Schul"}-Login</h1>
-        <span class="responsive-text">Trage hier die Zugangsdaten für deine Schule ein<br>(dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
+        <span class="responsive-text">Trage hier die Zugangsdaten <strong>für deine Schule</strong> ein, <strong>nicht die deines Accounts</strong>.<br>(dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
         <label for="school_username">Nutzername</label>
         <div class="input_icon">
             <img src="/public/base_static/images/user-solid-white.svg" alt="User Icon">
@@ -177,12 +179,16 @@
             </button>
             <input disabled={!school_auth_visible} autocomplete="off" name="school_password" on:input={(event) => {password = event.target.value}} type={password_visible ? "text" : "password"} required class="textfield" placeholder="Passwort"/>
         </div>
-        <Button type="submit" background="var(--accent-color)">Login</Button>
+        <Button type="submit" background="var(--accent-color)">Autorisieren</Button>
     </form>
     {/if}
 </main>
 
 <style lang="scss">
+    strong {
+        font-weight: 700;
+    }
+
     .password_field {
         .textfield {
             padding-right: 40px;
@@ -272,8 +278,9 @@
 
     #back_button {
         position: absolute;
-        top: 0px;
+        top: 5px;
         left: 5px;
+        padding: 0;
         border: 0;
         background: none;
         color: var(--text-color);
