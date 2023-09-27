@@ -669,7 +669,7 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                      logger: logging.Logger) -> dict[str, models.Teacher]:
     out: dict[str, models.Teacher] = {}
 
-    if lesson.is_scheduled:
+    if lesson._is_scheduled:
         return out
 
     for paragraph in lesson.parsed_info.paragraphs:

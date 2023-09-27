@@ -14,7 +14,7 @@ from .stats import LessonsStatistics
 
 
 class PlanProcessor:
-    VERSION = "83"
+    VERSION = "85"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -169,7 +169,7 @@ class PlanProcessor:
         self._logger.info("* Scraping teachers...")
 
         if self.school_number not in schools.teacher_scrapers:
-            self._logger.warning("=> No teacher scraper available for this school.")
+            self._logger.debug("=> No teacher scraper available for this school.")
             scraped_teachers = {}
         else:
             self._logger.info("=> Scraping teachers...")
