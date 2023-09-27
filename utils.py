@@ -19,8 +19,9 @@ from var import *
 load_dotenv()
 
 db = pymongo.MongoClient(os.getenv("MONGO_URL") if os.getenv("MONGO_URL") else "", 27017).vplan
-users = db.user
-creds = db.creds
+users = db["user"]
+creds = db["creds"]
+schools = db["schools"]
 
 
 # RESPONSE WRAPPERS
@@ -274,10 +275,11 @@ class BetterEmbed(DiscordEmbed):
         self.add_embed_field(name, value, inline)
 
 
-print("Updating icons...")
-add_database_icons()
-print("Updating school authorization count...")
-update_school_authorization_count()
+def update_database():
+    add_database_icons()
+    update_school_authorization_count()
+
+
 if __name__ == "__main__":
     # json_to_mongo()
     ...
