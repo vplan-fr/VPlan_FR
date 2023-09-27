@@ -30,7 +30,7 @@ def get_teachers() -> list[Teacher]:
 
 def parse_room(room_str: str) -> Room:
     """
-    Es ist fast wie am Ostwald: ([Haus]),[Etage],[Zweistellige Raumnummer) Einziger Unterschied:
+    Es ist fast wie am Ostwald: ([Haus]), [Etage], [Zweistellige Raumnummer]) einziger Unterschied:
         Haus ist nur ein optionaler Hinweis für 'Im Anbau'
 
     Ein raum im Hauptgebäude wäre also 307 (Dritte Etage, Raum 07)
