@@ -2,6 +2,8 @@ import {current_page, indexed_db, settings} from "./stores.js";
 import {notifications} from "./notifications.js";
 import { get } from "svelte/store";
 
+const MAX_CACHED_PLANS = 10; // 2 Weeks
+
 export function group_rooms(rooms) {
     let _grouped_rooms = {};
     for (let [room, data] of Object.entries(rooms)) {
@@ -141,15 +143,6 @@ export function update_colors(settings) {
     }
 }
 
-export function delete_oldest_plan_before(date) {
-    let oldest_item = Object.keys(localStorage).filter(x => x.endsWith("plan")).sort((a, b) => Date.parse(a.split("_")[1]) - Date.parse(b.split("_")[1]))[0];
-    if(date > oldest_item.split("_")[1]) {
-        localStorage.removeItem(oldest_item);
-        return true;
-    }
-    return false;
-}
-
 export function init_indexed_db() {
     // Check for support.
     if (!('indexedDB' in window)) {
@@ -170,9 +163,9 @@ export function init_indexed_db() {
         indexed_db.set(event.target.result);
         if (!get(indexed_db).objectStoreNames.contains('plan-store')) {
             const plan_store = get(indexed_db).createObjectStore('plan-store', {keyPath: ['school_num', 'date']});
-            plan_store.createIndex('School Number', 'school_num');
-            plan_store.createIndex('Date', 'date');
-            plan_store.createIndex('Plan Data', 'plan_data');
+            plan_store.createIndex('school_num', 'school_num');
+            plan_store.createIndex('date', 'date');
+            plan_store.createIndex('plan_data', 'plan_data');
         }
     }
 }  
@@ -193,14 +186,61 @@ export function get_from_db(school_num, date, callback, error_callback = () => {
     
     request.onsuccess = (event) => {
         if(request.result !== undefined) {
-            callback(request.result.plan_data);
+            callback(request.result);
         } else {
             error_callback();
         }
     };
 }
 
+export function get_school_plan_count(school_num, callback) {
+    if(!get(indexed_db)) {
+        return;
+    }
+
+    const tx = get(indexed_db).transaction(['plan-store']);
+    
+    tx.onerror = (event) => {
+        console.log("Error while getting schools plan count", event);
+    };
+
+    const store = tx.objectStore('plan-store');
+    const index = store.index("school_num");
+    const request = index.getAll(school_num);
+    request.onerror = (event) => {
+        console.error(event);
+    };
+
+    request.onsuccess = (event) => {
+        callback(request.result ? request.result.length : 0);
+    };
+}
+
 export function cache_plan(school_num, date, data) {
+    if(!get(indexed_db)) {
+        return;
+    }
+
+    get_from_db(school_num, date, () => {
+        _indexed_db_add(school_num, date, data);
+    }, () => {
+        get_school_plan_count(school_num, count => {
+            if(count >= MAX_CACHED_PLANS) {
+                delete_oldest_plan_before(school_num, date, result => {
+                    if(result) {
+                        _indexed_db_add(school_num, date, data);
+                    } else {
+                        notifications.danger("Plan konnte nicht gecached werden!")
+                    }
+                });
+            } else {
+                _indexed_db_add(school_num, date, data);
+            }
+        });
+    });
+}
+
+function _indexed_db_add(school_num, date, data) {
     if(!get(indexed_db)) {
         return;
     }
@@ -220,6 +260,48 @@ export function cache_plan(school_num, date, data) {
         plan_data: data
     };
     store.put(item);
+}
+
+export function delete_oldest_plan_before(school_num, date, callback) {
+    if(!get(indexed_db)) {
+        return;
+    }
+
+    const tx = get(indexed_db).transaction(['plan-store']);
+    
+    tx.onerror = (event) => {
+        console.log("Error while deleting oldest plan", event);
+    };
+
+    const store = tx.objectStore('plan-store');
+    const index = store.index("school_num");
+    const request = index.getAll(school_num);
+    request.onerror = (event) => {
+        console.error(event);
+    };
+
+    request.onsuccess = (event) => {
+        let oldest_item = request.result.sort((a, b) => Date.parse(a.date) - Date.parse(b.date))[0];
+        if(date > oldest_item.date) {
+            _indexed_db_remove(oldest_item.school_num, oldest_item.date);
+            callback(true);
+            return;
+        }
+        callback(false);
+    };
+}
+
+function _indexed_db_remove(school_num, date) {
+    const tx = get(indexed_db).transaction(['plan-store'], 'readwrite');
+
+    // tx.oncomplete = (event) => {};
+    
+    tx.onerror = (event) => {
+        console.log("Error while removing plan", event);
+    };
+
+    const store = tx.objectStore('plan-store');
+    store.delete([school_num, date]);
 }
 
 export function format_date(date) {
