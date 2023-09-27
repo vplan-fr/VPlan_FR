@@ -7,9 +7,9 @@
     import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
     import SveltyPicker from 'svelty-picker';
-    import {get_settings, group_rooms, update_colors, navigate_page} from "./utils.js";
+    import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt} from './stores.js'
+    import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db} from './stores.js'
     import {customFetch, format_revision_date} from "./utils.js";
     import SchoolManager from "./SchoolManager.svelte";
     import Preferences from "./Preferences.svelte";
@@ -262,6 +262,24 @@
     function logout() {
         close_modal();
         localStorage.clear();
+        try {
+            console.log("Trying to close DB");
+            $indexed_db.close();
+            console.log("Trying to delete DB");
+            var req = indexedDB.deleteDatabase('plan-db');
+            req.onsuccess = function () {
+                console.log("Deleted database successfully");
+            };
+            req.onerror = function () {
+                console.log("Couldn't delete database");
+            };
+            req.onblocked = function () {
+                console.log("Couldn't delete database due to the operation being blocked");
+            };
+        } catch (ex) {
+            console.log("Failed deleting DB", ex);
+        }
+
         localStorage.setItem('logged_in', `${$logged_in}`);
         init_vars();
     }
@@ -280,13 +298,14 @@
             plan_type = decodeURI(tmp_variables[3]);
             plan_value = decodeURI(tmp_variables[4]);
         }
-    }
+    }  
 
     $logged_in = localStorage.getItem('logged_in') === 'true';
     init_vars();
     check_login_status();
     refresh_plan_vars();
 
+    $: $logged_in && init_indexed_db();
     $: !$logged_in && logout();
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
     $: school_num && get_meta();

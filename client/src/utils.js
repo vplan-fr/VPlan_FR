@@ -1,4 +1,4 @@
-import {current_page, settings} from "./stores.js";
+import {current_page, indexed_db, settings} from "./stores.js";
 import {notifications} from "./notifications.js";
 import { get } from "svelte/store";
 
@@ -62,6 +62,9 @@ function getCookie(name) {
 }
 
 export async function customFetch(url, options = {}) {
+    if(!navigator.onLine) {
+        throw Error("Diese Funktion ist offline nicht verfügbar");
+    }
     const headers = {
         "X-CSRFToken": getCookie("csrftoken")
     };
@@ -112,7 +115,7 @@ export function navigate_page(page_id) {
     if(page_id === "plan" && get(current_page).startsWith("plan")) {return;}
     current_page.set(page_id);
     location.hash = `#${page_id}`;
-    console.log(`Changed Location to: "${page_id}"`);
+    // console.log(`Changed Location to: "${page_id}"`);
 }
 
 export function update_colors(settings) {
@@ -147,20 +150,76 @@ export function delete_oldest_plan_before(date) {
     return false;
 }
 
-export function cache_plan(school_num, date, data) {
-    try {
-        localStorage.setItem(`${school_num}_${date}_plan`, JSON.stringify(data));
-    } catch (error) {
-        if (error.name === 'QuotaExceededError' ) {
-            if(!delete_oldest_plan_before(date)) {
-                notifications.danger("Der aktuelle Plan konnte nicht gecached werden.")
-                return;
-            }
-            cache_plan(school_num, date, data);
-        } else {
-            throw error;
+export function init_indexed_db() {
+    // Check for support.
+    if (!('indexedDB' in window)) {
+        console.log("This browser doesn't support IndexedDB.");
+        notifications.danger("Dein Browser unterstützt kein Plan-Caching!");
+        return;
+    }
+
+    let request = indexedDB.open('plan-db', 1);
+    request.onerror = (event) => {
+        console.error("Couldn't open IndexedDB");
+        notifications.danger("Konnte den Plan-Cache nicht öffnen!");
+    };
+    request.onsuccess = (event) => {
+        indexed_db.set(event.target.result);
+    };
+    request.onupgradeneeded = (event) => {
+        indexed_db.set(event.target.result);
+        if (!get(indexed_db).objectStoreNames.contains('plan-store')) {
+            const plan_store = get(indexed_db).createObjectStore('plan-store', {keyPath: ['school_num', 'date']});
+            plan_store.createIndex('School Number', 'school_num');
+            plan_store.createIndex('Date', 'date');
+            plan_store.createIndex('Plan Data', 'plan_data');
         }
     }
+}  
+
+export function get_from_db(school_num, date, callback, error_callback = () => {}) {
+    if(!get(indexed_db)) {
+        error_callback();
+        return;
+    }
+
+    const transaction = get(indexed_db).transaction(["plan-store"]);
+    const store = transaction.objectStore("plan-store");
+    const request = store.get([school_num, date]);
+    request.onerror = (event) => {
+        error_callback();
+        console.error(event);
+    };
+    
+    request.onsuccess = (event) => {
+        if(request.result !== undefined) {
+            callback(request.result.plan_data);
+        } else {
+            error_callback();
+        }
+    };
+}
+
+export function cache_plan(school_num, date, data) {
+    if(!get(indexed_db)) {
+        return;
+    }
+
+    const tx = get(indexed_db).transaction(['plan-store'], 'readwrite');
+
+    // tx.oncomplete = (event) => {};
+    
+    tx.onerror = (event) => {
+        console.log("Error while caching plan", event);
+    };
+
+    const store = tx.objectStore('plan-store');
+    const item = {
+        school_num: school_num,
+        date: date,
+        plan_data: data
+    };
+    store.put(item);
 }
 
 export function format_date(date) {
