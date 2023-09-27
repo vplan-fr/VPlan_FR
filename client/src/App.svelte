@@ -276,9 +276,11 @@
 
     function refresh_plan_vars() {
         let tmp_variables = location.hash.split("|");
-        if (tmp_variables.length === 5) {
+        if (tmp_variables.length >= 3) {
             school_num = decodeURI(tmp_variables[1]);
             date = decodeURI(tmp_variables[2]);
+        }
+        if (tmp_variables.length === 5) {
             plan_type = decodeURI(tmp_variables[3]);
             plan_value = decodeURI(tmp_variables[4]);
         }

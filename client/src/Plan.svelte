@@ -23,6 +23,7 @@
     export let enabled_dates;
     let used_rooms_hidden = true;
 
+    let plan_data;
     let all_lessons = [];
     let rooms_data = {};
     let info;
@@ -38,27 +39,34 @@
     };
     let controller = new AbortController();
     let signal = controller.signal;
+    let full_teacher_name = null;
+    let teacher_contact_link = null;
+    let teacher_image_path = null;
+    let preferences_apply = true;
+    let lessons;
+    let show_left_key = true;
+    let show_right_key = true;
+    let last_updated;
 
     function reset_plan_vars() {
-        info = null;
         all_lessons = [];
         rooms_data = null;
         plan_type = null;
         plan_value = null;
     }
 
-    export function load_lessons(date, c_plan_type, entity, use_grouped_form_plans, revision=".newest") {
+    function load_lessons(data, c_plan_type, entity, use_grouped_form_plans) {
         // Check if settings are loaded
         if(use_grouped_form_plans === undefined) {
             return;
         }
         // Check the presence of necessary variables
-        if (date === null || date === undefined || !c_plan_type || ((c_plan_type !== "room_overview") && !entity)) {
+        if (!c_plan_type || ((c_plan_type !== "room_overview") && !entity)) {
             reset_plan_vars();
             return;
         }
         // Check the validity of the plan type
-        if(!enabled_dates.includes(date) || !["forms", "rooms", "teachers", "room_overview"].includes(c_plan_type)) {
+        if(!["forms", "rooms", "teachers", "room_overview"].includes(c_plan_type)) {
             reset_plan_vars();
             return;
         }
@@ -72,6 +80,23 @@
         }
 
         let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans";
+        rooms_data = data.rooms;
+        if (c_plan_type !== "room_overview") {
+            all_lessons = data[plan_key][c_plan_type] ? data[plan_key][c_plan_type][entity] || [] : [];
+        }
+    }
+
+    function load_plan_data(data) {
+        plan_data = data;
+        info = data.info;
+        week_letter = info.week;
+    }
+
+    function load_plan(date, revision=".newest") {
+        if (date === null || date === undefined || !enabled_dates.includes(date)) {
+            return;
+        }
+
         loading = true;
         data_from_cache = false;
         cache_loading_failed = false;
@@ -84,12 +109,7 @@
             get_from_db(school_num, date, (data) => {
                 data = data.plan_data;
                 if(loading || network_loading_failed) {
-                    rooms_data = data.rooms;
-                    if (c_plan_type !== "room_overview") {
-                        all_lessons = data[plan_key][c_plan_type] ? data[plan_key][c_plan_type][entity] || [] : [];
-                    }
-                    info = data.info;
-                    week_letter = info.week;
+                    load_plan_data(data);
     
                     cache_loading_failed = false;
                     data_from_cache = true;
@@ -109,12 +129,7 @@
                 if (Object.keys(data).length !== 0 && revision === ".newest") {
                     cache_plan(school_num, date, data);
                 }
-                rooms_data = data.rooms;
-                if (c_plan_type !== "room_overview") {
-                    all_lessons = data[plan_key][c_plan_type][entity] || [];
-                }
-                info = data.info;
-                week_letter = info.week;
+                load_plan_data(data);
                 
                 loading = false;
                 network_loading_failed = false;
@@ -124,7 +139,6 @@
                 loading = false;
                 network_loading_failed = true;
         });
-        location.hash = gen_location_hash();
     }
 
     function periods_to_block_label(periods) {
@@ -166,11 +180,13 @@
         return `${formattedDate}`;
     }
 
-    function gen_location_hash() {
+    function gen_location_hash(school_num, date, plan_type, plan_value) {
         if(school_num && date && plan_type) {
             return `#plan|${school_num}|${date}|${plan_type}|${plan_value}`;
+        } else if(school_num && date) {
+            return `#plan|${school_num}|${date}`;
         } else {
-            return "#plan";
+            return `#plan`
         }
     }
 
@@ -231,21 +247,30 @@
         show_right_key = enabled_dates.indexOf(date) < (enabled_dates.length - 1);
     }
 
-    $: $indexed_db, load_lessons(date, plan_type, plan_value, $settings.use_grouped_form_plans, selected_revision);
+    function load_lessons_check_plan(plan_data, plan_type, plan_value, use_grouped_form_plans) {
+        let curr_time = new Date();
+        // only if 30s passed, load plan
+        if(!last_updated || curr_time - last_updated > 30_000) {
+            console.log("Loading Plan...");
+            load_plan(date, selected_revision);
+            last_updated = new Date();
+        }
+
+        load_lessons(plan_data, plan_type, plan_value, use_grouped_form_plans);
+    }
 
     if(!school_num) {
         navigate_page('school_manager');
     }
 
     onMount(() => {
-        location.hash = gen_location_hash();
         title.set("Plan");
         // console.log("Mounted Plan.svelte");
     });
 
-    let full_teacher_name = null;
-    let teacher_contact_link = null;
-    let teacher_image_path = null;
+    $: $indexed_db, load_plan(date, selected_revision);
+    $: load_lessons_check_plan(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans);
+
     $: if (plan_type === "teachers") {
         full_teacher_name = meta.teachers[plan_value]?.surname || null;
         teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
@@ -255,122 +280,112 @@
             teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
         }
     }
-
-    let preferences_apply = true;
-    let lessons = all_lessons;
-
-    let show_left_key = true;
-    let show_right_key = true;
     
     $: date && enabled_dates && update_date_btns();
     $: preferences_apply, lessons = render_lessons(all_lessons);
     $: loading_failed = (cache_loading_failed && network_loading_failed && !loading);
+    $: location.hash = gen_location_hash(school_num, date, plan_type, plan_value);
 </script>
 
 <svelte:window on:keydown={keydown_handler}/>
 <svelte:body use:swipe={{ timeframe: 300, minSwipeDistance: 60, touchAction: 'pan-y' }} on:swipe={swipe_handler} />
 
-{#if plan_type !== "room_overview"}
-<div class="plan" class:extra-height={extra_height}>
-    {#if show_title && info}
-        {#if plan_type === "forms" && (plan_value in $preferences)}
-            <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
-        {/if}
-            <h1 class="plan-heading">
-                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{#if teacher_image_path !== null}<img class="teacher-img" src="{teacher_image_path}" alt="">{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
-            </h1>
-        {/if}
-    {#if loading}
-        <span class="responsive-text">Lädt...</span>
-    {:else if loading_failed}
-        <span class="responsive-text">Plan konnte nicht geladen werden</span>
-    {:else}
-        {#if lessons.length === 0}
-        {#if plan_type}    
-            <span class="responsive-text">Keine Stunden</span>
-        {:else}
-        <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus, um einen Plan zu sehen.</span>
-        {/if}
-        {:else}
-        <div class="lessons-wrapper">
-            {#if external_times}
-                <div class="deco-bar"></div>
+<div class:plan={plan_type !== "room_overview"} class:extra-height={extra_height}>
+    {#if plan_type !== "room_overview"}
+        {#if show_title && info && plan_type && plan_value}
+            {#if plan_type === "forms" && (plan_value in $preferences)}
+                <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
             {/if}
-            {#each lessons as lesson, i}
-                {#if external_times}    
-                    {#if !all_lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
-                        <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
-                    {/if}
+                <h1 class="plan-heading">
+                    Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{#if teacher_image_path !== null}<img class="teacher-img" src="{teacher_image_path}" alt="">{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+                </h1>
+            {/if}
+        {#if loading}
+            <span class="responsive-text">Lädt...</span>
+        {:else if loading_failed}
+            <span class="responsive-text">Plan konnte nicht geladen werden.</span>
+        {:else}
+            {#if lessons.length === 0}
+            {#if plan_type}    
+                <span class="responsive-text">Keine Stunden</span>
+            {:else}
+            <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus, um einen Plan zu sehen.</span>
+            {/if}
+            {:else}
+            <div class="lessons-wrapper">
+                {#if external_times}
+                    <div class="deco-bar"></div>
                 {/if}
-                <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
-            {/each}
-        </div>
-        {/if}
-        {#if info}
-            {#if info.additional_info.length > 0}
-                <div class="additional-info">
-                    {#each info.processed_additional_info as info_paragraph}
-                        {#if info_paragraph.length > 0}
-                            <div class="inline-wrapper">
-                                {#each info_paragraph as text_segment}
-                                    {#if text_segment.link?.value.length === 1}
-                                        <button class="no-btn-visuals" on:click={() => {
-                                            date = text_segment.link.date;
-                                            plan_type = text_segment.link.type;
-                                            plan_value = text_segment.link.value[0];
-                                        }}>
-                                            <div class="clickable">{text_segment.text}</div>
-                                        </button>
-                                    {:else if text_segment.link?.value.length >= 2}
-                                        <div class="fit-content-width">
-                                            <Dropdown let:toggle small={true} transform_origin_x="50%">
-                                                <button slot="toggle_button" on:click={toggle} class="toggle-button">
-                                                    <span class="grow">{text_segment.text}</span>
-                                                    <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
-                                                </button>
-    
-                                                {#each text_segment.link.value as item}
-                                                    <button on:click={() => {
-                                                        date=text_segment.link.date;
-                                                        plan_type = text_segment.link.type;
-                                                        plan_value = item;
-                                                    }}>{item}</button>
-                                                {/each}
-                                            </Dropdown>
-                                        </div>
-                                    {:else}
-                                        <button class="no-btn-visuals">{text_segment.text}</button>
-                                    {/if}
-                                {/each}
-                            </div>
-                        {:else}
-                            <div class="info-spacer"></div>
+                {#each lessons as lesson, i}
+                    {#if external_times}    
+                        {#if !all_lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
+                            <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
                         {/if}
-                    {/each}
-                </div>
+                    {/if}
+                    <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
+                {/each}
+            </div>
             {/if}
-            <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
         {/if}
-    {/if}
-</div>
-{:else}
-<div class:extra-height={extra_height}>
-    <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
-    {#if info}
-        <h1 class="plan-heading">Freie Räume am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
-    {/if}
-    {#if loading}
-        <span class="responsive-text">Lädt...</span>
-    {:else if loading_failed}
-        <span class="responsive-text">Plan konnte nicht geladen werden</span>
     {:else}
-        <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
+        <button on:click={() => {used_rooms_hidden = !used_rooms_hidden}} class="plus-btn">{used_rooms_hidden ? "+" : "-"}</button>
         {#if info}
-            <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+            <h1 class="plan-heading">Freie Räume am <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak"/>({info.week}-Woche)</h1>
+        {/if}
+        {#if loading}
+            <span class="responsive-text">Lädt...</span>
+        {:else if loading_failed}
+            <span class="responsive-text">Plan konnte nicht geladen werden</span>
+        {:else}
+            <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
         {/if}
     {/if}
+    {#if info}
+        {#if info.additional_info.length > 0}
+            <div class="additional-info">
+                {#each info.processed_additional_info as info_paragraph}
+                    {#if info_paragraph.length > 0}
+                        <div class="inline-wrapper">
+                            {#each info_paragraph as text_segment}
+                                {#if text_segment.link?.value.length === 1}
+                                    <button class="no-btn-visuals" on:click={() => {
+                                        date = text_segment.link.date;
+                                        plan_type = text_segment.link.type;
+                                        plan_value = text_segment.link.value[0];
+                                    }}>
+                                        <div class="clickable">{text_segment.text}</div>
+                                    </button>
+                                {:else if text_segment.link?.value.length >= 2}
+                                    <div class="fit-content-width">
+                                        <Dropdown let:toggle small={true} transform_origin_x="50%">
+                                            <button slot="toggle_button" on:click={toggle} class="toggle-button">
+                                                <span class="grow">{text_segment.text}</span>
+                                                <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+                                            </button>
+
+                                            {#each text_segment.link.value as item}
+                                                <button on:click={() => {
+                                                    date=text_segment.link.date;
+                                                    plan_type = text_segment.link.type;
+                                                    plan_value = item;
+                                                }}>{item}</button>
+                                            {/each}
+                                        </Dropdown>
+                                    </div>
+                                {:else}
+                                    <button class="no-btn-visuals">{text_segment.text}</button>
+                                {/if}
+                            {/each}
+                        </div>
+                    {:else}
+                        <div class="info-spacer"></div>
+                    {/if}
+                {/each}
+            </div>
+        {/if}
+        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+    {/if}
 </div>
-{/if}
 <div class="day-controls">
     <button tabindex="-1" on:click={() => {change_day(-1);}} class:hidden={!show_left_key}><span class="material-symbols-outlined left">arrow_back_ios_new</span></button>
     <button tabindex="-1" on:click={() => {change_day(1);}} class:hidden={!show_right_key}><span class="material-symbols-outlined right">arrow_forward_ios</span></button>
