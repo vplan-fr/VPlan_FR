@@ -79,7 +79,7 @@
         <label for="l_password">Passwort</label>
         <div class="input_icon password_field">
             <img src="/public/base_static/images/lock-solid.svg" alt="Lock Icon">
-            <button type="button" on:click={() => {login_password_visible = !login_password_visible}}>
+            <button type="button" on:click={() => {login_password_visible = !login_password_visible}} tabindex="-1">
                 <span class="material-symbols-outlined">{login_password_visible ? "visibility_off" : "visibility"}</span>
             </button>
             <input disabled={register_visible} autocomplete="current-password" name="l_password" on:input={(event) => {l_password = event.target.value}} type={login_password_visible ? "text" : "password"} minlength="1" required class="textfield" placeholder="Passwort"/>
@@ -103,7 +103,7 @@
         <label for="s_nickname">Passwort</label>
         <div class="input_icon password_field">
             <img src="/public/base_static/images/lock-solid.svg" alt="Lock Icon">
-            <button type="button" on:click={() => {register_password_visible = !register_password_visible}}>
+            <button type="button" on:click={() => {register_password_visible = !register_password_visible}} tabindex="-1">
                 <span class="material-symbols-outlined">{register_password_visible ? "visibility_off" : "visibility"}</span>
             </button>
             <input disabled={!register_visible} autocomplete="new-password" name="s_password" on:input={(event) => {s_password = event.target.value}} type={register_password_visible ? "text" : "password"} minlength="10" required class="textfield" placeholder="Passwort"/>
