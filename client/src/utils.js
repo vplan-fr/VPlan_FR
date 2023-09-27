@@ -304,6 +304,29 @@ function _indexed_db_remove(school_num, date) {
     store.delete([school_num, date]);
 }
 
+export function clear_plan_cache(callback=() => {}) {
+    if(!get(indexed_db)) {
+        return;
+    }
+
+    const tx = get(indexed_db).transaction(['plan-store'], "readwrite");
+    
+    tx.onerror = (event) => {
+        console.log("Error while clearing cache", event);
+    };
+
+    const store = tx.objectStore('plan-store');
+    const request = store.clear();
+    request.onerror = (event) => {
+        notifications.danger("Cache konnte nicht geleert werden");
+        console.error(event);
+    };
+
+    request.onsuccess = (event) => {
+        callback();
+    };
+}
+
 export function format_date(date) {
     date = new Date(date);
 

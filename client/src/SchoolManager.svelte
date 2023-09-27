@@ -171,13 +171,13 @@
             <img src="/public/base_static/images/user-solid-white.svg" alt="User Icon">
             <input disabled={!school_auth_visible} autocomplete="off" name="school_username" bind:value={username} type="text" required class="textfield" placeholder="Nutzername"/>
         </div>
-        <label for="school_password">Passwort</label>
+        <label for="school_password">Schul-Passwort</label>
         <div class="input_icon password_field">
             <img src="/public/base_static/images/lock-solid-white.svg" alt="Lock Icon">
             <button type="button" on:click={() => {password_visible = !password_visible}}>
                 <span class="material-symbols-outlined">{password_visible ? "visibility_off" : "visibility"}</span>
             </button>
-            <input disabled={!school_auth_visible} autocomplete="off" name="school_password" on:input={(event) => {password = event.target.value}} type={password_visible ? "text" : "password"} required class="textfield" placeholder="Passwort"/>
+            <input disabled={!school_auth_visible} autocomplete="off" name="school_password" on:input={(event) => {password = event.target.value}} type={password_visible ? "text" : "password"} required class="textfield" placeholder="Schul-Passwort"/>
         </div>
         <Button type="submit" background="var(--accent-color)">Autorisieren</Button>
     </form>

@@ -1,7 +1,7 @@
 <script>
     import {notifications} from "./notifications.js";
     import {logged_in, settings, active_modal, indexed_db} from './stores.js';
-    import {customFetch, update_colors} from "./utils.js";
+    import {clear_plan_cache, customFetch, update_colors} from "./utils.js";
     import Modal from "./Components/Modal.svelte";
     import { onMount } from "svelte";
     import Button from "./Components/Button.svelte";
@@ -58,29 +58,6 @@
         window.open("/auth/account", "_blank");
     }
 
-    function clear_plan_cache() {
-        if(!$indexed_db) {
-            return;
-        }
-
-        const tx = $indexed_db.transaction(['plan-store'], "readwrite");
-        
-        tx.onerror = (event) => {
-            console.log("Error while deleting oldest plan", event);
-        };
-
-        const store = tx.objectStore('plan-store');
-        const request = store.clear();
-        request.onerror = (event) => {
-            notifications.danger("Cache konnte nicht geleert werden");
-            console.error(event);
-        };
-
-        request.onsuccess = (event) => {
-            notifications.success("Cache geleert");
-        };
-    }
-
     // onMount(() => {
     //     console.log("Mounted Settings.svelte");
     // });
@@ -110,7 +87,7 @@
         <br>
         <div class="horizontal-container">
             <Button on:click={reset_settings} class="split">Einstellungen zurücksetzen</Button>
-            <Button on:click={clear_plan_cache} class="split">Plan-Cache leeren</Button>
+            <Button on:click={() => {clear_plan_cache(() => {notifications.success("Cache geleert");})}} class="split">Plan-Cache leeren</Button>
             <Button on:click={view_saved_data} class="split">Gespeicherte Daten einsehen</Button>
         </div>
         <Button on:click={delete_account} background="var(--cancelled-color)">Account löschen</Button>

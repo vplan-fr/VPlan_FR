@@ -7,7 +7,7 @@
     import Settings from "./Settings.svelte";
     import AboutUs from "./AboutUs.svelte";
     import SveltyPicker from 'svelty-picker';
-    import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db} from "./utils.js";
+    import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db} from './stores.js'
     import {customFetch, format_revision_date} from "./utils.js";
@@ -262,23 +262,7 @@
     function logout() {
         close_modal();
         localStorage.clear();
-        try {
-            console.log("Trying to close DB");
-            $indexed_db.close();
-            console.log("Trying to delete DB");
-            var req = indexedDB.deleteDatabase('plan-db');
-            req.onsuccess = function () {
-                console.log("Deleted database successfully");
-            };
-            req.onerror = function () {
-                console.log("Couldn't delete database");
-            };
-            req.onblocked = function () {
-                console.log("Couldn't delete database due to the operation being blocked");
-            };
-        } catch (ex) {
-            console.log("Failed deleting DB", ex);
-        }
+        clear_plan_cache();
 
         localStorage.setItem('logged_in', `${$logged_in}`);
         init_vars();
