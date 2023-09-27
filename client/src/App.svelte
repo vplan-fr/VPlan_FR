@@ -435,6 +435,7 @@
     #page-container {
         position: relative;
         min-height: calc(100vh - 56px);
+        padding-bottom: 15px;
 
         @media only screen and (min-width: 602px) {
             min-height: calc(100vh - 64px);
