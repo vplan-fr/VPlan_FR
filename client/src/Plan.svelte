@@ -173,33 +173,6 @@
         }
     }
 
-    $: load_lessons(date, plan_type, plan_value, $settings.use_grouped_form_plans, selected_revision);
-
-    if(!school_num) {
-        navigate_page('school_manager');
-    }
-
-    onMount(() => {
-        location.hash = gen_location_hash();
-        title.set("Plan");
-        // console.log("Mounted Plan.svelte");
-    });
-
-    let full_teacher_name = null;
-    let teacher_contact_link = null;
-    let teacher_image_path = null;
-    $: if (plan_type === "teachers") {
-        full_teacher_name = meta.teachers[plan_value]?.surname || null;
-        teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
-        teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
-        teacher_image_path = meta.teachers[plan_value]?.image_path || null;
-        if (teacher_image_path) {
-            teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
-        }
-    }
-
-    let preferences_apply = true;
-    let lessons = all_lessons;
     function render_lessons(lessons) {
         if (plan_type !== "forms") {
             return lessons
@@ -271,9 +244,15 @@
 
     let full_teacher_name = null;
     let teacher_contact_link = null;
+    let teacher_image_path = null;
     $: if (plan_type === "teachers") {
         full_teacher_name = meta.teachers[plan_value]?.surname || null;
         teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
+        teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
+        teacher_image_path = meta.teachers[plan_value]?.image_path || null;
+        if (teacher_image_path) {
+            teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
+        }
     }
 
     let preferences_apply = true;
