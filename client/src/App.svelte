@@ -492,7 +492,7 @@
     :global(.responsive-heading) {
         font-size: var(--font-size-xl);
         margin-bottom: 15px;
-        line-height: 1.6;
+        line-height: 1.2;
         font-weight: 700;
     }
 
