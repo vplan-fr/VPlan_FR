@@ -158,6 +158,15 @@
         <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
         <Select data={schools_categorized} grouped={true} icon_location="/public/base_static/images/school_icons" bind:selected_id={authorize_school_id} data_name="Schulen">Schule auswählen</Select>
         <Button type="submit" background="var(--accent-color)">Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></Button>
+        {#if is_admin}
+        <Button type="button" on:click={() => {
+            if (authorize_school_id) {
+                school_auth_visible = true;
+            } else {
+                notifications.danger("Wähle eine Schule aus um fortzufahren.");
+            }
+        }}>Schule autorisieren <span class="material-symbols-outlined">login</span></Button>
+        {/if}
     </form>
     {:else}
     <form transition:fly|local={{x: 600}} on:submit|preventDefault={authorize_school}>
