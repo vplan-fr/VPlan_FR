@@ -4,8 +4,8 @@
     import Rooms from "./Rooms.svelte";
     import {notifications} from './notifications.js';
     import { swipe } from 'svelte-gestures';
-    import {preferences, settings, title} from './stores.js';
-    import {arraysEqual, cache_plan, customFetch, format_date, navigate_page} from "./utils.js";
+    import {indexed_db, preferences, settings, title} from './stores.js';
+    import {arraysEqual, cache_plan, customFetch, format_date, get_from_db, navigate_page} from "./utils.js";
     import Dropdown from './Components/Dropdown.svelte';
 
     export let api_base;
@@ -28,6 +28,8 @@
     let info;
     let loading = false;
     let loading_failed = false;
+    let cache_loading_failed = false;
+    let network_loading_failed = false;
     let data_from_cache = false;
     let plan_type_map = {
         "forms": "Klasse",
@@ -69,30 +71,35 @@
             return;
         }
 
-        console.log("Loading lessons...", date, c_plan_type, entity, use_grouped_form_plans, revision);
-
         let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans";
         loading = true;
         data_from_cache = false;
-        loading_failed = false;
+        cache_loading_failed = false;
+        network_loading_failed = false;
         controller.abort();
         controller = new AbortController();
         signal = controller.signal;
+        // Try to load from cache
         if (revision === ".newest") {
-            let data = localStorage.getItem(`${school_num}_${date}_plan`);
-            if (data !== "undefined" && data) {
-                data = JSON.parse(data);
-                rooms_data = data.rooms;
-                if (c_plan_type !== "room_overview") {
-                    all_lessons = data[plan_key][c_plan_type] ? data[plan_key][c_plan_type][entity] || [] : [];
+            get_from_db(school_num, date, (data) => {
+                if(loading || network_loading_failed) {
+                    rooms_data = data.rooms;
+                    if (c_plan_type !== "room_overview") {
+                        all_lessons = data[plan_key][c_plan_type] ? data[plan_key][c_plan_type][entity] || [] : [];
+                    }
+                    info = data.info;
+                    week_letter = info.week;
+    
+                    cache_loading_failed = false;
+                    data_from_cache = true;
+                    loading = false;
                 }
-                info = data.info;
-                week_letter = info.week;
-
-                data_from_cache = true;
-                loading = false;
-            }
+            }, () => {
+                cache_loading_failed = true;
+            });
         }
+
+        // Try to load from network
         let params = new URLSearchParams();
         params.append("date", date);
         params.append("revision", revision);
@@ -107,21 +114,14 @@
                 }
                 info = data.info;
                 week_letter = info.week;
-                //console.log(lessons);
                 
                 loading = false;
+                network_loading_failed = false;
+                data_from_cache = false;
             })
             .catch(error => {
-                if (error.name === "AbortError") {
-                } else if (data_from_cache) {
-                    loading_failed = false;
-                    loading = false;
-                    notifications.info("Plan aus Cache geladen", 2000);
-                } else {
-                    loading_failed = true;
-                    loading = false;
-                    notifications.danger("Plan konnte nicht geladen werden.");
-                }
+                loading = false;
+                network_loading_failed = true;
         });
         location.hash = gen_location_hash();
     }
@@ -173,33 +173,6 @@
         }
     }
 
-    $: load_lessons(date, plan_type, plan_value, $settings.use_grouped_form_plans, selected_revision);
-
-    if(!school_num) {
-        navigate_page('school_manager');
-    }
-
-    onMount(() => {
-        location.hash = gen_location_hash();
-        title.set("Plan");
-        // console.log("Mounted Plan.svelte");
-    });
-
-    let full_teacher_name = null;
-    let teacher_contact_link = null;
-    let teacher_image_path = null;
-    $: if (plan_type === "teachers") {
-        full_teacher_name = meta.teachers[plan_value]?.surname || null;
-        teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
-        teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
-        teacher_image_path = meta.teachers[plan_value]?.image_path || null;
-        if (teacher_image_path) {
-            teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
-        }
-    }
-
-    let preferences_apply = true;
-    let lessons = all_lessons;
     function render_lessons(lessons) {
         if (plan_type !== "forms") {
             return lessons
@@ -252,15 +225,45 @@
         }
     }
 
-    let show_left_key = true;
-    let show_right_key = true;
     function update_date_btns() {
         show_left_key = enabled_dates.indexOf(date) > 0;
         show_right_key = enabled_dates.indexOf(date) < (enabled_dates.length - 1);
     }
+
+    $: $indexed_db, load_lessons(date, plan_type, plan_value, $settings.use_grouped_form_plans, selected_revision);
+
+    if(!school_num) {
+        navigate_page('school_manager');
+    }
+
+    onMount(() => {
+        location.hash = gen_location_hash();
+        title.set("Plan");
+        // console.log("Mounted Plan.svelte");
+    });
+
+    let full_teacher_name = null;
+    let teacher_contact_link = null;
+    let teacher_image_path = null;
+    $: if (plan_type === "teachers") {
+        full_teacher_name = meta.teachers[plan_value]?.surname || null;
+        teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
+        teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
+        teacher_image_path = meta.teachers[plan_value]?.image_path || null;
+        if (teacher_image_path) {
+            teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
+        }
+    }
+
+    let preferences_apply = true;
+    let lessons = all_lessons;
+
+    let show_left_key = true;
+    let show_right_key = true;
     
     $: date && enabled_dates && update_date_btns();
     $: preferences_apply, lessons = render_lessons(all_lessons);
+    $: loading_failed = (cache_loading_failed && network_loading_failed && !loading);
 </script>
 
 <svelte:window on:keydown={keydown_handler}/>
