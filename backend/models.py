@@ -33,14 +33,16 @@ class Lesson:
     subject_changed: bool
     teacher_changed: bool
     room_changed: bool
+    forms_changed: bool
 
-    is_scheduled: bool
     takes_place: bool | None = None  # whether this lesson in its current form takes place
 
     is_internal: bool = False
     _lesson_date: datetime.date = None
 
     _origin_plan_type: typing.Literal["forms", "teachers", "rooms"] = None
+    _origin_plan_lesson_id: int = None
+    _is_scheduled: bool | None = None
     _grouped_form_plan_current_course: str = None
     _grouped_form_plan_current_teachers: set[str] = None
     _grouped_form_plan_current_rooms: set[str] = None
@@ -71,11 +73,11 @@ class Lesson:
             subject_changed=False,
             teacher_changed=False,
             room_changed=False,
+            forms_changed=False,
             begin=None,
             end=None,
             takes_place=True,
             is_internal=True,
-            is_scheduled=False,
             _lesson_date=date,
             _origin_plan_type=plan_type,
         )
@@ -94,7 +96,6 @@ class Lesson:
             "room_changed": self.room_changed,
             "takes_place": self.takes_place,
             "is_internal": self.is_internal,
-            "is_scheduled": self.is_scheduled,
             "class_data": repr(self.class_),
             "info": self.parsed_info.serialize(self._lesson_date),
             "origin_plan_type": self._origin_plan_type,
@@ -159,7 +160,6 @@ class PlanLesson:
             "room_changed": self.room_changed,
             "forms_changed": self.forms_changed,
             "is_unplanned": self.is_unplanned,
-            # "info": self.info,
             "info": self.parsed_info.serialize(self._lesson_date),
             "begin": self.begin.strftime("%H:%M") if self.begin else None,
             "takes_place": self.takes_place,
@@ -167,16 +167,16 @@ class PlanLesson:
         }
 
     @classmethod
-    def create(cls, current_lesson: Lesson | None, scheduled_lesson: Lesson | None,
+    def create(cls, taking_place_lesson: Lesson | None, not_taking_place_lesson: Lesson | None,
                plan_type: typing.Literal["forms", "teachers", "rooms"],
                plan_value: set[str]) -> PlanLesson:
-        assert not (current_lesson is None is scheduled_lesson)
+        assert not (taking_place_lesson is None is not_taking_place_lesson)
 
-        if current_lesson is None:
+        if taking_place_lesson is None:
             _current_lesson = Lesson(
-                periods=scheduled_lesson.periods,
-                begin=scheduled_lesson.begin,
-                end=scheduled_lesson.end,
+                periods=not_taking_place_lesson.periods,
+                begin=not_taking_place_lesson.begin,
+                end=not_taking_place_lesson.end,
                 forms=set(),
                 teachers=set(),
                 rooms=set(),
@@ -186,19 +186,19 @@ class PlanLesson:
                 subject_changed=True,
                 teacher_changed=True,
                 room_changed=True,
-                is_scheduled=False,
+                forms_changed=True,
                 takes_place=False,
-                _lesson_date=scheduled_lesson._lesson_date,
-                _origin_plan_type=scheduled_lesson._origin_plan_type,
+                _lesson_date=not_taking_place_lesson._lesson_date,
+                _origin_plan_type=not_taking_place_lesson._origin_plan_type,
             )
         else:
-            _current_lesson = current_lesson
+            _current_lesson = taking_place_lesson
 
-        if scheduled_lesson is None:
+        if not_taking_place_lesson is None:
             _scheduled_lesson = Lesson(
-                periods=current_lesson.periods,
-                begin=current_lesson.begin,
-                end=current_lesson.end,
+                periods=taking_place_lesson.periods,
+                begin=taking_place_lesson.begin,
+                end=taking_place_lesson.end,
                 forms=set(),
                 teachers=set(),
                 rooms=set(),
@@ -208,13 +208,13 @@ class PlanLesson:
                 subject_changed=False,
                 teacher_changed=False,
                 room_changed=False,
-                is_scheduled=True,
+                forms_changed=False,
                 takes_place=False,
-                _lesson_date=current_lesson._lesson_date,
-                _origin_plan_type=current_lesson._origin_plan_type,
+                _lesson_date=taking_place_lesson._lesson_date,
+                _origin_plan_type=taking_place_lesson._origin_plan_type,
             )
         else:
-            _scheduled_lesson = scheduled_lesson
+            _scheduled_lesson = not_taking_place_lesson
 
         paragraphs = []
 
@@ -222,11 +222,15 @@ class PlanLesson:
             lesson_info.AbstractParsedLessonInfoMessageWithCourseInfo.get_other_info_type_of_plan_type(plan_type)
         )
 
-        if not _current_lesson.takes_place and plan_type != _scheduled_lesson._origin_plan_type:
+        # add lesson info
+        if _current_lesson._origin_plan_type != plan_type:
             scheduled_other_info_value = getattr(_scheduled_lesson, other_info_value_type)
 
-            if (scheduled_other_info_value is not None and
-                    not (_scheduled_lesson.course is None and _current_lesson.course is None)):
+            if (
+                not _current_lesson.takes_place
+                and scheduled_other_info_value is not None
+                and not (_scheduled_lesson.course is None is _current_lesson.course)
+            ):
                 paragraphs.append(
                     LessonInfoParagraph([LessonInfoMessage(lesson_info.Cancelled(
                         course=_scheduled_lesson.course or _current_lesson.course,
@@ -237,20 +241,19 @@ class PlanLesson:
                     ), -1), ], -1)
                 )
 
-        scheduled_other_info_value = getattr(_scheduled_lesson, other_info_value_type)
-        current_other_info_value = getattr(_current_lesson, other_info_value_type)
-        other_info_value_changed = {
-            "forms": True,
-            "teachers": _current_lesson.teacher_changed,
-            "rooms": _current_lesson.room_changed,
-        }[other_info_value_type]
-        if (
+            current_other_info_value = getattr(_current_lesson, other_info_value_type)
+            other_info_value_changed = {
+                "forms": True,
+                "teachers": _current_lesson.teacher_changed,
+                "rooms": _current_lesson.room_changed,
+            }[other_info_value_type]
+            if (
                 _scheduled_lesson.course is not None is not _current_lesson.course and
                 _scheduled_lesson.teachers is not None is not _current_lesson.teachers and
+                # either course or relevant other info value is different
                 ((_current_lesson.course != _scheduled_lesson.course and _current_lesson.subject_changed) or
                  (current_other_info_value != scheduled_other_info_value and other_info_value_changed))
-        ):
-            if _current_lesson._origin_plan_type != plan_type:
+            ):
                 paragraphs.append(
                     LessonInfoParagraph([LessonInfoMessage(lesson_info.InsteadOfCourse(
                         course=_scheduled_lesson.course,
@@ -273,10 +276,7 @@ class PlanLesson:
             current_teachers=_current_lesson.teachers,
             current_rooms=_current_lesson.rooms,
             current_course=_current_lesson.course,
-            class_number=(
-                (_scheduled_lesson.class_opt.number or _current_lesson.class_opt.number)
-                if _scheduled_lesson is not None else _current_lesson.class_opt.number
-            ),
+            class_number=_current_lesson.class_opt.number or _scheduled_lesson.class_opt.number,
             subject_changed=(
                 _current_lesson.subject_changed
                 if _current_lesson._origin_plan_type == plan_type
@@ -288,22 +288,9 @@ class PlanLesson:
             parsed_info=_current_lesson.parsed_info + ParsedLessonInfo(paragraphs),
             takes_place=_current_lesson.takes_place,
             is_internal=_current_lesson.is_internal,
-            is_unplanned=_current_lesson.takes_place and scheduled_lesson is None,
+            is_unplanned=_current_lesson.takes_place and not_taking_place_lesson is None,  # TODO
             _lesson_date=_current_lesson._lesson_date
         )
-
-        if not plan_lesson.takes_place and scheduled_lesson is not None:
-            plan_lesson.current_forms = set()
-            plan_lesson.current_teachers = set()
-            plan_lesson.current_rooms = set()
-            plan_lesson.current_course = None
-            # plan_lesson.parsed_info.paragraphs.append(
-            #     LessonInfoParagraph([LessonInfoMessage(lesson_info.Cancelled(
-            #         course=scheduled_lesson.course,
-            #         plan_type=
-            #
-            #     ), -1)], -1)
-            # )
 
         return plan_lesson
 
@@ -336,61 +323,71 @@ class Lessons:
     @staticmethod
     def _to_plan_lessons(lessons: list[Lesson], plan_type: typing.Literal["forms", "teachers", "rooms"],
                          plan_value: set[str]) -> list[PlanLesson]:
+        # select all lessons that take place
+        # first, pair them with not taking place lessons by _origin_plan_lesson_id (assert <= one per TPL)
+        # then pair scheduled lessons by looking at *_changed attrs
+        #
+        # remaining not-taking place lessons:
+        #   group by ~~_origin_plan_lesson_id/class_opt.number/~~ (course,teachers,forms,rooms)
+        #   if only one:
+        #       select all taking place lessons that have no not TPLs
+        #           if only one:
+        #   render as cancelled
         out = []
 
-        scheduled_lessons = [lesson for lesson in lessons if lesson.is_scheduled]
-        used_scheduled_lessons: list[Lesson] = []
-        lessons.sort(key=lambda l: (
-            not l.subject_changed,
-            l.takes_place,
-            l.course if l.course else "",
-        ), reverse=True)
+        not_taking_place_lessons = [lesson for lesson in lessons if not lesson.takes_place]
 
-        for current_lesson in lessons:
-            if current_lesson.is_scheduled:
+        lessons.sort(key=lambda l: (
+            l.subject_changed,
+            l.room_changed,
+            l.teacher_changed,
+            l.forms_changed,
+            not l.takes_place,
+            l.course if l.course else "",
+        ))
+
+        for taking_place_lesson in lessons:
+            if not taking_place_lesson.takes_place:
                 continue
 
-            for scheduled_lesson in scheduled_lessons:
-                if scheduled_lesson.class_opt.number is not None is not current_lesson.class_opt.number:
-                    if scheduled_lesson.class_opt.number == current_lesson.class_opt.number:
-                        break
+            for not_taking_place_lesson in not_taking_place_lessons:
+                if taking_place_lesson._origin_plan_lesson_id == not_taking_place_lesson._origin_plan_lesson_id:
+                    out.append(
+                        PlanLesson.create(taking_place_lesson, not_taking_place_lesson, plan_type, plan_value)
+                    )
+                    not_taking_place_lessons.remove(not_taking_place_lesson)
+                    break
             else:
-                for scheduled_lesson in scheduled_lessons:
+                for not_taking_place_lesson in not_taking_place_lessons:
+                    # @formatter:off
+                    is_match = (
+                        (taking_place_lesson.course != not_taking_place_lesson.course) in ((True, False) if taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.subject_changed else (taking_place_lesson.subject_changed,))
+                        and (True if taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.teacher_changed else (not taking_place_lesson.teachers.issuperset(not_taking_place_lesson.teachers or set())) == taking_place_lesson.teacher_changed)
+                        and (True if taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.room_changed else (not taking_place_lesson.rooms.issuperset(not_taking_place_lesson.rooms or set())) == taking_place_lesson.room_changed)
+                        and (True if taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.forms_changed else (not taking_place_lesson.forms.issuperset(not_taking_place_lesson.forms or set())) == taking_place_lesson.forms_changed)
+                    )
+                    # @formatter:on
 
-                    if (
-                            (scheduled_lesson.course != current_lesson.course) in
-                            (False, current_lesson.subject_changed)
-                    ):
+                    if is_match:
+                        out.append(
+                            PlanLesson.create(taking_place_lesson, not_taking_place_lesson, plan_type, plan_value)
+                        )
+                        not_taking_place_lessons.remove(not_taking_place_lesson)
                         break
                 else:
-                    scheduled_lesson = None
+                    if len(not_taking_place_lessons) == 1:
+                        out.append(
+                            PlanLesson.create(taking_place_lesson, not_taking_place_lessons[0], plan_type, plan_value)
+                        )
+                        not_taking_place_lessons.pop()
+                    else:
+                        out.append(
+                            PlanLesson.create(taking_place_lesson, None, plan_type, plan_value)
+                        )
 
-            if not current_lesson.takes_place:
-                # try to find corresponding used scheduled lesson to drop this cancelled lesson
-                found = False
-                for used_scheduled_lesson in used_scheduled_lessons:
-                    if (
-                            used_scheduled_lesson.course == current_lesson.course and
-                            used_scheduled_lesson.teachers == current_lesson.teachers and
-                            used_scheduled_lesson.forms == current_lesson.forms
-                    ):
-                        found = True
-                        break
-
-                if found:
-                    continue
-
-            if scheduled_lesson is not None:
-                scheduled_lessons.remove(scheduled_lesson)
-                used_scheduled_lessons.append(scheduled_lesson)
-
+        for not_taking_place_lesson in not_taking_place_lessons:
             out.append(
-                PlanLesson.create(current_lesson, scheduled_lesson, plan_type, plan_value)
-            )
-
-        for scheduled_lesson in scheduled_lessons:
-            out.append(
-                PlanLesson.create(None, scheduled_lesson, plan_type, plan_value)
+                PlanLesson.create(None, not_taking_place_lesson, plan_type, plan_value)
             )
 
         return out
@@ -420,8 +417,8 @@ class Lessons:
 
     @staticmethod
     def _group_lesson_info(
-            parsed_info1: ParsedLessonInfo,
-            parsed_info2: ParsedLessonInfo
+        parsed_info1: ParsedLessonInfo,
+        parsed_info2: ParsedLessonInfo
     ) -> ParsedLessonInfo | None:
         """Group two parsed lesson infos if possible."""
 
@@ -482,50 +479,49 @@ class Lessons:
 
         sorted_lessons = sorted(
             self.lessons,
-            key=lambda x: (str(x.is_scheduled),
-                           x.class_.number if x.class_ else (x.course if x.course else ""),
-                           x.teachers or set(),
-                           x.parsed_info.lesson_group_sort_key(),
-                           x.class_opt.group or "",
-                           x.forms or set(),
-                           x.periods or set())
+            key=lambda x: (
+                x.takes_place,
+                x.course or "",
+                x.teachers or set(),
+                x.rooms or set(),
+                x.parsed_info.lesson_group_sort_key(),
+                x.class_opt.group or "",
+
+                x.forms or set(),
+                x.periods or set(),
+            )
         )
 
         grouped: list[Lesson] = []
 
         for lesson in sorted_lessons:
-            for previous_lesson in grouped[-1:-3:-1]:  # go through last 2 lessons
+            for previous_lesson in grouped[-1:-4:-1]:
                 can_get_grouped = (
-                        lesson.rooms == previous_lesson.rooms and
-                        lesson.course == previous_lesson.course and
-                        lesson.teachers == previous_lesson.teachers and
-                        lesson.class_opt.number == previous_lesson.class_opt.number
+                    lesson.rooms == previous_lesson.rooms
+                    and lesson.course == previous_lesson.course
+                    and lesson.teachers == previous_lesson.teachers
+                    and lesson.takes_place == previous_lesson.takes_place
                 )
 
                 grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info)
 
                 can_get_grouped &= grouped_additional_info is not None
 
-                if (
-                        # both lessons have no form
-                        (not lesson.forms and not grouped[-1].forms)
-                        # or lesson form is the same as previous lesson form
-                        # when this method is called, lessons should only have one form
-                        or (lesson.forms and list(lesson.forms)[0] in grouped[-1].forms)
-                ):
-                    # "temporal" grouping, since lesson is duplicated for each period of block,
-                    # period must be even to get grouped onto first lesson of block
-                    can_get_grouped &= list(lesson.periods)[0] % 2 == 0
-                else:
-                    # lesson is duplicated for each form -> periods must be the same ("spacial" grouping)
-                    can_get_grouped &= list(lesson.periods)[-1] in grouped[-1].periods
+                # block must be the same
+                previous_lesson_block = (next(iter(previous_lesson.periods)) + 1) // 2
+                current_lesson_block = (next(iter(lesson.periods)) + 1) // 2
+                can_get_grouped &= previous_lesson_block == current_lesson_block
 
                 if can_get_grouped:
                     previous_lesson.periods |= lesson.periods
                     previous_lesson.forms |= lesson.forms
                     previous_lesson.parsed_info = grouped_additional_info
-                    previous_lesson.begin = min(filter(lambda x: x, (grouped[-1].begin, lesson.begin)), default=None)
-                    previous_lesson.end = max(filter(lambda x: x, (grouped[-1].end, lesson.end)), default=None)
+                    previous_lesson.begin = min(filter(lambda x: x, (previous_lesson.begin, lesson.begin)),
+                                                default=None)
+                    previous_lesson.end = max(filter(lambda x: x, (previous_lesson.end, lesson.end)), default=None)
+                    previous_lesson._is_scheduled = (
+                        None if previous_lesson._is_scheduled != lesson._is_scheduled else previous_lesson._is_scheduled
+                    )
                     break
             else:
                 grouped.append(copy.deepcopy(lesson))
@@ -578,6 +574,7 @@ class Plan:
         lessons: list[Lesson] = []
         exams: dict[str, list[Exam]] = defaultdict(list)
         all_classes = {number: class_ for form in form_plan.forms for number, class_ in form.classes.items()}
+        _id = 0
         for form in form_plan.forms:
             for lesson in form.lessons:
                 if lesson.class_number in all_classes:
@@ -603,15 +600,17 @@ class Plan:
                     rooms=set(lesson.room().split(" ")) if lesson.room() else set(),
                     course=lesson.subject(),
 
-                    parsed_info=ParsedLessonInfo([]),
+                    # see below
+                    parsed_info=None,
 
                     class_=class_data,
                     subject_changed=lesson.subject.was_changed,
                     teacher_changed=lesson.teacher.was_changed,
                     room_changed=lesson.room.was_changed,
-                    _lesson_date=form_plan.date,
-                    is_scheduled=False
+                    forms_changed=False,
+                    _lesson_date=form_plan.date
                 )
+                current_lesson._is_scheduled = False
                 current_lesson.parsed_info = ParsedLessonInfo.from_str(
                     lesson.information, current_lesson
                 ) if lesson.information is not None else ParsedLessonInfo([])
@@ -628,10 +627,10 @@ class Plan:
                     ),
                     rooms=current_lesson.rooms if not current_lesson.room_changed else None,
                     course=(
-                            lesson.course2
-                            or (current_lesson.course if not current_lesson.subject_changed else None)
-                            or (class_data.group if class_data is not None else None)
-                            or (class_data.subject if class_data is not None else None)
+                        lesson.course2
+                        or (current_lesson.course if not current_lesson.subject_changed else None)
+                        or (class_data.group if class_data is not None else None)
+                        or (class_data.subject if class_data is not None else None)
                     ),
                     parsed_info=current_lesson.parsed_info,
 
@@ -639,26 +638,25 @@ class Plan:
                     subject_changed=False,
                     teacher_changed=False,
                     room_changed=False,
-                    takes_place=None,
-                    is_scheduled=True,
+                    forms_changed=False,
+                    takes_place=False,
                     _lesson_date=form_plan.date,
                 )
+                scheduled_lesson._is_scheduled = True
 
                 if current_lesson.course == "---" and current_lesson.subject_changed:
                     # Indiware Stundenplaner's way of telling us that the lesson is cancelled
                     current_lesson.course = scheduled_lesson.course
                     current_lesson.teachers = scheduled_lesson.teachers
                     current_lesson.rooms = scheduled_lesson.rooms
+                    current_lesson.subject_changed = False
+                    current_lesson.teacher_changed = False
+                    current_lesson.room_changed = False
+
                     current_lesson.takes_place = False
-                    scheduled_lesson.takes_place = False
-                    # the following should be true already
-                    current_lesson.subject_changed = True
-                    current_lesson.teacher_changed = True
-                    current_lesson.room_changed = True
                 else:
                     current_lesson.takes_place = True
-                    scheduled_lesson.takes_place = False
-                #
+
                 # if current_lesson.subject_changed:
                 #     scheduled_lesson.class_ = None
 
@@ -673,9 +671,12 @@ class Plan:
                     l._grouped_form_plan_scheduled_forms = scheduled_lesson.forms
 
                     l._origin_plan_type = "forms"
+                    l._origin_plan_lesson_id = _id
 
                 lessons.append(scheduled_lesson)
                 lessons.append(current_lesson)
+
+                _id += 1
 
             for exam in form.exams:
                 exam = copy.deepcopy(exam)
