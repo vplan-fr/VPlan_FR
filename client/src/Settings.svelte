@@ -1,6 +1,6 @@
 <script>
     import {notifications} from "./notifications.js";
-    import {logged_in, settings, active_modal} from './stores.js';
+    import {logged_in, settings, active_modal, indexed_db} from './stores.js';
     import {customFetch, update_colors} from "./utils.js";
     import Modal from "./Components/Modal.svelte";
     import { onMount } from "svelte";
@@ -58,6 +58,29 @@
         window.open("/auth/account", "_blank");
     }
 
+    function clear_plan_cache() {
+        if(!$indexed_db) {
+            return;
+        }
+
+        const tx = $indexed_db.transaction(['plan-store'], "readwrite");
+        
+        tx.onerror = (event) => {
+            console.log("Error while deleting oldest plan", event);
+        };
+
+        const store = tx.objectStore('plan-store');
+        const request = store.clear();
+        request.onerror = (event) => {
+            notifications.danger("Cache konnte nicht geleert werden");
+            console.error(event);
+        };
+
+        request.onsuccess = (event) => {
+            notifications.success("Cache geleert");
+        };
+    }
+
     // onMount(() => {
     //     console.log("Mounted Settings.svelte");
     // });
@@ -86,8 +109,9 @@
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.use_grouped_form_plans}>Lehrer/Raumpläne nur als umgeordnete Klassenpläne anzeigen. (Bsp.: Lehreränderung bei Klassenplan wird nicht zu Ausfall im Lehrerplan des ursprünglichen Lehrers)</span>
         <br>
         <div class="horizontal-container">
-            <Button on:click={reset_settings} class="halfed">Einstellungen zurücksetzen</Button>
-            <Button on:click={view_saved_data} class="halfed">Gespeicherte Daten einsehen</Button>
+            <Button on:click={reset_settings} class="split">Einstellungen zurücksetzen</Button>
+            <Button on:click={clear_plan_cache} class="split">Plan-Cache leeren</Button>
+            <Button on:click={view_saved_data} class="split">Gespeicherte Daten einsehen</Button>
         </div>
         <Button on:click={delete_account} background="var(--cancelled-color)">Account löschen</Button>
     </div>
@@ -109,7 +133,7 @@
         display: flex;
         flex-direction: row;
         
-        :global(.halfed) {
+        :global(.split) {
             flex: 1;
         }
     }

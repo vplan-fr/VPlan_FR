@@ -5,7 +5,7 @@
     import {notifications} from './notifications.js';
     import { swipe } from 'svelte-gestures';
     import {indexed_db, preferences, settings, title} from './stores.js';
-    import {arraysEqual, cache_plan, customFetch, format_date, get_from_db, navigate_page} from "./utils.js";
+    import {arraysEqual, cache_plan, customFetch, format_date, get_from_db, get_school_plan_count, navigate_page} from "./utils.js";
     import Dropdown from './Components/Dropdown.svelte';
 
     export let api_base;
@@ -82,6 +82,7 @@
         // Try to load from cache
         if (revision === ".newest") {
             get_from_db(school_num, date, (data) => {
+                data = data.plan_data;
                 if(loading || network_loading_failed) {
                     rooms_data = data.rooms;
                     if (c_plan_type !== "room_overview") {
