@@ -57,7 +57,7 @@
 
     function load_lessons(data, c_plan_type, entity, use_grouped_form_plans) {
         // Check if settings are loaded
-        if(use_grouped_form_plans === undefined) {
+        if(use_grouped_form_plans === undefined || data === undefined) {
             return;
         }
         // Check the presence of necessary variables
@@ -601,10 +601,10 @@
     }
 
     .extra-height {
-        min-height: calc(100vh - 66px);
+        min-height: calc(100vh - 82px);
 
         @media only screen and (min-width: 1501px) {
-            min-height: calc(100vh - 74px);
+            min-height: calc(100vh - 90px);
         }
     }
 
