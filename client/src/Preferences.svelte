@@ -182,7 +182,7 @@
     {/if}
     <svelte:fragment slot="footer">
         {#if selected_form != null}
-            <Button on:click={setPreferences} background="var(--accent-color)" small={true}>Speichern</Button>
+            <Button on:click={() => {setPreferences(); $active_modal = "";}} background="var(--accent-color)" small={true}>Speichern</Button>
         {/if}
         <Button on:click={() => {$active_modal = ""}} small={true}>Abbrechen</Button>
     </svelte:fragment>
