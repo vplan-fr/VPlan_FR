@@ -120,7 +120,7 @@
         {/if}
         <!-- Forms -->
         {#if plan_type !== "forms"}
-            {#if forms.length === 0 && s_forms.length !== 0}
+            {#if forms.length === 0 && s_forms.length === 0}
                 <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
                     <span class="extra_padding">-</span>
                 </div>
