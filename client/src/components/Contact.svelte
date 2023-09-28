@@ -1,10 +1,10 @@
 <script>
-    import {customFetch, navigate_page} from "./utils.js";
-    import {notifications} from "./notifications.js";
-    import Select from "./Components/Select.svelte";
+    import {customFetch, navigate_page} from "../utils.js";
+    import {notifications} from "../notifications.js";
+    import Select from "../base_components/Select.svelte";
     import { onMount } from "svelte";
-    import { title } from "./stores.js";
-    import Button from "./Components/Button.svelte";
+    import { title } from "../stores.js";
+    import Button from "../base_components/Button.svelte";
 
     let category = "bug";
     let person = "student";

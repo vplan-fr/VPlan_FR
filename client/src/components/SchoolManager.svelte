@@ -1,11 +1,11 @@
 <script>
-    import {notifications} from './notifications.js';
+    import {notifications} from '../notifications.js';
     import { onMount } from "svelte";
-    import { title } from "./stores";
-    import {customFetch, navigate_page} from "./utils.js";
-    import Select from "./Components/Select.svelte";
+    import { title } from "../stores";
+    import {customFetch, navigate_page} from "../utils.js";
+    import Select from "../base_components/Select.svelte";
     import { fly } from 'svelte/transition';
-    import Button from './Components/Button.svelte';
+    import Button from '../base_components/Button.svelte';
 
     onMount(() => {
         location.hash = "#school_manager";

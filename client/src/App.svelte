@@ -1,27 +1,27 @@
 <script>
-    import Plan from "./Plan.svelte";
-    import Weekplan from "./Weekplan.svelte";
-    import Authentication from "./Authentication.svelte";
-	import Toast from './Components/Toast.svelte';
-    import Navbar from "./Navbar.svelte";
-    import Settings from "./Settings.svelte";
-    import AboutUs from "./AboutUs.svelte";
+    import Plan from "./components/Plan.svelte";
+    import Weekplan from "./components/Weekplan.svelte";
+    import Authentication from "./components/Authentication.svelte";
+	import Toast from './base_components/Toast.svelte';
+    import Navbar from "./components/Navbar.svelte";
+    import Settings from "./components/Settings.svelte";
+    import AboutUs from "./components/AboutUs.svelte";
     import SveltyPicker from 'svelty-picker';
     import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db} from './stores.js'
     import {customFetch, format_revision_date} from "./utils.js";
-    import SchoolManager from "./SchoolManager.svelte";
-    import Preferences from "./Preferences.svelte";
-    import Changelog from "./Changelog.svelte";
-    import Select from "./Components/Select.svelte";
-    import Contact from "./Contact.svelte";
-    import Impressum from "./Impressum.svelte";
+    import SchoolManager from "./components/SchoolManager.svelte";
+    import Preferences from "./components/Preferences.svelte";
+    import Changelog from "./components/Changelog.svelte";
+    import Select from "./base_components/Select.svelte";
+    import Contact from "./components/Contact.svelte";
+    import Impressum from "./components/Impressum.svelte";
     import {de} from 'svelty-picker/i18n';
-    import PwaInstallHelper from "./PWAInstallHelper.svelte";
-    import Dropdown from "./Components/Dropdown.svelte";
+    import PwaInstallHelper from "./components/PWAInstallHelper.svelte";
+    import Dropdown from "./base_components/Dropdown.svelte";
     import {animateScroll} from 'svelte-scrollto-element';
-    import Button from "./Components/Button.svelte";
+    import Button from "./base_components/Button.svelte";
     import { fade } from "svelte/transition";
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);

@@ -1,10 +1,10 @@
 <script>
-    import {notifications} from './notifications.js';
-    import {logged_in, active_modal, new_changelogs_available} from './stores.js';
-    import Dropdown from './Components/Dropdown.svelte';
+    import {notifications} from '../notifications.js';
+    import {logged_in, active_modal, new_changelogs_available} from '../stores.js';
+    import Dropdown from '../base_components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
     import { onMount } from 'svelte';
-    import {customFetch, navigate_page} from "./utils.js";
+    import {customFetch, navigate_page} from "../utils.js";
 
     function logout() {
         customFetch('/auth/logout')

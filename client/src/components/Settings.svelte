@@ -1,10 +1,9 @@
 <script>
-    import {notifications} from "./notifications.js";
-    import {logged_in, settings, active_modal, indexed_db} from './stores.js';
-    import {clear_plan_cache, customFetch, update_colors} from "./utils.js";
-    import Modal from "./Components/Modal.svelte";
-    import { onMount } from "svelte";
-    import Button from "./Components/Button.svelte";
+    import {notifications} from "../notifications.js";
+    import {logged_in, settings, active_modal} from '../stores.js';
+    import {clear_plan_cache, customFetch, update_colors} from "../utils.js";
+    import Modal from "../base_components/Modal.svelte";
+    import Button from "../base_components/Button.svelte";
 
     let temp_settings;
 

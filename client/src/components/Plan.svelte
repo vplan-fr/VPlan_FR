@@ -2,11 +2,11 @@
     import {onMount} from 'svelte';
     import Lesson from './Lesson.svelte';
     import Rooms from "./Rooms.svelte";
-    import {notifications} from './notifications.js';
+    import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
-    import {indexed_db, preferences, settings, title} from './stores.js';
-    import {arraysEqual, cache_plan, customFetch, format_date, get_from_db, get_school_plan_count, navigate_page} from "./utils.js";
-    import Dropdown from './Components/Dropdown.svelte';
+    import {indexed_db, preferences, settings, title} from '../stores.js';
+    import {arraysEqual, cache_plan, customFetch, format_date, get_from_db, get_school_plan_count, navigate_page} from "../utils.js";
+    import Dropdown from '../base_components/Dropdown.svelte';
 
     export let api_base;
     export let school_num;

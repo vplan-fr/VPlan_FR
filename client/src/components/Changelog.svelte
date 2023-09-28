@@ -1,11 +1,10 @@
 <script>
-    import { customFetch } from "./utils";
-    import {active_modal, logged_in, new_changelogs_available} from './stores';
-    import { notifications } from "./notifications";
-    import Modal from "./Components/Modal.svelte";
+    import { customFetch } from "../utils";
+    import {active_modal, logged_in, new_changelogs_available} from '../stores';
+    import { notifications } from "../notifications";
+    import Modal from "../base_components/Modal.svelte";
     import SvelteMarkdown from 'svelte-markdown'
-    import { onMount } from "svelte";
-    import Button from "./Components/Button.svelte";
+    import Button from "../base_components/Button.svelte";
 
     let changelog = [];
     let unread_changelogs = [];
