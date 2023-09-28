@@ -416,7 +416,7 @@ def resolve_teacher_abbreviations(surnames: list[str], abbreviation_by_surname: 
     return [abbreviation_by_surname.get(surname, surname) for surname in surnames]
 
 
-def __parse_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoMessage, re.Match | None]:
+def _parse_form_plan_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoMessage, re.Match | None]:
     if match := _InfoParsers.substitution.match(info):
         return InsteadOfCourse(
             plan_type="forms",
@@ -500,10 +500,17 @@ def __parse_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoM
         return FailedToParse(), None
 
 
-def _parse_message(info: str, lesson: models.Lesson) -> ParsedLessonInfoMessage:
+def _parse_message(info: str, lesson: models.Lesson, plan_type: typing.Literal["forms", "teachers", "rooms"]
+                   ) -> ParsedLessonInfoMessage:
     info = info.strip()
     info = re.sub(r"(?<=\w)/ ", "/", info)  # remove spaces after slashes like in G/ R/ W
-    parsed_info, match = __parse_message(info, lesson)
+
+    if plan_type == "forms":
+        parsed_info, match = _parse_form_plan_message(info, lesson)
+    else:
+        # TODO
+        parsed_info = FailedToParse()
+        match = None
 
     if match is not None:
         parsed_info.original_messages = [info[match.start():match.end()]]
@@ -547,8 +554,9 @@ class LessonInfoMessage:
     index: int
 
     @classmethod
-    def from_str(cls, message: str, lesson: models.Lesson, index: int) -> LessonInfoMessage:
-        parsed = _parse_message(message, lesson)
+    def from_str(cls, message: str, lesson: models.Lesson, index: int, 
+                 plan_type: typing.Literal["forms", "teachers", "rooms"]) -> LessonInfoMessage:
+        parsed = _parse_message(message, lesson, plan_type)
 
         return cls(
             parsed=parsed,
@@ -571,9 +579,10 @@ class LessonInfoParagraph:
     index: int
 
     @classmethod
-    def from_str(cls, paragraph: str, lesson: models.Lesson, index: int) -> LessonInfoParagraph:
+    def from_str(cls, paragraph: str, lesson: models.Lesson, index: int,
+                 plan_type: typing.Literal["forms", "teachers", "rooms"]) -> LessonInfoParagraph:
         messages = [
-            LessonInfoMessage.from_str(message.strip(), lesson, i)
+            LessonInfoMessage.from_str(message.strip(), lesson, i, plan_type)
             for i, message in enumerate(paragraph.split(","))
         ]
         new_messages = []
@@ -605,9 +614,10 @@ class ParsedLessonInfo:
     paragraphs: list[LessonInfoParagraph]
 
     @classmethod
-    def from_str(cls, info: str, lesson: models.Lesson) -> ParsedLessonInfo:
+    def from_str(cls, info: str, lesson: models.Lesson, plan_type: typing.Literal["forms", "teachers", "rooms"]
+                 ) -> ParsedLessonInfo:
         return cls([
-            LessonInfoParagraph.from_str(paragraph.strip(), lesson, i)
+            LessonInfoParagraph.from_str(paragraph.strip(), lesson, i, plan_type)
             for i, paragraph in enumerate(info.split(";"))
         ])
 
@@ -856,7 +866,7 @@ def add_fuzzy_teacher_links(text: str, teacher_abbreviation_by_surname: dict[str
         else:
             return None
 
-    return add_fuzzy_with_validator(text, [_InfoParsers._teacher, "\b\w+"], validator)
+    return add_fuzzy_with_validator(text, [_InfoParsers._teacher, r"\b\w+"], validator)
 
 
 def group_text_segments(segments: list[LessonInfoTextSegment]) -> list[LessonInfoTextSegment]:
