@@ -11,10 +11,6 @@
     export let plan_value;
     export let used_rooms_hidden = true;
 
-    // onMount(() => {
-    //     console.log("Mounted Rooms.svelte");
-    // });
-
     $: all_rooms_grouped = all_rooms ? group_rooms(all_rooms) : []
     $: all_rooms_grouped_dict = Object.fromEntries(all_rooms_grouped)
 </script>

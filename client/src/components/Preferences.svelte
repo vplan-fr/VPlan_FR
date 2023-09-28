@@ -10,10 +10,9 @@
     export let grouped_forms;
     export let course_lists;
     export let school_num;
+
     let selected_form = null;
     let class_groups_by_subject = [];
-    $: class_groups_by_subject = selected_form != null ? sort_courses_by_subject(course_lists[selected_form].class_groups) : [];
-
     let allItems = [];
     let selection = {};
     let current_form_preferences = [];
@@ -130,6 +129,7 @@
         updateCourses();
     }
 
+    $: class_groups_by_subject = selected_form != null ? sort_courses_by_subject(course_lists[selected_form].class_groups) : [];
     $: create_select_arr(grouped_forms)
     $: selected_form, updateCourses();
 </script>
