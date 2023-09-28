@@ -36,9 +36,9 @@
             weekdates.push(`${tmp_new_date.getFullYear()}-${('00'+(tmp_new_date.getMonth()+1)).slice(-2)}-${('00'+tmp_new_date.getDate()).slice(-2)}`);
         }
     }
-    $: gen_weekdates(week_start);
+    // $: gen_weekdates(week_start);
 </script>
-<div class="responsive-heading">
+<!-- <div class="responsive-heading">
     Wochenplan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}</span> 
     in der Woche vom <span class="custom-badge">{week_start}</span> <span class="no-linebreak">({week_letter}-Woche)</span>
 </div>
@@ -48,7 +48,8 @@
     <Plan bind:api_base date={weekdates[2]} bind:plan_type bind:plan_value show_title={false} extra_height={false} />
     <Plan bind:api_base date={weekdates[3]} bind:plan_type bind:plan_value show_title={false} extra_height={false} />
     <Plan bind:api_base date={weekdates[4]} bind:plan_type bind:plan_value show_title={false} extra_height={false} />
-</div>
+</div> -->
+<h1 class="responsive-heading">Wochenplan Coming Soon...</h1>
 <style lang="scss">
     .week_plan {
         display: flex;

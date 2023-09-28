@@ -57,10 +57,6 @@
         window.open("/auth/account", "_blank");
     }
 
-    // onMount(() => {
-    //     console.log("Mounted Settings.svelte");
-    // });
-
     $: update_colors(temp_settings);
 </script>
 

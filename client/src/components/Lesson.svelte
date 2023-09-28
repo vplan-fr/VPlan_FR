@@ -9,24 +9,6 @@
     export let plan_value;
     export let display_time = true;
 
-    $: only_teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers?.length === 0 && lesson.takes_place;
-
-    $: teachers = (lesson.takes_place && !only_teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers) || [];
-    $: s_teachers = (!arraysEqual(lesson.scheduled_teachers, teachers) ? lesson.scheduled_teachers?.filter(t => !teachers.includes(t)) : []) || [];
-
-    $: forms = (lesson.takes_place ? lesson.current_forms : lesson.scheduled_forms) || [];
-    $: s_forms = (!arraysEqual(lesson.scheduled_forms, forms) ? lesson.scheduled_forms?.filter(f => !forms.includes(f)) : []) || []
-    $: forms_str = lesson.takes_place ? lesson.current_forms_str : lesson.scheduled_forms_str;
-    $: s_forms_str = s_forms.length !== 0 ? lesson.scheduled_forms_str : "";
-
-    $: rooms = (lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms) || [];
-    $: s_rooms = (!arraysEqual(lesson.scheduled_rooms, rooms) ? lesson.scheduled_rooms?.filter(r => !rooms.includes(r)) : []) || [];
-
-    $: subject_changed = lesson.subject_changed && lesson.takes_place && !lesson.is_unplanned;
-    $: teacher_changed = lesson.teacher_changed && lesson.takes_place && !lesson.is_unplanned;
-    $: room_changed = lesson.room_changed && lesson.takes_place && !lesson.is_unplanned;
-    $: forms_changed = lesson.forms_changed && lesson.takes_place && !lesson.is_unplanned;
-
     function periods_to_block_label(periods) {
         periods.sort(function (a, b) {
             return a - b;
@@ -45,7 +27,24 @@
             return periods.map(p => periods_to_block_label([p])).join(", ");
         }
     }
-    //$: console.log(lesson);
+
+    $: only_teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers?.length === 0 && lesson.takes_place;
+
+    $: teachers = (lesson.takes_place && !only_teacher_absent ? lesson.current_teachers : lesson.scheduled_teachers) || [];
+    $: s_teachers = (!arraysEqual(lesson.scheduled_teachers, teachers) ? lesson.scheduled_teachers?.filter(t => !teachers.includes(t)) : []) || [];
+
+    $: forms = (lesson.takes_place ? lesson.current_forms : lesson.scheduled_forms) || [];
+    $: s_forms = (!arraysEqual(lesson.scheduled_forms, forms) ? lesson.scheduled_forms?.filter(f => !forms.includes(f)) : []) || []
+    $: forms_str = lesson.takes_place ? lesson.current_forms_str : lesson.scheduled_forms_str;
+    $: s_forms_str = s_forms.length !== 0 ? lesson.scheduled_forms_str : "";
+
+    $: rooms = (lesson.takes_place ? lesson.current_rooms : lesson.scheduled_rooms) || [];
+    $: s_rooms = (!arraysEqual(lesson.scheduled_rooms, rooms) ? lesson.scheduled_rooms?.filter(r => !rooms.includes(r)) : []) || [];
+
+    $: subject_changed = lesson.subject_changed && lesson.takes_place && !lesson.is_unplanned;
+    $: teacher_changed = lesson.teacher_changed && lesson.takes_place && !lesson.is_unplanned;
+    $: room_changed = lesson.room_changed && lesson.takes_place && !lesson.is_unplanned;
+    $: forms_changed = lesson.forms_changed && lesson.takes_place && !lesson.is_unplanned;
 </script>
 
 <div class="card" class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>

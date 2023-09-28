@@ -3,7 +3,6 @@
     import {logged_in, active_modal, new_changelogs_available} from '../stores.js';
     import Dropdown from '../base_components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
-    import { onMount } from 'svelte';
     import {customFetch, navigate_page} from "../utils.js";
 
     function logout() {
@@ -15,10 +14,6 @@
                 notifications.danger(error.message);
             });
     }
-
-    // onMount(() => {
-    //     console.log("Mounted Navbar.svelte");
-    // });
 </script>
 
 <nav transition:fly={{y:-64}}>

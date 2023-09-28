@@ -21,9 +21,6 @@
         location.hash = "#pwa_install";
         title.set("Installieren");
     });
-
-    // Testing
-    // $: $pwa_prompt, $pwa_prompt = null;
 </script>
 
 <main>

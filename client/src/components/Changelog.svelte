@@ -3,11 +3,12 @@
     import {active_modal, logged_in, new_changelogs_available} from '../stores';
     import { notifications } from "../notifications";
     import Modal from "../base_components/Modal.svelte";
-    import SvelteMarkdown from 'svelte-markdown'
+    import SvelteMarkdown from 'svelte-markdown';
     import Button from "../base_components/Button.svelte";
 
     let changelog = [];
     let unread_changelogs = [];
+    
     function get_changelog() {
         customFetch("/api/v69.420/changelog")
             .then(data => {

@@ -6,23 +6,11 @@
     import Select from "../base_components/Select.svelte";
     import { fly } from 'svelte/transition';
     import Button from '../base_components/Button.svelte';
-
-    onMount(() => {
-        location.hash = "#school_manager";
-        title.set("Schule wählen");
-        get_schools();
-        get_authorized_schools();
-        get_admin_status();
-        // console.log("Mounted SchoolManager.svelte");
-    });
     
     export let school_num;
     export let date;
     export let plan_type;
     export let plan_value;
-    function isObjectInList(object, list) {
-        return list.some(item => item.toString() === object.toString());
-    }
 
     let authorize_school_id;
     let username = "schueler";
@@ -36,6 +24,10 @@
     let is_admin = false;
     let school_id_arr = [];
     let password_visible = false;
+
+    function isObjectInList(object, list) {
+        return list.some(item => item.toString() === object.toString());
+    }
 
     function get_schools() {
         customFetch("/api/v69.420/schools")
@@ -115,6 +107,23 @@
         );
     }
 
+    function get_school_name_by_id(school_id) {
+        for (let school of schools) {
+            if (school.id === school_id.toString()) {
+                return school.display_name;
+            }
+        }
+        return "";
+    }
+
+    get_schools();
+    get_authorized_schools();
+    get_admin_status();
+    
+    onMount(() => {
+        location.hash = "#school_manager";
+        title.set("Schule wählen");
+    });
 
     $: schools, school_id_arr = schools.map(obj => obj.id);
     $: schools, authorized_schools = schools.filter(obj => authorized_school_ids.includes(obj.id));
@@ -122,16 +131,7 @@
     $: schools_categorized = [
         ["Autorisiert", authorized_schools],
         ["Unautorisiert", unauthorized_schools]
-    ]
-
-    function get_school_name_by_id(school_id) {
-        for (let school of schools) {
-            if (school.id === school_id.toString()) {
-                return school.display_name
-            }
-        }
-        return ""
-    }
+    ];
 </script>
 
 <main>
