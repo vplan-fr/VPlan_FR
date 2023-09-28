@@ -87,7 +87,7 @@ def account() -> Response:
     tmp_user = current_user.get_user()
     if request.method == "GET":
         return send_success({
-            key: value for key, value in tmp_user.items() if key not in ["_id", "admin"]
+            key: value for key, value in tmp_user.items() if key not in ["_id", "admin", "password_hash"]
         })
     elif request.method == "DELETE":
         embed = DiscordEmbed(title="User deletion", color="ff0000")
