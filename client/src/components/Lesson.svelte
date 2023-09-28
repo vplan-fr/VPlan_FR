@@ -1,7 +1,7 @@
 <script>
-    import Dropdown from "./Components/Dropdown.svelte";
-    import {settings} from "./stores";
-    import {arraysEqual} from "./utils.js";
+    import Dropdown from "../base_components/Dropdown.svelte";
+    import {settings} from "../stores";
+    import {arraysEqual} from "../utils.js";
 
     export let lesson;
     export let date;

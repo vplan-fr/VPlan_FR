@@ -1,9 +1,9 @@
 <script>
     import { onMount } from "svelte";
-    import { pwa_prompt, title } from "./stores";
-    import { notifications } from "./notifications";
-    import { navigate_page } from "./utils";
-    import Button from "./Components/Button.svelte";
+    import { pwa_prompt, title } from "../stores";
+    import { notifications } from "../notifications";
+    import { navigate_page } from "../utils";
+    import Button from "../base_components/Button.svelte";
 
     async function try_install() {
         $pwa_prompt.prompt();

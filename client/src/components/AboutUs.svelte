@@ -1,8 +1,8 @@
 <script>
     import { onMount } from "svelte";
-    import { title } from "./stores";
-    import Button from "./Components/Button.svelte";
-    import {navigate_page} from "./utils.js";
+    import { title } from "../stores";
+    import Button from "../base_components/Button.svelte";
+    import {navigate_page} from "../utils.js";
 
     onMount(() => {
         location.hash = "#about_us";

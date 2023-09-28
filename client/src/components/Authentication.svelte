@@ -1,8 +1,8 @@
 <script>
-    import {notifications} from './notifications.js';
+    import {notifications} from '../notifications.js';
     import { fly, fade } from 'svelte/transition';
-    import { logged_in, title } from './stores.js';
-    import {customFetch, navigate_page} from "./utils.js";
+    import { logged_in, title } from '../stores.js';
+    import {customFetch, navigate_page} from "../utils.js";
 
     let l_nickname;
     let l_password;

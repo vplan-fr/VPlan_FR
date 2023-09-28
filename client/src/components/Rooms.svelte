@@ -1,10 +1,9 @@
 <script>
-    import CollapsibleWrapper from "./Components/CollapsibleWrapper.svelte";
-    import {group_rooms} from "./utils.js";
-    import Collapsible from "./Components/Collapsible.svelte";
+    import CollapsibleWrapper from "../base_components/CollapsibleWrapper.svelte";
+    import {group_rooms} from "../utils.js";
+    import Collapsible from "../base_components/Collapsible.svelte";
     import { fade } from "svelte/transition";
     import { flip } from "svelte/animate";
-    import { onMount } from "svelte";
 
     export let rooms_data;
     export let all_rooms;

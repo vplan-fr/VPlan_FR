@@ -1,10 +1,10 @@
 <script>
-    import Button from "./Components/Button.svelte";
-    import Modal from "./Components/Modal.svelte";
-    import Select from "./Components/Select.svelte";
-    import {notifications} from "./notifications.js";
-    import {preferences, active_modal} from './stores.js';
-    import {customFetch, navigate_page} from "./utils.js";
+    import Button from "../base_components/Button.svelte";
+    import Modal from "../base_components/Modal.svelte";
+    import Select from "../base_components/Select.svelte";
+    import {notifications} from "../notifications.js";
+    import {preferences, active_modal} from '../stores.js';
+    import {customFetch, navigate_page} from "../utils.js";
 
     export let api_base;
     export let grouped_forms;
