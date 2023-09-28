@@ -83,7 +83,13 @@ def plan(school_num: str) -> Response:
         return send_error("Invalid revision timestamp format. Must be in ISO format.")
 
     try:
-        data = cache.get_all_json_plan_files(date, revision)
+        data = {
+            "info": json.loads(cache.get_plan_file(date, revision, "info.json")),
+            "rooms": json.loads(cache.get_plan_file(date, revision, "rooms.json")),
+            "plans": json.loads(cache.get_plan_file(date, revision, "plans.json")),
+            "exams": json.loads(cache.get_plan_file(date, revision, "exams.json")),
+            "grouped_form_plans": json.loads(cache.get_plan_file(date, revision, "grouped_form_plans.json")),
+        }
     except FileNotFoundError:
         return send_error("Invalid date or revision.")
 
