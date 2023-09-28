@@ -321,7 +321,7 @@
                 {#each lessons as lesson, i}
                     {#if external_times}    
                         {#if !all_lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
-                            <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}: {lesson.begin} - {lesson.end}</span>
+                            <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}{lesson.begin != null && lesson.end != null ? ": " + lesson.begin + " - " + lesson.end : ". Block"}</span>
                         {/if}
                     {/if}
                     <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
