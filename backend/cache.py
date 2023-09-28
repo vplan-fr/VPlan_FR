@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import json
-import typing
 from pathlib import Path
 
 
@@ -15,8 +13,8 @@ class Cache:
             return self.path / "plans" / day.isoformat()
         elif isinstance(timestamp, datetime.datetime):
             return (
-                    self.path / "plans" / day.isoformat()
-                    / timestamp.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
+                self.path / "plans" / day.isoformat()
+                / timestamp.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
             )
         else:
             return self.path / "plans" / day.isoformat() / timestamp
@@ -30,13 +28,19 @@ class Cache:
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
 
+    def remove_plan_file(self, day: datetime.date, timestamp: datetime.datetime | str, filename: str):
+        """Remove a plan file from the cache."""
+
+        path = self.get_plan_path(day, timestamp) / filename
+        path.unlink(missing_ok=True)
+
     def store_plan_file_link(
-            self,
-            day: datetime.date,
-            timestamp: datetime.datetime | str,
-            filename: str,
-            to_timestamp: datetime.datetime | str,
-            to_filename: str
+        self,
+        day: datetime.date,
+        timestamp: datetime.datetime | str,
+        filename: str,
+        to_timestamp: datetime.datetime | str,
+        to_filename: str
     ):
         """Create a symlink to a plan file in the cache."""
 
@@ -127,18 +131,6 @@ class Cache:
         self.get_plan_path(day, ".newest").unlink(missing_ok=True)
         if timestamps:
             self.set_newest(day, timestamps[0])
-
-    def get_all_json_plan_files(self,
-                                day: datetime.date,
-                                timestamp: datetime.datetime | str) -> dict[str, typing.Any]:
-        out = {}
-
-        for file in self.get_plan_path(day, timestamp).iterdir():
-            if file.suffix == ".json" and not file.name.startswith((".", "_")) and not file.stem.endswith(".xml"):
-                with open(file, "r", encoding="utf-8") as f:
-                    out[file.stem] = json.load(f)
-
-        return out
 
     def plan_file_exists(self,
                          day: datetime.date,

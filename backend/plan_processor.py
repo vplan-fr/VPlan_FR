@@ -6,7 +6,7 @@ import logging
 
 from . import schools
 from .cache import Cache
-from .plan_extractor import PlanExtractor
+from .plan_extractor import StudentsPlanExtractor, TeachersPlanExtractor
 from .meta_extractor import MetaExtractor
 from .models import Teachers, Exam, Teacher, PlanLesson
 from .vplan_utils import group_forms, ParsedForm
@@ -14,7 +14,7 @@ from .stats import LessonsStatistics
 
 
 class PlanProcessor:
-    VERSION = "85"
+    VERSION = "86"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -44,7 +44,7 @@ class PlanProcessor:
         for day in self.cache.get_days():
             self.cache.update_newest(day)
 
-            for revision in self.cache.get_timestamps(day):
+            for revision in self.cache.get_timestamps(day)[0:1]:
                 self.update_plans(day, revision)
 
     def update_plans(self, day: datetime.date, timestamp: datetime.datetime) -> bool:
@@ -70,21 +70,24 @@ class PlanProcessor:
                 vplan_kl = self.cache.get_plan_file(date, timestamp, "VplanKl.xml", newest_before=True)
             except FileNotFoundError:
                 vplan_kl = None
-            plan_extractor = PlanExtractor(plan_kl, vplan_kl, self.teachers.abbreviation_by_surname(),
-                                           logger=self._logger)
+
+            students_plan_extractor = StudentsPlanExtractor(
+                plan_kl, vplan_kl, self.teachers.abbreviation_by_surname(), logger=self._logger
+            )
 
             self.cache.store_plan_file(
                 date, timestamp,
                 json.dumps({
-                    "rooms": plan_extractor.room_plan_extractor.plan(),
-                    "teachers": plan_extractor.teacher_plan_extractor.plan(),
-                    "forms": plan_extractor.form_plan_extractor.plan()
+                    "forms": (form_plan := students_plan_extractor.form_plan_extractor.plan()),
+                    "teachers": students_plan_extractor.teacher_plan_extractor.plan(),
+                    "rooms": (room_plan := students_plan_extractor.room_plan_extractor.plan()),
                 }, default=PlanLesson.serialize),
                 "plans.json"
             )
             self.cache.store_plan_file(
                 date, timestamp,
-                json.dumps(plan_extractor.form_plan_extractor.grouped_form_plans(), default=PlanLesson.serialize),
+                json.dumps(students_plan_extractor.form_plan_extractor.grouped_form_plans(),
+                           default=PlanLesson.serialize),
                 "grouped_form_plans.json"
             )
 
@@ -92,9 +95,9 @@ class PlanProcessor:
             # self.cache.store_plan_file(
             #     date, timestamp,
             #     json.dumps({
-            #         "rooms": plan_extractor.room_plan_extractor.forms_lessons_grouped.group_by("rooms"),
-            #         "teachers": plan_extractor.teacher_plan_extractor.forms_lessons_grouped.group_by("teachers"),
-            #         "forms": plan_extractor.form_plan_extractor.forms_lessons_grouped.group_by("forms")
+            #         "rooms": students_plan_extractor.room_plan_extractor.forms_lessons_grouped.group_by("rooms"),
+            #         "teachers": students_plan_extractor.teacher_plan_extractor.forms_lessons_grouped.group_by("teachers"),
+            #         "forms": students_plan_extractor.form_plan_extractor.forms_lessons_grouped.group_by("forms")
             #     }, default=Lessons.serialize),
             #     "_plans_raw.json"
             # )
@@ -102,23 +105,23 @@ class PlanProcessor:
             self.cache.store_plan_file(
                 date, timestamp,
                 json.dumps({
-                    "all_lessons": LessonsStatistics.from_lessons(plan_extractor.forms_plan.lessons).serialize()
+                    "all_lessons": LessonsStatistics.from_lessons(students_plan_extractor.plan.lessons).serialize()
                 }),
                 "statistics.json"
             )
 
             self.cache.store_plan_file(
                 date, timestamp,
-                json.dumps(plan_extractor.forms_plan.exams, default=Exam.serialize),
+                json.dumps(students_plan_extractor.plan.exams, default=Exam.serialize),
                 "exams.json"
             )
 
             all_rooms = self.meta_extractor.rooms()
             rooms_data = {
-                "used_rooms_by_period": (used_rooms := plan_extractor.used_rooms_by_period()),
-                "free_rooms_by_period": (free_rooms := plan_extractor.free_rooms_by_period(all_rooms)),
-                "used_rooms_by_block": plan_extractor.rooms_by_block(used_rooms),
-                "free_rooms_by_block": plan_extractor.rooms_by_block(free_rooms)
+                "used_rooms_by_period": (used_rooms := students_plan_extractor.used_rooms_by_period()),
+                "free_rooms_by_period": (free_rooms := students_plan_extractor.free_rooms_by_period(all_rooms)),
+                "used_rooms_by_block": students_plan_extractor.rooms_by_block(used_rooms),
+                "free_rooms_by_block": students_plan_extractor.rooms_by_block(free_rooms)
             }
 
             self.cache.store_plan_file(
@@ -128,18 +131,58 @@ class PlanProcessor:
             )
 
             all_forms = self.meta_extractor.forms()
-            plan_extractor.teacher_abbreviation_by_surname |= (
-                    {-i: t.abbreviation for i, t in enumerate(self.meta_extractor.teachers())} |
-                    self.teachers.abbreviation_by_surname()
+            all_forms_parsed = [ParsedForm.from_str(f) for f in all_forms]
+            students_plan_extractor.teacher_abbreviation_by_surname |= (
+                {-i: t.abbreviation for i, t in enumerate(self.meta_extractor.teachers())} |
+                self.teachers.abbreviation_by_surname()
             )
             self.cache.store_plan_file(
                 date, timestamp,
-                json.dumps(plan_extractor.info_data([ParsedForm.from_str(f) for f in all_forms])),
+                json.dumps(students_plan_extractor.info_data(all_forms_parsed)),
                 "info.json"
             )
 
-            self.add_teachers(plan_extractor.extracted_teachers)
+            try:
+                plan_le = self.cache.get_plan_file(date, timestamp, "PlanLe.xml", newest_before=True)
+            except FileNotFoundError:
+                pass
+            else:
+                teachers_plan_extractor = TeachersPlanExtractor(
+                    plan_le, self.teachers.abbreviation_by_surname(), logger=self._logger
+                )
 
+                teachers_plans = {
+                    "teachers": teachers_plan_extractor.teacher_plan(),
+                    "forms": form_plan,
+                    "rooms": room_plan,
+                }
+
+                self.cache.store_plan_file(
+                    date, timestamp,
+                    json.dumps(teachers_plans, default=PlanLesson.serialize),
+                    "plans.teachers.json"
+                )
+
+                self.cache.store_plan_file(
+                    date, timestamp,
+                    json.dumps(teachers_plan_extractor.info_data(all_forms_parsed)),
+                    "info.teachers.json"
+                )
+
+                teachers_rooms_data = {
+                    "used_rooms_by_period": (used_rooms := teachers_plan_extractor.used_rooms_by_period()),
+                    "free_rooms_by_period": (free_rooms := teachers_plan_extractor.free_rooms_by_period(all_rooms)),
+                    "used_rooms_by_block": teachers_plan_extractor.rooms_by_block(used_rooms),
+                    "free_rooms_by_block": teachers_plan_extractor.rooms_by_block(free_rooms)
+                }
+
+                self.cache.store_plan_file(
+                    date, timestamp,
+                    json.dumps(teachers_rooms_data, default=list),
+                    "rooms.teachers.json"
+                )
+
+            self.add_teachers(students_plan_extractor.extracted_teachers)
             self.cache.update_newest(date)
 
         self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")

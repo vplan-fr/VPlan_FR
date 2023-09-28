@@ -53,6 +53,10 @@ class Lesson:
     _grouped_form_plan_scheduled_forms: set[str] = None
 
     @property
+    def _origin_plan_value(self) -> set[str]:
+        return getattr(self, self._origin_plan_type)
+
+    @property
     def class_opt(self):
         if self.class_ is None:
             # noinspection PyTypeChecker
@@ -181,7 +185,7 @@ class PlanLesson:
                 teachers=set(),
                 rooms=set(),
                 course=None,
-                parsed_info=ParsedLessonInfo([]),
+                parsed_info=None,
                 class_=None,
                 subject_changed=True,
                 teacher_changed=True,
@@ -203,7 +207,7 @@ class PlanLesson:
                 teachers=set(),
                 rooms=set(),
                 course=None,
-                parsed_info=ParsedLessonInfo([]),
+                parsed_info=None,
                 class_=None,
                 subject_changed=False,
                 teacher_changed=False,
@@ -285,7 +289,7 @@ class PlanLesson:
             teacher_changed=_current_lesson.teacher_changed,
             room_changed=_current_lesson.room_changed,
             forms_changed=(_current_lesson.forms != _scheduled_lesson.forms) if _scheduled_lesson is not None else True,
-            parsed_info=_current_lesson.parsed_info + ParsedLessonInfo(paragraphs),
+            parsed_info=(_current_lesson.parsed_info or _scheduled_lesson.parsed_info) + ParsedLessonInfo(paragraphs),
             takes_place=_current_lesson.takes_place,
             is_internal=_current_lesson.is_internal,
             is_unplanned=_current_lesson.takes_place and not_taking_place_lesson is None,  # TODO
@@ -473,13 +477,12 @@ class Lessons:
         out.sort_original()
         return out
 
-    def group_blocks_and_lesson_info(self) -> Lessons:
+    def group_blocks_and_lesson_info(self, plan_type: typing.Literal["forms", "teachers", "rooms"]) -> Lessons:
         assert all(len(x.periods) <= 1 for x in self.lessons), \
             "Lessons must be ungrouped. (Must only have one period.)"
 
-        sorted_lessons = sorted(
-            self.lessons,
-            key=lambda x: (
+        if plan_type == "forms":
+            sort_key = lambda x: (
                 x.takes_place,
                 x.course or "",
                 x.teachers or set(),
@@ -490,7 +493,22 @@ class Lessons:
                 x.forms or set(),
                 x.periods or set(),
             )
-        )
+        elif plan_type == "teachers":
+            sort_key = lambda x: (
+                x.takes_place,
+                x.course or "",
+                x.forms or set(),
+                x.rooms or set(),
+                x.parsed_info.lesson_group_sort_key(),
+                x.class_opt.group or "",
+
+                x.teachers or set(),
+                x.periods or set(),
+            )
+        else:
+            raise NotImplementedError
+
+        sorted_lessons = sorted(self.lessons, key=sort_key)
 
         grouped: list[Lesson] = []
 
@@ -513,9 +531,14 @@ class Lessons:
                 can_get_grouped &= previous_lesson_block == current_lesson_block
 
                 if can_get_grouped:
-                    previous_lesson.periods |= lesson.periods
-                    previous_lesson.forms |= lesson.forms
+                    if plan_type == "forms":
+                        previous_lesson.forms |= lesson.forms
+                    elif plan_type == "teachers":
+                        previous_lesson.teachers |= lesson.teachers
+                    else:
+                        raise NotImplementedError
                     previous_lesson.parsed_info = grouped_additional_info
+                    previous_lesson.periods |= lesson.periods
                     previous_lesson.begin = min(filter(lambda x: x, (previous_lesson.begin, lesson.begin)),
                                                 default=None)
                     previous_lesson.end = max(filter(lambda x: x, (previous_lesson.end, lesson.end)), default=None)
@@ -612,7 +635,7 @@ class Plan:
                 )
                 current_lesson._is_scheduled = False
                 current_lesson.parsed_info = ParsedLessonInfo.from_str(
-                    lesson.information, current_lesson
+                    lesson.information, current_lesson, "forms"
                 ) if lesson.information is not None else ParsedLessonInfo([])
 
                 scheduled_lesson = Lesson(
@@ -690,6 +713,99 @@ class Plan:
 
             indiware_plan=form_plan,
             exams=exams
+        )
+
+    @classmethod
+    def from_teacher_plan(cls, teacher_plan: indiware_mobil.IndiwareMobilPlan) -> Plan:
+        lessons: list[Lesson] = []
+        _id = 0
+        for teacher in teacher_plan.forms:
+            for lesson in teacher.lessons:
+
+                current_lesson = Lesson(
+                    periods={lesson.period} if lesson.period is not None else set(),
+                    begin=lesson.start,
+                    end=lesson.end,
+
+                    forms=set(lesson.teacher().split(",")) if lesson.teacher() else set(),
+                    teachers={teacher.short_name},
+                    # TODO: Some schools use rooms with spaces
+                    rooms=set(lesson.room().split(" ")) if lesson.room() else set(),
+                    course=lesson.subject(),
+
+                    # see below
+                    parsed_info=None,
+
+                    class_=None,
+                    subject_changed=lesson.subject.was_changed,
+                    teacher_changed=False,
+                    room_changed=lesson.room.was_changed,
+                    forms_changed=lesson.teacher.was_changed,
+                    _lesson_date=teacher_plan.date
+                )
+                current_lesson._is_scheduled = False
+                current_lesson.parsed_info = ParsedLessonInfo.from_str(
+                    lesson.information, current_lesson, "teachers"
+                ) if lesson.information is not None else ParsedLessonInfo([])
+
+                scheduled_lesson = Lesson(
+                    periods={lesson.period} if lesson.period is not None else set(),
+                    begin=lesson.start,
+                    end=lesson.end,
+
+                    forms=(
+                        (current_lesson.forms if not current_lesson.forms_changed else None)
+                    ),
+                    teachers=current_lesson.teachers,
+                    rooms=current_lesson.rooms if not current_lesson.room_changed else None,
+                    course=(
+                        lesson.course2
+                        or (current_lesson.course if not current_lesson.subject_changed else None)
+                    ),
+                    parsed_info=current_lesson.parsed_info,
+
+                    class_=None,
+                    subject_changed=False,
+                    teacher_changed=False,
+                    room_changed=False,
+                    forms_changed=False,
+                    takes_place=False,
+                    _lesson_date=teacher_plan.date,
+                )
+                scheduled_lesson._is_scheduled = True
+
+                if current_lesson.course == "---" and current_lesson.subject_changed:
+                    # Indiware Stundenplaner's way of telling us that the lesson is cancelled
+                    current_lesson.course = scheduled_lesson.course
+                    current_lesson.forms = scheduled_lesson.forms
+                    current_lesson.rooms = scheduled_lesson.rooms
+                    current_lesson.subject_changed = False
+                    current_lesson.forms_changed = False
+                    current_lesson.room_changed = False
+
+                    current_lesson.takes_place = False
+                else:
+                    current_lesson.takes_place = True
+
+                for l in current_lesson, scheduled_lesson:
+                    l._origin_plan_type = "teachers"
+                    l._origin_plan_lesson_id = _id
+
+                lessons.append(scheduled_lesson)
+                lessons.append(current_lesson)
+
+                _id += 1
+
+            for break_supervision in teacher.break_supervisions:
+                # TODO
+                pass
+
+        return cls(
+            lessons=Lessons(lessons),
+            additional_info=teacher_plan.additional_info,
+
+            indiware_plan=teacher_plan,
+            exams={}
         )
 
     def week_letter(self):
