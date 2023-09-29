@@ -216,8 +216,13 @@ class PlanProcessor:
             scraped_teachers = {}
         else:
             self._logger.info("=> Scraping teachers...")
-            _scraped_teachers = schools.teacher_scrapers[str(self.school_number)]()
-            scraped_teachers = {teacher.abbreviation: teacher for teacher in _scraped_teachers}
+            try:
+                _scraped_teachers = schools.teacher_scrapers[str(self.school_number)]()
+            except Exception as e:
+                self._logger.error(" -> Exception while scraping teachers.", exc_info=e)
+                scraped_teachers = {}
+            else:
+                scraped_teachers = {teacher.abbreviation: teacher for teacher in _scraped_teachers}
 
             self._logger.debug(f" -> Found {len(scraped_teachers)} teachers.")
 
