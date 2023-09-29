@@ -19,7 +19,7 @@ from var import *
 load_dotenv()
 
 db = pymongo.MongoClient(os.getenv("MONGO_URL") if os.getenv("MONGO_URL") else "", 27017).vplan
-users = db["user"]
+users = db["users"]
 creds = db["creds"]
 schools = db["schools"]
 
