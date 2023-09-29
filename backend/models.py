@@ -497,12 +497,22 @@ class Lessons:
             sort_key = lambda x: (
                 x.takes_place,
                 x.course or "",
-                x.forms or set(),
                 x.rooms or set(),
+                x.forms or set(),
                 x.parsed_info.lesson_group_sort_key(),
-                x.class_opt.group or "",
 
                 x.teachers or set(),
+                x.periods or set(),
+            )
+        elif plan_type == "rooms":
+            sort_key = lambda x: (
+                x.takes_place,
+                x.course or "",
+                x.teachers or set(),
+                x.forms or set(),
+                x.parsed_info.lesson_group_sort_key(),
+
+                x.rooms or set(),
                 x.periods or set(),
             )
         else:
@@ -515,11 +525,12 @@ class Lessons:
         for lesson in sorted_lessons:
             for previous_lesson in grouped[-1:-4:-1]:
                 can_get_grouped = (
-                    lesson.rooms == previous_lesson.rooms
-                    and lesson.course == previous_lesson.course
-                    and lesson.teachers == previous_lesson.teachers
+                    lesson.course == previous_lesson.course
                     and lesson.takes_place == previous_lesson.takes_place
                 )
+
+                for remaining_plan_value in {"forms", "teachers", "rooms"} - {plan_type}:
+                    can_get_grouped &= getattr(lesson, remaining_plan_value) == getattr(previous_lesson, remaining_plan_value)
 
                 grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info)
 
@@ -535,6 +546,8 @@ class Lessons:
                         previous_lesson.forms |= lesson.forms
                     elif plan_type == "teachers":
                         previous_lesson.teachers |= lesson.teachers
+                    elif plan_type == "rooms":
+                        previous_lesson.rooms |= lesson.rooms
                     else:
                         raise NotImplementedError
                     previous_lesson.parsed_info = grouped_additional_info
@@ -721,7 +734,6 @@ class Plan:
         _id = 0
         for teacher in teacher_plan.forms:
             for lesson in teacher.lessons:
-
                 current_lesson = Lesson(
                     periods={lesson.period} if lesson.period is not None else set(),
                     begin=lesson.start,
@@ -753,9 +765,7 @@ class Plan:
                     begin=lesson.start,
                     end=lesson.end,
 
-                    forms=(
-                        (current_lesson.forms if not current_lesson.forms_changed else None)
-                    ),
+                    forms=current_lesson.forms if not current_lesson.forms_changed else None,
                     teachers=current_lesson.teachers,
                     rooms=current_lesson.rooms if not current_lesson.room_changed else None,
                     course=(
@@ -805,6 +815,91 @@ class Plan:
             additional_info=teacher_plan.additional_info,
 
             indiware_plan=teacher_plan,
+            exams={}
+        )
+
+    @classmethod
+    def from_room_plan(cls, room_plan: indiware_mobil.IndiwareMobilPlan) -> Plan:
+        lessons: list[Lesson] = []
+        _id = 0
+        for room in room_plan.forms:
+            for lesson in room.lessons:
+                current_lesson = Lesson(
+                    periods={lesson.period} if lesson.period is not None else set(),
+                    begin=lesson.start,
+                    end=lesson.end,
+
+                    forms=set(lesson.room().split(",")) if lesson.room() else set(),
+                    teachers=set(lesson.teacher().split()) if lesson.teacher() else set(),
+                    rooms={room.short_name},
+                    course=lesson.subject(),
+
+                    # see below
+                    parsed_info=None,
+
+                    class_=None,
+                    subject_changed=lesson.subject.was_changed,
+                    teacher_changed=lesson.teacher.was_changed,
+                    room_changed=False,
+                    forms_changed=lesson.room.was_changed,
+                    _lesson_date=room_plan.date
+                )
+                current_lesson._is_scheduled = False
+                current_lesson.parsed_info = ParsedLessonInfo.from_str(
+                    lesson.information, current_lesson, "rooms"
+                ) if lesson.information is not None else ParsedLessonInfo([])
+
+                scheduled_lesson = Lesson(
+                    periods={lesson.period} if lesson.period is not None else set(),
+                    begin=lesson.start,
+                    end=lesson.end,
+
+                    forms=current_lesson.forms if not current_lesson.forms_changed else None,
+                    teachers=current_lesson.teachers if not current_lesson.teacher_changed else None,
+                    rooms=current_lesson.rooms,
+                    course=(
+                        lesson.course2
+                        or (current_lesson.course if not current_lesson.subject_changed else None)
+                    ),
+                    parsed_info=current_lesson.parsed_info,
+
+                    class_=None,
+                    subject_changed=False,
+                    teacher_changed=False,
+                    room_changed=False,
+                    forms_changed=False,
+                    takes_place=False,
+                    _lesson_date=room_plan.date,
+                )
+                scheduled_lesson._is_scheduled = True
+
+                if current_lesson.course == "---" and current_lesson.subject_changed:
+                    # Indiware Stundenplaner's way of telling us that the lesson is cancelled
+                    current_lesson.course = scheduled_lesson.course
+                    current_lesson.forms = scheduled_lesson.forms
+                    current_lesson.teachers = scheduled_lesson.teachers
+                    current_lesson.subject_changed = False
+                    current_lesson.forms_changed = False
+                    current_lesson.teacher_changed = False
+
+                    current_lesson.takes_place = False
+                else:
+                    current_lesson.takes_place = True
+
+                for l in current_lesson, scheduled_lesson:
+                    l._origin_plan_type = "rooms"
+                    l._origin_plan_lesson_id = _id
+
+                lessons.append(scheduled_lesson)
+                lessons.append(current_lesson)
+
+                _id += 1
+
+        return cls(
+            lessons=Lessons(lessons),
+            additional_info=room_plan.additional_info,
+
+            indiware_plan=room_plan,
             exams={}
         )
 

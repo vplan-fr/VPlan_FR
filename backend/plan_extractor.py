@@ -239,19 +239,32 @@ class SubPlanExtractor:
         }
 
 
-class TeachersPlanExtractor(PlanExtractor):
-    def __init__(self, plan_le: str, teacher_abbreviation_by_surname: dict[str, str], *,
+class TeachersPlanExtractor:
+    def __init__(self, plan_le: str, plan_ra: str | None, teacher_abbreviation_by_surname: dict[str, str], *,
                  logger: logging.Logger):
         self._logger = logger
 
         teacher_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_le))
-        self.plan = Plan.from_teacher_plan(teacher_plan)
+        self.teacher_plan_extractor = PlanExtractor()
+        self.teacher_plan_extractor.plan = Plan.from_teacher_plan(teacher_plan)
+        self.teacher_plan_extractor.teacher_abbreviation_by_surname = teacher_abbreviation_by_surname
+        self.teacher_plan_extractor._logger = logger
+        self.teacher_plan_extractor.fill_in_lesson_times()
 
-        self.teacher_abbreviation_by_surname = teacher_abbreviation_by_surname
-
-        self.fill_in_lesson_times()
+        if plan_ra is not None:
+            room_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_ra))
+            self.room_plan_extractor = PlanExtractor()
+            self.room_plan_extractor.plan = Plan.from_room_plan(room_plan)
+            self.room_plan_extractor.teacher_abbreviation_by_surname = teacher_abbreviation_by_surname
+            self.room_plan_extractor._logger = logger
+            self.room_plan_extractor.fill_in_lesson_times()
 
     def teacher_plan(self):
-        lessons_grouped = self.plan.lessons.group_blocks_and_lesson_info("teachers")
+        lessons_grouped = self.teacher_plan_extractor.plan.lessons.group_blocks_and_lesson_info("teachers")
         SubPlanExtractor.extrapolate_lesson_times(lessons_grouped)
         return lessons_grouped.make_plan("teachers", plan_type="teachers")
+
+    def room_plan(self):
+        lessons_grouped = self.room_plan_extractor.plan.lessons.group_blocks_and_lesson_info("rooms")
+        SubPlanExtractor.extrapolate_lesson_times(lessons_grouped)
+        return lessons_grouped.make_plan("rooms", plan_type="rooms")
