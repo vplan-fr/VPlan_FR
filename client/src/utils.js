@@ -418,3 +418,31 @@ export function arraysEqual(a, b) {
     }
     return true;
 }
+
+export async function load_meta(school_num) {
+    let meta_data;
+    return customFetch(`/api/v69.420/${school_num}/meta`)
+        .then(data => {
+            try {
+                localStorage.setItem(`${school_num}_meta`, JSON.stringify(data));
+            } catch (error) {
+                if (error.name === 'QuotaExceededError' ) {
+                    notifications.danger("Die Schulmetadaten konnten nicht gecached werden.")
+                } else {
+                    throw error;
+                }
+            }
+            meta_data = data;
+            return [meta_data, false]
+        })
+        .catch(error => {
+            meta_data = localStorage.getItem(`${school_num}_meta`);
+            if (meta_data !== "undefined" && meta_data) {
+                console.log("Metadaten aus Cache geladen");
+                return [JSON.parse(meta_data), true];
+            } else {
+                console.log("Metadaten konnten nicht geladen werden.");
+                notifications.danger(error.message);
+            }
+        })
+}
