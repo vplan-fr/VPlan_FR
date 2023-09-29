@@ -44,7 +44,7 @@ class PlanProcessor:
         for day in self.cache.get_days():
             self.cache.update_newest(day)
 
-            for revision in self.cache.get_timestamps(day)[0:1]:
+            for revision in self.cache.get_timestamps(day):
                 self.update_plans(day, revision)
 
     def update_plans(self, day: datetime.date, timestamp: datetime.datetime) -> bool:
