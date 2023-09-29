@@ -14,7 +14,7 @@ from .stats import LessonsStatistics
 
 
 class PlanProcessor:
-    VERSION = "86"
+    VERSION = "87"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -147,14 +147,19 @@ class PlanProcessor:
             except FileNotFoundError:
                 pass
             else:
+                try:
+                    plan_ra = self.cache.get_plan_file(date, timestamp, "PlanRa.xml", newest_before=True)
+                except FileNotFoundError:
+                    plan_ra = None
+
                 teachers_plan_extractor = TeachersPlanExtractor(
-                    plan_le, self.teachers.abbreviation_by_surname(), logger=self._logger
+                    plan_le, plan_ra, self.teachers.abbreviation_by_surname(), logger=self._logger
                 )
 
                 teachers_plans = {
                     "teachers": teachers_plan_extractor.teacher_plan(),
                     "forms": form_plan,
-                    "rooms": room_plan,
+                    "rooms": teachers_plan_extractor.room_plan(),
                 }
 
                 self.cache.store_plan_file(
@@ -165,15 +170,15 @@ class PlanProcessor:
 
                 self.cache.store_plan_file(
                     date, timestamp,
-                    json.dumps(teachers_plan_extractor.info_data(all_forms_parsed)),
+                    json.dumps(teachers_plan_extractor.teacher_plan_extractor.info_data(all_forms_parsed)),
                     "info.teachers.json"
                 )
 
                 teachers_rooms_data = {
-                    "used_rooms_by_period": (used_rooms := teachers_plan_extractor.used_rooms_by_period()),
-                    "free_rooms_by_period": (free_rooms := teachers_plan_extractor.free_rooms_by_period(all_rooms)),
-                    "used_rooms_by_block": teachers_plan_extractor.rooms_by_block(used_rooms),
-                    "free_rooms_by_block": teachers_plan_extractor.rooms_by_block(free_rooms)
+                    "used_rooms_by_period": (used_rooms := teachers_plan_extractor.teacher_plan_extractor.used_rooms_by_period()),
+                    "free_rooms_by_period": (free_rooms := teachers_plan_extractor.teacher_plan_extractor.free_rooms_by_period(all_rooms)),
+                    "used_rooms_by_block": teachers_plan_extractor.teacher_plan_extractor.rooms_by_block(used_rooms),
+                    "free_rooms_by_block": teachers_plan_extractor.teacher_plan_extractor.rooms_by_block(free_rooms)
                 }
 
                 self.cache.store_plan_file(
