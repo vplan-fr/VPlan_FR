@@ -18,6 +18,8 @@ def get_teachers() -> list[Teacher]:
     teacher_images = get_teacher_images()
     for teacher in hard_coded_teachers:
         teacher_data = teacher.split(",")
+        if len(teacher_data) != 3:
+            continue
         if teacher_data[1] and teacher_data[2]:
             for name in teacher_images:
                 if name[:-4].startswith(teacher_data[2]) and name[:-4].endswith(teacher_data[1]):
