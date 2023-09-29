@@ -6,17 +6,18 @@
     import Navbar from "./components/Navbar.svelte";
     import Settings from "./components/Settings.svelte";
     import AboutUs from "./components/AboutUs.svelte";
+    import Favourites from "./Favourites.svelte";
     import SveltyPicker from 'svelty-picker';
     import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db} from './stores.js'
-    import {customFetch, format_revision_date} from "./utils.js";
     import SchoolManager from "./components/SchoolManager.svelte";
     import Preferences from "./components/Preferences.svelte";
     import Changelog from "./components/Changelog.svelte";
     import Select from "./base_components/Select.svelte";
     import Contact from "./components/Contact.svelte";
     import Impressum from "./components/Impressum.svelte";
+    import {customFetch, format_revision_date, load_meta} from "./utils.js";
     import {de} from 'svelty-picker/i18n';
     import PwaInstallHelper from "./components/PWAInstallHelper.svelte";
     import Dropdown from "./base_components/Dropdown.svelte";
@@ -84,51 +85,22 @@
     }
 
     function get_meta() {
-        let data_from_cache = false;
-        let data = localStorage.getItem(`${school_num}_meta`);
-        if (data !== "undefined" && data) {
-            data = JSON.parse(data);
-            meta = data;
-            all_rooms = data.rooms;
-            teacher_list = Object.keys(data.teachers);
-            grouped_forms = data.forms.grouped_forms;
-            enabled_dates = Object.keys(data.dates);
-            if(!date) {
-                date = data.date;
-            }
-            course_lists = data.forms.forms;
-            data_from_cache = true;
-        }
-        customFetch(`${api_base}/meta`)
+        load_meta(school_num)
             .then(data => {
-                // console.log("Meta geladen");
-                try {
-                    localStorage.setItem(`${school_num}_meta`, JSON.stringify(data));
-                } catch (error) {
-                    if (error.name === 'QuotaExceededError' ) {
-                        notifications.danger("Die Schulmetadaten konnten nicht gecached werden.")
-                    } else {
-                        throw error;
-                    }
+                if (!data) {
+                    return
                 }
-                meta = data;
-                all_rooms = data.rooms;
-                teacher_list = Object.keys(data.teachers);
-                grouped_forms = data.forms.grouped_forms;
-                enabled_dates = Object.keys(data.dates);
+                meta = data[0];
+                all_rooms = meta.rooms;
+                teacher_list = Object.keys(meta.teachers);
+                grouped_forms = meta.forms.grouped_forms;
+                enabled_dates = Object.keys(meta.dates);
                 if(!date) {
-                    date = data.date;
+                    date = meta.date;
                 }
-                course_lists = data.forms.forms;
+                course_lists = meta.forms.forms;
+                //data_from_cache = data[1];
             })
-            .catch(error => {
-                if (data_from_cache) {
-                    // notifications.info("Metadaten aus Cache geladen", 2000);
-                    console.log("Metadaten aus Cache geladen");
-                } else {
-                    notifications.danger(error.message);
-                }
-            });
     }
 
     function check_login_status() {
@@ -293,7 +265,7 @@
             plan_type = decodeURI(tmp_variables[3]);
             plan_value = decodeURI(tmp_variables[4]);
         }
-    }  
+    }
 
     $logged_in = localStorage.getItem('logged_in') === 'true';
     init_vars();
@@ -311,7 +283,7 @@
     $: (Object.keys($settings).length !== 0) && localStorage.setItem("settings", `${JSON.stringify($settings)}`);
     $: update_colors($settings);
     $: $logged_in && get_greeting();
-    
+
     $: selected_form && set_plan("forms", selected_form);
     $: gen_form_arr(grouped_forms);
     $: selected_teacher && set_plan("teachers", selected_teacher);
@@ -372,6 +344,8 @@
             <AboutUs />
         {:else if $current_page === "impressum"}
             <Impressum />
+        {:else if $current_page === "favourites"}
+            <Favourites />
         {:else if $logged_in}
             {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
