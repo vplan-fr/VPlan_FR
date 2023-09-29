@@ -32,6 +32,7 @@
                 <button class="nav-button" on:click={() => navigate_page("school_manager")}><span class="material-symbols-outlined">school</span> Schule wechseln</button>
                 <button class="nav-button" on:click={() => $active_modal = "preferences"}><span class="material-symbols-outlined">account_circle</span> Unterricht wählen</button>
                 <button class="nav-button" on:click={() => $active_modal = "changelog"}><span class="material-symbols-outlined" class:new_notification={$new_changelogs_available}>assignment</span> Changelog {#if $new_changelogs_available}✨{/if}</button>
+                <button class="nav-button" on:click={() => navigate_page("favourites")}><span class="material-symbols-outlined">account_circle</span> Favoriten wählen</button>
                 <button class="nav-button" on:click={() => navigate_page("contact")}><span class="material-symbols-outlined">contact_page</span> Kontaktiere uns</button>
                 <button on:click={logout} class="nav-button"><span class="material-symbols-outlined">logout</span> Logout</button>
             </Dropdown>

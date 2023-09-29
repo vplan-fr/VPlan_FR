@@ -94,7 +94,10 @@
         week_letter = info.week;
     }
 
-    function load_plan(date, revision=".newest") {
+    function load_plan(date, revision=".newest", enabled_dates) {
+        if (enabled_dates === null || enabled_dates === undefined) {
+            return;
+        }
         if (date === null || date === undefined || !enabled_dates.includes(date)) {
             return;
         }
@@ -139,6 +142,7 @@
                 data_from_cache = false;
             })
             .catch(error => {
+                console.error(error);
                 loading = false;
                 network_loading_failed = true;
         });
@@ -253,7 +257,7 @@
     function load_lessons_check_plan(plan_data, plan_type, plan_value, use_grouped_form_plans) {
         let curr_time = new Date();
         if(!last_updated || curr_time - last_updated > 30_000) {
-            load_plan(date, selected_revision);
+            load_plan(date, selected_revision, enabled_dates);
             last_updated = new Date();
         }
 
@@ -269,16 +273,18 @@
         // console.log("Mounted Plan.svelte");
     });
 
-    $: $indexed_db, load_plan(date, selected_revision);
+    $: $indexed_db, load_plan(date, selected_revision, enabled_dates);
     $: load_lessons_check_plan(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans);
 
     $: if (plan_type === "teachers") {
-        full_teacher_name = meta.teachers[plan_value]?.surname || null;
-        teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
-        teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
-        teacher_image_path = meta.teachers[plan_value]?.image_path || null;
-        if (teacher_image_path) {
-            teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
+        if (meta.teachers) {
+            full_teacher_name = meta.teachers[plan_value]?.surname || null;
+            teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
+            teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
+            teacher_image_path = meta.teachers[plan_value]?.image_path || null;
+            if (teacher_image_path) {
+                teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
+            }
         }
     }
     
