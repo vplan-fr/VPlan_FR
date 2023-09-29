@@ -651,6 +651,13 @@ class Plan:
                     lesson.information, current_lesson, "forms"
                 ) if lesson.information is not None else ParsedLessonInfo([])
 
+                for paragraph in current_lesson.parsed_info.paragraphs:
+                    for moved_to_message in paragraph.messages:
+                        if isinstance(moved_to_message.parsed, lesson_info.MovedTo):
+                            # if lessons are moved, class data no longer represents the scheduled lesson
+                            class_data = None
+                            current_lesson.class_ = None
+
                 scheduled_lesson = Lesson(
                     periods={lesson.period} if lesson.period is not None else set(),
                     begin=lesson.start,
