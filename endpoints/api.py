@@ -90,7 +90,8 @@ def plan(school_num: str) -> Response:
             "exams": json.loads(cache.get_plan_file(date, revision, "exams.json")),
             "grouped_form_plans": json.loads(cache.get_plan_file(date, revision, "grouped_form_plans.json")),
         }
-    except FileNotFoundError:
+    except FileNotFoundError as e:
+        print(e)
         return send_error("Invalid date or revision.")
 
     return send_success(data)
@@ -113,6 +114,9 @@ def authorize(school_num: str) -> Response:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
     if not school_data:
         return send_error("Schulnummer unbekannt, falls du eine Schule hinzufügen möchtest, nimm bitte Kontakt mit uns auf")
+    if school_data["hosting"]["creds"] == {}:
+        current_user.authorize_school(school_num)
+        return send_success()
     username = request.form.get("username")
     if username is None:
         return send_error("Kein Nutzername für die Schule angegeben")
@@ -179,9 +183,13 @@ def preferences(school_num: str) -> Response:
 
         current_preferences.setdefault(school_num, {})[request.args["form"]] = stored_classes
 
-        current_user.set_user_preferences(current_preferences)
+        return current_user.set_user_preferences(current_preferences)
 
-        return send_success()
+
+@api.route(f"/favourites", methods=["GET", "POST"])
+@login_required
+def favourites(school_num):
+    return ""
 
 
 @api.route(f"/api/v69.420/changelog", methods=["GET", "POST"])
