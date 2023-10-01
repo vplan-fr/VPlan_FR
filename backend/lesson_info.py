@@ -682,6 +682,9 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                      logger: logging.Logger) -> dict[str, teacher_model.Teacher]:
     out: dict[str, teacher_model.Teacher] = {}
 
+    for teacher_abbreviation in lesson.teachers or ():
+        out[teacher_abbreviation] = teacher_model.Teacher(teacher_abbreviation)
+
     if lesson._is_scheduled:
         return out
 
