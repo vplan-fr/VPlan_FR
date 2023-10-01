@@ -156,7 +156,7 @@ class ParsedLessonInfoMessage(abc.ABC):
 class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
     plan_type: typing.Literal["forms", "teachers", "rooms"]
     plan_value: set[str]
-    periods: list[int]
+    periods: set[int]
     date: datetime.date | None
 
     def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
@@ -170,7 +170,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                         type=self.plan_type,
                         value=sorted(self.plan_value),
                         date=lesson_date,
-                        periods=self.periods
+                        periods=sorted(self.periods)
                     )
                 )
             ]
@@ -184,7 +184,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                         type=self.plan_type,
                         value=sorted(self.plan_value),
                         date=self.date,
-                        periods=self.periods
+                        periods=sorted(self.periods)
                     )
                 )
             ]
@@ -251,7 +251,7 @@ class AbstractParsedLessonInfoMessageWithCourseInfo(ParsedLessonInfoMessage, abc
 @dataclasses.dataclass
 class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
     date: datetime.date | None
-    periods: list[int]
+    periods: set[int]
 
     def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
         if self.date is None:
@@ -264,13 +264,13 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
                         type=self.plan_type,
                         value=sorted(self.plan_value),
                         date=lesson_date,
-                        periods=self.periods
+                        periods=sorted(self.periods)
                     )
                 )
             ]
         elif self.date < lesson_date:
             return [
-                *self._course_text_segments(self.date, self.periods),
+                *self._course_text_segments(self.date, sorted(self.periods)),
                 LessonInfoTextSegment(" gehalten am "),
                 LessonInfoTextSegment(
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
@@ -279,13 +279,13 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
                         type=self.plan_type,
                         value=sorted(self.plan_value),
                         date=self.date,
-                        periods=self.periods
+                        periods=sorted(self.periods)
                     )
                 )
             ]
         else:
             return [
-                *self._course_text_segments(self.date, self.periods),
+                *self._course_text_segments(self.date, sorted(self.periods)),
                 LessonInfoTextSegment(" verlegt nach "),
                 LessonInfoTextSegment(
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
@@ -294,7 +294,7 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
                         type=self.plan_type,
                         value=sorted(self.plan_value),
                         date=self.date,
-                        periods=self.periods
+                        periods=sorted(self.periods)
                     )
                 )
             ]
@@ -433,7 +433,7 @@ def _parse_form_plan_message(info: str, lesson: models.Lesson) -> tuple[ParsedLe
         return MovedFrom(
             plan_type="forms",
             plan_value=lesson.forms,
-            periods=[int(match.group("period_begin"))],
+            periods={int(match.group("period_begin"))},
             date=None
         ), match
     elif match := _InfoParsers.instead_of.match(info):

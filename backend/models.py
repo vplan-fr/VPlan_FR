@@ -456,7 +456,7 @@ class Lessons:
                         new_message = copy.deepcopy(message1)
                         # noinspection PyTypeHints
                         new_message.parsed: lesson_info.MovedFrom | lesson_info.MovedTo
-                        new_message.parsed.periods += parsed2.periods
+                        new_message.parsed.periods |= parsed2.periods
                         new_message.parsed.original_messages += parsed2.original_messages
                         new_message.parsed.plan_value |= parsed2.plan_value
                         new_paragraph.append(new_message)
