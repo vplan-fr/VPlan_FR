@@ -24,6 +24,7 @@ db = pymongo.MongoClient(os.getenv("MONGO_URL") if os.getenv("MONGO_URL") else "
 users = db["users"]
 creds = db["creds"]
 schools = db["schools"]
+meta = db["meta"]
 
 
 # RESPONSE WRAPPERS
@@ -118,7 +119,7 @@ class User(UserMixin):
     def set_favourites(self, favourites) -> Response:
         new_favourites = []
         for cur_favourite in favourites:
-            favourite = {elem: cur_favourite.get(elem) for elem in ["school_num", "name", "priority", "plan_type", "plan_value"]}
+            favourite = {elem: cur_favourite.get(elem) for elem in ["school_num", "name", "priority", "plan_type", "plan_value", "preferences"]}
             for key in favourite:
                 if not favourite[key]:
                     return send_error(f"{key} nicht angegeben")
@@ -315,6 +316,11 @@ class BetterEmbed(DiscordEmbed):
 def update_database():
     add_database_icons()
     update_school_authorization_count()
+
+
+@run_in_background
+def meta_to_database(request_data):
+    meta.insert_one(request_data)
 
 
 if __name__ == "__main__":

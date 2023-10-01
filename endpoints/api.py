@@ -26,7 +26,6 @@ api = Blueprint('api', __name__)
 def schools() -> Response:
     # school_data = get_all_schools_by_number()
     school_data = get_all_schools()
-    print(school_data)
     return send_success(school_data)
 
 
@@ -91,7 +90,6 @@ def plan(school_num: str) -> Response:
             "grouped_form_plans": json.loads(cache.get_plan_file(date, revision, "grouped_form_plans.json")),
         }
     except FileNotFoundError as e:
-        print(e)
         return send_error("Invalid date or revision.")
 
     return send_success(data)
@@ -171,7 +169,6 @@ def preferences(school_num: str) -> Response:
 
         try:
             data = json.loads(request.data)
-            print(data)
         except json.JSONDecodeError:
             return send_error("Invalid JSON data.")
 
