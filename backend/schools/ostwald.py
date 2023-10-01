@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List
 
 import requests
 from bs4 import BeautifulSoup
@@ -8,7 +7,7 @@ from backend.teacher import Teacher
 from backend.room import Room
 
 
-def scrape_teachers() -> List[Teacher]:
+def scrape_teachers() -> list[Teacher]:
     r = requests.post("https://www.ostwaldgymnasium.de/index.php/schule/lehrer", data={"limit": "0"})
 
     soup = BeautifulSoup(r.text, features="html.parser")
