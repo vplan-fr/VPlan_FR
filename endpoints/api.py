@@ -26,7 +26,6 @@ api = Blueprint('api', __name__)
 def schools() -> Response:
     # school_data = get_all_schools_by_number()
     school_data = get_all_schools()
-    print(school_data)
     return send_success(school_data)
 
 
@@ -48,6 +47,7 @@ def meta(school_num) -> Response:
     date = find_closest_date(dates)
 
     return send_success({
+        "school_num": school_num,
         "meta": meta_data,
         "teachers": teachers_data,
         "forms": forms_data,
@@ -90,8 +90,7 @@ def plan(school_num: str) -> Response:
             "exams": json.loads(cache.get_plan_file(date, revision, "exams.json")),
             "grouped_form_plans": json.loads(cache.get_plan_file(date, revision, "grouped_form_plans.json")),
         }
-    except FileNotFoundError as e:
-        print(e)
+    except FileNotFoundError:
         return send_error("Invalid date or revision.")
 
     return send_success(data)
@@ -171,7 +170,6 @@ def preferences(school_num: str) -> Response:
 
         try:
             data = json.loads(request.data)
-            print(data)
         except json.JSONDecodeError:
             return send_error("Invalid JSON data.")
 
@@ -186,10 +184,16 @@ def preferences(school_num: str) -> Response:
         return current_user.set_user_preferences(current_preferences)
 
 
-@api.route(f"/favourites", methods=["GET", "POST"])
+@api.route(f"/api/v69.420/favourites", methods=["GET", "POST"])
 @login_required
-def favourites(school_num):
-    return ""
+def favourites() -> Response:
+    if request.method == "GET":
+        return send_success(current_user.get_user().get("favourites", []))
+    try:
+        data = json.loads(request.data)
+    except json.JSONDecodeError:
+        return send_error("Invalid JSON data.")
+    return current_user.set_favourites(data)
 
 
 @api.route(f"/api/v69.420/changelog", methods=["GET", "POST"])
