@@ -266,6 +266,9 @@ class TeachersPlanExtractor:
         return lessons_grouped.make_plan("teachers", plan_type="teachers")
 
     def room_plan(self):
-        lessons_grouped = self.room_plan_extractor.plan.lessons.group_blocks_and_lesson_info("rooms")
-        SubPlanExtractor.extrapolate_lesson_times(lessons_grouped)
-        return lessons_grouped.make_plan("rooms", plan_type="rooms")
+        if not hasattr(self, "room_plan_extractor"):
+            return {}
+        else:
+            lessons_grouped = self.room_plan_extractor.plan.lessons.group_blocks_and_lesson_info("rooms")
+            SubPlanExtractor.extrapolate_lesson_times(lessons_grouped)
+            return lessons_grouped.make_plan("rooms", plan_type="rooms")
