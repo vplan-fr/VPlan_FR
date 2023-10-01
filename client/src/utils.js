@@ -453,6 +453,7 @@ export function get_favourites() {
         .then(data => {
             localStorage.setItem("favourites", JSON.stringify(data));
             favourites.set(data);
+            console.log(data);
             return data
         }).catch(error => {
             console.log("Favourites couldn't be loaded.");

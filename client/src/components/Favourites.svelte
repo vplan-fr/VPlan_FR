@@ -1,11 +1,11 @@
 <script>
-    import {customFetch, get_favourites, load_meta} from "./utils.js";
-    import Select from "./base_components/Select.svelte";
-    import Button from "./base_components/Button.svelte";
+    import {customFetch, get_favourites, load_meta} from "../utils.js";
+    import Select from "../base_components/Select.svelte";
+    import Button from "../base_components/Button.svelte";
     import {onMount} from "svelte";
-    import {notifications} from "./notifications.js";
+    import {notifications} from "../notifications.js";
 
-    import {favourites} from "./stores.js";
+    import {favourites} from "../stores.js";
 
     let cur_favourites = [];
     let all_schools = {};
@@ -19,7 +19,10 @@
     onMount(() => {
         get_schools();
         get_authorized_schools();
-        load_favourites();
+        get_favourites()
+            .then(data => {
+                load_favourites()
+            });
     });
 
 
@@ -56,9 +59,10 @@
     function load_favourites() {
         // change preferences to dict
         let temp_fav = $favourites;
-        favourites.set(temp_fav);
-        temp_fav = temp_fav.map(item => ({ ...item, preferences: item.preferences.reduce((obj, preference) => ({ ...obj, [preference]: false }), {}) }));
+        console.log(temp_fav);
+        temp_fav = temp_fav.map(item => ({ ...item, preferences: (item.preferences || []).reduce((obj, preference) => ({ ...obj, [preference]: false }), {}) }));
         cur_favourites = temp_fav;
+        console.log(cur_favourites);
     }
     function save_favourites() {
         let new_favourites = [];
