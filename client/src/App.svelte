@@ -8,7 +8,7 @@
     import AboutUs from "./components/AboutUs.svelte";
     import Favourites from "./Favourites.svelte";
     import SveltyPicker from 'svelty-picker';
-    import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache} from "./utils.js";
+    import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache, get_favourites} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db, selected_favourite, favourites} from './stores.js'
     import SchoolManager from "./components/SchoolManager.svelte";
@@ -269,34 +269,43 @@
 
     function select_plan(favourites, selected_favourite) {
         // check if selected_favourite is in favourites (selected_favourite is the index)
-        if (selected_favourite === -1) {
-            plan_type = "";
-            plan_value = "";
-        }
-        if (selected_favourite !== null && favourites[selected_favourite]) {
+        if (selected_favourite !== -1 && favourites[selected_favourite]) {
             selected_favourite = favourites[selected_favourite];
             school_num = selected_favourite.school_num;
             localStorage.setItem('school_num', school_num);
             plan_type = selected_favourite.plan_type;
             plan_value = selected_favourite.plan_value;
+            selected_form = null;
+            selected_teacher = null;
+            selected_room = null;
         }
-
     }
 
     $: select_plan($favourites, $selected_favourite);
+    function reset_favourite() {
+        selected_favourite.set(-1);
+    }
+    // reset favourite when selecting new thing
+    $: selected_form && reset_favourite();
+    $: selected_teacher && reset_favourite();
+    $: selected_room && reset_favourite();
     $: if ($selected_favourite !== -1) {
-        if ($favourites[$selected_favourite].plan_value !== plan_value) {
-            selected_favourite.set(-1);
-        } else if ($favourites[$selected_favourite].plan_type !== plan_type) {
+        // check if selected_favourite is in favourites
+        if ($favourites.length <= $selected_favourite) {
             selected_favourite.set(-1);
         }
     }
+    // CHANGE THIS FOR SETTING IF FIRST FAVOURITE SHOULD BE SELECTED
+    /*$: if ($favourites.length !== 0 && $selected_favourite === -1) {
+        selected_favourite.set(0);
+    }*/
 
 
     $logged_in = localStorage.getItem('logged_in') === 'true';
     init_vars();
     check_login_status();
     refresh_plan_vars();
+    get_favourites();
 
     $: $logged_in && init_indexed_db();
     $: !$logged_in && logout();
@@ -338,7 +347,7 @@
         }
         if(new_location === "") {new_location = "plan";}
         navigate_page(new_location);
-        if(new_location.startsWith("plan")) {
+        if (new_location.startsWith("plan")) {
             refresh_plan_vars();
         }
     });
@@ -414,7 +423,11 @@
                     <!-- Show room overview -->
                     <div class="control" id="c5">
                         <Button on:click={() => {
-                            set_plan("room_overview", "");
+                            //set_plan("room_overview", "");
+                            reset_favourite();
+                            console.log("going to room overview");
+                            plan_type = "room_overview";
+                            plan_value = "";
                         }}>Freie Räume</Button>
                     </div>
                 </div>

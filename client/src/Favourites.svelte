@@ -1,5 +1,5 @@
 <script>
-    import {customFetch, load_meta} from "./utils.js";
+    import {customFetch, get_favourites, load_meta} from "./utils.js";
     import Select from "./base_components/Select.svelte";
     import Button from "./base_components/Button.svelte";
     import {onMount} from "svelte";
@@ -54,17 +54,20 @@
         - duplicated courses are unified: for each course c1 that already exists as course c0, the pair c1: c0 is put into an object -> later, the check-value of c1 is set to that of c0
     */
     function load_favourites() {
+        get_favourites()
+            .then(data => {
+                let temp_fav = data;
+                temp_fav = temp_fav.map(item => ({ ...item, preferences: (
+                        item.preferences ? item.preferences.reduce((obj, preference) => ({ ...obj, [preference]: false }), {}): {}
+                    )}));
+                cur_favourites = temp_fav;
+            })
         // change preferences to dict
-        let temp_fav = $favourites;
-        favourites.set(temp_fav);
-        temp_fav = temp_fav.map(item => ({ ...item, preferences: item.preferences.reduce((obj, preference) => ({ ...obj, [preference]: false }), {}) }));
-        cur_favourites = temp_fav;
     }
     function save_favourites() {
         let new_favourites = [];
         for (let favourite = 0; favourite < cur_favourites.length; favourite++) {
             let cur_favourite = {...cur_favourites[favourite]};
-            console.log(duplicated_courses_match, favourite);
             // check if favourite in duplicated_courses_match
             if (duplicated_courses_match.hasOwnProperty(favourite)) {
                 for (const cur_key of Object.keys(duplicated_courses_match[favourite])) {
@@ -74,9 +77,21 @@
             cur_favourite.preferences = Object.keys(cur_favourite.preferences).filter(key => cur_favourite.preferences[key] === false);
             new_favourites.push(cur_favourite);
         }
-        console.log(new_favourites);
         favourites.set(new_favourites);
         // now the post request
+        customFetch("/api/v69.420/favourites", {
+            method: "POST",
+            body: JSON.stringify(new_favourites),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+            .then(data => {
+                notifications.success("Favoriten gespeichert.");
+            })
+            .catch(error => {
+                notifications.danger(error.message);
+            })
     }
 
     // FAVOURITE MANAGEMENT
@@ -85,7 +100,7 @@
     }
     // clear everything except for the school num of a favourite
     function clear_favourite(favourite) {
-        cur_favourites[favourite] = {"school_num": cur_favourites[favourite].school_num, "name": "", "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}
+        cur_favourites[favourite] = {"school_num": cur_favourites[favourite].school_num, "name": cur_favourites[favourite].name, "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}
     }
     // delete a favourite
     function delete_favourite(favourite) {
@@ -268,7 +283,7 @@
 
 
 
-        {:else if cur_favourites[favourite].plan_type !== "free_rooms"}
+        {:else if cur_favourites[favourite].plan_type !== "room_overview"}
             <Select data={get_values(cur_favourites[favourite].school_num, cur_favourites[favourite].plan_type, all_meta)} grouped={false} bind:selected_id={cur_favourites[favourite].plan_value} data_name="{cur_favourites[favourite].plan_type}">Klasse/Lehrer/Raum auswählen</Select>
         {/if}
         <button on:click={() => {delete_favourite(favourite)}}>Favorit löschen</button>
