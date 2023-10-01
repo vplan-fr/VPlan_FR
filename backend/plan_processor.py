@@ -8,7 +8,8 @@ from . import schools
 from .cache import Cache
 from .plan_extractor import StudentsPlanExtractor, TeachersPlanExtractor
 from .meta_extractor import MetaExtractor
-from .models import Teachers, Exam, Teacher, PlanLesson
+from .teacher import Teacher, Teachers
+from .models import PlanLesson, Exam
 from .vplan_utils import group_forms, ParsedForm
 from .stats import LessonsStatistics
 
@@ -175,8 +176,12 @@ class PlanProcessor:
                 )
 
                 teachers_rooms_data = {
-                    "used_rooms_by_period": (used_rooms := teachers_plan_extractor.teacher_plan_extractor.used_rooms_by_period()),
-                    "free_rooms_by_period": (free_rooms := teachers_plan_extractor.teacher_plan_extractor.free_rooms_by_period(all_rooms)),
+                    "used_rooms_by_period": (
+                        used_rooms := teachers_plan_extractor.teacher_plan_extractor.used_rooms_by_period()
+                    ),
+                    "free_rooms_by_period": (
+                        free_rooms := teachers_plan_extractor.teacher_plan_extractor.free_rooms_by_period(all_rooms)
+                    ),
                     "used_rooms_by_block": teachers_plan_extractor.teacher_plan_extractor.rooms_by_block(used_rooms),
                     "free_rooms_by_block": teachers_plan_extractor.teacher_plan_extractor.rooms_by_block(free_rooms)
                 }

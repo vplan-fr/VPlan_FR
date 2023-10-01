@@ -1,7 +1,8 @@
 import typing
 
 from . import ostwald, taro, rudolf_hildebrandt
-from ..models import Teacher, Room
+from ..room import Room
+from ..teacher import Teacher
 
 teacher_scrapers: dict[str, typing.Callable[[], list[Teacher]]] = {
     "10001329": ostwald.scrape_teachers,

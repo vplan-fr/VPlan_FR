@@ -1,14 +1,13 @@
-# coding=utf-8
 from __future__ import annotations
 
 import copy
 import dataclasses
 import datetime
+import typing
 from collections import defaultdict
 
-import typing
-from stundenplan24_py import indiware_mobil
 import stundenplan24_py
+from stundenplan24_py import indiware_mobil
 
 from .lesson_info import ParsedLessonInfo, LessonInfoParagraph, LessonInfoMessage
 from . import vplan_utils, lesson_info
@@ -530,7 +529,9 @@ class Lessons:
                 )
 
                 for remaining_plan_value in {"forms", "teachers", "rooms"} - {plan_type}:
-                    can_get_grouped &= getattr(lesson, remaining_plan_value) == getattr(previous_lesson, remaining_plan_value)
+                    can_get_grouped &= (
+                        getattr(lesson, remaining_plan_value) == getattr(previous_lesson, remaining_plan_value)
+                    )
 
                 grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info)
 
@@ -937,113 +938,6 @@ class Plan:
 @dataclasses.dataclass
 class Class(indiware_mobil.Class):
     forms: set[str]
-
-
-@dataclasses.dataclass
-class Teacher:
-    abbreviation: str | None
-    full_name: str | None = None
-    surname: str | None = None
-    info: str | None = None
-    subjects: list[str] = dataclasses.field(default_factory=list)
-    contact_link: str | None = None
-    image_path: str | None = None
-
-    def serialize(self) -> dict:
-        return {
-            "abbreviation": self.abbreviation,
-            "full_name": self.full_name,
-            "surname": self.surname,
-            "info": self.info,
-            "subjects": self.subjects,
-            "contact_link": self.contact_link,
-            "image_path": self.image_path
-        }
-
-    @classmethod
-    def deserialize(cls, data: dict) -> Teacher:
-        return cls(
-            abbreviation=data["abbreviation"],
-            full_name=data["full_name"],
-            surname=data["surname"],
-            info=data["info"],
-            subjects=data["subjects"],
-            contact_link=data.get("contact_link"),
-            image_path=data.get("image_path"),
-        )
-
-    def merge(self, other: Teacher) -> Teacher:
-        return Teacher(
-            full_name=self.full_name or other.full_name,
-            surname=self.surname or other.surname,
-            info=self.info or other.info,
-            abbreviation=self.abbreviation or other.abbreviation,
-            subjects=list(set(self.subjects + other.subjects)),
-            contact_link=self.contact_link or other.contact_link,
-            image_path=self.image_path or other.image_path,
-        )
-
-    def surname_no_titles(self):
-        """Strip parts of self.surname like "Dr." and return it."""
-        if self.surname is not None:
-            return " ".join(filter(lambda x: "." not in x, self.surname.split(" ")))
-        else:
-            return None
-
-
-@dataclasses.dataclass
-class Teachers:
-    teachers: list[Teacher] = dataclasses.field(default_factory=list)
-    scrape_timestamp: datetime.datetime = datetime.datetime.min
-
-    def serialize(self) -> dict:
-        return {
-            "teachers": {teacher.abbreviation: teacher.serialize() for teacher in self.teachers},
-            "timestamp": self.scrape_timestamp.isoformat()
-        }
-
-    @classmethod
-    def deserialize(cls, data: dict) -> Teachers:
-        return cls(
-            teachers=[Teacher.deserialize(teacher) for teacher in data["teachers"].values()],
-            scrape_timestamp=datetime.datetime.fromisoformat(data["timestamp"])
-        )
-
-    def to_dict(self) -> dict[str, Teacher]:
-        return {teacher.abbreviation: teacher for teacher in self.teachers}
-
-    def abbreviation_by_surname(self) -> dict[str, str]:
-        return {teacher.surname_no_titles(): teacher.abbreviation
-                for teacher in self.teachers
-                if teacher.surname is not None}
-
-
-@dataclasses.dataclass
-class Room:
-    house: int | str
-    floor: int | None
-    room_nr: int | None
-    appendix: str = ""
-
-    def to_short(self) -> str:
-        if isinstance(self.house, str):
-            assert self.floor is None
-            return self.house + (str(self.room_nr) if self.room_nr else "") + self.appendix
-
-        if self.floor < 0:
-            return f"-{self.house}{abs(self.floor)}{self.room_nr:02}{self.appendix}"
-        elif self.floor == 0:
-            return f"{self.house}{self.room_nr:02}{self.appendix}"
-        else:
-            return f"{self.house}{self.floor}{self.room_nr:02}{self.appendix}"
-
-    def to_dict(self) -> dict:
-        return {
-            "house": self.house,
-            "floor": self.floor,
-            "room_nr": self.room_nr,
-            "appendix": self.appendix
-        }
 
 
 @dataclasses.dataclass

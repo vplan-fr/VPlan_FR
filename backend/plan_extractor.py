@@ -10,7 +10,8 @@ from stundenplan24_py import indiware_mobil, substitution_plan
 
 from . import lesson_info
 from .lesson_info import process_additional_info
-from .models import Plan, Teacher, Teachers, Lesson, Lessons
+from .teacher import Teacher, Teachers
+from .models import Lesson, Lessons, Plan
 from .vplan_utils import parse_absent_element, ParsedForm
 
 
