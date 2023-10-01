@@ -1,4 +1,5 @@
 import threading
+from pathlib import Path
 from typing import List
 
 import pymongo
@@ -14,6 +15,7 @@ from flask_login import UserMixin, current_user
 from dotenv import load_dotenv
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
+import backend.cache
 from var import *
 
 load_dotenv()
@@ -95,14 +97,46 @@ class User(UserMixin):
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'settings': new_settings}})
         return send_success()
 
-    def set_user_preferences(self, preferences):
+    def set_user_preferences(self, preferences) -> Response:
         users.update_one({'_id': ObjectId(self.mongo_id)}, {'$set': {'preferences': preferences}})
-        return "Success"
+        return send_success()
 
     # get setting for user, if setting not set get default setting
     def get_setting(self, setting_key):
         self.get_user()
         return self.user.get("settings", {}).get(setting_key, DEFAULT_SETTINGS.get(setting_key, None))
+
+    def get_favourites(self) -> Response:
+        return send_success(self.user.get("favourites", {}))
+    """
+        what does a favourite need:
+            -> name by user (default "Favourit {n}")
+            -> priority
+            -> school_id, plan_type, plan_value
+    """
+
+    def set_favourites(self, favourites) -> Response:
+        new_favourites = []
+        for cur_favourite in favourites:
+            favourite = {elem: cur_favourite.get(elem) for elem in ["school_num", "name", "priority", "plan_type", "plan_value"]}
+            for key in favourite:
+                if not favourite[key]:
+                    return send_error(f"{key} nicht angegeben")
+            if favourite["school_num"] not in self.get_authorized_schools():
+                return send_error("Schule nicht autorisiert")
+            if len(favourite["name"]) > 40:
+                return send_error("Name zu lang")
+            if favourite["plan_type"] not in ["forms", "teachers", "rooms", "free_rooms"]:
+                return send_error("invalide Planart")
+            cache = backend.cache.Cache(Path(".cache") / favourite["school_num"])
+            if favourite["plan_type"] == "free_rooms":
+                favourite["plan_value"] = None
+            else:
+                if favourite["plan_value"] not in json.loads(cache.get_meta_file(f"{favourite['plan_type']}.json"))[favourite["plan_type"]]:
+                    return send_error("invalider Plan")
+            new_favourites.append(favourite)
+        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'favourites': new_favourites}})
+        return send_success(new_favourites)
 
 
 def get_user(user_id):
@@ -169,13 +203,16 @@ def get_all_schools():
             "$project": {
                 #"_id": False,
                 "count": False,
-                "hosting": False,
+                #"hosting": False,
                 "comment": False,
             }
         }
     ]
-
-    return list(creds.aggregate(pipeline))
+    schools_list = list(creds.aggregate(pipeline))
+    for ind, elem in enumerate(schools_list):
+        schools_list[ind]["creds_needed"] = True if elem["hosting"]["creds"] else False
+        del schools_list[ind]["hosting"]
+    return schools_list
 
 
 def get_all_schools_by_number():
