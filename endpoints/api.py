@@ -26,7 +26,6 @@ api = Blueprint('api', __name__)
 def schools() -> Response:
     # school_data = get_all_schools_by_number()
     school_data = get_all_schools()
-    print(school_data)
     return send_success(school_data)
 
 
@@ -48,6 +47,7 @@ def meta(school_num) -> Response:
     date = find_closest_date(dates)
 
     return send_success({
+        "school_num": school_num,
         "meta": meta_data,
         "teachers": teachers_data,
         "forms": forms_data,
@@ -90,7 +90,7 @@ def plan(school_num: str) -> Response:
             "exams": json.loads(cache.get_plan_file(date, revision, "exams.json")),
             "grouped_form_plans": json.loads(cache.get_plan_file(date, revision, "grouped_form_plans.json")),
         }
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         return send_error("Invalid date or revision.")
 
     return send_success(data)
@@ -113,6 +113,9 @@ def authorize(school_num: str) -> Response:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
     if not school_data:
         return send_error("Schulnummer unbekannt, falls du eine Schule hinzufügen möchtest, nimm bitte Kontakt mit uns auf")
+    if school_data["hosting"]["creds"] == {}:
+        current_user.authorize_school(school_num)
+        return send_success()
     username = request.form.get("username")
     if username is None:
         return send_error("Kein Nutzername für die Schule angegeben")
@@ -167,7 +170,6 @@ def preferences(school_num: str) -> Response:
 
         try:
             data = json.loads(request.data)
-            print(data)
         except json.JSONDecodeError:
             return send_error("Invalid JSON data.")
 
@@ -179,9 +181,19 @@ def preferences(school_num: str) -> Response:
 
         current_preferences.setdefault(school_num, {})[request.args["form"]] = stored_classes
 
-        current_user.set_user_preferences(current_preferences)
+        return current_user.set_user_preferences(current_preferences)
 
-        return send_success()
+
+@api.route(f"/api/v69.420/favourites", methods=["GET", "POST"])
+@login_required
+def favourites() -> Response:
+    if request.method == "GET":
+        return send_success(current_user.get_user().get("favourites", []))
+    try:
+        data = json.loads(request.data)
+    except json.JSONDecodeError:
+        return send_error("Invalid JSON data.")
+    return current_user.set_favourites(data)
 
 
 @api.route(f"/api/v69.420/changelog", methods=["GET", "POST"])
