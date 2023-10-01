@@ -453,11 +453,13 @@ export function get_favourites() {
         .then(data => {
             localStorage.setItem("favourites", JSON.stringify(data));
             favourites.set(data);
-            console.log(data);
-            return data
         }).catch(error => {
-            console.log("Favourites couldn't be loaded.");
-            favourites.set(JSON.parse(localStorage.getItem("favourites")))
-            return JSON.parse(localStorage.getItem("favourites"))
+            console.log("Favourites couldn't be loaded from server.");
+            // check if favourites in localstorage
+            if(!localStorage.getItem("favourites")) {
+                favourites.set([])
+            } else {
+                favourites.set(JSON.parse(localStorage.getItem("favourites")))
+            }
         })
 }
