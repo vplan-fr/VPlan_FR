@@ -4,7 +4,7 @@
     import Rooms from "./Rooms.svelte";
     import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
-    import {indexed_db, preferences, settings, title} from '../stores.js';
+    import {indexed_db, preferences, settings, title, selected_favourite, favourites} from '../stores.js';
     import {arraysEqual, cache_plan, customFetch, format_date, get_from_db, get_school_plan_count, navigate_page} from "../utils.js";
     import Dropdown from '../base_components/Dropdown.svelte';
 
@@ -94,7 +94,7 @@
         week_letter = info.week;
     }
 
-    function load_plan(date, revision=".newest", enabled_dates) {
+    function load_plan(school_num, date, revision=".newest", enabled_dates) {
         if (enabled_dates === null || enabled_dates === undefined) {
             return;
         }
@@ -204,10 +204,13 @@
         if (!preferences_apply) {
             return lessons
         }
-        if (!(plan_value in $preferences)) {
+        //if (!(plan_value in $preferences)) {
+        //    return lessons
+        //}
+        if ($selected_favourite === -1) {
             return lessons
         }
-        let cur_preferences = $preferences[plan_value] || [];
+        let cur_preferences = $favourites[$selected_favourite].preferences || [];
         let new_lessons = [];
         for (const lesson of lessons) {
             if (!(cur_preferences.includes(lesson.class_number))) {
@@ -273,7 +276,7 @@
         // console.log("Mounted Plan.svelte");
     });
 
-    $: $indexed_db, load_plan(date, selected_revision, enabled_dates);
+    $: $indexed_db, load_plan(school_num, date, selected_revision, enabled_dates);
     $: load_lessons_check_plan(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans);
 
     $: if (plan_type === "teachers") {
@@ -301,7 +304,7 @@
 <div class:plan={plan_type !== "room_overview"} class:extra-height={extra_height}>
     {#if plan_type !== "room_overview"}
         {#if show_title && info && plan_type && plan_value}
-            {#if plan_type === "forms" && (plan_value in $preferences)}
+            {#if plan_type === "forms" && ($selected_favourite !== -1)}
                 <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
             {/if}
                 <h1 class="plan-heading">

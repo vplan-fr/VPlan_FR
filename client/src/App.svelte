@@ -10,7 +10,7 @@
     import SveltyPicker from 'svelty-picker';
     import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db} from './stores.js'
+    import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db, selected_favourite, favourites} from './stores.js'
     import SchoolManager from "./components/SchoolManager.svelte";
     import Preferences from "./components/Preferences.svelte";
     import Changelog from "./components/Changelog.svelte";
@@ -118,7 +118,7 @@
         );
     }
 
-    function get_preferences() {
+    /*function get_preferences() {
         customFetch(`${api_base}/preferences`)
             .then(data => {
                 preferences.set(data);
@@ -126,7 +126,7 @@
             .catch(error => {
                 console.error("Preferences konnten nicht geladen werden.");
             })
-    }
+    }*/
 
     function choose(choices) {
         var index = Math.floor(Math.random() * choices.length);
@@ -226,7 +226,7 @@
     function gen_revision_arr(all_revisions) {
         revision_arr = [];
         for(const [index, revision] of Object.entries(all_revisions)) {
-            if(index == 1) {continue;}
+            if (index == 1) {continue;}
             revision_arr.push({
                 "id": revision,
                 "display_name": format_revision_date(revision, all_revisions[1])
@@ -267,6 +267,32 @@
         }
     }
 
+    function select_plan(favourites, selected_favourite) {
+        // check if selected_favourite is in favourites (selected_favourite is the index)
+        if (selected_favourite === -1) {
+            plan_type = "";
+            plan_value = "";
+        }
+        if (selected_favourite !== null && favourites[selected_favourite]) {
+            selected_favourite = favourites[selected_favourite];
+            school_num = selected_favourite.school_num;
+            localStorage.setItem('school_num', school_num);
+            plan_type = selected_favourite.plan_type;
+            plan_value = selected_favourite.plan_value;
+        }
+
+    }
+
+    $: select_plan($favourites, $selected_favourite);
+    $: if ($selected_favourite !== -1) {
+        if ($favourites[$selected_favourite].plan_value !== plan_value) {
+            selected_favourite.set(-1);
+        } else if ($favourites[$selected_favourite].plan_type !== plan_type) {
+            selected_favourite.set(-1);
+        }
+    }
+
+
     $logged_in = localStorage.getItem('logged_in') === 'true';
     init_vars();
     check_login_status();
@@ -277,7 +303,7 @@
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
     $: school_num && get_meta();
     $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
-    $: school_num && get_preferences();
+    //$: school_num && get_preferences();
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
     $: $logged_in && get_settings();
     $: (Object.keys($settings).length !== 0) && localStorage.setItem("settings", `${JSON.stringify($settings)}`);
@@ -349,6 +375,10 @@
         {:else if $logged_in}
             {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
+                {#if $selected_favourite !== -1 && $favourites[$selected_favourite]}
+                    Gewählter Favorit: {$favourites[$selected_favourite].name}
+                    <br>
+                {/if}
                 <div class="controls-wrapper">
                     <!-- Datepicker -->
                     <div class="control" id="c1">
