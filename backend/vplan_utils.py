@@ -216,7 +216,9 @@ def forms_to_str(forms: typing.Iterable[str]) -> str:
     return parsed_forms_to_str([ParsedForm.from_str(form) for form in forms])
 
 
-def periods_to_block_label(periods: list[int]) -> str:
+def periods_to_block_label(periods: typing.Iterable[int]) -> str:
+    periods = list(set(periods))
+
     periods.sort()
 
     rests = {
@@ -246,11 +248,11 @@ def _parse_periods(period_str: str) -> list[int]:
         return list(range(period_str_to_int(begin), period_str_to_int(end) + 1))
 
 
-def parse_periods(period_str: str) -> list[int]:
-    return sum([_parse_periods(p) for p in period_str.split(",")], [])
+def parse_periods(period_str: str) -> set[int]:
+    return set(sum([_parse_periods(p) for p in period_str.split(",")], []))
 
 
-def parse_absent_element(element: str) -> tuple[str, list[int]]:
+def parse_absent_element(element: str) -> tuple[str, set[int]]:
     """Parse a string like the following: "label (1-2,4)" into label and periods."""
 
     segments = element.rsplit("(", 1)
@@ -258,7 +260,7 @@ def parse_absent_element(element: str) -> tuple[str, list[int]]:
     label = segments[0].strip()
 
     if len(segments) == 1:
-        periods = []
+        periods = set()
     else:
         periods = parse_periods(segments[1][:-1])
 
