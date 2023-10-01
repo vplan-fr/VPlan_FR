@@ -56,13 +56,13 @@
     function load_favourites() {
         get_favourites()
             .then(data => {
+                // change preferences to dict
                 let temp_fav = data;
                 temp_fav = temp_fav.map(item => ({ ...item, preferences: (
-                        item.preferences ? item.preferences.reduce((obj, preference) => ({ ...obj, [preference]: false }), {}): {}
-                    )}));
+                    item.preferences ? item.preferences.reduce((obj, preference) => ({ ...obj, [preference]: false }), {}): {}
+                )}));
                 cur_favourites = temp_fav;
             })
-        // change preferences to dict
     }
     function save_favourites() {
         let new_favourites = [];
