@@ -24,6 +24,7 @@ db = pymongo.MongoClient(os.getenv("MONGO_URL") if os.getenv("MONGO_URL") else "
 users = db["users"]
 creds = db["creds"]
 schools = db["schools"]
+meta = db["meta"]
 
 
 # RESPONSE WRAPPERS
@@ -118,22 +119,34 @@ class User(UserMixin):
     def set_favourites(self, favourites) -> Response:
         new_favourites = []
         for cur_favourite in favourites:
-            favourite = {elem: cur_favourite.get(elem) for elem in ["school_num", "name", "priority", "plan_type", "plan_value"]}
+            favourite = {elem: cur_favourite.get(elem) for elem in ["school_num", "name", "priority", "plan_type", "plan_value", "preferences"]}
             for key in favourite:
-                if not favourite[key]:
+                if favourite[key] is None:
+                    if favourite["plan_type"] == "room_overview" and key == "plan_value":
+                        continue
                     return send_error(f"{key} nicht angegeben")
             if favourite["school_num"] not in self.get_authorized_schools():
                 return send_error("Schule nicht autorisiert")
             if len(favourite["name"]) > 40:
                 return send_error("Name zu lang")
-            if favourite["plan_type"] not in ["forms", "teachers", "rooms", "free_rooms"]:
+            if not isinstance(favourite["priority"], int) or favourite["priority"] < 0 or favourite["priority"] > 100:
+                return send_error("Priorität muss eine Zahl zwischen 0 und 100 sein")
+            if favourite["plan_type"] not in ["forms", "teachers", "rooms", "room_overview"]:
                 return send_error("invalide Planart")
             cache = backend.cache.Cache(Path(".cache") / favourite["school_num"])
-            if favourite["plan_type"] == "free_rooms":
+            if favourite["plan_type"] == "room_overview":
                 favourite["plan_value"] = None
-            else:
-                if favourite["plan_value"] not in json.loads(cache.get_meta_file(f"{favourite['plan_type']}.json"))[favourite["plan_type"]]:
-                    return send_error("invalider Plan")
+                favourite["preferences"] = None
+                new_favourites.append(favourite)
+                continue
+            if favourite["plan_value"] not in json.loads(cache.get_meta_file(f"{favourite['plan_type']}.json"))[favourite["plan_type"]]:
+                return send_error("invalider Plan (Klasse/Lehrer/Raum) existiert nicht")
+            if favourite["plan_type"] != "forms":
+                favourite["preferences"] = None
+                new_favourites.append(favourite)
+                continue
+            available_preferences = json.loads(cache.get_meta_file("forms.json"))["forms"][favourite["plan_value"]]["class_groups"].keys()
+            favourite["preferences"] = [elem for elem in favourite["preferences"] if elem in available_preferences]
             new_favourites.append(favourite)
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'favourites': new_favourites}})
         return send_success(new_favourites)
@@ -315,6 +328,11 @@ class BetterEmbed(DiscordEmbed):
 def update_database():
     add_database_icons()
     update_school_authorization_count()
+
+
+@run_in_background
+def meta_to_database(request_data):
+    meta.insert_one(request_data)
 
 
 if __name__ == "__main__":

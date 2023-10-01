@@ -74,8 +74,10 @@
         }
         // Check the validity of the plan value
         if((plan_type === "rooms" || plan_type === "teachers") && (!Object.keys(meta[plan_type]).includes(entity))) {
-            reset_plan_vars();
-            return;
+            if (meta.school_num === school_num) {
+                reset_plan_vars();
+                return;
+            }
         } else if((plan_type === "forms") && !Object.keys(meta.forms.forms).includes(entity)) {
             reset_plan_vars();
             return;
@@ -142,7 +144,8 @@
                 data_from_cache = false;
             })
             .catch(error => {
-                console.error(error);
+                console.log(error.message);
+                //console.error(error);
                 loading = false;
                 network_loading_failed = true;
         });
@@ -277,7 +280,7 @@
     });
 
     $: $indexed_db, load_plan(school_num, date, selected_revision, enabled_dates);
-    $: load_lessons_check_plan(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans);
+    $: meta && load_lessons_check_plan(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans);
 
     $: if (plan_type === "teachers") {
         if (meta.teachers) {
