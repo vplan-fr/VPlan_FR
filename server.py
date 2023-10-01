@@ -44,6 +44,8 @@ app.register_blueprint(api)
 def after_request(resp):
     if request.path.startswith("/public"):
         return resp
+    if request.host == "localhost:5000" or request.host == "127.0.0.1:5000" or request.remote_addr == "127.0.0.1":
+        return resp
     request_data = {
         "time": time.time(),
         "host": request.host,
