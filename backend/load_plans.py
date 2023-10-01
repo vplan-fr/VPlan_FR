@@ -2,16 +2,16 @@
 from __future__ import annotations
 
 import argparse
+import aiohttp
 import asyncio
 import logging
 from pathlib import Path
 
-from backend.creds_provider import creds_provider_factory
 from stundenplan24_py import (
     IndiwareStundenplanerClient, Hosting, proxies
 )
-import aiohttp
 
+from .creds_provider import creds_provider_factory
 from .plan_downloader import PlanDownloader
 from .plan_processor import PlanProcessor
 from .cache import Cache
