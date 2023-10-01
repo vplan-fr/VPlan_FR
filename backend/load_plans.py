@@ -13,8 +13,8 @@ from stundenplan24_py import (
 
 from .creds_provider import creds_provider_factory
 from .plan_downloader import PlanDownloader
-from .plan_processor import PlanProcessor
 from .cache import Cache
+from .plan_processor import PlanProcessor
 
 
 class PlanCrawler:
