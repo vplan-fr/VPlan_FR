@@ -1,32 +1,48 @@
 <script>
-    import {load_meta} from "./utils.js";
+    import {customFetch, load_meta} from "./utils.js";
     import Select from "./base_components/Select.svelte";
     import Button from "./base_components/Button.svelte";
     import {onMount} from "svelte";
-    import {title} from "./stores.js";
+    import {notifications} from "./notifications.js";
 
-    let favourites = [
-        //{"school_num": "10001329", "name": "Arthur", "priority": 0, "plan_type": "forms", "plan_value": "JG12", "preferences": {}}
-    ]
-    $: console.log(favourites);
+    import {favourites} from "./stores.js";
+
+    let cur_favourites = [];
+    let all_schools = {};
+    let authorized_school_ids = [];
     let school_nums = [];
-    $: school_nums = [...new Set(favourites.map(obj => obj.school_num))];
+    $: school_nums = [...new Set(cur_favourites.map(obj => obj.school_num).filter(school_num => school_num !== ""))];
     let all_meta = {};
     let duplicated_courses_match = {};
     $: update_meta(school_nums);
 
-    let preferences = {};
-
     onMount(() => {
+        get_schools();
+        get_authorized_schools();
         load_favourites();
     });
 
-    function get_pseudo_favourites_from_server() {
-        return [
-            //{"school_num": "10001329", "name": "Arthur", "priority": 0, "plan_type": "forms", "plan_value": "JG12", "preferences": [607, 609, 616]},
-            {"school_num": "10001329", "name": "Leo", "priority": 1, "plan_type": "forms", "plan_value": "6/4", "preferences": ["494", "434"]},
-        ]
+
+    // duplicate from school manager but hard to simplify
+    function get_schools() {
+        customFetch("/api/v69.420/schools")
+            .then(data => {
+                all_schools = Object.fromEntries(data.map(obj => [obj._id, obj]));
+            })
+            .catch(error => {
+                notifications.danger(error.message);
+            })
     }
+    function get_authorized_schools() {
+        customFetch("/auth/authorized_schools")
+            .then(data => {
+                authorized_school_ids = data;
+            })
+            .catch(error => {
+                console.error("Autorisierte Schulen konnten nicht ermittelt werden.");
+            });
+    }
+
 
     /*
     preferences procedure:
@@ -39,37 +55,43 @@
     */
     function load_favourites() {
         // change preferences to dict
-        let temp_fav = get_pseudo_favourites_from_server();
+        let temp_fav = $favourites;
+        favourites.set(temp_fav);
         temp_fav = temp_fav.map(item => ({ ...item, preferences: item.preferences.reduce((obj, preference) => ({ ...obj, [preference]: false }), {}) }));
-        console.log(temp_fav)
-        favourites = temp_fav;
+        cur_favourites = temp_fav;
     }
     function save_favourites() {
         let new_favourites = [];
-        for (let favourite = 0; favourite < favourites.length; favourite++) {
-            let cur_favourite = {...favourites[favourite]};
-            for (const cur_key of Object.keys(duplicated_courses_match[favourite])) {
-                cur_favourite.preferences[cur_key] = cur_favourite.preferences[duplicated_courses_match[favourite][cur_key]];
+        for (let favourite = 0; favourite < cur_favourites.length; favourite++) {
+            let cur_favourite = {...cur_favourites[favourite]};
+            console.log(duplicated_courses_match, favourite);
+            // check if favourite in duplicated_courses_match
+            if (duplicated_courses_match.hasOwnProperty(favourite)) {
+                for (const cur_key of Object.keys(duplicated_courses_match[favourite])) {
+                    cur_favourite.preferences[cur_key] = cur_favourite.preferences[duplicated_courses_match[favourite][cur_key]];
+                }
             }
             cur_favourite.preferences = Object.keys(cur_favourite.preferences).filter(key => cur_favourite.preferences[key] === false);
             new_favourites.push(cur_favourite);
         }
         console.log(new_favourites);
+        favourites.set(new_favourites);
+        // now the post request
     }
 
     // FAVOURITE MANAGEMENT
     function add_favourite() {
-        favourites = [...favourites, {"school_num": "test", "name": "", "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}];
+        cur_favourites = [...cur_favourites, {"school_num": "", "name": "", "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}];
     }
     // clear everything except for the school num of a favourite
     function clear_favourite(favourite) {
-        favourites[favourite] = {"school_num": favourites[favourite].school_num, "name": "", "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}
+        cur_favourites[favourite] = {"school_num": cur_favourites[favourite].school_num, "name": "", "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}
     }
     // delete a favourite
     function delete_favourite(favourite) {
-        let new_array = favourites;
+        let new_array = cur_favourites;
         new_array.splice(favourite, 1);
-        favourites = new_array;
+        cur_favourites = new_array;
     }
 
 
@@ -116,8 +138,8 @@
     }
     // get subjects for one form
     function get_subjects(favourite, stored_meta) {
-        let school_num = favourites[favourite].school_num;
-        let form = favourites[favourite].plan_value;
+        let school_num = cur_favourites[favourite].school_num;
+        let form = cur_favourites[favourite].plan_value;
         if (!stored_meta.hasOwnProperty(school_num)) {
             return []
         }
@@ -126,8 +148,8 @@
         }
         duplicated_courses_match[favourite] = {};
         for (const class_group of Object.keys(stored_meta[school_num].forms.forms[form].class_groups)) {
-            if (favourites[favourite].preferences[class_group] === undefined) {
-                favourites[favourite].preferences[class_group] = true;
+            if (cur_favourites[favourite].preferences[class_group] === undefined) {
+                cur_favourites[favourite].preferences[class_group] = true;
             }
         }
 
@@ -172,22 +194,27 @@
 
 <button on:click={save_favourites}>Speichern</button>
 <button on:click={add_favourite}>Favorit hinzufügen</button>
-{#each favourites as _, favourite}
+<br><br><br><br><br>
+{#each cur_favourites as _, favourite}
     <p>
-        <input type="text" bind:value={favourites[favourite].name}>
+        <label for="favourite_name">Name des Favoriten</label>
+        <input name="favourite_name" type="text" bind:value={cur_favourites[favourite].name}>
         <!-- TODO: GET AUTHORIZED SCHOOLS -->
-        <select name="school_select" id="" bind:value={favourites[favourite].school_num} on:change={() => clear_favourite(favourite)}>
-            <option value="10001329">Ostwald</option>
-            <option value="10000000">Beispielschule</option>
+        <select name="school_select" id="" bind:value={cur_favourites[favourite].school_num} on:change={() => clear_favourite(favourite)}>
+            {#each authorized_school_ids as school_id}
+                {#if all_schools.hasOwnProperty(school_id)}
+                    <option value={school_id}>{all_schools[school_id].display_name}</option>
+                {/if}
+            {/each}
         </select>
-        <select name="plan_type_select" id="" bind:value={favourites[favourite].plan_type} on:change={() => favourites[favourite].plan_value = ""}>
+        <select name="plan_type_select" id="" bind:value={cur_favourites[favourite].plan_type} on:change={() => {cur_favourites[favourite].plan_value = ""; cur_favourites[favourite].preferences = {}}}>
             <option value="forms">Klassenplan</option>
             <option value="teachers">Lehrerplan</option>
             <option value="rooms">Raumplan</option>
-            <option value="free_rooms">Freie Räume</option>
+            <option value="room_overview">Freie Räume</option>
         </select>
-        {#if favourites[favourite].plan_type === "forms"}
-            <Select data={get_values(favourites[favourite].school_num, favourites[favourite].plan_type, all_meta)} grouped={true} bind:selected_id={favourites[favourite].plan_value} data_name="{favourites[favourite].plan_type}">Klasse/Lehrer/Raum auswählen</Select>
+        {#if cur_favourites[favourite].plan_type === "forms"}
+            <Select data={get_values(cur_favourites[favourite].school_num, cur_favourites[favourite].plan_type, all_meta)} grouped={true} bind:selected_id={cur_favourites[favourite].plan_value} data_name="{cur_favourites[favourite].plan_type}">Klasse/Lehrer/Raum auswählen</Select>
             <!--choosable courses-->
             {#each Object.entries(
                 get_subjects(favourite, all_meta)
@@ -195,7 +222,7 @@
                 {#if courses.length === 1}
                     <li>{subject}:<input
                             type="checkbox"
-                            bind:checked={favourites[favourite].preferences[courses[0].class_number]}
+                            bind:checked={cur_favourites[favourite].preferences[courses[0].class_number]}
                     />
                         {courses[0].class_number}
                         {courses[0].teacher} |
@@ -210,12 +237,12 @@
                         {#if courses.length > 2}
                             <Button class="inline-flex" on:click={() => {
                                 for (const course of courses) {
-                                    favourites[favourite].preferences[course.class_number] = true;
+                                    cur_favourites[favourite].preferences[course.class_number] = true;
                                 }
                             }}>Alle Auswählen</Button>
                             <Button class="inline-flex" on:click={() => {
                                 for (const course of courses) {
-                                    favourites[favourite].preferences[course.class_number] = false;
+                                    cur_favourites[favourite].preferences[course.class_number] = false;
                                 }
                             }}>Keinen Auswählen</Button>
                         {/if}
@@ -225,7 +252,7 @@
                             <li>
                                 <input
                                         type="checkbox"
-                                        bind:checked={favourites[favourite].preferences[course.class_number]}
+                                        bind:checked={cur_favourites[favourite].preferences[course.class_number]}
                                 />
                                 {course.class_number}
                                 {course.teacher} |
@@ -241,8 +268,8 @@
 
 
 
-        {:else if favourites[favourite].plan_type !== "free_rooms"}
-            <Select data={get_values(favourites[favourite].school_num, favourites[favourite].plan_type, all_meta)} grouped={false} bind:selected_id={favourites[favourite].plan_value} data_name="{favourites[favourite].plan_type}">Klasse/Lehrer/Raum auswählen</Select>
+        {:else if cur_favourites[favourite].plan_type !== "free_rooms"}
+            <Select data={get_values(cur_favourites[favourite].school_num, cur_favourites[favourite].plan_type, all_meta)} grouped={false} bind:selected_id={cur_favourites[favourite].plan_value} data_name="{cur_favourites[favourite].plan_type}">Klasse/Lehrer/Raum auswählen</Select>
         {/if}
         <button on:click={() => {delete_favourite(favourite)}}>Favorit löschen</button>
     </p>
