@@ -183,10 +183,16 @@ def preferences(school_num: str) -> Response:
         return current_user.set_user_preferences(current_preferences)
 
 
-@api.route(f"/favourites", methods=["GET", "POST"])
+@api.route(f"/api/v69.420/favourites", methods=["GET", "POST"])
 @login_required
-def favourites(school_num):
-    return ""
+def favourites() -> Response:
+    if request.method == "GET":
+        return send_success(current_user.get_user().get("favourites", []))
+    try:
+        data = json.loads(request.data)
+    except json.JSONDecodeError:
+        return send_error("Invalid JSON data.")
+    return current_user.set_favourites(data)
 
 
 @api.route(f"/api/v69.420/changelog", methods=["GET", "POST"])

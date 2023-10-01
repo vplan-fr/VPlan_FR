@@ -15,7 +15,6 @@
                 notifications.danger(error.message);
             });
     }
-    $: console.log(selected_favourite);
 </script>
 
 <nav transition:fly={{y:-64}}>
