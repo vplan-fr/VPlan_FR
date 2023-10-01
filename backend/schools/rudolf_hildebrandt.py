@@ -1,4 +1,4 @@
-from backend.models import Room
+from backend.room import Room
 
 
 def parse_room(room: str) -> Room:
