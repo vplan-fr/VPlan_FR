@@ -79,8 +79,10 @@
                 return;
             }
         } else if((plan_type === "forms") && !Object.keys(meta.forms.forms).includes(entity)) {
-            reset_plan_vars();
-            return;
+            if (meta.school_num === school_num) {
+                reset_plan_vars();
+                return;
+            }
         }
 
         let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans";
