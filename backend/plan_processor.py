@@ -240,7 +240,7 @@ class PlanProcessor:
         self.store_teachers()
 
     def add_teachers(self, new_teachers: dict[str, Teacher], update_timestamp: bool = False):
-        self._logger.debug("=> Updating teachers...")
+        self._logger.debug(f"=> Updating teachers... ({len(new_teachers)})")
 
         old_teachers = self.teachers.to_dict()
         all_abbreviations = set(old_teachers.keys()) | set(new_teachers.keys())
