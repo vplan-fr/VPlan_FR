@@ -414,7 +414,7 @@ class Lessons:
         grouped_lessons = self.group_by(*group_attrs)
 
         return {
-            group: lessons.to_plan_lessons(plan_type, {group})
+            group: sorted(lessons.to_plan_lessons(plan_type, {group}), key=lambda l: (min(l.periods), -len(l.periods)))
             for group, lessons in grouped_lessons.items()
         }
 
@@ -464,6 +464,7 @@ class Lessons:
                         return None
 
                 # periods not groupable, so, to group, info string must be the same
+                # TODO: Refactor this, ParsedLessonInfo.original_messages is not reliable/a set
                 elif message1.parsed.original_messages == message2.parsed.original_messages:
                     new_paragraph.append(message1)
 
@@ -634,7 +635,7 @@ class Plan:
                     forms={form.short_name},
                     teachers=set(lesson.teacher().split()) if lesson.teacher() else set(),
                     # TODO: Some schools use rooms with spaces
-                    rooms=set(lesson.room().split(" ")) if lesson.room() else set(),
+                    rooms={r for r in lesson.room().split(" ") if r} if lesson.room() else set(),
                     course=lesson.subject(),
 
                     # see below
@@ -750,7 +751,7 @@ class Plan:
                     forms=set(lesson.teacher().split(",")) if lesson.teacher() else set(),
                     teachers={teacher.short_name},
                     # TODO: Some schools use rooms with spaces
-                    rooms=set(lesson.room().split(" ")) if lesson.room() else set(),
+                    rooms={r for r in lesson.room().split(" ") if r} if lesson.room() else set(),
                     course=lesson.subject(),
 
                     # see below
