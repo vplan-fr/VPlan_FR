@@ -4,7 +4,8 @@ from typing import List
 import requests
 from bs4 import BeautifulSoup
 
-from backend.models import Teacher, Room
+from backend.teacher import Teacher
+from backend.room import Room
 
 
 def scrape_teachers() -> List[Teacher]:
