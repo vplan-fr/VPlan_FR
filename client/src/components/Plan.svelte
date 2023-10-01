@@ -292,7 +292,7 @@
     }
     
     $: date && enabled_dates && update_date_btns();
-    $: preferences_apply, lessons = render_lessons(all_lessons);
+    $: preferences_apply, $selected_favourite, lessons = render_lessons(all_lessons);
     $: loading_failed = (cache_loading_failed && network_loading_failed && !loading);
     $: available_plan_version = data_from_cache ? "cached" : !network_loading_failed ? caching_successful ? "network_cached" : "network_uncached" : null;
     $: location.hash = gen_location_hash(school_num, date, plan_type, plan_value);
