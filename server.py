@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from flask import send_from_directory, Response
-from flask_login import LoginManager
+import time
+
+from flask import send_from_directory, Response, request
+from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_compress import Compress
+from bson import ObjectId
 
 from endpoints.authorization import authorization
 from endpoints.api import api
 
-from utils import User, AddStaticFileHashFlask, get_user, send_error, update_database
+from utils import User, AddStaticFileHashFlask, get_user, send_error, update_database, meta_to_database
 from var import *
 
 
@@ -35,6 +38,24 @@ login_manager.init_app(app)
 # endpoints
 app.register_blueprint(authorization)
 app.register_blueprint(api)
+
+
+@app.after_request
+def after_request(resp):
+    if request.path.startswith("/public"):
+        return resp
+    request_data = {
+        "time": time.time(),
+        "host": request.host,
+        "path": request.full_path,
+        "method": request.method,
+        "user-agent": request.user_agent.string,
+        "ip": request.remote_addr,
+    }
+    if current_user:
+        request_data["userId"] = ObjectId(current_user.get_id())
+    meta_to_database(request_data)
+    return resp
 
 
 @login_manager.user_loader
