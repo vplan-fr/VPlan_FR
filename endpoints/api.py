@@ -147,43 +147,6 @@ def instant_authorize(school_num: str) -> Response:
     return send_success()
 
 
-@api.route(f"{API_BASE_URL}/preferences", methods=['GET', 'POST'])
-@login_required
-def preferences(school_num: str) -> Response:
-    cache = backend.cache.Cache(Path(".cache") / school_num)
-
-    current_preferences = current_user.get_user().get("preferences", {})
-
-    if request.method == "GET":
-        if "form" in request.args:
-            return send_success(current_preferences.get(school_num, {}).get(request.args["form"], []))
-        else:
-            return send_success(current_preferences.get(school_num, {}))
-
-    elif request.method == "POST":
-        try:
-            class_groups = json.loads(cache.get_meta_file("forms.json"))["forms"][request.args["form"]]["class_groups"]
-        except KeyError:
-            return send_error(f"Invalid or missing form {request.args.get('form')!r}!")
-
-        stored_classes = []
-
-        try:
-            data = json.loads(request.data)
-        except json.JSONDecodeError:
-            return send_error("Invalid JSON data.")
-
-        for requested_class in data:
-            if requested_class not in class_groups:
-                continue
-
-            stored_classes.append(requested_class)
-
-        current_preferences.setdefault(school_num, {})[request.args["form"]] = stored_classes
-
-        return current_user.set_user_preferences(current_preferences)
-
-
 @api.route(f"/api/v69.420/favourites", methods=["GET", "POST"])
 @login_required
 def favourites() -> Response:

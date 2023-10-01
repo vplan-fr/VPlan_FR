@@ -4,7 +4,7 @@
     import Rooms from "./Rooms.svelte";
     import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
-    import {indexed_db, preferences, settings, title, selected_favourite, favourites} from '../stores.js';
+    import {indexed_db, settings, title, selected_favourite, favourites} from '../stores.js';
     import {arraysEqual, cache_plan, customFetch, format_date, get_from_db, get_school_plan_count, navigate_page} from "../utils.js";
     import Dropdown from '../base_components/Dropdown.svelte';
 
@@ -209,9 +209,6 @@
         if (!preferences_apply) {
             return lessons
         }
-        //if (!(plan_value in $preferences)) {
-        //    return lessons
-        //}
         if ($selected_favourite === -1) {
             return lessons
         }

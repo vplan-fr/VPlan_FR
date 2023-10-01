@@ -6,13 +6,12 @@
     import Navbar from "./components/Navbar.svelte";
     import Settings from "./components/Settings.svelte";
     import AboutUs from "./components/AboutUs.svelte";
-    import Favourites from "./Favourites.svelte";
+    import Favourites from "./components/Favourites.svelte";
     import SveltyPicker from 'svelty-picker';
     import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache, get_favourites} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db, selected_favourite, favourites} from './stores.js'
+    import {logged_in, title, current_page, settings, active_modal, pwa_prompt, indexed_db, selected_favourite, favourites} from './stores.js'
     import SchoolManager from "./components/SchoolManager.svelte";
-    import Preferences from "./components/Preferences.svelte";
     import Changelog from "./components/Changelog.svelte";
     import Select from "./base_components/Select.svelte";
     import Contact from "./components/Contact.svelte";
@@ -117,16 +116,6 @@
             }
         );
     }
-
-    /*function get_preferences() {
-        customFetch(`${api_base}/preferences`)
-            .then(data => {
-                preferences.set(data);
-            })
-            .catch(error => {
-                console.error("Preferences konnten nicht geladen werden.");
-            })
-    }*/
 
     function choose(choices) {
         var index = Math.floor(Math.random() * choices.length);
@@ -369,7 +358,6 @@
 
 <Settings />
 <Changelog />
-<Preferences bind:api_base bind:grouped_forms bind:course_lists bind:school_num />
 
 <div id="page-container">
     <main>
