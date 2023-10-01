@@ -15,6 +15,7 @@
                 notifications.danger(error.message);
             });
     }
+    $: console.log(selected_favourite);
 </script>
 
 <nav transition:fly={{y:-64}}>
@@ -26,11 +27,24 @@
         <li>
             <Dropdown let:toggle>
                 <button slot="toggle_button" on:click={toggle} class="nav-button">
-                    <span class="material-symbols-outlined">star</span>
+                    {#if $selected_favourite !== -1}
+                        <!-- TODO: make different if some favourite selected -->
+                        <span class="material-symbols-outlined">star</span>
+                    {:else}
+                        <span class="material-symbols-outlined">star</span>
+                    {/if}
                 </button>
                 {#each $favourites as favourite, index}
-                    <button class="nav-button" on:click={() => {selected_favourite.set(index); navigate_page("plan")}}><span class="material-symbols-outlined">star</span> {favourite.name}</button>
+                    <button class="nav-button" on:click={() => {selected_favourite.set(index); navigate_page("plan")}}>
+                        {#if $selected_favourite === index}
+                            <!-- TODO: make different if selected -->
+                            <span class="material-symbols-outlined">star</span>
+                        {:else}
+                            <span class="material-symbols-outlined">star</span>
+                        {/if}
+                    ({index}) {favourite.name}</button>
                 {/each}
+                <button class="nav-button" on:click={() => navigate_page("favourites")}><span class="material-symbols-outlined">account_circle</span> Favoriten wählen</button>
             </Dropdown>
         </li>
         <li>
