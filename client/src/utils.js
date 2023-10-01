@@ -1,6 +1,7 @@
 import {current_page, indexed_db, settings} from "./stores.js";
 import {notifications} from "./notifications.js";
 import { get } from "svelte/store";
+import { favourites } from "./stores.js";
 
 const MAX_CACHED_PLANS = 10; // 2 Weeks
 
@@ -417,4 +418,45 @@ export function arraysEqual(a, b) {
         if (a[i] !== b[i]) return false;
     }
     return true;
+}
+
+export async function load_meta(school_num) {
+    let meta_data;
+    return customFetch(`/api/v69.420/${school_num}/meta`)
+        .then(data => {
+            try {
+                localStorage.setItem(`${school_num}_meta`, JSON.stringify(data));
+            } catch (error) {
+                if (error.name === 'QuotaExceededError' ) {
+                    notifications.danger("Die Schulmetadaten konnten nicht gecached werden.")
+                } else {
+                    throw error;
+                }
+            }
+            meta_data = data;
+            return [meta_data, false]
+        })
+        .catch(error => {
+            meta_data = localStorage.getItem(`${school_num}_meta`);
+            if (meta_data !== "undefined" && meta_data) {
+                console.log("Metadaten aus Cache geladen");
+                return [JSON.parse(meta_data), true];
+            } else {
+                console.log("Metadaten konnten nicht geladen werden.");
+                notifications.danger(error.message);
+            }
+        })
+}
+
+export function get_favourites() {
+    return customFetch("/api/v69.420/favourites")
+        .then(data => {
+            localStorage.setItem("favourites", JSON.stringify(data));
+            favourites.set(data);
+            return data
+        }).catch(error => {
+            console.log("Favourites couldn't be loaded.");
+            favourites.set(JSON.parse(localStorage.getItem("favourites")))
+            return JSON.parse(localStorage.getItem("favourites"))
+        })
 }

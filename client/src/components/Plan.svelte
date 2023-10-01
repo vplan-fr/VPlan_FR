@@ -4,7 +4,7 @@
     import Rooms from "./Rooms.svelte";
     import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
-    import {indexed_db, preferences, settings, title} from '../stores.js';
+    import {indexed_db, preferences, settings, title, selected_favourite, favourites} from '../stores.js';
     import {arraysEqual, cache_plan, customFetch, format_date, get_from_db, get_school_plan_count, navigate_page} from "../utils.js";
     import Dropdown from '../base_components/Dropdown.svelte';
 
@@ -74,8 +74,10 @@
         }
         // Check the validity of the plan value
         if((plan_type === "rooms" || plan_type === "teachers") && (!Object.keys(meta[plan_type]).includes(entity))) {
-            reset_plan_vars();
-            return;
+            if (meta.school_num === school_num) {
+                reset_plan_vars();
+                return;
+            }
         } else if((plan_type === "forms") && !Object.keys(meta.forms.forms).includes(entity)) {
             reset_plan_vars();
             return;
@@ -94,7 +96,10 @@
         week_letter = info.week;
     }
 
-    function load_plan(date, revision=".newest") {
+    function load_plan(school_num, date, revision=".newest", enabled_dates) {
+        if (enabled_dates === null || enabled_dates === undefined) {
+            return;
+        }
         if (date === null || date === undefined || !enabled_dates.includes(date)) {
             return;
         }
@@ -139,6 +144,8 @@
                 data_from_cache = false;
             })
             .catch(error => {
+                console.log(error.message);
+                //console.error(error);
                 loading = false;
                 network_loading_failed = true;
         });
@@ -200,10 +207,13 @@
         if (!preferences_apply) {
             return lessons
         }
-        if (!(plan_value in $preferences)) {
+        //if (!(plan_value in $preferences)) {
+        //    return lessons
+        //}
+        if ($selected_favourite === -1) {
             return lessons
         }
-        let cur_preferences = $preferences[plan_value] || [];
+        let cur_preferences = $favourites[$selected_favourite].preferences || [];
         let new_lessons = [];
         for (const lesson of lessons) {
             if (!(cur_preferences.includes(lesson.class_number))) {
@@ -253,7 +263,7 @@
     function load_lessons_check_plan(plan_data, plan_type, plan_value, use_grouped_form_plans) {
         let curr_time = new Date();
         if(!last_updated || curr_time - last_updated > 30_000) {
-            load_plan(date, selected_revision);
+            load_plan(date, selected_revision, enabled_dates);
             last_updated = new Date();
         }
 
@@ -269,21 +279,23 @@
         // console.log("Mounted Plan.svelte");
     });
 
-    $: $indexed_db, load_plan(date, selected_revision);
-    $: load_lessons_check_plan(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans);
+    $: $indexed_db, load_plan(school_num, date, selected_revision, enabled_dates);
+    $: meta && load_lessons_check_plan(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans);
 
     $: if (plan_type === "teachers") {
-        full_teacher_name = meta.teachers[plan_value]?.surname || null;
-        teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
-        teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
-        teacher_image_path = meta.teachers[plan_value]?.image_path || null;
-        if (teacher_image_path) {
-            teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
+        if (meta.teachers) {
+            full_teacher_name = meta.teachers[plan_value]?.surname || null;
+            teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
+            teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
+            teacher_image_path = meta.teachers[plan_value]?.image_path || null;
+            if (teacher_image_path) {
+                teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
+            }
         }
     }
     
     $: date && enabled_dates && update_date_btns();
-    $: preferences_apply, lessons = render_lessons(all_lessons);
+    $: preferences_apply, $selected_favourite, lessons = render_lessons(all_lessons);
     $: loading_failed = (cache_loading_failed && network_loading_failed && !loading);
     $: available_plan_version = data_from_cache ? "cached" : !network_loading_failed ? caching_successful ? "network_cached" : "network_uncached" : null;
     $: location.hash = gen_location_hash(school_num, date, plan_type, plan_value);
@@ -295,7 +307,7 @@
 <div class:plan={plan_type !== "room_overview"} class:extra-height={extra_height}>
     {#if plan_type !== "room_overview"}
         {#if show_title && info && plan_type && plan_value}
-            {#if plan_type === "forms" && (plan_value in $preferences)}
+            {#if plan_type === "forms" && ($selected_favourite !== -1)}
                 <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
             {/if}
                 <h1 class="plan-heading">

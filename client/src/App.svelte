@@ -6,17 +6,18 @@
     import Navbar from "./components/Navbar.svelte";
     import Settings from "./components/Settings.svelte";
     import AboutUs from "./components/AboutUs.svelte";
+    import Favourites from "./Favourites.svelte";
     import SveltyPicker from 'svelty-picker';
-    import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache} from "./utils.js";
+    import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache, get_favourites} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db} from './stores.js'
-    import {customFetch, format_revision_date} from "./utils.js";
+    import {logged_in, title, current_page, preferences, settings, active_modal, pwa_prompt, indexed_db, selected_favourite, favourites} from './stores.js'
     import SchoolManager from "./components/SchoolManager.svelte";
     import Preferences from "./components/Preferences.svelte";
     import Changelog from "./components/Changelog.svelte";
     import Select from "./base_components/Select.svelte";
     import Contact from "./components/Contact.svelte";
     import Impressum from "./components/Impressum.svelte";
+    import {customFetch, format_revision_date, load_meta} from "./utils.js";
     import {de} from 'svelty-picker/i18n';
     import PwaInstallHelper from "./components/PWAInstallHelper.svelte";
     import Dropdown from "./base_components/Dropdown.svelte";
@@ -83,52 +84,23 @@
         revision_arr = [];
     }
 
-    function get_meta() {
-        let data_from_cache = false;
-        let data = localStorage.getItem(`${school_num}_meta`);
-        if (data !== "undefined" && data) {
-            data = JSON.parse(data);
-            meta = data;
-            all_rooms = data.rooms;
-            teacher_list = Object.keys(data.teachers);
-            grouped_forms = data.forms.grouped_forms;
-            enabled_dates = Object.keys(data.dates);
-            if(!date) {
-                date = data.date;
-            }
-            course_lists = data.forms.forms;
-            data_from_cache = true;
-        }
-        customFetch(`${api_base}/meta`)
+    function get_meta(tmp_school_num) {
+        load_meta(tmp_school_num)
             .then(data => {
-                // console.log("Meta geladen");
-                try {
-                    localStorage.setItem(`${school_num}_meta`, JSON.stringify(data));
-                } catch (error) {
-                    if (error.name === 'QuotaExceededError' ) {
-                        notifications.danger("Die Schulmetadaten konnten nicht gecached werden.")
-                    } else {
-                        throw error;
-                    }
+                if (!data) {
+                    return
                 }
-                meta = data;
-                all_rooms = data.rooms;
-                teacher_list = Object.keys(data.teachers);
-                grouped_forms = data.forms.grouped_forms;
-                enabled_dates = Object.keys(data.dates);
+                meta = data[0];
+                all_rooms = meta.rooms;
+                teacher_list = Object.keys(meta.teachers);
+                grouped_forms = meta.forms.grouped_forms;
+                enabled_dates = Object.keys(meta.dates);
                 if(!date) {
-                    date = data.date;
+                    date = meta.date;
                 }
-                course_lists = data.forms.forms;
+                course_lists = meta.forms.forms;
+                //data_from_cache = data[1];
             })
-            .catch(error => {
-                if (data_from_cache) {
-                    // notifications.info("Metadaten aus Cache geladen", 2000);
-                    console.log("Metadaten aus Cache geladen");
-                } else {
-                    notifications.danger(error.message);
-                }
-            });
     }
 
     function check_login_status() {
@@ -146,7 +118,7 @@
         );
     }
 
-    function get_preferences() {
+    /*function get_preferences() {
         customFetch(`${api_base}/preferences`)
             .then(data => {
                 preferences.set(data);
@@ -154,7 +126,7 @@
             .catch(error => {
                 console.error("Preferences konnten nicht geladen werden.");
             })
-    }
+    }*/
 
     function choose(choices) {
         var index = Math.floor(Math.random() * choices.length);
@@ -254,7 +226,7 @@
     function gen_revision_arr(all_revisions) {
         revision_arr = [];
         for(const [index, revision] of Object.entries(all_revisions)) {
-            if(index == 1) {continue;}
+            if (index == 1) {continue;}
             revision_arr.push({
                 "id": revision,
                 "display_name": format_revision_date(revision, all_revisions[1])
@@ -293,25 +265,60 @@
             plan_type = decodeURI(tmp_variables[3]);
             plan_value = decodeURI(tmp_variables[4]);
         }
-    }  
+    }
+
+    function select_plan(favourites, selected_favourite) {
+        // check if selected_favourite is in favourites (selected_favourite is the index)
+        if (selected_favourite !== -1 && favourites[selected_favourite]) {
+            selected_favourite = favourites[selected_favourite];
+            school_num = selected_favourite.school_num;
+            localStorage.setItem('school_num', school_num);
+            plan_type = selected_favourite.plan_type;
+            plan_value = selected_favourite.plan_value;
+            selected_form = null;
+            selected_teacher = null;
+            selected_room = null;
+        }
+    }
+
+    $: select_plan($favourites, $selected_favourite);
+    function reset_favourite() {
+        selected_favourite.set(-1);
+    }
+    // reset favourite when selecting new thing
+    $: selected_form && reset_favourite();
+    $: selected_teacher && reset_favourite();
+    $: selected_room && reset_favourite();
+    $: if ($selected_favourite !== -1) {
+        // check if selected_favourite is in favourites
+        if ($favourites.length <= $selected_favourite) {
+            selected_favourite.set(-1);
+        }
+    }
+    // CHANGE THIS FOR SETTING IF FIRST FAVOURITE SHOULD BE SELECTED
+    /*$: if ($favourites.length !== 0 && $selected_favourite === -1) {
+        selected_favourite.set(0);
+    }*/
+
 
     $logged_in = localStorage.getItem('logged_in') === 'true';
     init_vars();
     check_login_status();
     refresh_plan_vars();
+    get_favourites();
 
     $: $logged_in && init_indexed_db();
     $: !$logged_in && logout();
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
-    $: school_num && get_meta();
+    $: get_meta(school_num);
     $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
-    $: school_num && get_preferences();
+    //$: school_num && get_preferences();
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
     $: $logged_in && get_settings();
     $: (Object.keys($settings).length !== 0) && localStorage.setItem("settings", `${JSON.stringify($settings)}`);
     $: update_colors($settings);
     $: $logged_in && get_greeting();
-    
+
     $: selected_form && set_plan("forms", selected_form);
     $: gen_form_arr(grouped_forms);
     $: selected_teacher && set_plan("teachers", selected_teacher);
@@ -340,7 +347,7 @@
         }
         if(new_location === "") {new_location = "plan";}
         navigate_page(new_location);
-        if(new_location.startsWith("plan")) {
+        if (new_location.startsWith("plan")) {
             refresh_plan_vars();
         }
     });
@@ -372,9 +379,15 @@
             <AboutUs />
         {:else if $current_page === "impressum"}
             <Impressum />
+        {:else if $current_page === "favourites"}
+            <Favourites />
         {:else if $logged_in}
             {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
+                {#if $selected_favourite !== -1 && $favourites[$selected_favourite]}
+                    Gewählter Favorit: {$favourites[$selected_favourite].name}
+                    <br>
+                {/if}
                 <div class="controls-wrapper">
                     <!-- Datepicker -->
                     <div class="control" id="c1">
@@ -410,7 +423,11 @@
                     <!-- Show room overview -->
                     <div class="control" id="c5">
                         <Button on:click={() => {
-                            set_plan("room_overview", "");
+                            //set_plan("room_overview", "");
+                            reset_favourite();
+                            console.log("going to room overview");
+                            plan_type = "room_overview";
+                            plan_value = "";
                         }}>Freie Räume</Button>
                     </div>
                 </div>
