@@ -1,6 +1,7 @@
 import os
 
-from backend.models import Teacher, Room
+from backend.teacher import Teacher
+from backend.room import Room
 
 
 # teachers and images from: https://taroschule.de/lehrerinnen/
