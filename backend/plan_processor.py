@@ -6,12 +6,12 @@ import logging
 
 from . import schools
 from .cache import Cache
-from .plan_extractor import StudentsPlanExtractor, TeachersPlanExtractor
 from .meta_extractor import MetaExtractor
 from .teacher import Teacher, Teachers
 from .models import PlanLesson, Exam
 from .vplan_utils import group_forms, ParsedForm
 from .stats import LessonsStatistics
+from .plan_extractor import StudentsPlanExtractor, TeachersPlanExtractor
 
 
 class PlanProcessor:
