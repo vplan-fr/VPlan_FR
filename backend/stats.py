@@ -1,7 +1,7 @@
 import dataclasses
 from collections import defaultdict
 
-from backend import models
+from . import models
 
 
 @dataclasses.dataclass

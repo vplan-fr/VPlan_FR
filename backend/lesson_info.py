@@ -7,8 +7,11 @@ import logging
 import re
 import typing
 
-from .vplan_utils import periods_to_block_label, parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str, \
+from .vplan_utils import (
+    periods_to_block_label, parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str,
     MajorMinorParsedForm, AlphanumParsedForm, forms_to_str, _loose_parse_form_pattern
+)
+from . import teacher as teacher_model
 from . import models
 
 
@@ -188,10 +191,10 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
 
     def is_groupable(self, other: MovedFrom):
         return (
-                self.before == other.before and
-                self.after == other.after and
-                self.date == other.date and
-                self.plan_type == other.plan_type
+            self.before == other.before and
+            self.after == other.after and
+            self.date == other.date and
+            self.plan_type == other.plan_type
         )
 
 
@@ -298,10 +301,10 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
 
     def is_groupable(self, other: MovedTo):
         return (
-                self.course == other.course and
-                self.original_other_info_value == other.original_other_info_value and
-                self.date == other.date and
-                self.plan_type == other.plan_type
+            self.course == other.course and
+            self.original_other_info_value == other.original_other_info_value and
+            self.date == other.date and
+            self.plan_type == other.plan_type
         )
 
 
@@ -554,7 +557,7 @@ class LessonInfoMessage:
     index: int
 
     @classmethod
-    def from_str(cls, message: str, lesson: models.Lesson, index: int, 
+    def from_str(cls, message: str, lesson: models.Lesson, index: int,
                  plan_type: typing.Literal["forms", "teachers", "rooms"]) -> LessonInfoMessage:
         parsed = _parse_message(message, lesson, plan_type)
 
@@ -588,9 +591,9 @@ class LessonInfoParagraph:
         new_messages = []
         for message in messages:
             can_merge = (
-                    new_messages
-                    and isinstance(new_messages[-1].parsed, FailedToParse)
-                    and isinstance(message.parsed, FailedToParse)
+                new_messages
+                and isinstance(new_messages[-1].parsed, FailedToParse)
+                and isinstance(message.parsed, FailedToParse)
             )
             if can_merge:
                 new_messages[-1].parsed.original_messages += message.parsed.original_messages
@@ -676,8 +679,8 @@ class ParsedLessonInfo:
 
 
 def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
-                     logger: logging.Logger) -> dict[str, models.Teacher]:
-    out: dict[str, models.Teacher] = {}
+                     logger: logging.Logger) -> dict[str, teacher_model.Teacher]:
+    out: dict[str, teacher_model.Teacher] = {}
 
     if lesson._is_scheduled:
         return out
@@ -685,9 +688,9 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
     for paragraph in lesson.parsed_info.paragraphs:
         for message in paragraph.messages:
             if (
-                    getattr(message.parsed, "other_info_value", -1) is None and
-                    hasattr(message.parsed, "course") and
-                    getattr(message.parsed, "_teachers", None) is not None
+                getattr(message.parsed, "other_info_value", -1) is None and
+                hasattr(message.parsed, "course") and
+                getattr(message.parsed, "_teachers", None) is not None
             ):
                 # noinspection PyUnresolvedReferences
                 surname = next(iter(message.parsed._teachers))
@@ -700,8 +703,8 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                 _class: dict[str, models.Class] = {
                     class_nr: class_ for class_nr, class_ in classes.items()
                     if (
-                            course == (class_.group or class_.subject)
-                            and lesson.forms.issubset(class_.forms)
+                        course == (class_.group or class_.subject)
+                        and lesson.forms.issubset(class_.forms)
                     )
                 }
 
@@ -709,8 +712,8 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                     _class = {
                         class_nr: class_ for class_nr, class_ in classes.items()
                         if (
-                                course == class_.subject
-                                and lesson.forms.issubset(class_.forms)
+                            course == class_.subject
+                            and lesson.forms.issubset(class_.forms)
                         )
                     }
 
@@ -731,7 +734,7 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                     continue
 
                 abbreviation = list(_class.values())[0].teacher
-                teacher = models.Teacher(abbreviation, None, surname, None, [])
+                teacher = teacher_model.Teacher(abbreviation, None, surname, None, [])
 
                 out[teacher.abbreviation] = teacher
 
