@@ -48,7 +48,9 @@ def parse_room(room_str: str) -> Room:
 
     for exception in exceptions:
         if room_str.startswith(exception):
-            return Room(exception, None, int(room_str[len(exception):]), "")
+            _num_after = room_str[len(exception):]
+            num_after = int(_num_after) if _num_after else None
+            return Room(exception, None, num_after, "")
 
     if room_str.startswith("E"):
         house = "Anbau"
