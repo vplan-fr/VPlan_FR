@@ -15,7 +15,7 @@ from .plan_extractor import StudentsPlanExtractor, TeachersPlanExtractor
 
 
 class PlanProcessor:
-    VERSION = "90"
+    VERSION = "91"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -133,10 +133,8 @@ class PlanProcessor:
 
             all_forms = self.meta_extractor.forms()
             all_forms_parsed = [ParsedForm.from_str(f) for f in all_forms]
-            students_plan_extractor.teacher_abbreviation_by_surname |= (
-                {-i: t.abbreviation for i, t in enumerate(self.meta_extractor.teachers())} |
-                self.teachers.abbreviation_by_surname()
-            )
+            students_plan_extractor.teacher_abbreviation_by_surname = self.teachers.abbreviation_by_surname()
+
             self.cache.store_plan_file(
                 date, timestamp,
                 json.dumps(students_plan_extractor.info_data(all_forms_parsed)),
@@ -210,6 +208,7 @@ class PlanProcessor:
         self.cache.store_meta_file(json.dumps(data), "meta.json")
         self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
+        self.add_teachers({t.abbreviation: t for t in self.meta_extractor.teachers()})
         self.scrape_teachers()
         self.update_forms()
         self.update_rooms()
