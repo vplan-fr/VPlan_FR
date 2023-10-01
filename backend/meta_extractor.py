@@ -9,7 +9,8 @@ from xml.etree import ElementTree as ET
 from stundenplan24_py import indiware_mobil
 
 from .cache import Cache
-from .models import DefaultTimesInfo, Teacher
+from .models import DefaultTimesInfo
+from .teacher import Teacher
 
 
 class DailyMetaExtractor:
