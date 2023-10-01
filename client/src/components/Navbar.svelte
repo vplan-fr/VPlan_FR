@@ -4,6 +4,7 @@
     import Dropdown from '../base_components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
     import {customFetch, navigate_page} from "../utils.js";
+    import {selected_favourite, favourites} from "../stores.js";
 
     function logout() {
         customFetch('/auth/logout')
@@ -17,11 +18,21 @@
 </script>
 
 <nav transition:fly={{y:-64}}>
-    <button class="logo-button" on:click={() => {navigate_page("plan")}}>
+    <button class="logo-button" on:click={() => {navigate_page("plan"); selected_favourite.set(-1)}}>
         <img class="logo" src="/public/base_static/images/better_vp_white.svg" alt="Better VPlan Logo">
     </button>
     <ul class="nav-element-wrapper">
         <li><button on:click={() => {navigate_page("about_us")}} class="nav-button">Über uns</button></li>
+        <li>
+            <Dropdown let:toggle>
+                <button slot="toggle_button" on:click={toggle} class="nav-button">
+                    <span class="material-symbols-outlined">star</span>
+                </button>
+                {#each $favourites as favourite, index}
+                    <button class="nav-button" on:click={() => {selected_favourite.set(index); navigate_page("plan")}}><span class="material-symbols-outlined">star</span> {favourite.name}</button>
+                {/each}
+            </Dropdown>
+        </li>
         <li>
             <Dropdown let:toggle>
                 <button slot="toggle_button" on:click={toggle} class="nav-button">
