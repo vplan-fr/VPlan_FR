@@ -84,8 +84,8 @@
         revision_arr = [];
     }
 
-    function get_meta() {
-        load_meta(school_num)
+    function get_meta(tmp_school_num) {
+        load_meta(tmp_school_num)
             .then(data => {
                 if (!data) {
                     return
@@ -310,7 +310,7 @@
     $: $logged_in && init_indexed_db();
     $: !$logged_in && logout();
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
-    $: school_num && get_meta();
+    $: get_meta(school_num);
     $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
     //$: school_num && get_preferences();
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));

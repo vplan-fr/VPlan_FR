@@ -47,6 +47,7 @@ def meta(school_num) -> Response:
     date = find_closest_date(dates)
 
     return send_success({
+        "school_num": school_num,
         "meta": meta_data,
         "teachers": teachers_data,
         "forms": forms_data,
