@@ -13,6 +13,7 @@
     export let plan_value;
 
     let authorize_school_id;
+    let authorize_school_data = {};
     let username = "schueler";
     let password = "";
     let schools = [];
@@ -68,18 +69,22 @@
 
     function authorize_school() {
         get_authorized_schools();
-        console.log(username, password);
         if (!isObjectInList(authorize_school_id, school_id_arr)) {
             notifications.danger("Schule unbekannt (kontaktiere uns, um deine Schule hinzuzufügen)")
             return
         }
-        if (username === "") {
-            notifications.danger("Bitte gib einen Nutzernamen an");
-            return
-        }
-        if (password === "") {
-            notifications.danger("Bitte gib ein Passwort an");
-            return
+        if (authorize_school_data.creds_needed) {
+            if (username === "") {
+                notifications.danger("Bitte gib einen Nutzernamen an");
+                return
+            }
+            if (password === "") {
+                notifications.danger("Bitte gib ein Passwort an");
+                return
+            }
+        } else {
+            username = "";
+            password = "";
         }
         let formData = new FormData();
         formData.append('username', username);
@@ -107,13 +112,13 @@
         );
     }
 
-    function get_school_name_by_id(school_id) {
+    function get_school_by_id(school_id) {
         for (let school of schools) {
             if (school.id === school_id.toString()) {
-                return school.display_name;
+                return school
             }
         }
-        return "";
+        return {};
     }
 
     get_schools();
@@ -132,6 +137,7 @@
         ["Autorisiert", authorized_schools],
         ["Unautorisiert", unauthorized_schools]
     ];
+    $: authorize_school_data = get_school_by_id(authorize_school_id);
 </script>
 
 <main>
@@ -173,21 +179,25 @@
         <button on:click={() => {school_auth_visible = false;}} type="reset" id="back_button">
             <span class="material-symbols-outlined">keyboard_backspace</span>
         </button>
-        <h1 class="responsive-heading">{authorize_school_id ? get_school_name_by_id(authorize_school_id) : "Schul"}-Login</h1>
-        <span class="responsive-text">Trage hier die Zugangsdaten <strong>für deine Schule</strong> ein, <strong>nicht die deines Accounts</strong>.<br>(dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
-        <label for="school_username">Nutzername</label>
-        <div class="input_icon">
-            <img src="/public/base_static/images/user-solid-white.svg" alt="User Icon">
-            <input disabled={!school_auth_visible} autocomplete="off" name="school_username" bind:value={username} type="text" required class="textfield" placeholder="Nutzername"/>
-        </div>
-        <label for="school_password">Schul-Passwort</label>
-        <div class="input_icon password_field">
-            <img src="/public/base_static/images/lock-solid-white.svg" alt="Lock Icon">
-            <button type="button" on:click={() => {password_visible = !password_visible}} tabindex="-1">
-                <span class="material-symbols-outlined">{password_visible ? "visibility_off" : "visibility"}</span>
-            </button>
-            <input disabled={!school_auth_visible} autocomplete="off" name="school_password" on:input={(event) => {password = event.target.value}} type={password_visible ? "text" : "password"} required class="textfield" placeholder="Schul-Passwort"/>
-        </div>
+        <h1 class="responsive-heading">{authorize_school_id ? authorize_school_data.display_name : "Schul"}-Login</h1>
+        {#if authorize_school_data.creds_needed}
+            <span class="responsive-text">Trage hier die Zugangsdaten <strong>für deine Schule</strong> ein, <strong>nicht die deines Accounts</strong>.<br>(dieselben wie in der <div title="🤢" style="display: inline-block;">VpMobil24-App</div>)</span>
+            <label for="school_username">Nutzername</label>
+            <div class="input_icon">
+                <img src="/public/base_static/images/user-solid-white.svg" alt="User Icon">
+                <input disabled={!school_auth_visible} autocomplete="off" name="school_username" bind:value={username} type="text" required class="textfield" placeholder="Nutzername"/>
+            </div>
+            <label for="school_password">Schul-Passwort</label>
+            <div class="input_icon password_field">
+                <img src="/public/base_static/images/lock-solid-white.svg" alt="Lock Icon">
+                <button type="button" on:click={() => {password_visible = !password_visible}} tabindex="-1">
+                    <span class="material-symbols-outlined">{password_visible ? "visibility_off" : "visibility"}</span>
+                </button>
+                <input disabled={!school_auth_visible} autocomplete="off" name="school_password" on:input={(event) => {password = event.target.value}} type={password_visible ? "text" : "password"} required class="textfield" placeholder="Schul-Passwort"/>
+            </div>
+        {:else}
+            <span class="responsive-text">(Für diese Schule benötigst du keine Zugangsdaten)</span>
+        {/if}
         <Button type="submit" background="var(--accent-color)">Autorisieren</Button>
     </form>
     {/if}
