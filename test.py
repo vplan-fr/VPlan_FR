@@ -1,46 +1,68 @@
-from typing import Tuple
+import os
+from typing import Dict, Tuple
+from dotenv import load_dotenv
 
 import requests
-from base64 import b64encode
+
+load_dotenv()
+
+
+def match_status_code(code) -> Tuple[bool, bool]:
+    if code == 200:
+        return True, True
+    elif code == 401:
+        return True, False
+    elif code == 404:
+        return False, False
+    else:
+        raise ValueError(f"status code unknown: {code}")
+
+
+def get_other_servers() -> Dict[str, str]:
+    url = f"https://www.stundenplan24.de/extern/links24k.txt"
+    username = os.getenv("LINKS24_USER")
+    password = os.getenv("LINKS24_PASSWORD")
+    print(username, password)
+    r = requests.get(url, auth=(username, password))
+    return {elem.split("=")[0]: elem.split("=")[1].strip() for elem in r.text.split("\n")}
 
 
 class SchoolCandidate:
-    def __init__(self, abbreviation: str, school_num: str, username: str, password: str,
-                 server: str = "www.stundenplan24.de"):
-        self.abbreviation = abbreviation
-        self.school_num = school_num
-        self.username = username
-        self.password = password
-        self.server = server
-        self.school_exists = None
-        self.is_valid = None
+    test_url: str = ""
+    school_exists: bool = False
+    is_valid: bool = False
+    servers: Dict[str, str] = {}
+    needs_password: bool = True
 
-    def get_other_servers(self):
-        ...
+    def __init__(self, abbreviation: str, school_num: str, username: str, password: str, test: bool = True):
+        self.abbreviation: str = abbreviation
+        self.school_num: str = school_num
+        self.username: str = username
+        self.password: str = password
+        self.servers = get_other_servers()
+        self.test_url = self.servers[school_num] if self.school_num in self.servers else f"https://www.stundenplan24.de/{self.school_num}/mobil/"
+        self.test() if test else ...
 
     def test(self) -> Tuple[bool, bool]:
-        url = f"https://{self.server}/{self.school_num}/mobil/"
-        headers = {
-            "Authorization": f"Basic {b64encode(f'{self.username}:{self.password}'.encode('utf-8')).decode('utf-8')}"
-        }
-        r = requests.get(url, headers=headers)
-        self.school_exists = False
-        self.is_valid = False
-        if r.status_code == 200:
-            self.school_exists = True
-            self.is_valid = True
-        elif r.status_code == 401:
-            self.school_exists = True
-        elif r.status_code == 404:
-            ...
+        # testing doesnw really work apparently
+        r = requests.get(self.test_url)
+        self.school_exists, self.is_valid = match_status_code(r.status_code)
+        if self.school_exists:
+            self.needs_password = False
+            return self.school_exists, self.is_valid
+        r = requests.get(self.test_url, auth=(self.username, self.password))
+        self.school_exists, self.is_valid = match_status_code(r.status_code)
         return self.school_exists, self.is_valid
 
 
 if __name__ == "__main__":
-    i = SchoolCandidate(
-        "ostwald2",
-        "10001329",
-        "schueler",
-        "testpasswort"
-    ).test()
-    print(i)
+    servers = get_other_servers()
+    for server_id, server_link in servers.items():
+        print(server_id, server_link)
+        """i = SchoolCandidate(
+            "",
+            server_id,
+            "",
+            ""
+        )"""
+        #print(i.needs_password)
