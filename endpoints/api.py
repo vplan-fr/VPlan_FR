@@ -231,23 +231,35 @@ def contact() -> Response:
 @api.route(f"/api/v69.420/add_school", methods=["POST"])
 @login_required
 def add_school() -> Response:
-    data = json.loads(request.data)
+    data = request.form
     school_num = data.get("school_num")
-    if not school_num:
+    if school_num is None:
         return send_error("Keine Schulnummer angegeben")
-    if school_num in VALID_SCHOOLS:
-        return send_error("Schule schon vorhanden")
+    # commented out so people can submit teacher passwords or new passwords
+    #if school_num in VALID_SCHOOLS:
+    #    return send_error("Schule schon vorhanden")
     display_name = data.get("display_name")
-    if not display_name:
+    if display_name is None:
         return send_error("Kein Schulname angegeben")
     username = data.get("username")
-    if not username:
+    if username is None:
         return send_error("Kein Nutzername angegeben")
     pw = data.get("pw")
-    if not pw:
+    if pw is None:
         return send_error("Kein Passwort angegeben")
+    if not school_num and not username and not pw:
+        return send_error("Bitte gib alle Daten an")
 
     candidate = SchoolCandidate("", school_num, username, pw)
+    embed = BetterEmbed(title="Neue Schulanfrage!", color="ffffff", inline=False)
+    embed.add_embed_field("Schulnummer:", school_num, inline=False)
+    embed.add_embed_field("Schulname:", display_name, inline=False)
+    embed.add_embed_field("Nutzername:", username, inline=False)
+    embed.add_cleaned_field("Passwort:", f"||```{pw}```||", inline=False)
+    embed.add_embed_field("Schule existiert:", str(candidate.school_exists), inline=False)
+    embed.add_embed_field("Daten korrekt:", str(candidate.is_valid), inline=False)
+    embed.add_embed_field("Benötigt Passwort:", str(candidate.needs_password), inline=False)
+    webhook_send("WEBHOOK_ADD_SCHOOL", embeds=[embed])
     if not candidate.school_exists:
         return send_error("Schule existiert nicht")
     if not candidate.is_valid:
