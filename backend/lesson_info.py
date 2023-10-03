@@ -19,8 +19,9 @@ from . import models
 
 
 class _InfoParsers:
-    _teacher_name = (r"[A-ZÄÖÜ][a-zäöüß]+(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?\.?)*"
-                     r"(?: [A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)")
+    _teacher_name = (r"[A-ZÄÖÜ][a-zäöüß]+"
+                     r"(?: (?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?\.?)*"
+                     r"(?: (?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)")
     _teacher_abbreviation = r"[A-ZÄÖÜ][A-ZÄÖÜa-zäöüß]{2,}"
     _teacher = fr"(?:{_teacher_name})|(?:{_teacher_abbreviation})"
 
@@ -507,6 +508,7 @@ def _parse_message(info: str, lesson: models.Lesson, plan_type: typing.Literal["
                    ) -> ParsedLessonInfoMessage:
     info = info.strip()
     info = re.sub(r"(?<=\w)/ ", "/", info)  # remove spaces after slashes like in G/ R/ W
+    info = re.sub(r"\b[´`]\b", "'", info)
 
     if plan_type == "forms":
         parsed_info, match = _parse_form_plan_message(info, lesson)
