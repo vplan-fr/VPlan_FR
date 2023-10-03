@@ -8,7 +8,7 @@ from xml.etree import ElementTree as ET
 
 from stundenplan24_py import indiware_mobil, substitution_plan
 
-from . import lesson_info
+from . import lesson_info, default_plan
 from .lesson_info import process_additional_info
 from .teacher import Teacher, Teachers
 from .models import Lesson, Lessons, Plan
@@ -178,6 +178,9 @@ class StudentsPlanExtractor(PlanExtractor):
 
                 self.plan.lessons.lessons.append(lesson)
 
+    def default_plan(self) -> default_plan.DefaultPlanInfo:
+        return default_plan.DefaultPlanInfo.from_lessons(self.plan.lessons)
+
 
 class SubPlanExtractor:
     def __init__(self, forms_plan: Plan, plan_type: typing.Literal["forms", "rooms", "teachers"],
@@ -187,14 +190,13 @@ class SubPlanExtractor:
         self.forms_lessons_grouped = (
             forms_plan.lessons
             .filter_plan_type_messages(plan_type)
-            .group_blocks_and_lesson_info("forms")
+            .group_blocks_and_lesson_info(origin_plan_type="forms")
         )
 
         if self.plan_type in ("rooms", "teachers"):
             self.forms_lessons_grouped = self.forms_lessons_grouped.filter(lambda l: not l.is_internal)
 
         self.resolve_teachers_in_lesson_info(teacher_abbreviation_by_surname)
-
         self.extrapolate_lesson_times(self.forms_lessons_grouped)
 
     def resolve_teachers_in_lesson_info(self, teacher_abbreviation_by_surname: dict[str, str]):

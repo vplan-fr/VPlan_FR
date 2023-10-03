@@ -87,6 +87,12 @@ class PlanProcessor:
             )
             self.cache.store_plan_file(
                 date, timestamp,
+                json.dumps(students_plan_extractor.default_plan().serialize()),
+                "_default_plan.json"
+            )
+
+            self.cache.store_plan_file(
+                date, timestamp,
                 json.dumps(students_plan_extractor.form_plan_extractor.grouped_form_plans(),
                            default=PlanLesson.serialize),
                 "grouped_form_plans.json"
