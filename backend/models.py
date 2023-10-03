@@ -86,23 +86,44 @@ class Lesson:
         )
 
     def serialize(self) -> dict:
+        assert len(self.parsed_info.paragraphs) == 0
         return {
             "periods": sorted(self.periods),
+            "begin": self.begin.strftime("%H:%M") if self.begin else None,
+            "end": self.end.strftime("%H:%M") if self.end else None,
             "forms": sorted(self.forms),
             "teachers": sorted(self.teachers) if self.teachers is not None else None,
             "rooms": sorted(self.rooms) if self.rooms is not None else None,
             "course": self.course,
-            "begin": self.begin.strftime("%H:%M") if self.begin else None,
-            "end": self.end.strftime("%H:%M") if self.end else None,
             "subject_changed": self.subject_changed,
             "teacher_changed": self.teacher_changed,
             "room_changed": self.room_changed,
+            "forms_changed": self.forms_changed,
             "takes_place": self.takes_place,
             "is_internal": self.is_internal,
-            "class_data": repr(self.class_),
-            "info": self.parsed_info.serialize(self._lesson_date),
-            "origin_plan_type": self._origin_plan_type,
+            "_origin_plan_lesson_id": self._origin_plan_lesson_id,
         }
+
+    @classmethod
+    def deserialize(cls, data):
+        return cls(
+            periods=set(data["periods"]),
+            begin=datetime.datetime.strptime(data["begin"], "%H:%M").time() if data["begin"] else None,
+            end=datetime.datetime.strptime(data["end"], "%H:%M").time() if data["end"] else None,
+            forms=set(data["forms"]) if data["forms"] is not None else None,
+            teachers=set(data["teachers"]) if data["teachers"] is not None else None,
+            rooms=set(data["rooms"]) if data["rooms"] is not None else None,
+            course=data["course"],
+            parsed_info=ParsedLessonInfo([]),
+            class_=None,
+            subject_changed=data["subject_changed"],
+            teacher_changed=data["teacher_changed"],
+            room_changed=data["room_changed"],
+            forms_changed=data["forms_changed"],
+            takes_place=data["takes_place"],
+            is_internal=data["is_internal"],
+            _origin_plan_lesson_id=data["_origin_plan_lesson_id"],
+        )
 
 
 @dataclasses.dataclass
@@ -477,11 +498,11 @@ class Lessons:
         out.sort_original()
         return out
 
-    def group_blocks_and_lesson_info(self, plan_type: typing.Literal["forms", "teachers", "rooms"]) -> Lessons:
+    def group_blocks_and_lesson_info(self, origin_plan_type: typing.Literal["forms", "teachers", "rooms"]) -> Lessons:
         assert all(len(x.periods) <= 1 for x in self.lessons), \
             "Lessons must be ungrouped. (Must only have one period.)"
 
-        if plan_type == "forms":
+        if origin_plan_type == "forms":
             sort_key = lambda x: (
                 x.takes_place,
                 x.course or "",
@@ -493,7 +514,7 @@ class Lessons:
                 x.forms or set(),
                 x.periods or set(),
             )
-        elif plan_type == "teachers":
+        elif origin_plan_type == "teachers":
             sort_key = lambda x: (
                 x.takes_place,
                 x.course or "",
@@ -504,7 +525,7 @@ class Lessons:
                 x.teachers or set(),
                 x.periods or set(),
             )
-        elif plan_type == "rooms":
+        elif origin_plan_type == "rooms":
             sort_key = lambda x: (
                 x.takes_place,
                 x.course or "",
@@ -523,13 +544,15 @@ class Lessons:
         grouped: list[Lesson] = []
 
         for lesson in sorted_lessons:
+            assert lesson._origin_plan_type == origin_plan_type
+
             for previous_lesson in grouped[-1:-4:-1]:
                 can_get_grouped = (
                     lesson.course == previous_lesson.course
                     and lesson.takes_place == previous_lesson.takes_place
                 )
 
-                for remaining_plan_value in {"forms", "teachers", "rooms"} - {plan_type}:
+                for remaining_plan_value in {"forms", "teachers", "rooms"} - {origin_plan_type}:
                     can_get_grouped &= (
                         getattr(lesson, remaining_plan_value) == getattr(previous_lesson, remaining_plan_value)
                     )
@@ -544,11 +567,11 @@ class Lessons:
                 can_get_grouped &= previous_lesson_block == current_lesson_block
 
                 if can_get_grouped:
-                    if plan_type == "forms":
+                    if origin_plan_type == "forms":
                         previous_lesson.forms |= lesson.forms
-                    elif plan_type == "teachers":
+                    elif origin_plan_type == "teachers":
                         previous_lesson.teachers |= lesson.teachers
-                    elif plan_type == "rooms":
+                    elif origin_plan_type == "rooms":
                         previous_lesson.rooms |= lesson.rooms
                     else:
                         raise NotImplementedError
