@@ -678,7 +678,7 @@ class Plan:
 
                 for paragraph in current_lesson.parsed_info.paragraphs:
                     for moved_to_message in paragraph.messages:
-                        if isinstance(moved_to_message.parsed, lesson_info.MovedTo):
+                        if isinstance(moved_to_message.parsed, (lesson_info.MovedTo, lesson_info.MovedFrom)):
                             # if lessons are moved, class data no longer represents the scheduled lesson
                             class_data = None
                             current_lesson.class_ = None
