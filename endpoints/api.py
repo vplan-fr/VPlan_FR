@@ -235,9 +235,6 @@ def add_school() -> Response:
     school_num = data.get("school_num")
     if school_num is None:
         return send_error("Keine Schulnummer angegeben")
-    # commented out so people can submit teacher passwords or new passwords
-    #if school_num in VALID_SCHOOLS:
-    #    return send_error("Schule schon vorhanden")
     display_name = data.get("display_name")
     if display_name is None:
         return send_error("Kein Schulname angegeben")
@@ -259,11 +256,15 @@ def add_school() -> Response:
     embed.add_embed_field("Schule existiert:", str(candidate.school_exists), inline=False)
     embed.add_embed_field("Daten korrekt:", str(candidate.is_valid), inline=False)
     embed.add_embed_field("Benötigt Passwort:", str(candidate.needs_password), inline=False)
+    if school_num in VALID_SCHOOLS:
+        embed.add_embed_field("Bemerkung:", "Schule schon vorhanden", inline=False)
     webhook_send("WEBHOOK_ADD_SCHOOL", embeds=[embed])
     if not candidate.school_exists:
         return send_error("Schule existiert nicht")
     if not candidate.is_valid:
         return send_error("Nutzername oder Passwort falsch")
 
+    if school_num in VALID_SCHOOLS:
+        return send_error("Schule schon bekannt, Daten trotzdem übermittelt.")
     return send_success("Die Daten sind korrekt, wir werden nun innerhalb weniger Tage deine Schule hinzufügen.")
 
