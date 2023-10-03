@@ -26,6 +26,12 @@
     let school_id_arr = [];
     let password_visible = false;
 
+    let school_add_visible = false;
+    let add_school_name = "";
+    let add_school_num = "";
+    let add_school_username = "";
+    let add_school_password = "";
+
     function isObjectInList(object, list) {
         return list.some(item => item.toString() === object.toString());
     }
@@ -113,7 +119,11 @@
     }
 
     function get_school_by_id(school_id) {
+        if (!school_id) {
+            return {};
+        }
         for (let school of schools) {
+            console.log(school);
             if (school.id === school_id.toString()) {
                 return school
             }
@@ -138,10 +148,36 @@
         ["Unautorisiert", unauthorized_schools]
     ];
     $: authorize_school_data = get_school_by_id(authorize_school_id);
+
+    function add_school() {
+        console.log(add_school_name, add_school_num, add_school_username, add_school_password);
+
+        let formData = new FormData();
+        formData.append('display_name', add_school_name);
+        formData.append('school_num', add_school_num);
+        formData.append('username', add_school_username);
+        formData.append('pw', add_school_password);
+        let tmp_api_base = `/api/v69.420/${authorize_school_id}`;
+        customFetch(`/api/v69.420/add_school`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(data => {
+                notifications.success(data);
+                school_add_visible = false;
+                add_school_name = "";
+                add_school_num = "";
+                add_school_username = "";
+                add_school_password = "";
+            })
+            .catch(error => {
+                notifications.danger(error.message);
+            });
+    }
 </script>
 
 <main>
-    {#if !school_auth_visible}
+    {#if !school_auth_visible && !school_add_visible}
     <form transition:fly|local={{x: -600}} on:submit|preventDefault={() => {
             if (authorize_school_id) {
                 if(isObjectInList(authorize_school_id, authorized_school_ids) || is_admin) {
@@ -174,7 +210,7 @@
         }}>Schule autorisieren <span class="material-symbols-outlined">login</span></Button>
         {/if}
     </form>
-    {:else}
+    {:else if !school_add_visible}
     <form transition:fly|local={{x: 600}} on:submit|preventDefault={authorize_school}>
         <button on:click={() => {school_auth_visible = false;}} type="reset" id="back_button">
             <span class="material-symbols-outlined">keyboard_backspace</span>
@@ -200,7 +236,19 @@
         {/if}
         <Button type="submit" background="var(--accent-color)">Autorisieren</Button>
     </form>
+    {:else}
+        <form transition:fly|local={{x: 600}} on:submit|preventDefault={add_school}>
+            <button on:click={() => {school_add_visible = false;}} type="reset" id="back_button">
+                <span class="material-symbols-outlined">keyboard_backspace</span>
+            </button>
+            <label for="add_school_name">Name der Schule: (z.B. Max-Mustermann-Gymnasium Löbau)</label><input type="text" name="add_school_name" id="" bind:value={add_school_name}>
+            <label for="add_school_num">Schulnummer: (z.B. 10000000)</label><input type="text" name="add_school_num" id="" bind:value={add_school_num}>
+            <label for="add_school_username">Nutzername: (schueler/lehrer)</label><input type="text" name="add_school_username" id="" bind:value={add_school_username}>
+            <label for="add_school_password">Passwort:</label><input type="text" name="" id="add_school_password" bind:value={add_school_password}>
+            <Button type="submit" background="var(--accent-color)">Hinzufügen</Button>
+        </form>
     {/if}
+    <label for="add_toggle">Schule Hinzufügen?</label><input type="checkbox" name="add_toggle" id="" bind:checked={school_add_visible}>
 </main>
 
 <style lang="scss">
