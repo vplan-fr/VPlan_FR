@@ -9,8 +9,8 @@ from copy import deepcopy
 import contextlib
 import hashlib
 
-from flask import Flask, Response, jsonify, request
-from flask_login import UserMixin, current_user
+from flask import Flask, Response, jsonify
+from flask_login import UserMixin
 
 from dotenv import load_dotenv
 from discord_webhook import DiscordWebhook, DiscordEmbed
@@ -23,7 +23,7 @@ load_dotenv()
 db = pymongo.MongoClient(os.getenv("MONGO_URL") if os.getenv("MONGO_URL") else "", 27017).vplan
 users = db["users"]
 creds = db["creds"]
-schools = db["schools"]
+VALID_SCHOOLS = [elem["_id"] for elem in list(creds.find({}))]
 meta = db["meta"]
 
 
@@ -324,6 +324,7 @@ class BetterEmbed(DiscordEmbed):
 def update_database():
     add_database_icons()
     update_school_authorization_count()
+    VALID_SCHOOLS = [elem["_id"] for elem in list(creds.find({}))]
 
 
 @run_in_background

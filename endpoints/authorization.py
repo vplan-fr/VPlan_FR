@@ -2,7 +2,6 @@ from bson import ObjectId
 from flask import Blueprint, request, session, Response
 from flask_login import login_required, current_user, login_user, logout_user
 
-import json
 import time
 from random import choice
 
