@@ -1,10 +1,10 @@
 from typing import List
 
 import json
+import os
 import datetime
 from pathlib import Path
 
-from discord_webhook import DiscordEmbed
 from flask import Blueprint, request, Response
 from flask_login import login_required, current_user
 from endpoints.authorization import school_authorized
@@ -12,9 +12,11 @@ from endpoints.authorization import school_authorized
 import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
-from utils import send_success, send_error, get_all_schools_by_number, get_all_schools
+from utils import send_success, send_error, get_all_schools
 from utils import get_school_by_id
 from utils import webhook_send, BetterEmbed
+from utils import VALID_SCHOOLS
+from school_test import SchoolCandidate
 
 from var import *
 
@@ -224,4 +226,32 @@ def contact() -> Response:
     embed.add_cleaned_field("Nachricht:", f"```{message}```", inline=False)
     webhook_send("WEBHOOK_CONTACT", embeds=[embed])
     return send_success()
+
+
+@api.route(f"/api/v69.420/add_school", methods=["POST"])
+@login_required
+def add_school() -> Response:
+    data = json.loads(request.data)
+    school_num = data.get("school_num")
+    if not school_num:
+        return send_error("Keine Schulnummer angegeben")
+    if school_num in VALID_SCHOOLS:
+        return send_error("Schule schon vorhanden")
+    display_name = data.get("display_name")
+    if not display_name:
+        return send_error("Kein Schulname angegeben")
+    username = data.get("username")
+    if not username:
+        return send_error("Kein Nutzername angegeben")
+    pw = data.get("pw")
+    if not pw:
+        return send_error("Kein Passwort angegeben")
+
+    candidate = SchoolCandidate("", school_num, username, pw)
+    if not candidate.school_exists:
+        return send_error("Schule existiert nicht")
+    if not candidate.is_valid:
+        return send_error("Nutzername oder Passwort falsch")
+
+    return send_success("Die Daten sind korrekt, wir werden nun innerhalb weniger Tage deine Schule hinzufügen.")
 
