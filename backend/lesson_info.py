@@ -832,7 +832,12 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
                         form_match = existing_form
                         break
                 elif MajorMinorParsedForm == type(parsed_form) == type(existing_form):
-                    if existing_form[0].lower() == parsed_form[0].lower() and existing_form[2] == parsed_form[2]:
+                    try:
+                        is_match = int(existing_form[0]) == int(parsed_form[0].lower())
+                    except ValueError:
+                        is_match = existing_form[0].lower() == parsed_form[0].lower()
+
+                    if is_match and existing_form[2] == parsed_form[2]:
                         form_match = existing_form
                         break
 
