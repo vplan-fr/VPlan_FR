@@ -505,35 +505,34 @@ class Lessons:
         if origin_plan_type == "forms":
             sort_key = lambda x: (
                 x.takes_place,
-                x.course or "",
-                x.teachers or set(),
-                x.rooms or set(),
+                x.course or x.class_opt.group or "",
+                tuple(x.rooms or set()),
+                tuple(x.teachers or set()),
                 x.parsed_info.lesson_group_sort_key(),
-                x.class_opt.group or "",
 
-                x.forms or set(),
-                x.periods or set(),
+                tuple(x.forms or set()),
+                tuple(x.periods or set()),
             )
         elif origin_plan_type == "teachers":
             sort_key = lambda x: (
                 x.takes_place,
                 x.course or "",
-                x.rooms or set(),
-                x.forms or set(),
+                tuple(x.rooms or set()),
+                tuple(x.forms or set()),
                 x.parsed_info.lesson_group_sort_key(),
 
-                x.teachers or set(),
-                x.periods or set(),
+                tuple(x.teachers or set()),
+                tuple(x.periods or set()),
             )
         elif origin_plan_type == "rooms":
             sort_key = lambda x: (
                 x.takes_place,
                 x.course or "",
-                x.teachers or set(),
-                x.forms or set(),
+                tuple(x.teachers or set()),
+                tuple(x.forms or set()),
                 x.parsed_info.lesson_group_sort_key(),
 
-                x.rooms or set(),
+                tuple(x.rooms or set()),
                 x.periods or set(),
             )
         else:
