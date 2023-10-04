@@ -73,7 +73,7 @@ class _InfoParsers:
     # selbst. (v), Aufgaben stehen im LernSax, bitte zu Hause bearbeiten
     # selbst. (v), Aufgaben stehen im LernSax
     # selbst. (v), Aufgaben wurden erteilt, bitte zu Hause erledigen
-    independent = re.compile(rf'selbst\. \(.\)')
+    independent = re.compile(rf'selbst\.(?: \(.\))?')
 
     tasks_in_lernsax = re.compile(rf'Aufgaben stehen im LernSax')
     tasks_were_given = re.compile(rf'Aufgaben wurden erteilt')
