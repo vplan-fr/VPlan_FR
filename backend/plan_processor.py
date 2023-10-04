@@ -15,7 +15,7 @@ from .plan_extractor import StudentsPlanExtractor, TeachersPlanExtractor
 
 
 class PlanProcessor:
-    VERSION = "94"
+    VERSION = "95"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
