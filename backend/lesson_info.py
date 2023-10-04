@@ -702,8 +702,8 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                 surname = next(iter(message.parsed._teachers))
                 course = message.parsed.course
 
+                # TODO: Better discrimination criteria between teacher surname and abbreviation
                 if len(surname.split()) == 1:
-                    logger.debug(f"Skipping teacher \"surname\" {surname!r}.")
                     continue
 
                 _class: dict[str, models.Class] = {
