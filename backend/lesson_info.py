@@ -20,9 +20,9 @@ from . import models
 
 class _InfoParsers:
     _teacher_name = (r"[A-ZÄÖÜ][a-zäöüß]+"
-                     r"(?: (?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?\.?)*"
+                     r"(?: (?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*\.?)*"
                      r"(?: van)?"
-                     r"(?: (?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)")
+                     r"(?: (?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*)")
     _teacher_abbreviation = r"[A-ZÄÖÜ][A-ZÄÖÜa-zäöüß]{2,}"
     _teacher = fr"(?:{_teacher_name})|(?:{_teacher_abbreviation})"
 
