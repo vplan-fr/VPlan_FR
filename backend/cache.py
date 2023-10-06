@@ -34,24 +34,6 @@ class Cache:
         path = self.get_plan_path(day, timestamp) / filename
         path.unlink(missing_ok=True)
 
-    def store_plan_file_link(
-        self,
-        day: datetime.date,
-        timestamp: datetime.datetime | str,
-        filename: str,
-        to_timestamp: datetime.datetime | str,
-        to_filename: str
-    ):
-        """Create a symlink to a plan file in the cache."""
-
-        path = self.get_plan_path(day, timestamp) / filename
-        to_path = self.get_plan_path(day, to_timestamp) / to_filename
-
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        path.unlink(missing_ok=True)
-        path.symlink_to(to_path)
-
     def get_plan_file(self,
                       day: datetime.date,
                       timestamp: datetime.datetime | str,
