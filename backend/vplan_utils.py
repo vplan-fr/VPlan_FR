@@ -93,13 +93,17 @@ def form_sort_key(major: str | None):
         return float("inf"), 0, major
 
 
-def group_forms(forms: list[str]) -> dict[str, list[str]]:
+def group_forms(forms: list[str]) -> dict[str | None, list[str]]:
     groups: dict[str | None, list[str]] = defaultdict(list)
 
-    for form in forms:
-        group_name, *_ = ParsedForm.from_str(form)
+    for form_str in forms:
+        form = ParsedForm.from_str(form_str)
+        if isinstance(form, MajorMinorParsedForm):
+            group_name = form.major
+        else:
+            group_name = None
 
-        groups[group_name].append(form)
+        groups[group_name].append(form_str)
 
     return {k: v for k, v in sorted(groups.items(), key=lambda x: form_sort_key(x[0]))}
 
