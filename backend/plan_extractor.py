@@ -147,7 +147,7 @@ class StudentsPlanExtractor(PlanExtractor):
                 info = f"{teacher_name}{' den ganzen Tag' if not periods else ''} abwesend laut Vertretungsplan"
                 lesson = Lesson.create_internal(self.plan.indiware_plan.date)
                 lesson.periods = {period}
-                lesson.current_teachers = {teacher_abbreviation}
+                lesson.teachers = {teacher_abbreviation}
                 lesson.info = info
                 lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
                 self.plan.lessons.lessons.append(lesson)
@@ -159,8 +159,8 @@ class StudentsPlanExtractor(PlanExtractor):
                 info = f"Raum {room}{' den ganzen Tag' if not periods else ''} nicht verfügbar laut Vertretungsplan"
                 lesson = Lesson.create_internal(self.plan.indiware_plan.date)
                 lesson.periods = {period}
-                lesson.current_rooms = {room_str}
-                lesson.current_course = "Belegt"
+                lesson.rooms = {room_str}
+                lesson.course = "Belegt"
                 lesson.info = info
                 lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
                 self.plan.lessons.lessons.append(lesson)
@@ -172,7 +172,7 @@ class StudentsPlanExtractor(PlanExtractor):
                 info = f"Klasse {form}{' den ganzen Tag' if not periods else ''} abwesend laut Vertretungsplan"
                 lesson = Lesson.create_internal(self.plan.indiware_plan.date)
                 lesson.periods = {period}
-                lesson.current_forms = {form}
+                lesson.forms = {form}
                 lesson.info = info
                 lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
 
