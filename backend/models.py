@@ -370,6 +370,7 @@ class Lessons:
             l.course if l.course else "",
         ))
 
+        # TODO: potentially multiple NTP lessons per TPL lesson bc they get grouped
         for taking_place_lesson in lessons:
             if not taking_place_lesson.takes_place:
                 continue
@@ -386,9 +387,9 @@ class Lessons:
                     # @formatter:off
                     is_match = (
                         (taking_place_lesson.course != not_taking_place_lesson.course) in ((True, False) if taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.subject_changed else (taking_place_lesson.subject_changed,))
-                        and (True if taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.teacher_changed else (not taking_place_lesson.teachers.issuperset(not_taking_place_lesson.teachers or set())) == taking_place_lesson.teacher_changed)
-                        and (True if taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.room_changed else (not taking_place_lesson.rooms.issuperset(not_taking_place_lesson.rooms or set())) == taking_place_lesson.room_changed)
-                        and (True if taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.forms_changed else (not taking_place_lesson.forms.issuperset(not_taking_place_lesson.forms or set())) == taking_place_lesson.forms_changed)
+                        and (True if taking_place_lesson.teachers is None or taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.teacher_changed else (not taking_place_lesson.teachers.issuperset(not_taking_place_lesson.teachers or set())) == taking_place_lesson.teacher_changed)
+                        and (True if taking_place_lesson.rooms is None or taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.room_changed else (not taking_place_lesson.rooms.issuperset(not_taking_place_lesson.rooms or set())) == taking_place_lesson.room_changed)
+                        and (True if taking_place_lesson.forms is None or taking_place_lesson._origin_plan_type != plan_type and taking_place_lesson.forms_changed else (not taking_place_lesson.forms.issuperset(not_taking_place_lesson.forms or set())) == taking_place_lesson.forms_changed)
                     )
                     # @formatter:on
 
@@ -418,7 +419,6 @@ class Lessons:
 
     def to_plan_lessons(self, plan_type: typing.Literal["forms", "teachers", "rooms"], plan_value: set[str]
                         ) -> list[PlanLesson]:
-
         lessons_by_periods: dict[frozenset[int], list[Lesson]] = defaultdict(list)
         for lesson in self:
             lessons_by_periods[frozenset(lesson.periods)].append(lesson)
