@@ -83,7 +83,7 @@ async def get_clients(session: aiohttp.ClientSession | None = None,
         # create crawler
         p = PlanCrawler(plan_downloader, plan_processor)
 
-        clients |= {school_name: p}
+        clients[school_name] = p
 
     return clients
 
