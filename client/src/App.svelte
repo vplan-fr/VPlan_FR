@@ -198,7 +198,7 @@
             for(let form of forms) {
                 converted_forms.push({"id": form, "display_name": form});
             }
-            form_arr.push([form_group, converted_forms]);
+            form_arr.push([form_group !== "null" ? form_group : "Sonstige", converted_forms]);
         }
     }
 
