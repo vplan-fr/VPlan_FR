@@ -321,28 +321,53 @@ class PlanLesson:
 
 @dataclasses.dataclass
 class Lessons:
-    lessons: list[Lesson]
+    lessons: list[Lesson] = dataclasses.field(default_factory=list)
 
-    def group_by(self, *attributes: str, include_none: bool = False) -> dict[str, Lessons]:
-        grouped_i = defaultdict(set)
+    _T = typing.TypeVar("_T")
+
+    def group_by_key(self, key: typing.Callable[[Lesson], typing.Iterable[_T]]) -> dict[_T, Lessons]:
+        lesson_i_by_category = defaultdict(set)
 
         for lesson_i, lesson in enumerate(self.lessons):
+            for category in key(lesson):
+                lesson_i_by_category[category].add(lesson_i)
+
+        return {category: Lessons([self.lessons[i] for i in indices])
+                for category, indices in lesson_i_by_category.items()}
+
+    @typing.overload
+    def group_by(self, *attributes: tuple[str, ...], include_none: bool = False) -> dict[tuple[typing.Any, ...], Lessons]:
+        ...
+
+    def group_by(self, *attributes: str, include_none: bool = False) -> dict[typing.Any, Lessons]:
+        def key(lesson: Lesson) -> list:
+            out = []
             for attribute in attributes:
-                value = getattr(lesson, attribute)
+                if isinstance(attribute, tuple):
+                    category = []
+                    for attr in attribute:
+                        value = getattr(lesson, attr)
 
-                if not include_none and value is None:
-                    continue
+                        if isinstance(value, (list, set)):
+                            value = tuple(value)
 
-                if not isinstance(value, (list, set)):
-                    value = [value]
+                        category.append(value)
 
-                for element in value:
-                    grouped_i[element].add(lesson_i)
+                    out.append(tuple(category))
+                else:
+                    value = getattr(lesson, attribute)
 
-        grouped = {attribute: [self.lessons[i] for i in indices] for attribute, indices in grouped_i.items()}
+                    if not include_none and value is None:
+                        continue
 
-        return {attribute: Lessons(sorted(lessons, key=lambda x: list(x.periods)[0]))
-                for attribute, lessons in grouped.items()}
+                    if not isinstance(value, (list, set)):
+                        value = [value]
+
+                    out += value
+
+            return out
+
+        return self.group_by_key(key=key)
 
     @staticmethod
     def _to_plan_lessons(lessons: list[Lesson], plan_type: typing.Literal["forms", "teachers", "rooms"],
@@ -574,6 +599,7 @@ class Lessons:
                         previous_lesson.rooms |= lesson.rooms
                     else:
                         raise NotImplementedError
+
                     previous_lesson.parsed_info = grouped_additional_info
                     previous_lesson.periods |= lesson.periods
                     previous_lesson.begin = min(filter(lambda x: x, (previous_lesson.begin, lesson.begin)),
