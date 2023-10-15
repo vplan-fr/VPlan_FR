@@ -386,7 +386,7 @@
                                         </Dropdown>
                                     </div>
                                 {:else}
-                                    <button class="no-btn-visuals">{text_segment.text}</button>
+                                    {text_segment.text}
                                 {/if}
                             {/each}
                         </div>
@@ -405,11 +405,11 @@
 </div>
 
 <style lang="scss">
-    .inline-wrapper {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        row-gap: .1em;
+    .inline-wrapper > * {
+        font-size: inherit;
+        color: var(--text-color);
+        white-space: pre-wrap;
+        word-break: break-word;
     }
 
     .info-spacer {
@@ -488,10 +488,6 @@
         padding: 0;
         margin: 0;
         text-align: start;
-        font-size: inherit;
-        color: var(--text-color);
-        white-space: pre;
-        word-break: break-all;
     }
 
     .clickable {
