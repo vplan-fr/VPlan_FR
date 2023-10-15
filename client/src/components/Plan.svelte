@@ -310,7 +310,7 @@
                 <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "+" : "-"}</button>
             {/if}
                 <h1 class="plan-heading">
-                    Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{#if teacher_image_path !== null}<img class="teacher-img" src="{teacher_image_path}" alt="">{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+                    Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{#if teacher_image_path !== null}<img class="teacher-img" src="{teacher_image_path}" alt="Lehrer Portrait">{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
                 </h1>
             {/if}
         {#if loading}
@@ -405,6 +405,15 @@
 </div>
 
 <style lang="scss">
+    .teacher-img {
+        height: 1.5em;
+        aspect-ratio: 1;
+        object-fit: cover;
+        border-radius: 10px;
+        box-sizing: border-box;
+        padding: .08em 0;
+    }
+
     .inline-wrapper > * {
         font-size: inherit;
         color: var(--text-color);
@@ -562,7 +571,7 @@
 
     .plan-heading {
         font-size: var(--font-size-md);
-        line-height: 1.8;
+        line-height: normal;
         font-weight: 700;
         margin-bottom: 15px;
 
@@ -618,10 +627,16 @@
     }
 
     .custom-badge {
+        display: inline-flex;
+        flex-direction: row;
+        column-gap: .3em;
+        align-items: center;
+
         background: rgba(255, 255, 255, 0.07);
         padding: 2px 7px;
         border-radius: 5px;
         white-space: nowrap;
+        margin-bottom: .2em;
     }
 
     .last-updated {
