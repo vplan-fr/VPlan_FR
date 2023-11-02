@@ -4,7 +4,7 @@ import datetime
 import json
 import logging
 
-from . import schools
+from . import schools, default_plan
 from .cache import Cache
 from .meta_extractor import MetaExtractor
 from .teacher import Teacher, Teachers
@@ -15,7 +15,7 @@ from .plan_extractor import StudentsPlanExtractor, TeachersPlanExtractor
 
 
 class PlanProcessor:
-    VERSION = "98"
+    VERSION = "99"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -81,7 +81,7 @@ class PlanProcessor:
                 json.dumps({
                     "forms": (form_plan := students_plan_extractor.form_plan_extractor.plan()),
                     "teachers": students_plan_extractor.teacher_plan_extractor.plan(),
-                    "rooms": (room_plan := students_plan_extractor.room_plan_extractor.plan()),
+                    "rooms": students_plan_extractor.room_plan_extractor.plan(),
                 }, default=PlanLesson.serialize),
                 "plans.json"
             )
@@ -312,7 +312,29 @@ class PlanProcessor:
             "rooms.json"
         )
 
+    def update_default_plan(self):
+        self._logger.info("* Updating default plan...")
+        d_plan = default_plan.DefaultPlan()
+
+        for day in self.cache.get_days():
+            for timestamp in self.cache.get_timestamps(day)[0:1]:
+                try:
+                    default_plan_info = default_plan.DefaultPlanInfo.deserialize(json.loads(
+                        self.cache.get_plan_file(day, timestamp, "_default_plan.json")
+                    ))
+                except FileNotFoundError:
+                    continue
+                else:
+                    success = d_plan.add_day(day, default_plan_info)
+                    if not success:
+                        self._logger.debug(f"=> Stopping default plan update at day {day!s} (not included).")
+                        break
+            else:
+                continue
+            break
+
     def update_all(self):
         self.update_meta()
         self.migrate_all()
+        self.update_default_plan()
         self.store_teachers()
