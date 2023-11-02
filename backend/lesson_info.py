@@ -788,14 +788,14 @@ def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedFo
     return segments
 
 
-def add_fuzzy_with_validator(text: str, patterns: list[str | typing.Pattern[str]],
+def add_fuzzy_with_validator(text: str, patterns: typing.Iterable[str | typing.Pattern[str]],
                              validator: typing.Callable[[re.Match], list[LessonInfoTextSegment] | None]
                              ) -> list[LessonInfoTextSegment]:
     segments = []
 
     i = 0
     while i < len(text):
-        matches = [re.match(pattern, text[i:]) for pattern in patterns]
+        matches = (re.match(pattern, text[i:]) for pattern in patterns)
 
         for match in matches:
             if match is None:
@@ -806,7 +806,6 @@ def add_fuzzy_with_validator(text: str, patterns: list[str | typing.Pattern[str]
             if new_segments is None:
                 continue
 
-            segments.append(LessonInfoTextSegment(text[i:i + match.start()]))
             segments += new_segments
             i += match.end()
             break
