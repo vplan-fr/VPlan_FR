@@ -655,6 +655,23 @@ class Plan:
 
     indiware_plan: indiware_mobil.IndiwareMobilPlan
 
+    @staticmethod
+    def parse_teachers(teachers: str | None) -> set[str]:
+        return {t for t in teachers.split() if t} if teachers is not None else set()
+
+    @staticmethod
+    def parse_rooms(rooms: str | None) -> set[str]:
+        parts = [r for r in rooms.split() if r] if rooms is not None else []
+
+        out = []
+        for part in parts:
+            if out and len(part) == 1 and part.isnumeric():
+                out[-1] += " " + part
+            else:
+                out.append(part)
+
+        return set(out)
+
     @classmethod
     def from_form_plan(cls, form_plan: indiware_mobil.IndiwareMobilPlan) -> Plan:
         lessons: list[Lesson] = []
@@ -681,9 +698,8 @@ class Plan:
                     end=lesson.end,
 
                     forms={form.short_name},
-                    teachers=set(lesson.teacher().split()) if lesson.teacher() else set(),
-                    # TODO: Some schools use rooms with spaces
-                    rooms={r for r in lesson.room().split(" ") if r} if lesson.room() else set(),
+                    teachers=cls.parse_teachers(lesson.teacher()),
+                    rooms=cls.parse_rooms(lesson.room()),
                     course=lesson.subject(),
 
                     # see below
@@ -798,8 +814,7 @@ class Plan:
 
                     forms=set(lesson.teacher().split(",")) if lesson.teacher() else set(),
                     teachers={teacher.short_name},
-                    # TODO: Some schools use rooms with spaces
-                    rooms={r for r in lesson.room().split(" ") if r} if lesson.room() else set(),
+                    rooms=cls.parse_rooms(lesson.room()),
                     course=lesson.subject(),
 
                     # see below
@@ -887,7 +902,7 @@ class Plan:
                     end=lesson.end,
 
                     forms=set(lesson.room().split(",")) if lesson.room() else set(),
-                    teachers=set(lesson.teacher().split()) if lesson.teacher() else set(),
+                    teachers=cls.parse_teachers(lesson.teacher()),
                     rooms={room.short_name},
                     course=lesson.subject(),
 
