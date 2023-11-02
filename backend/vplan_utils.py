@@ -1,7 +1,6 @@
 # coding=utf-8
 from __future__ import annotations
 
-import abc
 import dataclasses
 import datetime
 import re
@@ -26,62 +25,44 @@ _loose_parse_form_pattern = re.compile(
 )
 
 
-class ParsedForm(abc.ABC):
+@dataclasses.dataclass
+class ParsedForm:
+    major: str
+    separator: str
+    minor: str
+
     @classmethod
     def from_str(cls, form: str) -> ParsedForm:
         match = _parse_form_pattern.fullmatch(form)
         if match is None or match.group("alpha"):
-            return AlphanumParsedForm(form)
+            return ParsedForm(form, "", "")
         else:
-            return MajorMinorParsedForm(*match.group("major", "sep", "minor"))
+            return ParsedForm(*match.group("major", "sep", "minor"))
 
     @classmethod
     def from_form_match(cls, match: re.Match) -> ParsedForm:
         if match.group("alpha"):
-            return AlphanumParsedForm(match.group("alpha"))
+            return ParsedForm(match.group("alpha"), "", "")
         else:
-            return MajorMinorParsedForm(*match.group("major", "sep", "minor"))
+            return ParsedForm(*match.group("major", "sep", "minor"))
 
-    @abc.abstractmethod
-    def to_tuple(self) -> tuple[str, ...]:
-        ...
-
-    @abc.abstractmethod
-    def expand_forms(self) -> list[ParsedForm]:
-        ...
+    def isalpha(self):
+        return not self.separator and not self.minor
 
     def to_str(self):
         return "".join(self.to_tuple())
+
+    def to_tuple(self) -> tuple[str, str, str]:
+        return self.major, self.separator, self.minor
+
+    def expand_forms(self) -> list[ParsedForm]:
+        return [ParsedForm(self.major, self.separator, minor.strip()) for minor in self.minor.split(",")]
 
     def __iter__(self):
         return iter(self.to_tuple())
 
     def __getitem__(self, item):
         return self.to_tuple()[item]
-
-
-@dataclasses.dataclass(frozen=True)
-class MajorMinorParsedForm(ParsedForm):
-    major: str
-    separator: str
-    minor: str
-
-    def to_tuple(self) -> tuple[str, str, str]:
-        return self.major, self.separator, self.minor
-
-    def expand_forms(self) -> list[ParsedForm]:
-        return [MajorMinorParsedForm(self.major, self.separator, minor.strip()) for minor in self.minor.split(",")]
-
-
-@dataclasses.dataclass(frozen=True)
-class AlphanumParsedForm(ParsedForm):
-    alpha: str | None
-
-    def to_tuple(self) -> tuple[str]:
-        return self.alpha,
-
-    def expand_forms(self) -> list[ParsedForm]:
-        return [self]
 
 
 def form_sort_key(major: str | None):
@@ -98,7 +79,7 @@ def group_forms(forms: list[str]) -> dict[str | None, list[str]]:
 
     for form_str in forms:
         form = ParsedForm.from_str(form_str)
-        if isinstance(form, MajorMinorParsedForm):
+        if not form.isalpha():
             group_name = form.major
         else:
             group_name = None
@@ -194,8 +175,8 @@ def _group_form_minors(first_part: str, minors: list[str]) -> list[str]:
 
 
 def parsed_forms_to_str(forms: list[ParsedForm]) -> str:
-    alphanum_forms = [form for form in forms if isinstance(form, AlphanumParsedForm)]
-    other_forms = [form for form in forms if isinstance(form, MajorMinorParsedForm)]
+    alphanum_forms = [form for form in forms if form.isalpha()]
+    other_forms = [form for form in forms if not form.isalpha()]
 
     grouped: dict[tuple[str, str], list[str]] = defaultdict(list)
 
