@@ -26,7 +26,7 @@
                     <ul>
                         {#each group_rooms(Object.fromEntries(all_free_rooms.map(r => [r, all_rooms[r]]))) as [category, free_rooms] (category)}
                             <li>{category}:<br><br>
-                                {#each all_rooms_grouped_dict[category] as room (room)}
+                                {#each all_rooms_grouped_dict[category] || [] as room (room)}
                                     <div animate:flip|local={{duration: 200}} style={(!free_rooms.includes(room) && !used_rooms_hidden) || free_rooms.includes(room) ? "display: inline-block;": "display: none;"}}>
                                         {#if !free_rooms.includes(room) && !used_rooms_hidden}
                                             <button class="chip info-element used-room" on:click={() => {
