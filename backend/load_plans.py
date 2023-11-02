@@ -41,6 +41,7 @@ class PlanCrawler:
                 if downloaded_files:
                     self.plan_processor.store_teachers()
                     self.plan_processor.update_meta()
+                    self.plan_processor.update_default_plan()
             except Exception as e:
                 if not ignore_exceptions:
                     raise

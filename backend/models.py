@@ -29,10 +29,10 @@ class Lesson:
     # taken directly from plan xml
     class_: ClassData | None
 
-    subject_changed: bool
-    teacher_changed: bool
-    room_changed: bool
-    forms_changed: bool
+    subject_changed: bool = False
+    teacher_changed: bool = False
+    room_changed: bool = False
+    forms_changed: bool = False
 
     takes_place: bool | None = None  # whether this lesson in its current form takes place
 
@@ -95,13 +95,14 @@ class Lesson:
             "teachers": sorted(self.teachers) if self.teachers is not None else None,
             "rooms": sorted(self.rooms) if self.rooms is not None else None,
             "course": self.course,
+            "class_number": self.class_.number if self.class_ is not None else None,
             "subject_changed": self.subject_changed,
             "teacher_changed": self.teacher_changed,
             "room_changed": self.room_changed,
             "forms_changed": self.forms_changed,
             "takes_place": self.takes_place,
             "is_internal": self.is_internal,
-            "_origin_plan_lesson_id": self._origin_plan_lesson_id,
+            # "_origin_plan_lesson_id": self._origin_plan_lesson_id,
         }
 
     @classmethod
@@ -115,14 +116,14 @@ class Lesson:
             rooms=set(data["rooms"]) if data["rooms"] is not None else None,
             course=data["course"],
             parsed_info=ParsedLessonInfo([]),
-            class_=None,
+            class_=ClassData(None, None, None, data.get("class_number")),
             subject_changed=data["subject_changed"],
             teacher_changed=data["teacher_changed"],
             room_changed=data["room_changed"],
             forms_changed=data["forms_changed"],
             takes_place=data["takes_place"],
             is_internal=data["is_internal"],
-            _origin_plan_lesson_id=data["_origin_plan_lesson_id"],
+            # _origin_plan_lesson_id=data["_origin_plan_lesson_id"],
         )
 
 
@@ -197,6 +198,7 @@ class PlanLesson:
         assert not (taking_place_lesson is None is not_taking_place_lesson)
 
         if taking_place_lesson is None:
+            # noinspection PyTypeChecker
             _current_lesson = Lesson(
                 periods=not_taking_place_lesson.periods,
                 begin=not_taking_place_lesson.begin,
@@ -219,6 +221,7 @@ class PlanLesson:
             _current_lesson = taking_place_lesson
 
         if not_taking_place_lesson is None:
+            # noinspection PyTypeChecker
             _scheduled_lesson = Lesson(
                 periods=taking_place_lesson.periods,
                 begin=taking_place_lesson.begin,
@@ -336,10 +339,15 @@ class Lessons:
                 for category, indices in lesson_i_by_category.items()}
 
     @typing.overload
-    def group_by(self, *attributes: tuple[str, ...], include_none: bool = False) -> dict[tuple[typing.Any, ...], Lessons]:
+    def group_by(self, *attributes: tuple[str, ...], include_none: bool = False) -> dict[
+        tuple[typing.Any, ...], Lessons]:
         ...
 
+    @typing.overload
     def group_by(self, *attributes: str, include_none: bool = False) -> dict[typing.Any, Lessons]:
+        ...
+
+    def group_by(self, *attributes: str | tuple[str, ...], include_none: bool = False) -> dict[typing.Any, Lessons]:
         def key(lesson: Lesson) -> list:
             out = []
             for attribute in attributes:
@@ -626,6 +634,12 @@ class Lessons:
 
     def serialize(self) -> list:
         return [lesson.serialize() for lesson in self.lessons]
+
+    def __add__(self, other):
+        if not isinstance(other, Lessons):
+            return NotImplemented
+
+        return Lessons(self.lessons + other.lessons)
 
     def __iter__(self):
         return iter(self.lessons)

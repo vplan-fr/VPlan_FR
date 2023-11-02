@@ -179,7 +179,7 @@ class StudentsPlanExtractor(PlanExtractor):
                 self.plan.lessons.lessons.append(lesson)
 
     def default_plan(self) -> default_plan.DefaultPlanInfo:
-        return default_plan.DefaultPlanInfo.from_lessons(self.plan.lessons)
+        return default_plan.DefaultPlanInfo.from_lessons(self.plan.lessons, self.plan.indiware_plan.week)
 
 
 class SubPlanExtractor:
