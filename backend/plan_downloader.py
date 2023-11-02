@@ -245,5 +245,4 @@ class PlanDownloader:
         self._logger.debug(f"* Migrating cache ({self.__class__.__name__})...")
 
         for day in self.cache.get_days():
-            self._logger.debug(f"=> Date: {day!s}.")
             self.cache.update_newest(day)
