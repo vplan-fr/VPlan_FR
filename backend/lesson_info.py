@@ -8,8 +8,8 @@ import re
 import typing
 
 from .vplan_utils import (
-    periods_to_block_label, parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str,
-    MajorMinorParsedForm, AlphanumParsedForm, forms_to_str, _loose_parse_form_pattern
+    periods_to_block_label, parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str, forms_to_str,
+    _loose_parse_form_pattern
 )
 from . import teacher as teacher_model
 from . import models
@@ -827,11 +827,11 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
             form_match = None
 
             for existing_form in parsed_existing_forms:
-                if AlphanumParsedForm == type(parsed_form) == type(existing_form):
+                if parsed_form.isalpha() and existing_form.isalpha():
                     if (not existing_form[0].isnumeric()) and parsed_form[0] == existing_form[0]:
                         form_match = existing_form
                         break
-                elif MajorMinorParsedForm == type(parsed_form) == type(existing_form):
+                elif not parsed_form.isalpha() and not existing_form.isalpha():
                     try:
                         is_match = int(existing_form[0]) == int(parsed_form[0].lower())
                     except ValueError:
