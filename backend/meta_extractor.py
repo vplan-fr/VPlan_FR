@@ -19,7 +19,7 @@ class DailyMetaExtractor:
     def __init__(self, plankl_file: str):
         self.form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plankl_file))
 
-    def teachers(self) -> dict[str, list[str]]:
+    def teachers(self) -> dict[str, set[str]]:
         excluded_subjects = ["KL", "AnSt", "FÖ", "WB", "GTA"]
 
         all_teachers = set()
@@ -28,11 +28,11 @@ class DailyMetaExtractor:
                 if lesson.teacher():
                     all_teachers.add(lesson.teacher())
 
-        teachers = defaultdict(list, {teacher: [] for teacher in all_teachers})
+        teachers = defaultdict(set, {teacher: set() for teacher in all_teachers})
         for form in self.form_plan.forms:
             for class_ in form.classes.values():
                 if class_.teacher and class_.subject not in excluded_subjects:
-                    teachers[class_.teacher].append(class_.subject)
+                    teachers[class_.teacher].add(class_.subject)
 
         return teachers
 
@@ -117,15 +117,12 @@ class MetaExtractor:
         return rooms
 
     def teachers(self) -> list[Teacher]:
-        teachers: dict[str, list[str]] = defaultdict(list)
+        teachers: dict[str, set[str]] = defaultdict(set)
 
         for extractor in self.iterate_daily_extractors():
             for _teacher, subjects in extractor.teachers().items():
                 for teacher in _teacher.split(" "):
-                    teachers[teacher].extend(subjects)
-
-        for teacher, subjects in teachers.items():
-            teachers[teacher] = sorted(set(subjects))
+                    teachers[teacher] |= subjects
 
         return [
             Teacher(abbreviation, None, None, None, subjects=subjects)

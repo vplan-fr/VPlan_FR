@@ -18,7 +18,7 @@ from .vplan_utils import parse_absent_element, ParsedForm
 class PlanExtractor:
     _logger: logging.Logger
     plan: Plan
-    teacher_abbreviation_by_surname: dict[str, str]
+    teachers: Teachers
 
     def fill_in_lesson_times(self):
         forms: dict[str, indiware_mobil.Form] = {form.short_name: form for form in self.plan.indiware_plan.forms}
@@ -77,7 +77,7 @@ class PlanExtractor:
                 [i.serialize() for i in line]
                 for line in process_additional_info(
                     self.plan.additional_info, parsed_forms,
-                    self.teacher_abbreviation_by_surname,
+                    self.teachers,
                     self.plan.indiware_plan.date
                 )
             ],
@@ -87,19 +87,15 @@ class PlanExtractor:
 
 
 class StudentsPlanExtractor(PlanExtractor):
-    def __init__(self, plan_kl: str, vplan_kl: str | None, teacher_abbreviation_by_surname: dict[str, str], *,
+    def __init__(self, plan_kl: str, vplan_kl: str | None, teachers: Teachers, *,
                  logger: logging.Logger):
         self._logger = logger
+        self.teachers = teachers
 
         form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = Plan.from_form_plan(form_plan)
 
-        self.extracted_teachers = self._extract_teachers()
-
-        self.teacher_abbreviation_by_surname = (
-            teacher_abbreviation_by_surname.copy()
-            | Teachers(list(self.extracted_teachers.values())).abbreviation_by_surname()
-        )
+        self._extract_teachers()
 
         if vplan_kl is None:
             self.substitution_plan = None
@@ -112,36 +108,39 @@ class StudentsPlanExtractor(PlanExtractor):
         self.form_plan_extractor = SubPlanExtractor(
             self.plan,
             "forms",
-            self.teacher_abbreviation_by_surname,
+            self.teachers,
             logger=self._logger
         )
         self.room_plan_extractor = SubPlanExtractor(
             self.plan,
             "rooms",
-            self.teacher_abbreviation_by_surname,
+            self.teachers,
             logger=self._logger
         )
         self.teacher_plan_extractor = SubPlanExtractor(
             self.plan,
             "teachers",
-            self.teacher_abbreviation_by_surname,
+            self.teachers,
             logger=self._logger
         )
 
-    def _extract_teachers(self) -> dict[str, Teacher]:
+    def _extract_teachers(self):
         all_classes = self.plan.get_all_classes()
-        out: dict[str, Teacher] = {}
 
         for lesson in self.plan.lessons:
-            out |= lesson_info.extract_teachers(lesson, all_classes, logger=self._logger)
-
-        return out
+            self.teachers.add_teachers(
+                *lesson_info.extract_teachers(lesson, all_classes, logger=self._logger)
+            )
 
     def add_lessons_for_unavailable_from_subst_plan(self):
         for teacher_str in self.substitution_plan.absent_teachers:
             teacher_name, periods = parse_absent_element(teacher_str)
 
-            teacher_abbreviation = self.teacher_abbreviation_by_surname.get(teacher_name, teacher_name)
+            try:
+                teacher_abbreviation = self.teachers.query_plan_teacher(teacher_name).plan_short
+            except LookupError:
+                self._logger.warning(f" --> Unknown teacher: {teacher_name!r}.")
+                continue
 
             for period in periods or range(1, 11):
                 info = f"{teacher_name}{' den ganzen Tag' if not periods else ''} abwesend laut Vertretungsplan"
@@ -184,7 +183,7 @@ class StudentsPlanExtractor(PlanExtractor):
 
 class SubPlanExtractor:
     def __init__(self, forms_plan: Plan, plan_type: typing.Literal["forms", "rooms", "teachers"],
-                 teacher_abbreviation_by_surname: dict[str, str], *, logger: logging.Logger):
+                 teachers: Teachers, *, logger: logging.Logger):
         self._logger = logger
         self.plan_type = plan_type
         self.forms_lessons_grouped = (
@@ -196,12 +195,10 @@ class SubPlanExtractor:
         if self.plan_type in ("rooms", "teachers"):
             self.forms_lessons_grouped = self.forms_lessons_grouped.filter(lambda l: not l.is_internal)
 
-        self.resolve_teachers_in_lesson_info(teacher_abbreviation_by_surname)
-        self.extrapolate_lesson_times(self.forms_lessons_grouped)
-
-    def resolve_teachers_in_lesson_info(self, teacher_abbreviation_by_surname: dict[str, str]):
         for lesson in self.forms_lessons_grouped:
-            lesson.parsed_info.resolve_teachers(teacher_abbreviation_by_surname)
+            lesson.parsed_info.resolve_teachers(teachers)
+
+        self.extrapolate_lesson_times(self.forms_lessons_grouped)
 
     @staticmethod
     def extrapolate_lesson_times(lessons: Lessons):
@@ -243,14 +240,14 @@ class SubPlanExtractor:
 
 
 class TeachersPlanExtractor:
-    def __init__(self, plan_le: str, plan_ra: str | None, teacher_abbreviation_by_surname: dict[str, str], *,
+    def __init__(self, plan_le: str, plan_ra: str | None, teachers: Teachers, *,
                  logger: logging.Logger):
         self._logger = logger
 
         teacher_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_le))
         self.teacher_plan_extractor = PlanExtractor()
         self.teacher_plan_extractor.plan = Plan.from_teacher_plan(teacher_plan)
-        self.teacher_plan_extractor.teacher_abbreviation_by_surname = teacher_abbreviation_by_surname
+        self.teacher_plan_extractor.teachers = teachers
         self.teacher_plan_extractor._logger = logger
         self.teacher_plan_extractor.fill_in_lesson_times()
 
@@ -258,7 +255,7 @@ class TeachersPlanExtractor:
             room_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_ra))
             self.room_plan_extractor = PlanExtractor()
             self.room_plan_extractor.plan = Plan.from_room_plan(room_plan)
-            self.room_plan_extractor.teacher_abbreviation_by_surname = teacher_abbreviation_by_surname
+            self.room_plan_extractor.teachers = teachers
             self.room_plan_extractor._logger = logger
             self.room_plan_extractor.fill_in_lesson_times()
 

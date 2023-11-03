@@ -34,9 +34,10 @@ def scrape_teachers() -> list[Teacher]:
         teacher_data.append(
             Teacher(
                 full_name=None,
-                surname=name.replace("Madame", "Frau").replace("Monsieur", "Herr"),
-                abbreviation=kuerzel,
-                subjects=faecher.replace("G/R/W", "GRW").split(" "),
+                full_surname=name,
+                plan_long=Teacher.strip_titles(name.replace("Madame", "Frau").replace("Monsieur", "Herr")),
+                plan_short=kuerzel,
+                subjects=set(faecher.replace("G/R/W", "GRW").split(" ")),
                 info=additional_info,
                 contact_link=teacher_link
             )
@@ -74,9 +75,10 @@ def scrape_teacher(teacher_link: str) -> Teacher:
     kuerzel = soup.find("span", {"class": "contact-mobile", "itemprop": "telephone"}).text.strip()
     return Teacher(
         full_name=None,
-        surname=name.replace("Madama", "Frau").replace("Monsieur", "Frau"),
-        subjects=subjects,
-        abbreviation=kuerzel,
+        full_surname=name,
+        plan_long=Teacher.strip_titles(name.replace("Madame", "Frau").replace("Monsieur", "Herr")),
+        subjects=set(subjects),
+        plan_short=kuerzel,
         info=additional_info,
         contact_link=f"{teacher_link}#display-form"
     )
