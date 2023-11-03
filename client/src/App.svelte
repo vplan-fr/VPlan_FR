@@ -367,8 +367,6 @@
             <AboutUs />
         {:else if $current_page === "impressum"}
             <Impressum />
-        {:else if $current_page === "favourites"}
-            <Favourites />
         {:else if $logged_in}
             {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
@@ -430,6 +428,8 @@
                 {/if}
             {:else if $current_page === "school_manager"}
                 <SchoolManager bind:school_num bind:date bind:plan_type bind:plan_value />
+            {:else if $current_page === "favorites"}
+                <Favourites />
             {:else if $current_page === "pwa_install"}
                 <PwaInstallHelper />
             {:else}
