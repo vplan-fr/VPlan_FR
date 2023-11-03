@@ -684,6 +684,8 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
     out: dict[str, teacher_model.Teacher] = {}
 
     for plan_short in lesson.teachers or ():
+        if not plan_short:
+            continue
         out[plan_short] = teacher_model.Teacher(plan_short)
 
     if lesson._is_scheduled:
@@ -738,6 +740,9 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                     continue
 
                 abbreviation = list(_class.values())[0].teacher
+
+                if not abbreviation:
+                    continue
 
                 out[abbreviation] = teacher_model.Teacher(
                     plan_short=abbreviation,
