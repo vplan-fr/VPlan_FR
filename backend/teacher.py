@@ -81,6 +81,9 @@ class Teachers:
 
     def add_teachers(self, *teachers: Teacher):
         for teacher in teachers:
+            if teacher.plan_short == "":
+                continue
+
             if teacher.plan_short not in self.teachers:
                 self.teachers[teacher.plan_short] = teacher
             else:
