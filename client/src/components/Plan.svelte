@@ -283,7 +283,7 @@
 
     $: if (plan_type === "teachers") {
         if (meta.teachers) {
-            full_teacher_name = meta.teachers[plan_value]?.surname || null;
+            full_teacher_name = meta.teachers[plan_value]?.full_surname || meta.teachers[plan_value]?.plan_long || null;
             teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
             teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
             teacher_image_path = meta.teachers[plan_value]?.image_path || null;
