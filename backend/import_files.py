@@ -3,11 +3,11 @@ import datetime
 import sys
 from pathlib import Path
 
-from .load_plans import get_clients
+from .load_plans import get_crawlers
 
 
 async def main():
-    clients = await get_clients()
+    clients = await get_crawlers()
 
     directory = Path(sys.argv[1])
 

@@ -19,22 +19,27 @@ class DailyMetaExtractor:
     def __init__(self, plankl_file: str):
         self.form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plankl_file))
 
-    def teachers(self) -> dict[str, list[str]]:
-        excluded_subjects = ["KL", "AnSt", "FÖ", "WB", "GTA"]
+    def teachers(self) -> list[Teacher]:
+        excluded_subjects = ["KL", "AnSt", "FÖ", "WB", "GTA", "EU4"]
 
-        all_teachers = set()
+        out = []
         for form in self.form_plan.forms:
             for lesson in form.lessons:
-                if lesson.teacher():
-                    all_teachers.add(lesson.teacher())
+                for teacher in (lesson.teacher() or "").split():
+                    if not teacher:
+                        continue
+                    out.append(Teacher(plan_short=teacher, last_seen=self.form_plan.date))
 
-        teachers = defaultdict(list, {teacher: [] for teacher in all_teachers})
-        for form in self.form_plan.forms:
             for class_ in form.classes.values():
-                if class_.teacher and class_.subject not in excluded_subjects:
-                    teachers[class_.teacher].append(class_.subject)
+                subjects = set(s for s in class_.subject.split() if s not in excluded_subjects)
 
-        return teachers
+                for teacher in class_.teacher.split():
+                    if not teacher:
+                        continue
+
+                    out.append(Teacher(plan_short=teacher, subjects=subjects, last_seen=self.form_plan.date))
+
+        return out
 
     def forms(self) -> list[str]:
         return [form.short_name for form in self.form_plan.forms]
@@ -73,7 +78,7 @@ class DailyMetaExtractor:
 
 
 class MetaExtractor:
-    def __init__(self, cache: Cache, num_last_days: int = 10, *, logger: logging.Logger):
+    def __init__(self, cache: Cache, num_last_days: int | None = 10, *, logger: logging.Logger):
         self._logger = logger
 
         self.cache = cache
@@ -85,6 +90,7 @@ class MetaExtractor:
     def iterate_daily_extractors(self) -> typing.Generator[DailyMetaExtractor, None, None]:
         for day in self.cache.get_days()[:self.num_last_days]:
             for timestamp in self.cache.get_timestamps(day):
+                self._logger.log(5, f"Yielding DailyMetaExtractor for {day!s} {timestamp!s}.")
                 if (day, timestamp) in self._daily_extractors:
                     yield self._daily_extractors[(day, timestamp)]
                 else:
@@ -117,20 +123,7 @@ class MetaExtractor:
         return rooms
 
     def teachers(self) -> list[Teacher]:
-        teachers: dict[str, list[str]] = defaultdict(list)
-
-        for extractor in self.iterate_daily_extractors():
-            for _teacher, subjects in extractor.teachers().items():
-                for teacher in _teacher.split(" "):
-                    teachers[teacher].extend(subjects)
-
-        for teacher, subjects in teachers.items():
-            teachers[teacher] = sorted(set(subjects))
-
-        return [
-            Teacher(abbreviation, None, None, None, subjects=subjects)
-            for abbreviation, subjects in teachers.items()
-        ]
+        return sum((e.teachers() for e in self.iterate_daily_extractors()), [])
 
     def forms(self) -> list[str]:
         forms: set[str] = set()

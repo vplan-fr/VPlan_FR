@@ -417,10 +417,6 @@ def create_literal_parsed_info(msg: str) -> ParsedLessonInfo:
     )
 
 
-def resolve_teacher_abbreviations(surnames: list[str], abbreviation_by_surname: dict[str, str]) -> list[str]:
-    return [abbreviation_by_surname.get(surname, surname) for surname in surnames]
-
-
 def _parse_form_plan_message(info: str, lesson: models.Lesson) -> tuple[ParsedLessonInfoMessage, re.Match | None]:
     if match := _InfoParsers.substitution.match(info):
         return InsteadOfCourse(
@@ -649,14 +645,16 @@ class ParsedLessonInfo:
             sorted(paragraphs, key=lambda p: [i.parsed.original_messages for i in p.messages])
         )
 
-    def resolve_teachers(self, teacher_abbreviation_by_surname: dict[str, str]):
+    def resolve_teachers(self, teachers: teacher_model.Teachers):
         for paragraph in self.paragraphs:
             for message in paragraph.messages:
                 if hasattr(message.parsed, "_teachers"):
-                    message.parsed.other_info_value = resolve_teacher_abbreviations(
-                        message.parsed._teachers,
-                        teacher_abbreviation_by_surname
-                    )
+                    try:
+                        message.parsed.other_info_value = [
+                            teachers.query_plan_teacher(teacher_str).plan_short for teacher_str in message.parsed._teachers
+                        ]
+                    except LookupError:
+                        message.parsed.other_info_value = None
 
     def lesson_group_sort_key(self) -> list[list[list[str]]]:
         return [
@@ -682,14 +680,14 @@ class ParsedLessonInfo:
 
 
 def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
-                     logger: logging.Logger) -> dict[str, teacher_model.Teacher]:
+                     logger: logging.Logger) -> typing.Iterable[teacher_model.Teacher]:
     out: dict[str, teacher_model.Teacher] = {}
 
-    for teacher_abbreviation in lesson.teachers or ():
-        out[teacher_abbreviation] = teacher_model.Teacher(teacher_abbreviation)
+    for plan_short in lesson.teachers or ():
+        out[plan_short] = teacher_model.Teacher(plan_short, last_seen=lesson._lesson_date)
 
     if lesson._is_scheduled:
-        return out
+        return ()
 
     for paragraph in lesson.parsed_info.paragraphs:
         for message in paragraph.messages:
@@ -740,28 +738,34 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                     continue
 
                 abbreviation = list(_class.values())[0].teacher
-                teacher = teacher_model.Teacher(abbreviation, None, surname, None, [])
 
-                out[teacher.abbreviation] = teacher
+                if not abbreviation:
+                    continue
 
-    return out
+                out[abbreviation] = teacher_model.Teacher(
+                    plan_short=abbreviation,
+                    plan_long=surname,
+                    last_seen=lesson._lesson_date
+                )
+
+    return out.values()
 
 
 def process_additional_info(info: list[str], parsed_existing_forms: list[ParsedForm],
-                            teacher_abbreviation_by_surname: dict[str, str], date: datetime.date
+                            teachers: teacher_model.Teachers, date: datetime.date
                             ) -> list[list[LessonInfoTextSegment]]:
     info = info.copy()
     while info and not info[-1]:
         info.pop()
 
     return [
-        process_additional_info_line(line, parsed_existing_forms, teacher_abbreviation_by_surname, date)
+        process_additional_info_line(line, parsed_existing_forms, teachers, date)
         for line in info
     ]
 
 
 def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedForm],
-                                 teacher_abbreviation_by_surname: dict[str, str], date: datetime.date
+                                 teachers: teacher_model.Teachers, date: datetime.date
                                  ) -> list[LessonInfoTextSegment]:
     if text is None:
         return []
@@ -771,7 +775,7 @@ def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedFo
     text = re.sub(r"\b {1,3}\b", " ", text.strip())
 
     funcs = (
-        lambda s: add_fuzzy_teacher_links(s, teacher_abbreviation_by_surname, date),
+        lambda s: add_fuzzy_teacher_links(s, teachers, date),
         lambda s: add_fuzzy_form_links(s, parsed_existing_forms, date)
     )
 
@@ -857,24 +861,20 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
     return add_fuzzy_with_validator(text, [_loose_parse_form_pattern], validator)
 
 
-def add_fuzzy_teacher_links(text: str, teacher_abbreviation_by_surname: dict[str, str], date: datetime.date):
-    abbreviations = set(teacher_abbreviation_by_surname.values())
-
+def add_fuzzy_teacher_links(text: str, teachers: teacher_model.Teachers, date: datetime.date):
     def validator(match: re.Match) -> list[LessonInfoTextSegment] | None:
         surname_or_abbreviation = match.group()
 
-        if surname_or_abbreviation not in abbreviations and surname_or_abbreviation in teacher_abbreviation_by_surname:
-            abbreviation = teacher_abbreviation_by_surname[surname_or_abbreviation]
-        elif surname_or_abbreviation in abbreviations:
-            abbreviation = surname_or_abbreviation
-        else:
-            abbreviation = None
+        try:
+            plan_short = teachers.query_plan_teacher(surname_or_abbreviation).plan_short
+        except LookupError:
+            plan_short = None
 
-        if abbreviation is not None:
+        if plan_short is not None:
             return [
                 LessonInfoTextSegment(
                     surname_or_abbreviation,
-                    link=LessonInfoTextSegmentLink("teachers", [abbreviation], date, None)
+                    link=LessonInfoTextSegmentLink("teachers", [plan_short], date, None)
                 )
             ]
         else:
