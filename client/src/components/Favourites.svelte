@@ -286,9 +286,9 @@
                                             {#if course.group != null}
                                                 {course.group}
                                             {:else}
-                                                {courses[0].subject}
+                                                {course.subject}
                                             {/if}
-                                            | {courses[0].teacher}
+                                            | {course.teacher}
                                         </li>
                                     {/each}
                                 </ul>
