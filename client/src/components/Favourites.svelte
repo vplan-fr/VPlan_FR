@@ -239,6 +239,7 @@
     $: authorized_school_ids, all_schools, update_authorized_schools();
 </script>
 
+<h1 class="responsive-heading">Favoriten</h1>
 <CollapsibleWrapper class="extra-accordion-padding" let:closeOtherPanels>
     {#each cur_favourites as _, favourite}
         <Collapsible on:panel-open={closeOtherPanels} let:toggle>
