@@ -199,6 +199,7 @@
         <h1 class="responsive-heading">Schulauswahl</h1>
         <span class="responsive-text">Moin, bitte wähle hier deine Schule aus:</span>
         <Select data={schools_categorized} grouped={true} icon_location="/public/base_static/images/school_icons" bind:selected_id={authorize_school_id} data_name="Schulen">Schule auswählen</Select>
+        <span class="school-missing">Ist deine Schule nicht dabei? <button on:click={() => {school_add_visible = true;}} class="link-button" type="button">Füge sie hinzu</button></span>
         <Button type="submit" background="var(--accent-color)">Weiter zur Schule <span class="material-symbols-outlined">keyboard_arrow_right</span></Button>
         {#if is_admin}
         <Button type="button" on:click={() => {
@@ -237,18 +238,28 @@
         <Button type="submit" background="var(--accent-color)">Autorisieren</Button>
     </form>
     {:else}
-        <form transition:fly|local={{x: 600}} on:submit|preventDefault={add_school}>
+        <form transition:fly|local={{x: 600}} on:submit|preventDefault={add_school} autocomplete="off">
             <button on:click={() => {school_add_visible = false;}} type="reset" id="back_button">
                 <span class="material-symbols-outlined">keyboard_backspace</span>
             </button>
-            <label for="add_school_name">Name der Schule: (z.B. Max-Mustermann-Gymnasium Löbau)</label><input type="text" name="add_school_name" id="" bind:value={add_school_name}>
-            <label for="add_school_num">Schulnummer: (z.B. 10000000)</label><input type="text" name="add_school_num" id="" bind:value={add_school_num}>
-            <label for="add_school_username">Nutzername: (schueler/lehrer)</label><input type="text" name="add_school_username" id="" bind:value={add_school_username}>
-            <label for="add_school_password">Passwort:</label><input type="text" name="" id="add_school_password" bind:value={add_school_password}>
+            <h1 class="responsive-heading">Schule hinzufügen</h1>
+            <label for="add_school_name">Name der Schule</label>
+            <input disabled={!school_add_visible} autocomplete="organization" name="add_school_name" bind:value={add_school_name} type="text" required class="textfield" placeholder="Name der Schule (z.B. Max-Mustermann-Gymnasium Löbau)"/>
+            <label for="add_school_num">Schulnummer</label>
+            <input disabled={!school_add_visible} autocomplete="off" name="add_school_num" bind:value={add_school_num} type="text" required class="textfield" placeholder="Schulnummer (z.B. 10000000)"/>
+            <label for="add_school_username">Nutzername</label>
+            <div class="input_icon">
+                <img src="/public/base_static/images/user-solid-white.svg" alt="User Icon">
+                <input disabled={!school_add_visible} autocomplete="username" name="add_school_username" bind:value={add_school_username} type="text" required class="textfield" placeholder="Nutzername (schueler/lehrer)"/>
+            </div>
+            <label for="add_school_password">Schul-Passwort</label>
+            <div class="input_icon password_field">
+                <img src="/public/base_static/images/lock-solid-white.svg" alt="Lock Icon">
+                <input disabled={!school_add_visible} autocomplete="new-password" name="add_school_password" on:input={(event) => {add_school_password = event.target.value}} type={password_visible ? "text" : "password"} required class="textfield" placeholder="Schul-Passwort"/>
+            </div>
             <Button type="submit" background="var(--accent-color)">Hinzufügen</Button>
         </form>
     {/if}
-    <label for="add_toggle">Schule Hinzufügen?</label><input type="checkbox" name="add_toggle" id="" bind:checked={school_add_visible}>
 </main>
 
 <style lang="scss">
@@ -309,7 +320,6 @@
         margin-bottom: 5px;
 
         .textfield {
-            font-size: var(--font-size-sm);
             padding-left: 40px;
         }
         img {
@@ -332,6 +342,7 @@
         background-color: rgba(255, 255, 255, 0.1);
         color: var(--text-color);
         border-radius: 5px;
+        font-size: var(--font-size-sm);
     }
 
     .responsive-heading {
@@ -352,6 +363,22 @@
         background: none;
         color: var(--text-color);
         font-size: var(--font-size-md);
+    }
+
+    .school-missing {
+        font-size: var(--font-size-base);
+        margin-bottom: 5px;
+    }
+
+    .link-button {
+        display: inline-block;
+        text-align: left;
+        padding: 0;
+        margin: 0;
+        color: var(--accent-color);
+        background: transparent;
+        border: 0;
+        font-size: var(--font-size-base);
     }
 </style>
 
