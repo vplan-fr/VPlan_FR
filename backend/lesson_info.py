@@ -684,8 +684,6 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
     out: dict[str, teacher_model.Teacher] = {}
 
     for plan_short in lesson.teachers or ():
-        if not plan_short:
-            continue
         out[plan_short] = teacher_model.Teacher(plan_short, last_seen=lesson._lesson_date)
 
     if lesson._is_scheduled:
