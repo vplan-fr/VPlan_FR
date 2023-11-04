@@ -2,10 +2,12 @@
     import {customFetch, get_favourites, load_meta} from "../utils.js";
     import Select from "../base_components/Select.svelte";
     import Button from "../base_components/Button.svelte";
-    import {onMount} from "svelte";
     import {notifications} from "../notifications.js";
 
-    import {favourites} from "../stores.js";
+    import {favourites, title} from "../stores.js";
+    import CollapsibleWrapper from "../base_components/CollapsibleWrapper.svelte";
+    import Collapsible from "../base_components/Collapsible.svelte";
+    import { onMount } from "svelte";
 
     let cur_favourites = [];
     let all_schools = {};
@@ -14,17 +16,30 @@
     $: school_nums = [...new Set(cur_favourites.map(obj => obj.school_num).filter(school_num => school_num !== ""))];
     let all_meta = {};
     let duplicated_courses_match = {};
+    let plan_types = [
+        {"display_name": "Klassenplan", "id": "forms"},
+        {"display_name": "Lehrerplan", "id": "teachers"},
+        {"display_name": "Raumplan", "id": "rooms"},
+        {"display_name": "Freie Räume", "id": "room_overview"}
+    ];
+    let plan_type_map = {
+        "forms": "Klasse",
+        "teachers": "Lehrer",
+        "rooms": "Raum"
+    }
     $: update_meta(school_nums);
 
-    onMount(() => {
-        get_schools();
-        get_authorized_schools();
-        get_favourites()
-            .then(data => {
-                load_favourites()
-            });
-    });
+    get_schools();
+    get_authorized_schools();
+    get_favourites()
+        .then(data => {
+            load_favourites()
+        });
 
+    onMount(() => {
+        location.hash = "#favorites";
+        title.set("Favoriten");
+    });
 
     // duplicate from school manager but hard to simplify
     function get_schools() {
@@ -100,7 +115,8 @@
     }
     // clear everything except for the school num of a favourite
     function clear_favourite(favourite) {
-        cur_favourites[favourite] = {"school_num": cur_favourites[favourite].school_num, "name": cur_favourites[favourite].name, "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}
+        cur_favourites[favourite] = {"school_num": cur_favourites[favourite].school_num, "name": cur_favourites[favourite].name, "priority": 0, "plan_type":cur_favourites[favourite].plan_type, "plan_value": "", "preferences": {}}
+        cur_favourites = cur_favourites;
     }
     // delete a favourite
     function delete_favourite(favourite) {
@@ -108,7 +124,6 @@
         new_array.splice(favourite, 1);
         cur_favourites = new_array;
     }
-
 
     // load all metadata for all schools needed
     function update_meta(school_nums) {
@@ -205,92 +220,166 @@
         return courses_by_subject;
     }
 
+    function update_authorized_schools() {
+        authorized_schools = [];
+        for(const school_id of authorized_school_ids) {
+            if(all_schools.hasOwnProperty(school_id)) {
+                authorized_schools.push({
+                    "display_name": all_schools[school_id].display_name,
+                    "id": school_id
+                });
+            }
+        }
+    }
+
+    let authorized_schools = [];
+    $: authorized_school_ids, all_schools, update_authorized_schools();
 </script>
 
-<button on:click={save_favourites}>Speichern</button>
-<button on:click={add_favourite}>Favorit hinzufügen</button>
-<br><br><br><br><br>
-{#each cur_favourites as _, favourite}
-    <p>
-        <label for="favourite_name">Name des Favoriten</label>
-        <input name="favourite_name" type="text" bind:value={cur_favourites[favourite].name}>
-        <!-- TODO: GET AUTHORIZED SCHOOLS -->
-        <select name="school_select" id="" bind:value={cur_favourites[favourite].school_num} on:change={() => clear_favourite(favourite)}>
-            {#each authorized_school_ids as school_id}
-                {#if all_schools.hasOwnProperty(school_id)}
-                    <option value={school_id}>{all_schools[school_id].display_name}</option>
-                {/if}
-            {/each}
-        </select>
-        <select name="plan_type_select" id="" bind:value={cur_favourites[favourite].plan_type} on:change={() => {cur_favourites[favourite].plan_value = ""; cur_favourites[favourite].preferences = {}}}>
-            <option value="forms">Klassenplan</option>
-            <option value="teachers">Lehrerplan</option>
-            <option value="rooms">Raumplan</option>
-            <option value="room_overview">Freie Räume</option>
-        </select>
-        {#if cur_favourites[favourite].plan_type === "forms"}
-            <Select data={get_values(cur_favourites[favourite].school_num, cur_favourites[favourite].plan_type, all_meta)} grouped={true} bind:selected_id={cur_favourites[favourite].plan_value} data_name="{cur_favourites[favourite].plan_type}">Klasse/Lehrer/Raum auswählen</Select>
-            <!--choosable courses-->
-            {#each Object.entries(
-                get_subjects(favourite, all_meta)
-            ).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}
-                {#if courses.length === 1}
-                    <li>{subject}:<input
-                            type="checkbox"
-                            bind:checked={cur_favourites[favourite].preferences[courses[0].class_number]}
-                    />
-                        {courses[0].class_number}
-                        {courses[0].teacher} |
-                        {courses[0].subject}
-                        {#if courses[0].group != null}
-                            ({courses[0].group})
-                        {/if}
-                    </li>
-                {:else}
-                    <li>
-                        {subject}
-                        {#if courses.length > 2}
-                            <Button class="inline-flex" on:click={() => {
-                                for (const course of courses) {
-                                    cur_favourites[favourite].preferences[course.class_number] = true;
-                                }
-                            }}>Alle Auswählen</Button>
-                            <Button class="inline-flex" on:click={() => {
-                                for (const course of courses) {
-                                    cur_favourites[favourite].preferences[course.class_number] = false;
-                                }
-                            }}>Keinen Auswählen</Button>
-                        {/if}
-                    </li>
-                    <ul>
-                        {#each courses as course}
-                            <li>
-                                <input
-                                        type="checkbox"
-                                        bind:checked={cur_favourites[favourite].preferences[course.class_number]}
-                                />
-                                {course.class_number}
-                                {course.teacher} |
-                                {course.subject}
-                                {#if course.group != null}
-                                    ({course.group})
+<CollapsibleWrapper class="extra-accordion-padding" let:closeOtherPanels>
+    {#each cur_favourites as _, favourite}
+        <Collapsible on:panel-open={closeOtherPanels} let:toggle>
+            <button slot="handle" on:click={toggle} class="toggle-button" class:first={favourite == 0}>{cur_favourites[favourite].name ? cur_favourites[favourite].name : "Unbenannter Favorit"}</button>
+            <div class="wrapper-content">
+                <label for="favourite_name">Name des Favoriten</label>
+                <input name="favourite_name" type="text" maxlength="40" class="textfield" bind:value={cur_favourites[favourite].name}>
+                <!-- TODO: GET AUTHORIZED SCHOOLS -->
+                <Select data={authorized_schools} bind:selected_id={cur_favourites[favourite].school_num} onchange={() => clear_favourite(favourite)}>Schule auswählen</Select>
+
+                <Select data={plan_types} bind:selected_id={cur_favourites[favourite].plan_type} onchange={() => {cur_favourites[favourite].plan_value = ""; cur_favourites[favourite].preferences = {}}}>Planart auswählen</Select>
+                {#if cur_favourites[favourite].plan_type}
+                    {#if cur_favourites[favourite].plan_type === "forms"}
+                        <Select data={get_values(cur_favourites[favourite].school_num, cur_favourites[favourite].plan_type, all_meta)} grouped={true} bind:selected_id={cur_favourites[favourite].plan_value} data_name="{cur_favourites[favourite].plan_type}">{plan_type_map[cur_favourites[favourite].plan_type]} auswählen</Select>
+                        <!--choosable courses-->
+                        <div class="course_chooser">
+                            {#each Object.entries(
+                                get_subjects(favourite, all_meta)
+                            ).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}
+                                {#if courses.length === 1}
+                                    <li>{subject}:<input
+                                            type="checkbox"
+                                            bind:checked={cur_favourites[favourite].preferences[courses[0].class_number]}
+                                    />
+                                        {courses[0].class_number}
+                                        {courses[0].teacher} |
+                                        {courses[0].subject}
+                                        {#if courses[0].group != null}
+                                            ({courses[0].group})
+                                        {/if}
+                                    </li>
+                                {:else}
+                                    <li>
+                                        {subject}
+                                        {#if courses.length > 2}
+                                            <Button class="inline-flex" on:click={() => {
+                                                for (const course of courses) {
+                                                    cur_favourites[favourite].preferences[course.class_number] = true;
+                                                }
+                                            }}>Alle Auswählen</Button>
+                                            <Button class="inline-flex" on:click={() => {
+                                                for (const course of courses) {
+                                                    cur_favourites[favourite].preferences[course.class_number] = false;
+                                                }
+                                            }}>Keinen Auswählen</Button>
+                                        {/if}
+                                    </li>
+                                    <ul>
+                                        {#each courses as course}
+                                            <li>
+                                                <input
+                                                        type="checkbox"
+                                                        bind:checked={cur_favourites[favourite].preferences[course.class_number]}
+                                                />
+                                                {course.class_number}
+                                                {course.teacher} |
+                                                {course.subject}
+                                                {#if course.group != null}
+                                                    ({course.group})
+                                                {/if}
+                                            </li>
+                                        {/each}
+                                    </ul>
                                 {/if}
-                            </li>
-                        {/each}
-                    </ul>
+                            {:else}
+                                Wähle eine Klasse um die Kurse für sie zu wählen
+                            {/each}
+                        </div>
+                    {:else if cur_favourites[favourite].plan_type !== "room_overview"}
+                        <Select data={get_values(cur_favourites[favourite].school_num, cur_favourites[favourite].plan_type, all_meta)} grouped={false} bind:selected_id={cur_favourites[favourite].plan_value} data_name="{cur_favourites[favourite].plan_type}">{plan_type_map[cur_favourites[favourite].plan_type]} auswählen</Select>
+                    {/if}
                 {/if}
-            {/each}
-
-
-
-        {:else if cur_favourites[favourite].plan_type !== "room_overview"}
-            <Select data={get_values(cur_favourites[favourite].school_num, cur_favourites[favourite].plan_type, all_meta)} grouped={false} bind:selected_id={cur_favourites[favourite].plan_value} data_name="{cur_favourites[favourite].plan_type}">Klasse/Lehrer/Raum auswählen</Select>
-        {/if}
-        <button on:click={() => {delete_favourite(favourite)}}>Favorit löschen</button>
-    </p>
-{/each}
-
+                <Button on:click={() => {delete_favourite(favourite);}} background="var(--cancelled-color)">Favorit löschen</Button>
+            </div>
+        </Collapsible>
+    {/each}
+    <Collapsible on:panel-open={closeOtherPanels}>
+        <button slot="handle" on:click={add_favourite} class="toggle-button last" style="font-weight: 600;"><span class="material-symbols-outlined">add</span> Favorit hinzufügen</button>
+    </Collapsible>
+</CollapsibleWrapper>
+<Button on:click={save_favourites} background="var(--accent-color)">Speichern</Button>
 
 <style lang="scss">
+    :global(.extra-accordion-padding) {
+        margin: 20px 0px;
+    }
 
+    .toggle-button {
+        font-size: var(--font-size-base);
+        width: 100%;
+        border: none;
+        padding: .7em;
+        background-color: rgba(255, 255, 255, 0.05);
+        color: var(--text-color);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: background-color .2s ease;
+
+        &.first {
+            border-top: unset;
+        }
+
+        &.last {
+            border-bottom: unset;
+        }
+
+        &:hover, &:focus-visible {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+    }
+
+    .wrapper-content {
+        padding: 20px 0px;
+        margin: 0px 5px;
+        display: flex;
+        flex-direction: column;
+        row-gap: 10px;
+    }
+
+    .toggle-button .material-symbols-outlined {
+        vertical-align: middle;
+        font-size: 1.5em;
+    }
+
+    label {
+        margin-bottom: -2px;
+        font-size: var(--font-size-base);
+    }
+
+    .textfield {
+        width: auto;
+        padding: 12px 20px;
+        box-sizing: border-box;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-color);
+        border-radius: 5px;
+        font-size: var(--font-size-sm);
+    }
+
+    .course_chooser {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        padding: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+    }
 </style>
