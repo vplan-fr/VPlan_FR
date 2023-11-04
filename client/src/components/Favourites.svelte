@@ -282,7 +282,7 @@
                                                 type="checkbox"
                                                 bind:checked={cur_favourites[favourite].preferences[course.class_number]}
                                             />
-                                            <!-- {courses[0].class_number} -->
+                                            <!-- {course.class_number} -->
                                             {#if course.group != null}
                                                 {course.group}
                                             {:else}
