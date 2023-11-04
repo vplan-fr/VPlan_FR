@@ -43,7 +43,7 @@
                         {/if}
                     {favourite.name}</button>
                 {/each}
-                <button class="nav-button" on:click={() => navigate_page("favourites")}><span class="material-symbols-outlined">account_circle</span> Favoriten wählen</button>
+                <button class="nav-button" on:click={() => navigate_page("favorites")}><span class="material-symbols-outlined">account_circle</span> Favoriten wählen</button>
             </Dropdown>
         </li>
         <li>
@@ -53,7 +53,7 @@
                 </button>
 
                 <button class="nav-button" on:click={() => $active_modal = "settings"}><span class="material-symbols-outlined">settings</span> Einstellungen</button>
-                <button class="nav-button" on:click={() => navigate_page("favourites")}><span class="material-symbols-outlined">account_circle</span> Favoriten wählen</button>
+                <button class="nav-button" on:click={() => navigate_page("favorites")}><span class="material-symbols-outlined">account_circle</span> Favoriten wählen</button>
                 <button class="nav-button" on:click={() => navigate_page("school_manager")}><span class="material-symbols-outlined">school</span> Schule wechseln</button>
                 <button class="nav-button" on:click={() => navigate_page("contact")}><span class="material-symbols-outlined">contact_page</span> Kontaktiere uns</button>
                 <button class="nav-button" on:click={() => $active_modal = "changelog"}><span class="material-symbols-outlined" class:new_notification={$new_changelogs_available}>assignment</span> Changelog {#if $new_changelogs_available}✨{/if}</button>

@@ -9,6 +9,7 @@
     export let grouped = false;
     export let data_name = "Elemente";
     export let preselect = null;
+    export let onchange = () => {};
     let toggle_button;
     let selected_index = (preselect !== null) ? preselect : null;
     let grouped_length = null;
@@ -85,6 +86,7 @@
             selected_elem = data[selected_index];
         }
         selected_id = selected_elem.id;
+        onchange();
     }
 
     function unselect() {
