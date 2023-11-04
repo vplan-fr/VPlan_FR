@@ -32,7 +32,7 @@
             </div>
         </div>
         <p class="responsive-text">
-            Man kann uns mit unserem <Button class="inline" on:click={() => navigate_page("contact")} small={true}>Kontaktformular</Button> oder per Mail unter <a href="mailto:elanus4506@gmail.com">elanus4506@gmail.com</a> erreichen.
+            Man kann uns mit unserem <button on:click={() => navigate_page("contact")} class="link-button" type="button">Kontaktformular</button> oder per Mail unter <a href="mailto:elanus4506@gmail.com">elanus4506@gmail.com</a> erreichen.
             <br>
             Hier ist außerdem unser <a href="https://github.com/ArtrenH/VPlan_FR">Github-Repository</a>.
         </p>
@@ -40,10 +40,6 @@
 </main>
 
 <style lang="scss">
-    :global(.inline) {
-        display: inline !important;
-    }
-
     .third_wrapper {
         display: flex;
         flex-direction: row;
@@ -103,5 +99,17 @@
 
     a {
         color: var(--accent-color);
+    }
+
+    .link-button {
+        display: inline-block;
+        text-align: left;
+        padding: 0;
+        margin: 0;
+        color: var(--accent-color);
+        background: transparent;
+        border: 0;
+        font-size: var(--font-size-base);
+        text-decoration: underline;
     }
 </style>
