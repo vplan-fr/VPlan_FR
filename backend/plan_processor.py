@@ -7,7 +7,7 @@ import logging
 from . import schools, default_plan
 from .cache import Cache
 from .meta_extractor import MetaExtractor
-from .teacher import Teacher, Teachers
+from .teacher import Teachers
 from .models import PlanLesson, Exam
 from .vplan_utils import group_forms, ParsedForm
 from .stats import LessonsStatistics
@@ -15,7 +15,7 @@ from .plan_extractor import StudentsPlanExtractor, TeachersPlanExtractor
 
 
 class PlanProcessor:
-    VERSION = "99"
+    VERSION = "101"
 
     def __init__(self, cache: Cache, school_number: str, *, logger: logging.Logger):
         self._logger = logger
@@ -35,7 +35,12 @@ class PlanProcessor:
             self._logger.warning("=> Could not load any cached teachers.")
             return
 
-        self.teachers = Teachers.deserialize(data)
+        try:
+            self.teachers = Teachers.deserialize(data)
+        except Exception as e:
+            self._logger.error("=> Could not deserialize cached teachers.", exc_info=e)
+            self.teachers = Teachers()
+            return
 
         self._logger.info(f"=> Loaded {len(self.teachers.teachers)} cached teachers.")
 
@@ -73,7 +78,7 @@ class PlanProcessor:
                 vplan_kl = None
 
             students_plan_extractor = StudentsPlanExtractor(
-                plan_kl, vplan_kl, self.teachers.abbreviation_by_surname(), logger=self._logger
+                plan_kl, vplan_kl, self.teachers, logger=self._logger
             )
 
             self.cache.store_plan_file(
@@ -139,7 +144,6 @@ class PlanProcessor:
 
             all_forms = self.meta_extractor.forms()
             all_forms_parsed = [ParsedForm.from_str(f) for f in all_forms]
-            students_plan_extractor.teacher_abbreviation_by_surname = self.teachers.abbreviation_by_surname()
 
             self.cache.store_plan_file(
                 date, timestamp,
@@ -158,7 +162,7 @@ class PlanProcessor:
                     plan_ra = None
 
                 teachers_plan_extractor = TeachersPlanExtractor(
-                    plan_le, plan_ra, self.teachers.abbreviation_by_surname(), logger=self._logger
+                    plan_le, plan_ra, self.teachers, logger=self._logger
                 )
 
                 teachers_plans = {
@@ -196,7 +200,6 @@ class PlanProcessor:
                     "rooms.teachers.json"
                 )
 
-            self.add_teachers(students_plan_extractor.extracted_teachers)
             self.cache.update_newest(date)
 
         self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")
@@ -214,7 +217,7 @@ class PlanProcessor:
         self.cache.store_meta_file(json.dumps(data), "meta.json")
         self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
-        self.add_teachers({t.abbreviation: t for t in self.meta_extractor.teachers()})
+        self.teachers.add_teachers(*self.meta_extractor.teachers())
         self.scrape_teachers()
         self.update_forms()
         self.update_rooms()
@@ -228,41 +231,21 @@ class PlanProcessor:
 
         if self.school_number not in schools.teacher_scrapers:
             self._logger.debug("=> No teacher scraper available for this school.")
-            scraped_teachers = {}
+            scraped_teachers = []
         else:
             self._logger.info("=> Scraping teachers...")
             try:
-                _scraped_teachers = schools.teacher_scrapers[str(self.school_number)]()
+                scraped_teachers = schools.teacher_scrapers[str(self.school_number)]()
             except Exception as e:
                 self._logger.error(" -> Exception while scraping teachers.", exc_info=e)
-                scraped_teachers = {}
-            else:
-                scraped_teachers = {teacher.abbreviation: teacher for teacher in _scraped_teachers}
+                scraped_teachers = []
 
             self._logger.debug(f" -> Found {len(scraped_teachers)} teachers.")
 
-        self.add_teachers(scraped_teachers, update_timestamp=True)
+        self.teachers.add_teachers(*scraped_teachers)
+
+        self.teachers.scrape_timestamp = datetime.datetime.now()
         self.store_teachers()
-
-    def add_teachers(self, new_teachers: dict[str, Teacher], update_timestamp: bool = False):
-        self._logger.debug(f"=> Updating teachers... ({len(new_teachers)})")
-
-        old_teachers = self.teachers.to_dict()
-        all_abbreviations = set(old_teachers.keys()) | set(new_teachers.keys())
-
-        merged_teachers = []
-        for abbreviation in all_abbreviations:
-            new_teacher = new_teachers.get(abbreviation, Teacher(abbreviation))
-            old_teacher = old_teachers.get(abbreviation, Teacher(abbreviation))
-
-            merged_teachers.append(
-                Teacher.merge(new_teacher, old_teacher)
-            )
-
-        self.teachers = Teachers(
-            teachers=merged_teachers,
-            scrape_timestamp=datetime.datetime.now() if update_timestamp else self.teachers.scrape_timestamp
-        )
 
     def store_teachers(self):
         self._logger.info("* Storing teachers...")
