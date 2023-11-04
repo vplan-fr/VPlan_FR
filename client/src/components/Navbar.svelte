@@ -15,6 +15,15 @@
                 notifications.danger(error.message);
             });
     }
+
+    let favourite_icon_map = {
+        "forms": "school",
+        "teachers": "elderly",
+        "rooms": "sensor_door",
+        "room_overview": "nest_multi_room"
+    }
+
+    $: console.log($favourites);
 </script>
 
 <nav transition:fly={{y:-64}}>
@@ -26,24 +35,14 @@
         <li>
             <Dropdown let:toggle>
                 <button slot="toggle_button" on:click={toggle} class="nav-button">
-                    {#if $selected_favourite !== -1}
-                        <!-- TODO: make different if some favourite selected -->
-                        <span class="material-symbols-outlined">star</span>
-                    {:else}
-                        <span class="material-symbols-outlined">star</span>
-                    {/if}
+                    <span class="material-symbols-outlined" class:favourite-selected={$selected_favourite !== -1}>star</span>
                 </button>
                 {#each $favourites as favourite, index}
                     <button class="nav-button" on:click={() => {selected_favourite.set(index); navigate_page("plan")}}>
-                        {#if $selected_favourite === index}
-                            <!-- TODO: make different if selected -->
-                            <span class="material-symbols-outlined">star</span>
-                        {:else}
-                            <span class="material-symbols-outlined">star</span>
-                        {/if}
+                        <span class="material-symbols-outlined" class:favourite-selected={$selected_favourite === index}>{favourite_icon_map[favourite.plan_type]}</span>
                     {favourite.name}</button>
                 {/each}
-                <button class="nav-button" on:click={() => navigate_page("favorites")}><span class="material-symbols-outlined">account_circle</span> Favoriten wählen</button>
+                <button class="nav-button" on:click={() => navigate_page("favorites")}><span class="material-symbols-outlined">settings</span> Favoriten verwalten</button>
             </Dropdown>
         </li>
         <li>
@@ -53,7 +52,6 @@
                 </button>
 
                 <button class="nav-button" on:click={() => $active_modal = "settings"}><span class="material-symbols-outlined">settings</span> Einstellungen</button>
-                <button class="nav-button" on:click={() => navigate_page("favorites")}><span class="material-symbols-outlined">account_circle</span> Favoriten wählen</button>
                 <button class="nav-button" on:click={() => navigate_page("school_manager")}><span class="material-symbols-outlined">school</span> Schule wechseln</button>
                 <button class="nav-button" on:click={() => navigate_page("contact")}><span class="material-symbols-outlined">contact_page</span> Kontaktiere uns</button>
                 <button class="nav-button" on:click={() => $active_modal = "changelog"}><span class="material-symbols-outlined" class:new_notification={$new_changelogs_available}>assignment</span> Changelog {#if $new_changelogs_available}✨{/if}</button>
@@ -159,5 +157,10 @@
             aspect-ratio: 1;
             border-radius: 999vw;
         }
+    }
+    .favourite-selected {
+        background: rgba(255, 255, 255, 0.2);
+        outline: 4px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999vw;
     }
 </style>

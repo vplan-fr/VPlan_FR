@@ -10,6 +10,7 @@
     import { onMount } from "svelte";
 
     let cur_favourites = [];
+    let loading = true;
     let all_schools = {};
     let authorized_school_ids = [];
     let school_nums = [];
@@ -72,12 +73,14 @@
         - duplicated courses are unified: for each course c1 that already exists as course c0, the pair c1: c0 is put into an object -> later, the check-value of c1 is set to that of c0
     */
     function load_favourites() {
+        loading = true;
         // change preferences to dict
         let temp_fav = $favourites;
         console.log(temp_fav);
         temp_fav = temp_fav.map(item => ({ ...item, preferences: (item.preferences || []).reduce((obj, preference) => ({ ...obj, [preference]: false }), {}) }));
         cur_favourites = temp_fav;
         console.log(cur_favourites);
+        loading = false;
     }
     function save_favourites() {
         let new_favourites = [];
@@ -243,7 +246,6 @@
             <div class="wrapper-content">
                 <label for="favourite_name">Name des Favoriten</label>
                 <input name="favourite_name" type="text" maxlength="40" class="textfield" bind:value={cur_favourites[favourite].name}>
-                <!-- TODO: GET AUTHORIZED SCHOOLS -->
                 <Select data={authorized_schools} bind:selected_id={cur_favourites[favourite].school_num} onchange={() => clear_favourite(favourite)}>Schule auswählen</Select>
 
                 <Select data={plan_types} bind:selected_id={cur_favourites[favourite].plan_type} onchange={() => {cur_favourites[favourite].plan_value = ""; cur_favourites[favourite].preferences = {}}}>Planart auswählen</Select>
@@ -255,51 +257,40 @@
                             {#each Object.entries(
                                 get_subjects(favourite, all_meta)
                             ).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}
-                                {#if courses.length === 1}
-                                    <li>{subject}:<input
-                                            type="checkbox"
-                                            bind:checked={cur_favourites[favourite].preferences[courses[0].class_number]}
-                                    />
-                                        {courses[0].class_number}
-                                        {courses[0].teacher} |
-                                        {courses[0].subject}
-                                        {#if courses[0].group != null}
-                                            ({courses[0].group})
-                                        {/if}
-                                    </li>
-                                {:else}
-                                    <li>
-                                        {subject}
-                                        {#if courses.length > 2}
-                                            <Button class="inline-flex" on:click={() => {
-                                                for (const course of courses) {
-                                                    cur_favourites[favourite].preferences[course.class_number] = true;
-                                                }
-                                            }}>Alle Auswählen</Button>
-                                            <Button class="inline-flex" on:click={() => {
-                                                for (const course of courses) {
-                                                    cur_favourites[favourite].preferences[course.class_number] = false;
-                                                }
-                                            }}>Keinen Auswählen</Button>
-                                        {/if}
-                                    </li>
-                                    <ul>
-                                        {#each courses as course}
-                                            <li>
-                                                <input
-                                                        type="checkbox"
-                                                        bind:checked={cur_favourites[favourite].preferences[course.class_number]}
-                                                />
-                                                {course.class_number}
-                                                {course.teacher} |
-                                                {course.subject}
-                                                {#if course.group != null}
-                                                    ({course.group})
-                                                {/if}
-                                            </li>
-                                        {/each}
-                                    </ul>
-                                {/if}
+                                <div class="horizontal-align margin-bottom">
+                                    <h1 class="responsive-heading subject-heading">{subject}</h1>
+                                    {#if courses.length > 2}
+                                        <Button on:click={() => {
+                                            for (const course of courses) {
+                                                cur_favourites[favourite].preferences[course.class_number] = true;
+                                            }
+                                        }}
+                                        small={true}>Alle Auswählen</Button>
+                                        <Button on:click={() => {
+                                            for (const course of courses) {
+                                                cur_favourites[favourite].preferences[course.class_number] = false;
+                                            }
+                                        }}
+                                        small={true}>Keinen Auswählen</Button>
+                                    {/if}
+                                </div>
+                                <ul class="course-list">
+                                    {#each courses as course}
+                                        <li>
+                                            <input
+                                                type="checkbox"
+                                                bind:checked={cur_favourites[favourite].preferences[course.class_number]}
+                                            />
+                                            <!-- {courses[0].class_number} -->
+                                            {#if course.group != null}
+                                                {course.group}
+                                            {:else}
+                                                {courses[0].subject}
+                                            {/if}
+                                            | {courses[0].teacher}
+                                        </li>
+                                    {/each}
+                                </ul>
                             {:else}
                                 Wähle eine Klasse um die Kurse für sie zu wählen
                             {/each}
@@ -311,6 +302,12 @@
                 <Button on:click={() => {delete_favourite(favourite);}} background="var(--cancelled-color)">Favorit löschen</Button>
             </div>
         </Collapsible>
+    {:else}
+        {#if loading}
+            <Collapsible>
+                <button slot="handle" class="toggle-button first"><span class="material-symbols-outlined rotating">sync</span></button>
+            </Collapsible>
+        {/if}
     {/each}
     <Collapsible on:panel-open={closeOtherPanels}>
         <button slot="handle" on:click={add_favourite} class="toggle-button last" style="font-weight: 600;"><span class="material-symbols-outlined">add</span> Favorit hinzufügen</button>
@@ -381,5 +378,40 @@
         border-radius: 5px;
         padding: 10px;
         border: 2px solid rgba(255, 255, 255, 0.1);
+        font-size: var(--font-size-base);
+    }
+
+    .rotating {
+        animation: rotating .75s linear infinite;
+        transform-origin: 50% 48%;
+    }
+
+    @keyframes rotating {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .horizontal-align {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .margin-bottom {
+        margin-bottom: 5px;
+    }
+
+    .subject-heading {
+        margin-bottom: 0px !important;
+    }
+
+    .course-list {
+        margin-bottom: 15px;
     }
 </style>
