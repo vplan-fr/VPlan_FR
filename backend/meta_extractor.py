@@ -78,7 +78,7 @@ class DailyMetaExtractor:
 
 
 class MetaExtractor:
-    def __init__(self, cache: Cache, num_last_days: int = 10, *, logger: logging.Logger):
+    def __init__(self, cache: Cache, num_last_days: int | None = 10, *, logger: logging.Logger):
         self._logger = logger
 
         self.cache = cache
@@ -90,6 +90,7 @@ class MetaExtractor:
     def iterate_daily_extractors(self) -> typing.Generator[DailyMetaExtractor, None, None]:
         for day in self.cache.get_days()[:self.num_last_days]:
             for timestamp in self.cache.get_timestamps(day):
+                self._logger.log(5, f"Yielding DailyMetaExtractor for {day!s} {timestamp!s}.")
                 if (day, timestamp) in self._daily_extractors:
                     yield self._daily_extractors[(day, timestamp)]
                 else:

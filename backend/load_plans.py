@@ -54,29 +54,33 @@ class PlanCrawler:
             await asyncio.sleep(interval)
 
 
-async def get_clients(session: aiohttp.ClientSession | None = None,
-                      proxy_provider: proxies.ProxyProvider | None = None) -> dict[str, PlanCrawler]:
+async def get_crawlers(session: aiohttp.ClientSession | None = None,
+                       proxy_provider: proxies.ProxyProvider | None = None,
+                       create_clients: bool = True) -> dict[str, PlanCrawler]:
     creds_provider = creds_provider_factory(Path("creds.json"))
     _creds = creds_provider.get_creds()
 
-    clients = {}
+    crawlers = {}
 
     for school_name, data in _creds.items():
         specifier = data['school_number'] if 'school_number' in data else school_name
         logger = logging.getLogger(specifier)
         cache = Cache(Path(f".cache/{specifier}").absolute())
 
-        data["hosting"]["creds"] = data["hosting"]["creds"].get("teachers", data["hosting"]["creds"].get("students"))
-        hosting = Hosting.deserialize(data["hosting"])
-        client = IndiwareStundenplanerClient(hosting, session)
+        if create_clients:
+            data["hosting"]["creds"] = data["hosting"]["creds"].get("teachers", data["hosting"]["creds"].get("students"))
+            hosting = Hosting.deserialize(data["hosting"])
+            client = IndiwareStundenplanerClient(hosting, session)
 
-        for plan_client in client.substitution_plan_clients:
-            plan_client.proxy_provider = proxy_provider
-            plan_client.no_delay = True
+            for plan_client in client.substitution_plan_clients:
+                plan_client.proxy_provider = proxy_provider
+                plan_client.no_delay = True
 
-        for plan_client in client.indiware_mobil_clients:
-            plan_client.proxy_provider = proxy_provider
-            plan_client.no_delay = True
+            for plan_client in client.indiware_mobil_clients:
+                plan_client.proxy_provider = proxy_provider
+                plan_client.no_delay = True
+        else:
+            client = None
 
         plan_downloader = PlanDownloader(client, cache, logger=logger)
         plan_processor = PlanProcessor(cache, specifier, logger=logger)
@@ -84,9 +88,9 @@ async def get_clients(session: aiohttp.ClientSession | None = None,
         # create crawler
         p = PlanCrawler(plan_downloader, plan_processor)
 
-        clients[school_name] = p
+        crawlers[school_name] = p
 
-    return clients
+    return crawlers
 
 
 async def main():
@@ -119,7 +123,7 @@ async def main():
                                            never_raise_out_of_proxies=args.never_raise_out_of_proxies)
     # list(proxy_provider.fetch_proxies())
 
-    clients = await get_clients(proxy_provider=proxy_provider)
+    clients = await get_crawlers(proxy_provider=proxy_provider, create_clients=not args.only_process)
     try:
         if args.only_process:
             for client in clients.values():
