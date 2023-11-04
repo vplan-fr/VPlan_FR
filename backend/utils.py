@@ -7,6 +7,9 @@ from backend.load_plans import get_crawlers
 
 
 async def main():
+    logging.basicConfig(level="DEBUG", format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
+                        datefmt="%Y-%m-%d %H:%M:%S")
+
     argparser = argparse.ArgumentParser()
 
     subparsers = argparser.add_subparsers(dest="subcommand")
@@ -19,9 +22,6 @@ async def main():
     crawlers = await get_crawlers(create_clients=False)
 
     if args.subcommand == "migrate-all":
-        logging.basicConfig(level="DEBUG", format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
-                            datefmt="%Y-%m-%d %H:%M:%S")
-
         for crawler in crawlers.values():
             for day in crawler.plan_processor.cache.get_days():
                 crawler.plan_processor.cache.update_newest(day)
@@ -35,8 +35,8 @@ async def main():
             crawler.plan_processor.store_teachers()
 
     elif args.subcommand == "extract-all-teachers":
-        logging.basicConfig(level=1, format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
-                            datefmt="%Y-%m-%d %H:%M:%S")
+        logging.basicConfig(level="DEBUG", format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
+                            datefmt="%Y-%m-%d %H:%M:%S", force=True)
 
         for crawler in crawlers.values():
             crawler.plan_processor._logger.info("Extracting teachers...")
