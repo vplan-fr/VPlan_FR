@@ -377,10 +377,10 @@
         {:else if $logged_in}
             {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
-                {#if $selected_favourite !== -1 && $favourites[$selected_favourite]}
+                <!-- {#if $selected_favourite !== -1 && $favourites[$selected_favourite]}
                     Gewählter Favorit: {$favourites[$selected_favourite].name}
                     <br>
-                {/if}
+                {/if} -->
                 <div class="controls-wrapper">
                     <!-- Datepicker -->
                     <div class="control" id="c1">
