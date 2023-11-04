@@ -30,7 +30,7 @@
     let all_revisions;
     let plan_type;
     let plan_value;
-    let teacher_list;
+    let teacher_dict;
     let all_rooms;
     let grouped_forms;
     let api_base;
@@ -62,7 +62,7 @@
         all_revisions = [".newest"];
         plan_type = null;
         plan_value = null;
-        teacher_list = [];
+        teacher_dict = {};
         all_rooms = null;
         grouped_forms = [];
         api_base = null;
@@ -91,7 +91,7 @@
                 }
                 meta = data[0];
                 all_rooms = meta.rooms;
-                teacher_list = Object.keys(meta.teachers);
+                teacher_dict = meta.teachers;
                 grouped_forms = meta.forms.grouped_forms;
                 enabled_dates = Object.keys(meta.dates);
                 if(!date) {
@@ -202,10 +202,17 @@
         }
     }
 
-    function gen_teacher_arr(teacher_list) {
+    function gen_teacher_arr(teacher_dict) {
         teacher_arr = [];
-        for(let teacher of teacher_list) {
-            teacher_arr.push({"id": teacher, "display_name": teacher});
+        for(let teacher of Object.values(teacher_dict)) {
+            let long_name = teacher.full_surname || teacher.plan_long;
+            let display_name = teacher.plan_short;
+
+            if (long_name != null) {
+                display_name += ` (${long_name})`;
+            }
+
+            teacher_arr.push({"id": teacher.plan_short, "display_name": display_name});
         }
     }
 
@@ -319,7 +326,7 @@
     $: selected_form && set_plan("forms", selected_form);
     $: gen_form_arr(grouped_forms);
     $: selected_teacher && set_plan("teachers", selected_teacher);
-    $: gen_teacher_arr(teacher_list);
+    $: gen_teacher_arr(teacher_dict);
     $: selected_room && set_plan("rooms", selected_room);
     $: gen_room_arr(grouped_rooms);
     $: gen_revision_arr(all_revisions);
