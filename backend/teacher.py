@@ -2,25 +2,47 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
+import typing
 
 
-@dataclasses.dataclass
 class Teacher:
-    plan_short: str
-    full_name: str | None = None
-    full_surname: str | None = None
-    plan_long: str | None = None
-    info: str | None = None  # TODO: to set?
-    subjects: set[str] = dataclasses.field(default_factory=set)
-    contact_link: str | None = None
-    image_path: str | None = None
-    last_seen: datetime.date = datetime.date.min
+    def __init__(self,
+                 plan_short: str,
+                 full_name: str | None = None,
+                 full_surname: str | None = None,
+                 _plan_long: dict[str, int] = None,
+                 info: str | None = None,
+                 subjects: set[str] = None,
+                 contact_link: str | None = None,
+                 image_path: str | None = None,
+                 last_seen: datetime.date = datetime.date.min,
+                 plan_long: str = None):
+        _plan_long = {} if _plan_long is None else _plan_long
+        subjects = set() if subjects is None else subjects
+
+        if plan_long is not None:
+            _plan_long[plan_long] = 1
+
+        self.plan_short = plan_short
+        self.full_name = full_name
+        self.full_surname = full_surname
+        self._plan_long: dict[str, int] = _plan_long
+        self.info = info  # TODO: to set?
+        self.subjects = subjects
+        self.contact_link = contact_link
+        self.image_path = image_path
+        self.last_seen = last_seen
+
+    @property
+    def plan_long(self) -> str:
+        return max(self._plan_long, key=self._plan_long.get, default=None)
 
     def serialize(self) -> dict:
         return {
             "plan_short": self.plan_short,
             "full_name": self.full_name,
             "full_surname": self.full_surname,
+            "_plan_long": self._plan_long,
             "plan_long": self.plan_long,
             "info": self.info,
             "subjects": list(self.subjects),
@@ -35,7 +57,7 @@ class Teacher:
             plan_short=data["plan_short"],
             full_name=data["full_name"],
             full_surname=data["full_surname"],
-            plan_long=data["plan_long"],
+            _plan_long=data["_plan_long"],
             info=data["info"],
             subjects=set(data["subjects"]),
             contact_link=data.get("contact_link"),
@@ -47,7 +69,7 @@ class Teacher:
         return Teacher(
             full_name=other.full_name or self.full_name,
             full_surname=other.full_surname or self.full_surname,
-            plan_long=other.plan_long or self.plan_long,
+            _plan_long={k: v1 + v2 for k, v1, v2 in zip_dicts(self._plan_long, other._plan_long, default=0)},
             info=other.info or self.info,
             plan_short=other.plan_short or self.plan_short,
             subjects=other.subjects | self.subjects,
@@ -105,3 +127,16 @@ class Teachers:
 
     def query_plan_teacher(self, long_or_short: str) -> Teacher:
         return self.teachers.get(long_or_short, self.query_one(plan_long=long_or_short))
+
+
+_UNSET = object()
+
+
+def zip_dicts(*dicts: dict, default=_UNSET) -> typing.Generator[tuple, None, None]:
+    if default is _UNSET:
+        all_keys = set(dicts[0]).intersection(*dicts)
+    else:
+        all_keys = set().union(*dicts)
+
+    for key in all_keys:
+        yield key, *tuple(d.get(key, default) for d in dicts)
