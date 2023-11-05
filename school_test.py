@@ -20,6 +20,7 @@ def match_status_code(code) -> Tuple[bool, bool]:
 
 # returns a dict with keys school nums and values urls
 def get_other_servers() -> Dict[str, str]:
+    return {}
     url = f"https://www.stundenplan24.de/extern/links24k.txt"
     username = os.getenv("LINKS24_USER")
     password = os.getenv("LINKS24_PASSWORD")
