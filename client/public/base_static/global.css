@@ -3,7 +3,7 @@
 
     --text-color: white;
     --background: #121212;
-    --accent-color: #BB86FC;
+    --accent-color: #A860FF;
     --cancelled-color: #FF1744;
     --rainbow: hsl(var(--hue) 60% 30%);
     --fallback-rainbow: linear-gradient(
