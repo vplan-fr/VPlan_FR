@@ -45,7 +45,7 @@ SETTINGS = {
         "type": "color",
     },
     "accent_color": {
-        "default": "#bb86fc",
+        "default": "#A860FF",
         "type": "color",
     },
     "text_color": {
