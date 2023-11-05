@@ -28,7 +28,7 @@ def get_teachers() -> list[Teacher]:
                 if name[:-4].startswith(teacher_data[2]) and name[:-4].endswith(teacher_data[1]):
                     teacher_lst.append(Teacher(
                         plan_short=teacher_data[0],
-                        plan_long=name[:-4].replace("_", " "),
+                        full_surname=name[:-4].replace("_", " "),
                         image_path=name
                     ))
                     break
@@ -36,7 +36,7 @@ def get_teachers() -> list[Teacher]:
                 teacher_lst.append(
                     Teacher(
                         plan_short=teacher_data[0],
-                        plan_long=f"{teacher_data[2]} {teacher_data[1]}",
+                        full_surname=f"{teacher_data[2]} {teacher_data[1]}",
                     )
                 )
     return teacher_lst
