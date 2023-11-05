@@ -746,7 +746,8 @@ class Plan:
                     forms={form.short_name},
                     teachers=(
                         (current_lesson.teachers if not current_lesson.teacher_changed else None)
-                        or ({class_data.teacher} if class_data is not None else None)
+                        or ({class_data.teacher} if class_data is not None and class_data.teacher else None)
+                        or (set() if class_data is not None and not class_data.teacher else None)
                     ),
                     rooms=current_lesson.rooms if not current_lesson.room_changed else None,
                     course=(
