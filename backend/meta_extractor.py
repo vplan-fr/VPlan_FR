@@ -3,13 +3,12 @@ from __future__ import annotations
 import datetime
 import logging
 import typing
-from collections import defaultdict
 from xml.etree import ElementTree as ET
 
 from stundenplan24_py import indiware_mobil
 
 from .cache import Cache
-from .models import DefaultTimesInfo
+from .models import DefaultTimesInfo, Plan
 from .teacher import Teacher
 
 
@@ -18,18 +17,17 @@ class DailyMetaExtractor:
 
     def __init__(self, plankl_file: str):
         self.form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plankl_file))
+        self.plan = Plan.from_form_plan(self.form_plan)
 
     def teachers(self) -> list[Teacher]:
         excluded_subjects = ["KL", "AnSt", "FÖ", "WB", "GTA", "EU4"]
 
         out = []
-        for form in self.form_plan.forms:
-            for lesson in form.lessons:
-                for teacher in (lesson.teacher() or "").split():
-                    if not teacher:
-                        continue
-                    out.append(Teacher(plan_short=teacher, last_seen=self.form_plan.date))
+        for lesson in self.plan.lessons:
+            for teacher in lesson.teachers or []:
+                out.append(Teacher(plan_short=teacher, last_seen=self.form_plan.date))
 
+        for form in self.form_plan.forms:
             for class_ in form.classes.values():
                 subjects = set(s for s in class_.subject.split() if s not in excluded_subjects)
 
@@ -47,9 +45,8 @@ class DailyMetaExtractor:
     def rooms(self) -> set[str]:
         return set(
             room
-            for form in self.form_plan.forms
-            for lesson in form.lessons if lesson.room()
-            for room in lesson.room().split()
+            for lesson in self.plan.lessons
+            for room in lesson.rooms or []
         )
 
     def courses(self, form_name: str) -> dict[str, dict]:
