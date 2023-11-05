@@ -651,7 +651,8 @@ class ParsedLessonInfo:
                 if hasattr(message.parsed, "_teachers"):
                     try:
                         message.parsed.other_info_value = [
-                            teachers.query_plan_teacher(teacher_str).plan_short for teacher_str in message.parsed._teachers
+                            teachers.query_plan_teacher(teacher_str).plan_short for teacher_str in
+                            message.parsed._teachers
                         ]
                     except LookupError:
                         message.parsed.other_info_value = None
@@ -868,17 +869,14 @@ def add_fuzzy_teacher_links(text: str, teachers: teacher_model.Teachers, date: d
         try:
             plan_short = teachers.query_plan_teacher(surname_or_abbreviation).plan_short
         except LookupError:
-            plan_short = None
+            return
 
-        if plan_short is not None:
-            return [
-                LessonInfoTextSegment(
-                    surname_or_abbreviation,
-                    link=LessonInfoTextSegmentLink("teachers", [plan_short], date, None)
-                )
-            ]
-        else:
-            return None
+        return [
+            LessonInfoTextSegment(
+                surname_or_abbreviation,
+                link=LessonInfoTextSegmentLink("teachers", [plan_short], date, None)
+            )
+        ]
 
     return add_fuzzy_with_validator(text, [_InfoParsers._teacher, r"\b\w+"], validator)
 

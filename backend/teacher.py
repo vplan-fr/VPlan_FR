@@ -126,7 +126,10 @@ class Teachers:
             raise LookupError("No teacher found matching the given attributes.") from e
 
     def query_plan_teacher(self, long_or_short: str) -> Teacher:
-        return self.teachers.get(long_or_short, self.query_one(plan_long=long_or_short))
+        try:
+            return self.teachers[long_or_short]
+        except KeyError:
+            return self.query_one(plan_long=long_or_short)
 
 
 _UNSET = object()
