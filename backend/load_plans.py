@@ -123,37 +123,39 @@ async def main():
                                            never_raise_out_of_proxies=args.never_raise_out_of_proxies)
     # list(proxy_provider.fetch_proxies())
 
-    clients = await get_crawlers(proxy_provider=proxy_provider, create_clients=not args.only_process)
+    crawlers = await get_crawlers(proxy_provider=proxy_provider, create_clients=not args.only_process)
     try:
         if args.only_process:
-            for client in clients.values():
-                client.plan_downloader.migrate_all()
-                client.plan_processor.update_all()
+            for crawler in crawlers.values():
+                crawler.plan_downloader.migrate_all()
+                crawler.plan_processor.update_all()
         elif args.only_download:
             if args.once:
-                for client in clients.values():
-                    client.plan_downloader.migrate_all()
+                for crawler in crawlers.values():
+                    crawler.plan_downloader.migrate_all()
                 await asyncio.gather(
-                    *[client.plan_downloader.update_fetch() for client in clients.values()]
+                    *[crawler.plan_downloader.update_fetch() for crawler in crawlers.values()]
                 )
             else:
                 await asyncio.gather(
-                    *[client.plan_downloader.check_infinite(ignore_exceptions=args.ignore_exceptions)
-                      for client in clients.values()]
+                    *[crawler.plan_downloader.check_infinite(ignore_exceptions=args.ignore_exceptions)
+                      for crawler in crawlers.values()]
                 )
         else:
             await asyncio.gather(
-                *[client.check_infinite(once=args.once, ignore_exceptions=args.ignore_exceptions)
-                  for client in clients.values()]
+                *[crawler.check_infinite(once=args.once, ignore_exceptions=args.ignore_exceptions)
+                  for crawler in crawlers.values()]
             )
     finally:
         logging.info("Exit.")
         logging.debug("Closing clients...")
-        await asyncio.gather(*(client.plan_downloader.client.close() for client in clients.values()),
-                             return_exceptions=True)
-        proxy_provider.store_proxies()
-        for client in clients.values():
-            client.plan_processor.store_teachers()
+        if not args.only_process:
+            await asyncio.gather(*(client.plan_downloader.client.close() for client in crawlers.values()),
+                                 return_exceptions=True)
+            proxy_provider.store_proxies()
+
+        for crawler in crawlers.values():
+            crawler.plan_processor.store_teachers()
 
 
 if __name__ == "__main__":
