@@ -55,7 +55,7 @@ def meta(school_num) -> Response:
         "forms": forms_data,
         "rooms": rooms_data,
         "dates": dates_data,
-        "date": date.strftime("%Y-%m-%d")
+        "date": date.strftime("%Y-%m-%d") if date else None
     })
 
 
