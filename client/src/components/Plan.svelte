@@ -365,6 +365,7 @@
                                         date = text_segment.link.date;
                                         plan_type = text_segment.link.type;
                                         plan_value = text_segment.link.value[0];
+                                        selected_favourite.set(-1);
                                     }}>
                                         <div class="clickable">{text_segment.text}</div>
                                     </button>
@@ -381,6 +382,7 @@
                                                     date=text_segment.link.date;
                                                     plan_type = text_segment.link.type;
                                                     plan_value = item;
+                                                    selected_favourite.set(-1);
                                                 }}>{item}</button>
                                             {/each}
                                         </Dropdown>
