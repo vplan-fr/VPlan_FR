@@ -252,7 +252,7 @@ def parse_absent_element(element: str) -> tuple[str, set[int]]:
     return label, periods
 
 
-def find_closest_date(dates):
+def find_closest_date(dates) -> datetime.datetime | None:
     now = datetime.datetime.now()
     today = now.date()
     future_dates = [d for d in dates if d > today]
