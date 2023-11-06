@@ -137,7 +137,12 @@ class User(UserMixin):
                 favourite["preferences"] = None
                 new_favourites.append(favourite)
                 continue
-            if favourite["plan_value"] not in json.loads(cache.get_meta_file(f"{favourite['plan_type']}.json"))[favourite["plan_type"]]:
+            available_plans = json.loads(cache.get_meta_file(f"{favourite['plan_type']}.json"))
+            if favourite["plan_type"] in available_plans:
+                available_plans = available_plans[favourite["plan_type"]].keys()
+            else:
+                available_plans = available_plans.keys()
+            if favourite["plan_value"] not in available_plans:
                 return send_error("invalider Plan (Klasse/Lehrer/Raum) existiert nicht")
             if favourite["plan_type"] != "forms":
                 favourite["preferences"] = None
