@@ -11,22 +11,26 @@
     let register_visible = location.hash === "#register";
     let login_password_visible = false;
     let register_password_visible = false;
+    let action_in_progress = false;
 
     function login() {
         let formData = new FormData();
         formData.append('nickname', l_nickname);
         formData.append('pw', l_password);
+        action_in_progress = true;
         customFetch('/auth/login', {
             method: 'POST',
             body: formData,
         })
             .then(data => {
                 $logged_in = true;
+                action_in_progress = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
                 navigate_page("school_manager");
             })
             .catch(error => {
                 $logged_in = false;
+                action_in_progress = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
                 notifications.danger(error.message);
             }
@@ -37,17 +41,20 @@
         let formData = new FormData();
         formData.append('nickname', s_nickname);
         formData.append('pw', s_password);
+        action_in_progress = true;
         customFetch('/auth/signup', {
             method: 'POST',
             body: formData
         })
             .then(data => {
                 $logged_in = true;
+                action_in_progress = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
                 navigate_page("pwa_install");
             })
             .catch(error => {
                 $logged_in = false;
+                action_in_progress = false;
                 localStorage.setItem('logged_in', `${$logged_in}`);
                 notifications.danger(error.message);
             }
@@ -85,7 +92,7 @@
             <input disabled={register_visible} autocomplete="current-password" name="l_password" on:input={(event) => {l_password = event.target.value}} type={login_password_visible ? "text" : "password"} minlength="1" required class="textfield" placeholder="Passwort"/>
         </div>
         <button class="link-button" id="forgot_password" type="button" on:click={() => {alert('Verkackt :D Aber da wir keine E-Mails zum Registrieren benutzen ist ein Passwort-Reset nicht möglich. Aber frag uns einfach und wir helfen dir beim wiederherstellen deiner Einstellungen & Präferenzen bei einem neuen Account.')}}>Passwort vergessen?</button>
-        <button class="default-button" type="submit">Login</button>
+        <button class="default-button" type="submit" disabled={action_in_progress}>Login</button>
         <span class="no-account-info">Noch kein Account? <button on:click={toggle_form} class="link-button" type="button">Registrieren</button></span>
     </form>
     {/if}
@@ -109,7 +116,7 @@
             <input disabled={!register_visible} autocomplete="new-password" name="s_password" on:input={(event) => {s_password = event.target.value}} type={register_password_visible ? "text" : "password"} minlength="10" required class="textfield" placeholder="Passwort"/>
         </div>
         <span class="extra-info">Mit dem Registrieren akzeptierst du alle unbedingt erforderlichen Cookies.</span>
-        <button class="default-button" type="submit">Registrieren</button>
+        <button class="default-button" type="submit" disabled={action_in_progress}>Registrieren</button>
     </form>
     {/if}
 </main>
@@ -243,6 +250,12 @@
         color: black;
         font-size: var(--font-size-base);
         font-weight: 500;
+        transition: all .2s ease;
+
+        &:disabled {
+            color: #595959;
+            background: #b9b9b9;
+        }
     }
 
     .link-button {
