@@ -5,7 +5,8 @@
     import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
     import {indexed_db, settings, title, selected_favourite, favourites} from '../stores.js';
-    import {arraysEqual, cache_plan, customFetch, format_date, get_from_db, get_school_plan_count, navigate_page} from "../utils.js";
+    import {arraysEqual, format_date, navigate_page, format_timestamp} from "../utils.js";
+    import {periods_to_block_label, sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences} from "../plan.js";
     import Dropdown from '../base_components/Dropdown.svelte';
 
     export let api_base;
@@ -24,7 +25,7 @@
     export let available_plan_version;
     let used_rooms_hidden = true;
 
-    let plan_data;
+    let plan_data = [];
     let all_lessons = [];
     let rooms_data = {};
     let info;
@@ -39,16 +40,17 @@
         "teachers": "Lehrer"
     };
     let controller = new AbortController();
-    let signal = controller.signal;
     let full_teacher_name = null;
     let teacher_contact_link = null;
     let teacher_image_path = null;
     let preferences_apply = true;
-    let lessons;
+    let lessons = [];
     let show_left_key = true;
     let show_right_key = true;
-    let last_updated;
+    let last_updated = {};
     let caching_successful;
+
+    // === Handlers + Callbacks ===
 
     function reset_plan_vars() {
         all_lessons = [];
@@ -57,169 +59,49 @@
         plan_value = null;
     }
 
-    function load_lessons(data, c_plan_type, entity, use_grouped_form_plans) {
-        // Check if settings and data are loaded
-        if(use_grouped_form_plans === undefined || data === undefined) {
-            return;
-        }
-        // Check the presence of necessary variables
-        if (!c_plan_type || ((c_plan_type !== "room_overview") && !entity)) {
-            reset_plan_vars();
-            return;
-        }
-        // Check the validity of the plan type
-        if(!["forms", "rooms", "teachers", "room_overview"].includes(c_plan_type)) {
-            reset_plan_vars();
-            return;
-        }
-        // Check the validity of the plan value
-        if((plan_type === "rooms" || plan_type === "teachers") && (!Object.keys(meta[plan_type]).includes(entity))) {
-            if (meta.school_num === school_num) {
-                reset_plan_vars();
-                return;
-            }
-        } else if((plan_type === "forms") && !Object.keys(meta.forms.forms).includes(entity)) {
-            if (meta.school_num === school_num) {
-                reset_plan_vars();
-                return;
-            }
-        }
-
-        let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans";
-        rooms_data = data.rooms;
-        if (c_plan_type !== "room_overview") {
-            all_lessons = data[plan_key][c_plan_type] ? data[plan_key][c_plan_type][entity] || [] : [];
+    function update_lessons(type, data) {
+        if(type === "rooms_data") {
+            rooms_data = data;
+        } else if(type === "all_lessons") {
+            all_lessons = data;
+        } else {
+            console.error(`lesson_updater: unknown type "${type}"`);
         }
     }
 
-    function load_plan_data(data) {
+    function handle_plan_data(data) {
         plan_data = data;
         info = data.info;
         week_letter = info.week;
     }
 
-    function load_plan(school_num, date, revision=".newest", enabled_dates) {
-        if (enabled_dates === null || enabled_dates === undefined) {
-            return;
+    function handle_loading_state(loading_type, state) {
+        switch(loading_type) {
+            case 'loading':
+                loading = state;
+                break;
+            case 'data_from_cache':
+                data_from_cache = state;
+                break;
+            case 'cache_loading_failed':
+                cache_loading_failed = state;
+                break;
+            case 'network_loading_failed':
+                network_loading_failed = state;
+                break;
+            case 'caching_successful':
+                caching_successful = state;
+                break;
+            default:
+                console.error("Unsupported loading_type: " + loading_type);
+                break;
         }
-        if (date === null || date === undefined || !enabled_dates.includes(date)) {
-            return;
-        }
+    }
 
-        loading = true;
-        data_from_cache = false;
-        cache_loading_failed = false;
-        network_loading_failed = false;
-        caching_successful = false;
+    function renew_abort_controller() {
         controller.abort();
         controller = new AbortController();
-        signal = controller.signal;
-        // Try to load from cache
-        if (revision === ".newest") {
-            get_from_db(school_num, date, (data) => {
-                data = data.plan_data;
-                if(loading || network_loading_failed) {
-                    load_plan_data(data);
-    
-                    cache_loading_failed = false;
-                    data_from_cache = true;
-                    loading = false;
-                }
-            }, () => {
-                cache_loading_failed = true;
-            });
-        }
-
-        // Try to load from network
-        let params = new URLSearchParams();
-        params.append("date", date);
-        params.append("revision", revision);
-        customFetch(`${api_base}/plan?${params.toString()}`, {signal: signal})
-            .then(data => {
-                if (Object.keys(data).length !== 0 && revision === ".newest") {
-                    cache_plan(school_num, date, data, () => {caching_successful = true;});
-                }
-                load_plan_data(data);
-                
-                loading = false;
-                network_loading_failed = false;
-                data_from_cache = false;
-            })
-            .catch(error => {
-                console.log(error.message);
-                //console.error(error);
-                loading = false;
-                network_loading_failed = true;
-        });
-    }
-
-    function periods_to_block_label(periods) {
-        periods.sort(function (a, b) {  return a - b;  });
-
-        const rests = {
-            0: "/Ⅱ",
-            1: "/Ⅰ",
-        };
-
-        if (periods.length === 1) {
-            return `${Math.floor((periods[0] - 1) / 2) + 1}${rests[periods[0] % 2]}`;
-        } else if (periods.length === 2 && periods[0] % 2 === 1) {
-            return `${Math.floor(periods[periods.length - 1] / 2)}`;
-        } else {
-            return periods.map(p => periods_to_block_label([p])).join(", ");
-        }
-    }
-
-    function sameBlock(a, b) {
-        return a.includes(b[0]) || a.includes(b[1])
-    }
-
-    function format_timestamp(timestamp) {
-        const date = new Date(timestamp);
-
-        const targetTimezone = 'Europe/Berlin';
-        const options = {
-            timeZone: targetTimezone,
-            weekday: 'long',
-            month: 'long',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-        };
-        const formatter = new Intl.DateTimeFormat('de-DE', options);
-        const formattedDate = formatter.format(date).replace("um", "-") + " Uhr";
-
-        return `${formattedDate}`;
-    }
-
-    function gen_location_hash(school_num, date, plan_type, plan_value) {
-        if(school_num && date && plan_type) {
-            return `#plan|${school_num}|${date}|${plan_type}|${plan_value}`;
-        } else if(school_num && date) {
-            return `#plan|${school_num}|${date}`;
-        } else {
-            return `#plan`
-        }
-    }
-
-    function render_lessons(lessons) {
-        if (plan_type !== "forms") {
-            return lessons
-        }
-        if (!preferences_apply) {
-            return lessons
-        }
-        if ($selected_favourite === -1) {
-            return lessons
-        }
-        let cur_preferences = $favourites[$selected_favourite].preferences || [];
-        let new_lessons = [];
-        for (const lesson of lessons) {
-            if (!(cur_preferences.includes(lesson.class_number))) {
-                new_lessons.push(lesson);
-            }
-        }
-        return new_lessons;
+        return controller;
     }
 
     function change_day(day_amount) {
@@ -259,14 +141,12 @@
         show_right_key = enabled_dates.indexOf(date) < (enabled_dates.length - 1);
     }
 
-    function load_lessons_check_plan(plan_data, plan_type, plan_value, use_grouped_form_plans) {
-        let curr_time = new Date();
-        if(!last_updated || curr_time - last_updated > 30_000) {
-            load_plan(date, selected_revision, enabled_dates);
-            last_updated = new Date();
+    function handle_last_updated(given_date, renew) {
+        if(!renew) {
+            return last_updated[given_date] || new Date(1970, 1, 1);
         }
 
-        load_lessons(plan_data, plan_type, plan_value, use_grouped_form_plans);
+        last_updated[given_date] = new Date();
     }
 
     if(!school_num) {
@@ -275,29 +155,39 @@
 
     onMount(() => {
         title.set("Plan");
-        // console.log("Mounted Plan.svelte");
     });
 
-    $: $indexed_db, load_plan(school_num, date, selected_revision, enabled_dates);
-    $: meta && load_lessons_check_plan(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans);
+    // === Load Plan + Lessons ===
+    // Check if new plan has to be loaded and load lessons
+    $: $indexed_db, load_plan(
+        api_base, 
+        school_num, 
+        date, 
+        selected_revision, 
+        enabled_dates, 
+        handle_last_updated, handle_loading_state, handle_plan_data, renew_abort_controller);
+    $: meta && load_lessons(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans, meta, reset_plan_vars, update_lessons);
+    // Apply Preferences to lessons
+    $: lessons = apply_preferences(plan_type, preferences_apply, $selected_favourite, $favourites, all_lessons);
 
-    $: if (plan_type === "teachers") {
-        if (meta.teachers) {
-            full_teacher_name = meta.teachers[plan_value]?.full_surname || meta.teachers[plan_value]?.plan_long || null;
-            teacher_contact_link = meta.teachers[plan_value]?.contact_link || null;
-            teacher_image_path = "/public/base_static/images/teachers/" + school_num + "/" + meta.teachers[plan_value]?.image_path || null;
-            teacher_image_path = meta.teachers[plan_value]?.image_path || null;
-            if (teacher_image_path) {
-                teacher_image_path = `/public/base_static/images/teachers/${school_num}/${teacher_image_path}`;
-            }
-        }
+    // === Load Extra Teacher Data ===
+    // Get teacher data (Name, Contact and Image Link)
+    $: if(plan_type === "teachers") {
+        [full_teacher_name, teacher_contact_link, teacher_image_path] = get_teacher_data(meta.teachers, plan_value, school_num);
     }
     
+    // === UI + Navigation ===
+    // Update visibility of date switching buttons
     $: date && enabled_dates && update_date_btns();
-    $: preferences_apply, $selected_favourite, lessons = render_lessons(all_lessons);
+    
+    // Get if loading failed
     $: loading_failed = (cache_loading_failed && network_loading_failed && !loading);
-    $: available_plan_version = data_from_cache ? "cached" : !network_loading_failed ? caching_successful ? "network_cached" : "network_uncached" : null;
-    $: location.hash = gen_location_hash(school_num, date, plan_type, plan_value);
+    
+    // Get plan version string
+    $: available_plan_version = get_plan_version(data_from_cache, network_loading_failed, caching_successful);
+    
+    // Update location hash
+    $: location.hash = gen_location_hash("plan", school_num, date, plan_type, plan_value);
 </script>
 
 <svelte:window on:keydown={keydown_handler}/>
@@ -309,10 +199,10 @@
             {#if plan_type === "forms" && ($selected_favourite !== -1)}
                 <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "Alle Stunden anzeigen" : "Nur ausgewählte anzeigen"}</button>
             {/if}
-                <h1 class="plan-heading">
-                    Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{#if teacher_image_path !== null}<img class="teacher-img" src="{teacher_image_path}" alt="Lehrer Portrait">{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
-                </h1>
-            {/if}
+            <h1 class="plan-heading">
+                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{#if teacher_image_path !== null}<img class="teacher-img" src="{teacher_image_path}" alt="Lehrer Portrait">{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+            </h1>
+        {/if}
         {#if loading}
             <span class="responsive-text">Lädt...</span>
         {:else if loading_failed}
@@ -322,7 +212,7 @@
             {#if plan_type}    
                 <span class="responsive-text">Keine Stunden</span>
             {:else}
-            <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus, um einen Plan zu sehen.</span>
+                <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus, um einen Plan zu sehen.</span>
             {/if}
             {:else}
             <div class="lessons-wrapper">

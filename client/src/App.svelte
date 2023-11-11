@@ -418,7 +418,7 @@
                         <Button on:click={() => {
                             //set_plan("room_overview", "");
                             reset_favourite();
-                            console.log("going to room overview");
+                            // console.log("going to room overview");
                             plan_type = "room_overview";
                             plan_value = "";
                         }}>Freie Räume</Button>

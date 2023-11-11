@@ -22,8 +22,6 @@
         "rooms": "sensor_door",
         "room_overview": "nest_multi_room"
     }
-
-    $: console.log($favourites);
 </script>
 
 <nav transition:fly={{y:-64}}>

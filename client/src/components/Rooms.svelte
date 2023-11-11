@@ -16,7 +16,7 @@
 </script>
 
 {#if rooms_data?.free_rooms_by_block == null}
-    <h1 class="responsive-heading">Raumdaten nicht verfügbar.</h1>
+    <span class="responsive-text">Raumdaten nicht verfügbar.</span>
 {:else}
     <CollapsibleWrapper let:closeOtherPanels>
         {#each Object.entries(rooms_data.free_rooms_by_block) as [block, all_free_rooms], i}
