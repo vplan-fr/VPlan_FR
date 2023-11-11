@@ -158,14 +158,16 @@
     });
 
     // === Load Plan + Lessons ===
-    // Check if new plan has to be loaded and load lessons
+    // Check if new plan has to be loaded and load it
     $: $indexed_db, load_plan(
         api_base, 
         school_num, 
         date, 
         selected_revision, 
         enabled_dates, 
-        handle_last_updated, handle_loading_state, handle_plan_data, renew_abort_controller);
+        handle_last_updated, handle_loading_state, handle_plan_data, renew_abort_controller
+    );
+    // Load the new lessons on change to selected plan
     $: meta && load_lessons(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans, meta, reset_plan_vars, update_lessons);
     // Apply Preferences to lessons
     $: lessons = apply_preferences(plan_type, preferences_apply, $selected_favourite, $favourites, all_lessons);
