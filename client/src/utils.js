@@ -371,6 +371,24 @@ export function format_revision_date(date, latest) {
     return formatted_date
 }
 
+export function format_timestamp(timestamp) {
+    const date = new Date(timestamp);
+
+    const targetTimezone = 'Europe/Berlin';
+    const options = {
+        timeZone: targetTimezone,
+        weekday: 'long',
+        month: 'long',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    };
+    const formatter = new Intl.DateTimeFormat('de-DE', options);
+    const formattedDate = formatter.format(date).replace("um", "-") + " Uhr";
+
+    return `${formattedDate}`;
+}
+
 export function analyze_local_storage() {
     function calculateSizeInBytes(value) {
         const str = JSON.stringify(value);
