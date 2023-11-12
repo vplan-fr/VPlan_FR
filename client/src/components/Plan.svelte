@@ -108,7 +108,8 @@
         let tmp_date;
         tmp_date = enabled_dates[(enabled_dates.indexOf(date)+day_amount)];
         if (typeof tmp_date === 'undefined') {
-            notifications.danger("Für dieses Datum existiert kein Vertretungsplan!");
+            // Removed due to being more annoying than it bringing value to the UX
+            // notifications.danger("Für dieses Datum existiert kein Vertretungsplan!");
             return;
         }
         date = tmp_date;

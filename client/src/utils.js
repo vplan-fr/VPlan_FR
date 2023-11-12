@@ -466,18 +466,20 @@ export async function load_meta(school_num) {
         })
 }
 
-export function get_favourites() {
+export function get_favourites(callback = () => {}) {
     return customFetch("/api/v69.420/favourites")
         .then(data => {
             localStorage.setItem("favourites", JSON.stringify(data));
             favourites.set(data);
+            callback();
         }).catch(error => {
             console.log("Favourites couldn't be loaded from server.");
             // check if favourites in localstorage
             if(!localStorage.getItem("favourites")) {
-                favourites.set([])
+                favourites.set([]);
             } else {
-                favourites.set(JSON.parse(localStorage.getItem("favourites")))
+                favourites.set(JSON.parse(localStorage.getItem("favourites")));
             }
+            callback();
         })
 }

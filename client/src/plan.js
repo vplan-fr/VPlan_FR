@@ -136,7 +136,7 @@ export function gen_location_hash(location_name, school_num, date, plan_type, pl
 
 export function load_lessons(data, plan_type, plan_value, use_grouped_form_plans, meta, plan_var_resetter, update_lessons) {
     // Check if settings and data are loaded
-    if(use_grouped_form_plans === undefined || data === undefined) {
+    if(use_grouped_form_plans === undefined || data === undefined || data.length == 0) {
         return;
     }
     // Check the presence of necessary variables

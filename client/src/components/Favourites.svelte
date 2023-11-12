@@ -4,7 +4,7 @@
     import Button from "../base_components/Button.svelte";
     import {notifications} from "../notifications.js";
 
-    import {favourites, title} from "../stores.js";
+    import {favourites, title, settings} from "../stores.js";
     import CollapsibleWrapper from "../base_components/CollapsibleWrapper.svelte";
     import Collapsible from "../base_components/Collapsible.svelte";
     import { onMount } from "svelte";
@@ -243,7 +243,7 @@
 <CollapsibleWrapper class="extra-accordion-padding" let:closeOtherPanels>
     {#each cur_favourites as _, favourite}
         <Collapsible on:panel-open={closeOtherPanels} let:toggle>
-            <button slot="handle" on:click={toggle} class="toggle-button" class:first={favourite == 0}>{cur_favourites[favourite].name ? cur_favourites[favourite].name : "Unbenannter Favorit"}</button>
+            <button slot="handle" on:click={toggle} class="toggle-button" class:first={favourite == 0} class:load_first_favorite={$settings.load_first_favorite}>{cur_favourites[favourite].name ? cur_favourites[favourite].name : "Unbenannter Favorit"}</button>
             <div class="wrapper-content">
                 <label for="favourite_name">Name des Favoriten</label>
                 <input name="favourite_name" type="text" maxlength="40" class="textfield" bind:value={cur_favourites[favourite].name}>
@@ -334,6 +334,17 @@
 
         &.first {
             border-top: unset;
+
+            &.load_first_favorite {
+                outline: 2px solid var(--accent-color);
+                outline-offset: -2px;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+                @media only screen and (min-width: 1501px) {
+                    border-top-left-radius: 8px;
+                    border-top-right-radius: 8px;
+                }
+            }
         }
 
         &.last {

@@ -54,7 +54,8 @@
         "cached": "Offline Plan",
         "network_cached": "Aktueller Plan",
         "network_uncached": "Online only Plan"
-    }
+    };
+    let load_favorite = false;
 
     function init_vars() {
         school_num = localStorage.getItem('school_num');
@@ -285,40 +286,44 @@
         }
     }
 
-    $: select_plan($favourites, $selected_favourite);
+    function navigate_favorite() {
+        if(!load_favorite || !$settings.load_first_favorite) {
+            return;
+        }
+        navigate_page('plan');
+        if($favourites.length === 0) {
+            return;
+        }
+        $selected_favourite = 0;
+        load_favorite = false;
+    }
+
     function reset_favourite() {
         selected_favourite.set(-1);
     }
-    // reset favourite when selecting new thing
-    $: selected_form && reset_favourite();
-    $: selected_teacher && reset_favourite();
-    $: selected_room && reset_favourite();
+    // reset favourite when selecting new plan
+    $: (selected_form || selected_teacher || selected_room) && reset_favourite();
     $: if ($selected_favourite !== -1) {
         // check if selected_favourite is in favourites
         if ($favourites.length <= $selected_favourite) {
             selected_favourite.set(-1);
         }
     }
-    // CHANGE THIS FOR SETTING IF FIRST FAVOURITE SHOULD BE SELECTED
-    /*$: if ($favourites.length !== 0 && $selected_favourite === -1) {
-        selected_favourite.set(0);
-    }*/
-
 
     $logged_in = localStorage.getItem('logged_in') === 'true';
     init_vars();
     check_login_status();
     refresh_plan_vars();
-    get_favourites();
 
     $: $logged_in && init_indexed_db();
     $: !$logged_in && logout();
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
-    $: get_meta(school_num);
+    $: school_num && get_meta(school_num);
     $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
     //$: school_num && get_preferences();
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
-    $: $logged_in && get_settings();
+    $: $logged_in && (get_settings(), get_favourites(navigate_favorite));
+    $: select_plan($favourites, $selected_favourite);
     $: (Object.keys($settings).length !== 0) && localStorage.setItem("settings", `${JSON.stringify($settings)}`);
     $: update_colors($settings);
     $: $logged_in && get_greeting();
@@ -359,6 +364,10 @@
     let new_location = location.hash.slice(1);
     if(!((new_location === "login" || new_location === "register") && $logged_in)) {
         if(new_location === "") {new_location = "plan";}
+        if(new_location === "favorite") {
+            load_favorite = true;
+            new_location = "plan";
+        }
         navigate_page(new_location);
     }
 </script>
@@ -443,6 +452,8 @@
                 {/if}
             {:else if $current_page === "school_manager"}
                 <SchoolManager bind:school_num bind:date bind:plan_type bind:plan_value />
+            {:else if $current_page === "favorite"}
+                <span class="responsive-text">Lade deine Favoriten...</span>
             {:else if $current_page === "favorites"}
                 <Favourites />
             {:else if $current_page === "pwa_install"}
