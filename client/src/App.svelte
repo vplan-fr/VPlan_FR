@@ -275,6 +275,7 @@
             selected_form = null;
             selected_teacher = null;
             selected_room = null;
+            scrollTo(document.getElementsByClassName("plan")[0]);
         }
     }
 
