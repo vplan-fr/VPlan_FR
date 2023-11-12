@@ -66,6 +66,7 @@
     <div class="settings-container">
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.normal_greetings}>Normale Begrüßungen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.chatgpt_greetings}>ChatGPT Begrüßungen</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.load_first_favorite}>Beim Start den ersten Favoriten laden</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.swipe_day_change}>Swipen um Tag zu wechseln</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.day_switch_keys}>Pfeiltasten (Tastatur) zum Tag wechseln nutzen</span>
         <h2 class="category-heading">Aussehen</h2>

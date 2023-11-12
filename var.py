@@ -72,6 +72,10 @@ SETTINGS = {
         "default": True,
         "type": "bool",
     },
+    "load_first_favorite": {
+        "default": True,
+        "type": "bool",
+    },
 }
 
 TYPE_FUNCTIONS = {
