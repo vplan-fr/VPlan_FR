@@ -129,7 +129,13 @@ class Teachers:
         try:
             return self.teachers[long_or_short]
         except KeyError:
-            return self.query_one(plan_long=long_or_short)
+            out = self.query(plan_long=long_or_short)
+            if len(out) == 1:
+                return out[0]
+            elif not out:
+                raise LookupError("No teacher found matching the given name.")
+            else:
+                raise LookupError("Multiple teachers found matching the given name.")
 
 
 _UNSET = object()
