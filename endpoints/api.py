@@ -218,7 +218,7 @@ def contact() -> Response:
     embed = BetterEmbed(title="Neue Kontaktaufnahme!", color="ffffff", inline=False)
     embed.add_embed_field("Kategorie:", category, inline=False)
     embed.add_embed_field("Nutzerart:", person, inline=False)
-    if current_user:
+    if current_user.is_authenticated:
         embed.add_embed_field("Nutzername:", current_user.get_field("nickname"), inline=False)
     else:
         embed.add_embed_field("Nutzername:", "Nicht eingeloggt", inline=False)
