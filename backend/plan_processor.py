@@ -58,9 +58,10 @@ class PlanProcessor:
             if (cur_ver := self.cache.get_plan_file(day, timestamp, ".processed")) == self.VERSION:
                 return False
 
-            self._logger.info(f"=> Migrating plan for {day!s} to current version... ({cur_ver!r} -> {self.VERSION!r})")
+            self._logger.info(f"=> Migrating plan for {day!s} {timestamp!s} to current version... "
+                              f"({cur_ver!r} -> {self.VERSION!r})")
         else:
-            self._logger.info(f"=> Processing plan for {day!s}...")
+            self._logger.info(f"=> Processing plan for {day!s} {timestamp!s}...")
 
         self.compute_plans(day, timestamp)
 
