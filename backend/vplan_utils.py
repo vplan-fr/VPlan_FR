@@ -221,16 +221,19 @@ def periods_to_block_label(periods: typing.Iterable[int]) -> str:
 
 
 def _parse_periods(period_str: str) -> list[int]:
-    def period_str_to_int(string: str) -> int:
-        return int(string.replace("Stunde", "").replace(".", ""))
+    try:
+        def period_str_to_int(string: str) -> int:
+            return int(string.replace("Stunde", "").replace(".", ""))
 
-    if not period_str:
+        if not period_str:
+            return []
+        elif "-" not in period_str:
+            return [period_str_to_int(period_str)]
+        else:
+            begin, end = period_str.split("-")
+            return list(range(period_str_to_int(begin), period_str_to_int(end) + 1))
+    except ValueError:
         return []
-    elif "-" not in period_str:
-        return [period_str_to_int(period_str)]
-    else:
-        begin, end = period_str.split("-")
-        return list(range(period_str_to_int(begin), period_str_to_int(end) + 1))
 
 
 def parse_periods(period_str: str) -> set[int]:
