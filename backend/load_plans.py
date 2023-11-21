@@ -30,10 +30,11 @@ class PlanCrawler:
             try:
                 downloaded_files = await self.plan_downloader.update_fetch()
 
-                self.plan_processor._logger.debug("* Processing plans...")
-
                 if downloaded_files:
+                    self.plan_processor._logger.debug("* Processing plans...")
                     self.plan_processor.meta_extractor.invalidate_cache()
+                else:
+                    self.plan_processor._logger.debug("* No plans to process.")
 
                 for (date, revision), downloaded_files_metadata in downloaded_files.items():
                     self.plan_processor.update_plans(date, revision)
@@ -51,6 +52,7 @@ class PlanCrawler:
             if once:
                 break
 
+            self.plan_downloader._logger.debug(f"* Waiting {interval} s.")
             await asyncio.sleep(interval)
 
 
@@ -68,9 +70,18 @@ async def get_crawlers(session: aiohttp.ClientSession | None = None,
         cache = Cache(Path(f".cache/{specifier}").absolute())
 
         if create_clients:
-            data["hosting"]["creds"] = data["hosting"]["creds"].get("teachers", data["hosting"]["creds"].get("students"))
+            data["hosting"]["creds"] = data["hosting"]["creds"].get(
+                "teachers", data["hosting"]["creds"].get("students")
+            )
             hosting = Hosting.deserialize(data["hosting"])
+
             client = IndiwareStundenplanerClient(hosting, session)
+
+            if hosting.creds is not None and hosting.creds.username == "schueler":
+                logger.warning("* Disabling room and teacher plans because only student creds are available.")
+                # avoid trying to fetch room and teacher plans if no creds are available
+                client.teacher_plan_client = None
+                client.room_plan_client = None
 
             for plan_client in client.substitution_plan_clients:
                 plan_client.proxy_provider = proxy_provider
@@ -103,7 +114,7 @@ async def main():
     argument_parser.add_argument("--only-process", action="store_true",
                                  help="Do not download plans, only parse existing.")
     argument_parser.add_argument("--ignore-exceptions", action="store_true",
-                                 help="Don't raise exceptions and crash the program, instead print them and continue.")
+                                 help="Don't raise exceptions and crash the program, instead, print them and continue.")
     argument_parser.add_argument("--never-raise-out-of-proxies", action="store_true",
                                  help="Never crash the program if no more proxies seem to be available. "
                                       "Keep trying instead.")
