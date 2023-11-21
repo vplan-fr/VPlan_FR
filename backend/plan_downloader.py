@@ -15,8 +15,8 @@ from stundenplan24_py import (
 
 from .cache import Cache
 
-
 import stundenplan24_py.client
+
 stundenplan24_py.client.set_min_delay_between_requests(0.2)
 
 
@@ -72,11 +72,18 @@ class PlanDownloader:
 
         new: set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]] = set()
 
-        # not using asyncio.gather because the logs would be confusing
-        for indiware_client in self.client.indiware_mobil_clients:
-            new |= await self.fetch_indiware_mobil(indiware_client)
+        fetched = await asyncio.gather(
+            *(self.fetch_indiware_mobil(indiware_client) for indiware_client in self.client.indiware_mobil_clients),
+            self.fetch_substitution_plans()
+        )
 
-        new |= await self.fetch_substitution_plans()
+        for fetched_set in fetched:
+            new |= fetched_set
+
+        self.cache.store_meta_file(
+            json.dumps({"timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()}),
+            "last_fetch.json"
+        )
 
         out: dict[tuple[datetime.date, datetime.datetime], list[PlanFileMetadata]] = defaultdict(list)
         for date, revision, file_metadata in new:
@@ -85,8 +92,8 @@ class PlanDownloader:
         return out
 
     async def fetch_indiware_mobil(
-            self,
-            indiware_client: IndiwareMobilClient
+        self,
+        indiware_client: IndiwareMobilClient
     ) -> set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]]:
         try:
             self._logger.debug(f"=> Fetching Indiware Mobil available files.")
@@ -102,9 +109,9 @@ class PlanDownloader:
             return await self.download_indiware_mobil(indiware_client, plan_files)
 
     async def download_indiware_mobil(
-            self,
-            client: IndiwareMobilClient,
-            downloadable_plan_files: dict[str, datetime.datetime]
+        self,
+        client: IndiwareMobilClient,
+        downloadable_plan_files: dict[str, datetime.datetime]
     ) -> set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]]:
         new: set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]] = set()
 
@@ -149,8 +156,8 @@ class PlanDownloader:
         return out
 
     async def fetch_substitution_plan(
-            self,
-            plan_client: SubstitutionPlanClient
+        self,
+        plan_client: SubstitutionPlanClient
     ) -> set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]]:
         self._logger.debug("=> Checking for new substitution plans...")
 
@@ -197,9 +204,9 @@ class PlanDownloader:
         return out
 
     async def download_substitution_plan(
-            self,
-            plan_client: SubstitutionPlanClient,
-            date: datetime.date
+        self,
+        plan_client: SubstitutionPlanClient,
+        date: datetime.date
     ) -> set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]]:
         if isinstance(plan_client.endpoint, StudentsSubstitutionPlanEndpoint):
             plan_filename = "VplanKl.xml"

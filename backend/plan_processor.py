@@ -28,7 +28,7 @@ class PlanProcessor:
         self.load_teachers()
 
     def load_teachers(self):
-        self._logger.info("* Loading cached teachers...")
+        self._logger.debug("* Loading cached teachers...")
         try:
             data = json.loads(self.cache.get_meta_file("teachers.json"))
         except FileNotFoundError:
