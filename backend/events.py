@@ -27,6 +27,7 @@ class Event:
 @dataclasses.dataclass
 class PlanDownload(Event):
     plan_type: str  # Ex: "PlanKl.xml" or "VPlanKl.xml"
+    date: datetime.date
     last_modified: datetime.datetime
     file_length: int
 
