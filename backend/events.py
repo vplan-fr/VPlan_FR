@@ -103,8 +103,8 @@ class Timer(typing.Generic[_T]):
 
 
 def _submit_event(event: Event):
-    if _EVENTS_COLLECTION is None:
-        logging.debug("No MongoDB collection found. Not submitting event.")
+    if _DISABLED:
+        logging.debug("MongoDB event collection disabled. Not submitting event.")
         return
 
     event_base_dict = event.get_base_dict()
@@ -136,23 +136,66 @@ def submit_event(event: Event):
     return asyncio.get_event_loop().create_task(submit_event_async(event))
 
 
+_T2 = typing.TypeVar("_T2", bound=Event)
+
+
+def iterate_events(type_: typing.Type[_T2], school_number: str | None = None) -> typing.Iterator[_T2]:
+    cursor = _EVENTS_COLLECTION.find(
+        {
+            **({"type": type_.__name__} if type_ is not None else {}),
+            **({"school_number": school_number} if school_number is not None else {}),
+        },
+        sort=[("start_time", pymongo.ASCENDING)]
+    )
+
+    for event in cursor:
+        obj = type_.__new__(type_)
+
+        for field in dataclasses.fields(obj):
+            if field.name in event:
+                continue
+
+            if field.type is datetime.datetime:
+                obj.__dict__[field.name] = datetime.datetime.fromisoformat(event["data"][field.name])
+            else:
+                try:
+                    obj.__dict__[field.name] = event["data"][field.name]
+                except KeyError:
+                    pass
+
+        obj.__dict__["school_number"] = event["school_number"]
+        obj.__dict__["start_time"] = datetime.datetime.fromisoformat(event["start_time"])
+        obj.__dict__["end_time"] = datetime.datetime.fromisoformat(event["end_time"])
+
+        obj.__class__ = type_
+
+        yield obj
+
+
 def now() -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)
 
 
-def get_mongodb_event_collection() -> pymongo.collection.Collection | None:
+_DISABLED: bool
+_EVENTS_COLLECTION: pymongo.collection.Collection | None
+
+
+def init_mongodb_event_collection() -> pymongo.collection.Collection | None:
+    global _DISABLED, _EVENTS_COLLECTION
     env = dotenv.DotEnv(dotenv_path=dotenv.find_dotenv())
 
     if not env.get("PRODUCTION"):
         logging.warning("Not in production mode. Not submitting events.")
-        return
+        _DISABLED = True
 
     if (mongo_uri := env.get("MONGO_URL")) is not None:
         collection = pymongo.MongoClient(mongo_uri).get_database("vplan").get_collection("events")
         logging.info("Event collection found.")
-        return collection
+        _EVENTS_COLLECTION = collection
     else:
         logging.warning("No MONGO_URI found in .env file.")
+        _DISABLED = True
+        _EVENTS_COLLECTION = None
 
 
-_EVENTS_COLLECTION = get_mongodb_event_collection()
+init_mongodb_event_collection()
