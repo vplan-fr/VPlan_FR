@@ -148,7 +148,7 @@ class PlanDownloader:
                 )
 
                 await timer.submit_async(plan_type=plan_filename, last_modified=plan_response.last_modified,
-                                         file_length=len(plan_response.content))
+                                         file_length=len(plan_response.content), date=date)
 
                 self.cache.store_plan_file(date, revision, plan_response.content, plan_filename)
                 self.cache.store_plan_file(date, revision, json.dumps(downloaded_file.serialize()),
