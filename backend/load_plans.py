@@ -11,6 +11,7 @@ from stundenplan24_py import (
     IndiwareStundenplanerClient, Hosting, proxies
 )
 
+from . import events
 from .creds_provider import creds_provider_factory
 from .plan_downloader import PlanDownloader
 from .cache import Cache
@@ -18,7 +19,10 @@ from .plan_processor import PlanProcessor
 
 
 class PlanCrawler:
-    def __init__(self, plan_downloader: PlanDownloader, plan_processor: PlanProcessor):
+    school_number: str
+
+    def __init__(self, school_number: str, plan_downloader: PlanDownloader, plan_processor: PlanProcessor):
+        self.school_number = school_number
         self.plan_downloader = plan_downloader
         self.plan_processor = plan_processor
 
@@ -27,6 +31,7 @@ class PlanCrawler:
         self.plan_processor.update_all()
 
         while True:
+            _t1 = events.now()
             try:
                 downloaded_files = await self.plan_downloader.update_fetch()
 
@@ -48,6 +53,15 @@ class PlanCrawler:
                     raise
                 else:
                     self.plan_processor._logger.error("An error occurred.", exc_info=e)
+            else:
+                _t2 = events.now()
+                await events.submit_event_async(
+                    events.PlanCrawlCycle(
+                        school_number=self.school_number,
+                        start_time=_t1,
+                        end_time=_t2,
+                    )
+                )
 
             if once:
                 break
@@ -93,11 +107,11 @@ async def get_crawlers(session: aiohttp.ClientSession | None = None,
         else:
             client = None
 
-        plan_downloader = PlanDownloader(client, cache, logger=logger)
+        plan_downloader = PlanDownloader(specifier, client, cache, logger=logger)
         plan_processor = PlanProcessor(cache, specifier, logger=logger)
 
         # create crawler
-        p = PlanCrawler(plan_downloader, plan_processor)
+        p = PlanCrawler(specifier, plan_downloader, plan_processor)
 
         crawlers[school_name] = p
 
@@ -128,7 +142,7 @@ async def main():
         pass
 
     logging.basicConfig(level=args.loglevel, format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
-                        datefmt="%Y-%m-%d %H:%M:%S")
+                        datefmt="%Y-%m-%d %H:%M:%S", force=True)
 
     proxy_provider = proxies.ProxyProvider(Path("proxies.json").absolute(),
                                            never_raise_out_of_proxies=args.never_raise_out_of_proxies)
