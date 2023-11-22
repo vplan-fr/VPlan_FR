@@ -300,28 +300,20 @@ class PlanProcessor:
     def update_rooms(self):
         self._logger.info("* Updating rooms...")
 
-        all_rooms = self.meta_extractor.rooms()
-        parsed_rooms: dict[str, dict] = {}
+        parsed_rooms: dict[str, dict] = {room: None for room in self.meta_extractor.rooms()}
         try:
             room_parser = schools.room_parsers[str(self.school_number)]
-
-            for room in all_rooms:
+        except KeyError:
+            self._logger.debug("=> No room parser available for this school.")
+        else:
+            for room in parsed_rooms:
                 try:
                     parsed_rooms[room] = room_parser(room).to_dict()
                 except Exception as e:
-                    self._logger.error(f" -> Error while parsing room {room!r}: {e}")
-
-        except KeyError:
-            self._logger.debug("=> No room parser available for this school.")
-
-            parsed_rooms = {room: None for room in all_rooms}
-
-        data = {
-            room: parsed_rooms.get(room) for room in all_rooms
-        }
+                    self._logger.error(f" -> Error while parsing room {room!r}.", exc_info=e)
 
         self.cache.store_meta_file(
-            json.dumps(data),
+            json.dumps(parsed_rooms),
             "rooms.json"
         )
 
