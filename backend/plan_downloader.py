@@ -12,6 +12,7 @@ from stundenplan24_py import (
     IndiwareStundenplanerClient, IndiwareMobilClient, PlanClientError, SubstitutionPlanClient, UnauthorizedError,
     substitution_plan, PlanNotFoundError, StudentsSubstitutionPlanEndpoint, TeachersSubstitutionPlanEndpoint
 )
+from . import events
 
 from .cache import Cache
 
@@ -45,9 +46,11 @@ class PlanFileMetadata:
 class PlanDownloader:
     """Check for new indiware plans in regular intervals store them in cache."""
 
-    def __init__(self, client: IndiwareStundenplanerClient, cache: Cache, *, logger: logging.Logger):
+    def __init__(self, school_number: str, client: IndiwareStundenplanerClient, cache: Cache, *,
+                 logger: logging.Logger):
         self._logger = logger
 
+        self.school_number = school_number
         self.client = client
         self.cache = cache
 
@@ -72,10 +75,12 @@ class PlanDownloader:
 
         new: set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]] = set()
 
-        fetched = await asyncio.gather(
-            *(self.fetch_indiware_mobil(indiware_client) for indiware_client in self.client.indiware_mobil_clients),
-            self.fetch_substitution_plans()
-        )
+        with events.Timer(self.school_number, events.AllPlansDownloaded) as timer:
+            fetched = await asyncio.gather(
+                *(self.fetch_indiware_mobil(indiware_client) for indiware_client in self.client.indiware_mobil_clients),
+                self.fetch_substitution_plans()
+            )
+        await timer.submit_async()
 
         for fetched_set in fetched:
             new |= fetched_set
@@ -132,7 +137,8 @@ class PlanDownloader:
             else:
                 self._logger.info(f" -> Downloading indiware {filename!r}. Revision: {revision!s}.")
 
-                plan_response = await client.fetch_plan(filename)
+                with events.Timer(self.school_number, events.PlanDownload) as timer:
+                    plan_response = await client.fetch_plan(filename)
 
                 assert plan_response.last_modified is not None
                 downloaded_file = PlanFileMetadata(
@@ -140,6 +146,9 @@ class PlanDownloader:
                     last_modified=plan_response.last_modified,
                     etag=plan_response.etag,
                 )
+
+                await timer.submit_async(plan_type=plan_filename, last_modified=plan_response.last_modified,
+                                         file_length=len(plan_response.content))
 
                 self.cache.store_plan_file(date, revision, plan_response.content, plan_filename)
                 self.cache.store_plan_file(date, revision, json.dumps(downloaded_file.serialize()),

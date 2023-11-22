@@ -4,7 +4,7 @@ import datetime
 import json
 import logging
 
-from . import schools, default_plan
+from . import schools, default_plan, events
 from .cache import Cache
 from .meta_extractor import MetaExtractor
 from .teacher import Teachers
@@ -73,6 +73,7 @@ class PlanProcessor:
         except FileNotFoundError:
             self._logger.warning(f"=> Could not find Indiware form plan for date {date!s} and timestamp {timestamp!s}.")
         else:
+            _t1 = events.now()
             try:
                 vplan_kl = self.cache.get_plan_file(date, timestamp, "VplanKl.xml", newest_before=True)
             except FileNotFoundError:
@@ -152,11 +153,23 @@ class PlanProcessor:
                 "info.json"
             )
 
+            _t2 = events.now()
+            events.submit_event(events.StudentsRevisionProcessed(
+                school_number=self.school_number,
+                start_time=_t1,
+                end_time=_t2,
+                version=self.VERSION,
+                date=date,
+                revision=timestamp,
+                has_vplan=vplan_kl is not None
+            ))
+
             try:
                 plan_le = self.cache.get_plan_file(date, timestamp, "PlanLe.xml", newest_before=True)
             except FileNotFoundError:
                 pass
             else:
+                _t1 = events.now()
                 try:
                     plan_ra = self.cache.get_plan_file(date, timestamp, "PlanRa.xml", newest_before=True)
                 except FileNotFoundError:
@@ -201,6 +214,16 @@ class PlanProcessor:
                     "rooms.teachers.json"
                 )
 
+                _t2 = events.now()
+                events.submit_event(events.TeachersRevisionProcessed(
+                    school_number=self.school_number,
+                    start_time=_t1,
+                    end_time=_t2,
+                    version=self.VERSION,
+                    date=date,
+                    revision=timestamp
+                ))
+
             self.cache.update_newest(date)
 
         self.cache.store_plan_file(date, timestamp, str(self.VERSION), ".processed")
@@ -212,16 +235,19 @@ class PlanProcessor:
             self._logger.info("=> No plans cached yet.")
             return
 
-        data = {
-            "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
-        }
-        self.cache.store_meta_file(json.dumps(data), "meta.json")
-        self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
+        with events.Timer(self.school_number, events.MetaUpdate) as timer:
+            data = {
+                "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
+            }
+            self.cache.store_meta_file(json.dumps(data), "meta.json")
+            self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
 
-        self.teachers.add_teachers(*self.meta_extractor.teachers())
-        self.scrape_teachers()
-        self.update_forms()
-        self.update_rooms()
+            self.teachers.add_teachers(*self.meta_extractor.teachers())
+            self.scrape_teachers()
+            self.update_forms()
+            self.update_rooms()
+
+        timer.submit()
 
     def scrape_teachers(self):
         if datetime.datetime.now() - self.teachers.scrape_timestamp < datetime.timedelta(hours=6):
@@ -236,10 +262,13 @@ class PlanProcessor:
         else:
             self._logger.info("=> Scraping teachers...")
             try:
-                scraped_teachers = schools.teacher_scrapers[str(self.school_number)]()
+                with events.Timer(self.school_number, events.TeacherScrape) as timer:
+                    scraped_teachers = schools.teacher_scrapers[str(self.school_number)]()
             except Exception as e:
                 self._logger.error(" -> Exception while scraping teachers.", exc_info=e)
                 scraped_teachers = []
+            else:
+                timer.submit(teacher_count=len(scraped_teachers))
 
             self._logger.debug(f" -> Found {len(scraped_teachers)} teachers.")
 
