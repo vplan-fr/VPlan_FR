@@ -89,14 +89,14 @@ async def get_crawlers(session: aiohttp.ClientSession | None = None,
             )
             hosting = Hosting.deserialize(data["hosting"])
 
-            client = IndiwareStundenplanerClient(hosting, session)
-
             if hosting.creds is not None and hosting.creds.username == "schueler":
                 logger.warning("* Disabling room and teacher plans because only student creds are available.")
                 # avoid trying to fetch room and teacher plans if no creds are available
-                client.teacher_plan_client = None
-                client.room_plan_client = None
-                client.teachers_substitution_plan_client = None
+                hosting.indiware_mobil.rooms = None
+                hosting.indiware_mobil.teachers = None
+                hosting.substitution_plan.teachers = None
+
+            client = IndiwareStundenplanerClient(hosting, session)
 
             for plan_client in client.substitution_plan_clients:
                 plan_client.proxy_provider = proxy_provider
