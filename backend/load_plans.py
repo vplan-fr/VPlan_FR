@@ -96,6 +96,7 @@ async def get_crawlers(session: aiohttp.ClientSession | None = None,
                 # avoid trying to fetch room and teacher plans if no creds are available
                 client.teacher_plan_client = None
                 client.room_plan_client = None
+                client.teachers_substitution_plan_client = None
 
             for plan_client in client.substitution_plan_clients:
                 plan_client.proxy_provider = proxy_provider
