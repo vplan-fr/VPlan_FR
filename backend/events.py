@@ -95,18 +95,11 @@ class Timer(typing.Generic[_T]):
             **kwargs
         )
 
-    async def submit_async(self, **kwargs):
-        await submit_event_async(self.construct(**kwargs))
-
     def submit(self, **kwargs):
         return submit_event(self.construct(**kwargs))
 
 
 def _submit_event(event: Event):
-    if _DISABLED:
-        logging.debug("MongoDB event collection disabled. Not submitting event.")
-        return
-
     event_base_dict = event.get_base_dict()
 
     out = {}
@@ -128,15 +121,12 @@ def _submit_event(event: Event):
     _EVENTS_COLLECTION.insert_one(entity)
 
 
-async def submit_event_async(event: Event):
-    try:
-        await asyncio.wait_for(asyncio.get_event_loop().run_in_executor(_thread_pool_executor, _submit_event, event), timeout=10)
-    except asyncio.TimeoutError:
-        logging.error("Timeout while submitting event.", exc_info=True)
-
-
 def submit_event(event: Event):
-    return asyncio.get_event_loop().create_task(submit_event_async(event))
+    if _DISABLED:
+        logging.debug("MongoDB event collection disabled. Not submitting event.")
+        return
+
+    return _thread_pool_executor.submit(_submit_event, event)
 
 
 _T2 = typing.TypeVar("_T2", bound=Event)

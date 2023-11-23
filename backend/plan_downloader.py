@@ -80,7 +80,7 @@ class PlanDownloader:
                 *(self.fetch_indiware_mobil(indiware_client) for indiware_client in self.client.indiware_mobil_clients),
                 self.fetch_substitution_plans()
             )
-        await timer.submit_async()
+        timer.submit()
 
         for fetched_set in fetched:
             new |= fetched_set
@@ -147,8 +147,8 @@ class PlanDownloader:
                     etag=plan_response.etag,
                 )
 
-                await timer.submit_async(plan_type=plan_filename, last_modified=plan_response.last_modified,
-                                         file_length=len(plan_response.content), date=date)
+                timer.submit(plan_type=plan_filename, last_modified=plan_response.last_modified,
+                             file_length=len(plan_response.content), date=date)
 
                 self.cache.store_plan_file(date, revision, plan_response.content, plan_filename)
                 self.cache.store_plan_file(date, revision, json.dumps(downloaded_file.serialize()),
