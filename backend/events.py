@@ -1,8 +1,8 @@
 import asyncio
+import concurrent.futures
 import dataclasses
 import datetime
 import logging
-import time
 import typing
 
 import dotenv.main as dotenv
@@ -99,7 +99,7 @@ class Timer(typing.Generic[_T]):
         await submit_event_async(self.construct(**kwargs))
 
     def submit(self, **kwargs):
-        return _submit_event(self.construct(**kwargs))
+        return submit_event(self.construct(**kwargs))
 
 
 def _submit_event(event: Event):
@@ -114,7 +114,7 @@ def _submit_event(event: Event):
         if key in event_base_dict:
             continue
 
-        if isinstance(value, datetime.datetime):
+        if isinstance(value, (datetime.datetime, datetime.date)):
             out[key] = value.isoformat()
         else:
             out[key] = value
@@ -129,7 +129,10 @@ def _submit_event(event: Event):
 
 
 async def submit_event_async(event: Event):
-    await asyncio.get_event_loop().run_in_executor(None, _submit_event, event)
+    try:
+        await asyncio.wait_for(asyncio.get_event_loop().run_in_executor(_thread_pool_executor, _submit_event, event), timeout=10)
+    except asyncio.TimeoutError:
+        logging.error("Timeout while submitting event.", exc_info=True)
 
 
 def submit_event(event: Event):
@@ -178,10 +181,11 @@ def now() -> datetime.datetime:
 
 _DISABLED: bool
 _EVENTS_COLLECTION: pymongo.collection.Collection | None
+_thread_pool_executor: concurrent.futures.ThreadPoolExecutor | None
 
 
-def init_mongodb_event_collection() -> pymongo.collection.Collection | None:
-    global _DISABLED, _EVENTS_COLLECTION
+def init_mongodb_event_collection():
+    global _DISABLED, _EVENTS_COLLECTION, _thread_pool_executor
     env = dotenv.DotEnv(dotenv_path=dotenv.find_dotenv())
 
     if not env.get("PRODUCTION"):
@@ -196,6 +200,9 @@ def init_mongodb_event_collection() -> pymongo.collection.Collection | None:
         logging.warning("No MONGO_URI found in .env file.")
         _DISABLED = True
         _EVENTS_COLLECTION = None
+
+    if not _DISABLED:
+        _thread_pool_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
 
 init_mongodb_event_collection()

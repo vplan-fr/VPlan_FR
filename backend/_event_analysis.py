@@ -26,12 +26,12 @@ def main():
 
     for school_number, points in data.items():
         # average hourly
-        points = sorted(points, key=lambda p: p[0].hour)
-
-        points = [
-            (datetime.datetime(1990, 1, 1, hour), np.mean(list(y for x, y in group)))
-            for hour, group in itertools.groupby(points, key=lambda p: p[0].hour)
-        ]
+        # points = sorted(points, key=lambda p: p[0].hour)
+        #
+        # points = [
+        #     (datetime.datetime(1990, 1, 1, hour), np.mean(list(y for x, y in group)))
+        #     for hour, group in itertools.groupby(points, key=lambda p: p[0].hour)
+        # ]
 
         plt.plot(*zip(*points), label=school_number)
 
