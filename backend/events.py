@@ -188,6 +188,7 @@ def init_mongodb_event_collection():
     global _DISABLED, _EVENTS_COLLECTION, _thread_pool_executor
     env = dotenv.DotEnv(dotenv_path=dotenv.find_dotenv())
 
+    _DISABLED = False
     if not env.get("PRODUCTION"):
         logging.warning("Not in production mode. Not submitting events.")
         _DISABLED = True
