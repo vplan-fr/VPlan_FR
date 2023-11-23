@@ -20,7 +20,7 @@ def main():
     data: dict[str, list[tuple[datetime.datetime, float]]] = defaultdict(list)
 
     for event in events.iterate_events(events.PlanCrawlCycle):
-        y = (event.end_time - event.start_time).total_seconds()
+        y = (event.end_time - event.start_time).total_seconds() / 60
         x = event.start_time
         data[creds[event.school_number]].append((x, y))
 

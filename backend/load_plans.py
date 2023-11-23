@@ -55,7 +55,7 @@ class PlanCrawler:
                     self.plan_processor._logger.error("An error occurred.", exc_info=e)
             else:
                 _t2 = events.now()
-                await events.submit_event_async(
+                events.submit_event(
                     events.PlanCrawlCycle(
                         school_number=self.school_number,
                         start_time=_t1,
