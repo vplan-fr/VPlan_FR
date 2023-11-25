@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 
+from shared import comm
 from . import schools, default_plan, events
 from .cache import Cache
 from .meta_extractor import MetaExtractor
@@ -162,6 +163,11 @@ class PlanProcessor:
                 date=date,
                 revision=timestamp,
                 has_vplan=vplan_kl is not None
+            ))
+            comm.send_message(comm.NewRevisionAvailable(
+                school_number=self.school_number,
+                date=date,
+                revision=timestamp
             ))
 
             try:

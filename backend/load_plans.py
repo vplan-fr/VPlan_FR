@@ -12,7 +12,7 @@ from stundenplan24_py import (
 )
 
 from . import events
-from .creds_provider import creds_provider_factory
+from shared.creds_provider import creds_provider_factory
 from .plan_downloader import PlanDownloader
 from .cache import Cache
 from .plan_processor import PlanProcessor
