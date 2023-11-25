@@ -196,19 +196,23 @@ class PlanDownloader:
 
                 start += datetime.timedelta(days=step)
 
-        for plan_date in valid_date_iterator(datetime.date.today(), step=-1):
-            try:
-                out |= await self.download_substitution_plan(plan_client, plan_date)
-            except PlanNotFoundError:
-                self._logger.debug(f" -> Stopping substitution plan download at date {plan_date!s}.")
-                break
+        async def iter_backwards():
+            for plan_date in valid_date_iterator(datetime.date.today(), step=-1):
+                try:
+                    out.update(await self.download_substitution_plan(plan_client, plan_date))
+                except PlanNotFoundError:
+                    self._logger.debug(f" -> Stopping substitution plan download at date {plan_date!s}.")
+                    break
 
-        for plan_date in valid_date_iterator(datetime.date.today() + datetime.timedelta(days=1), step=1):
-            try:
-                out |= await self.download_substitution_plan(plan_client, plan_date)
-            except PlanNotFoundError:
-                self._logger.debug(f" -> Stopping substitution plan download at date {plan_date!s}.")
-                break
+        async def iter_forward():
+            for plan_date in valid_date_iterator(datetime.date.today() + datetime.timedelta(days=1), step=1):
+                try:
+                    out.update(await self.download_substitution_plan(plan_client, plan_date))
+                except PlanNotFoundError:
+                    self._logger.debug(f" -> Stopping substitution plan download at date {plan_date!s}.")
+                    break
+
+        await asyncio.gather(iter_backwards(), iter_forward())
 
         return out
 
