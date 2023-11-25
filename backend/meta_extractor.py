@@ -156,11 +156,11 @@ class MetaExtractor:
             for day in self.cache.get_days(reverse=False)
         }
 
-    def courses_data(self) -> dict[str, list[str]]:
+    def courses_data(self, forms: typing.Iterable[str]) -> dict[str, list[str]]:
         for extractor in self.iterate_daily_extractors():
             return {
                 form: extractor.courses(form)
-                for form in self.forms()
+                for form in forms
             }
 
         return {}
@@ -171,9 +171,9 @@ class MetaExtractor:
 
         return []
 
-    def forms_data(self):
+    def forms_data(self, forms: typing.Iterable[str]):
         default_times = self.default_times()
-        courses = self.courses_data()
+        courses = self.courses_data(forms)
 
         return {
             form: {

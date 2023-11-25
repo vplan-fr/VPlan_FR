@@ -288,8 +288,8 @@ class PlanProcessor:
         self._logger.info("* Updating forms...")
 
         data = {
-            "grouped_forms": group_forms(self.meta_extractor.forms()),
-            "forms": self.meta_extractor.forms_data()
+            "grouped_forms": group_forms(forms_list := self.meta_extractor.forms()),
+            "forms": self.meta_extractor.forms_data(forms_list)
         }
 
         self.cache.store_meta_file(
