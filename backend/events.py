@@ -171,7 +171,7 @@ def now() -> datetime.datetime:
 
 _DISABLED: bool
 _EVENTS_COLLECTION: pymongo.collection.Collection | None
-_thread_pool_executor: concurrent.futures.ThreadPoolExecutor | None
+_thread_pool_executor: concurrent.futures.ProcessPoolExecutor | None
 
 
 def init_mongodb_event_collection():
@@ -193,7 +193,7 @@ def init_mongodb_event_collection():
         _EVENTS_COLLECTION = None
 
     if not _DISABLED:
-        _thread_pool_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+        _thread_pool_executor = concurrent.futures.ProcessPoolExecutor(max_workers=2)
 
 
 init_mongodb_event_collection()
