@@ -5,6 +5,7 @@ import dataclasses
 import datetime
 import json
 import logging
+import multiprocessing
 import typing
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -113,7 +114,7 @@ def send_message(message: Message) -> Message | None:
     return _process_pool_executor.submit(_send_message_sync, message).result()
 
 
-def listen_messages(callback: typing.Callable[[Message], None | Message]):
+def _listen_messages(callback: typing.Callable[[Message], None | Message]):
     logger = logging.getLogger("comm")
 
     class _HttpRequestHandler(BaseHTTPRequestHandler):
@@ -157,3 +158,7 @@ def listen_messages(callback: typing.Callable[[Message], None | Message]):
         httpd.serve_forever()
     finally:
         httpd.server_close()
+
+
+def listen_messages(callback: typing.Callable[[Message], None | Message]):
+    multiprocessing.Process(target=_listen_messages, args=(callback,), daemon=True).start()

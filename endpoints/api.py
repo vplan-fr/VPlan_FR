@@ -268,3 +268,24 @@ def add_school() -> Response:
         return send_error("Schule schon bekannt, Daten trotzdem übermittelt.")
     return send_success("Die Daten sind korrekt, wir werden nun innerhalb weniger Tage deine Schule hinzufügen.")
 
+
+@api.route(f"/api/v69.420/add_webpush_subscription", methods=["POST"])
+@login_required
+def add_webpush_subscription() -> Response:
+    data = request.form
+    subscription = data.get("subscription")
+    if subscription is None:
+        return send_error("Keine Subscription angegeben")
+    try:
+        subscription = json.loads(subscription)
+    except json.JSONDecodeError:
+        return send_error("Subscription ist kein JSON")
+
+    current_user.update_field("webpush_subscriptions", current_user.get_field("webpush_subscriptions", []) + [subscription])
+    return send_success("Subscription hinzugefügt")
+
+
+@api.route(f"/api/v69.420/get_webpush_public_key", methods=["GET"])
+@login_required
+def get_webpush_public_key() -> Response:
+    return send_success(os.environ.get("VAPID_PUBLIC"))
