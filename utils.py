@@ -57,9 +57,9 @@ class User(UserMixin):
         self.get_user()
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {field: value}})
 
-    def get_field(self, field):
+    def get_field(self, field, default=None):
         self.get_user()
-        return self.user.get(field)
+        return self.user.get(field, default)
 
     def get_authorized_schools(self):
         self.get_user()
