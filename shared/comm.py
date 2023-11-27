@@ -94,12 +94,18 @@ async def send_message_async(message: Message) -> Message | None:
 
                 data = _serialize(message)
 
-                url = urllib3.util.Url(scheme="http", host="localhost", port=str(_PORT))
+                url = urllib3.util.Url(scheme="http", host="localhost", port=_PORT)
 
                 async with session.post(str(url), data=data, timeout=5) as response:
                     return _deserialize(await response.content.read())
+        except aiohttp.ClientConnectorError as e:
+            if e.errno == 111:
+                logging.getLogger("comm").warning(f"Error while sending message. Error: {str(e)}")
+                return None
+            else:
+                raise
         except Exception as e:
-            logging.getLogger("comm").exception("Error while sending message.", exc_info=e)
+            logging.getLogger("comm").error("Error while sending message.", exc_info=e)
             return None
 
 
