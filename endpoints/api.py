@@ -272,17 +272,32 @@ def add_school() -> Response:
 @api.route(f"/api/v69.420/add_webpush_subscription", methods=["POST"])
 @login_required
 def add_webpush_subscription() -> Response:
-    data = request.form
-    subscription = data.get("subscription")
-    if subscription is None:
-        return send_error("Keine Subscription angegeben")
     try:
-        subscription = json.loads(subscription)
+        subscription = json.loads(request.data.decode("utf-8"))
     except json.JSONDecodeError:
         return send_error("Subscription ist kein JSON")
 
-    current_user.update_field("webpush_subscriptions", current_user.get_field("webpush_subscriptions", []) + [subscription])
-    return send_success("Subscription hinzugefügt")
+    try:
+        subscription = {
+            "endpoint": subscription["endpoint"],
+            "expirationTime": subscription["expirationTime"],
+            "keys": {
+                "p256dh": subscription["keys"]["p256dh"],
+                "auth": subscription["keys"]["auth"]
+            }
+        }
+    except KeyError:
+        return send_error("Ungültige WebPush-Subscription.")
+
+    current_subs = set(current_user.get_field("webpush_subscriptions", []))
+    current_subs.add(json.dumps(subscription))
+    current_subs = list(current_subs)
+    del current_subs[-(10 + 1)::-1]
+
+    current_user.update_field(
+        "webpush_subscriptions", current_subs
+    )
+    return send_success("Subscription hinzugefügt.")
 
 
 @api.route(f"/api/v69.420/get_webpush_public_key", methods=["GET"])
