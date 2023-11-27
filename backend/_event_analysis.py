@@ -3,9 +3,9 @@ from collections import defaultdict
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
 
-from . import events, creds_provider
+from . import events
+from shared import creds_provider
 
 
 def main():
@@ -36,13 +36,15 @@ def main():
         # ]
 
         # line opacity
-        ax.plot(*zip(*points), label=school_number, marker="x", linestyle="solid", alpha=0.5, linewidth=0.5,
-                 markersize=5)
+        ax.plot(*zip(*points), label=school_number, marker="x", linestyle="solid", alpha=0.5, linewidth=1,
+                markersize=5)
 
-    for l, ms in zip(ax.lines, itertools.cycle('o><v^1*')):
-        l.set_marker(ms)
-        # l.set_color('black')
+    for l, marker_type, line_style in zip(ax.lines, itertools.cycle('o><v^1*'), itertools.cycle(["dotted", "dashed", "dashdot", "solid"])):
+        l.set_marker(marker_type)
+        l.set_linestyle(line_style)
+        #
 
+    # ax.set_yscale('log')
     ax.set_ylim(bottom=0, top=max(max(y for x, y in points) for points in data.values()) * 1.1)
 
     ax.set_ylabel('Sekunden')
@@ -54,10 +56,7 @@ def main():
 
     fig.legend(loc='outside right upper')
 
-
     plt.show()
-
-    print(max(data, key=lambda k: data[k][0][1]))
 
 
 if __name__ == '__main__':
