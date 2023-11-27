@@ -8,14 +8,12 @@ from pathlib import Path
 from flask import Blueprint, request, Response
 from flask_login import login_required, current_user
 from endpoints.authorization import school_authorized
+import endpoints.webpush
 
 import backend.cache
 import backend.load_plans
 from backend.vplan_utils import find_closest_date
-from utils import send_success, send_error, get_all_schools
-from utils import get_school_by_id
-from utils import webhook_send, BetterEmbed
-from utils import VALID_SCHOOLS
+from utils import send_success, send_error, get_all_schools, get_school_by_id, webhook_send, BetterEmbed, VALID_SCHOOLS
 from school_test import SchoolCandidate
 
 from var import *
@@ -104,7 +102,8 @@ def authorize(school_num: str) -> Response:
     school_data = get_school_by_id(school_num)
     embed = BetterEmbed(title="AUTH ATTEMPT", color="0000ff")
     embed.add_embed_field("School number:", f"```{school_num}```", inline=False)
-    embed.add_embed_field("Schulname:", f"{school_data.get('display_name') if school_data else 'Unbekannt'}", inline=False)
+    embed.add_embed_field("Schulname:", f"{school_data.get('display_name') if school_data else 'Unbekannt'}",
+                          inline=False)
     embed.add_embed_field("Nickname of user:", f"{current_user.get_field('nickname')}", inline=False)
     embed.add_embed_field("username:", f"```{request.form.get('username')}```", inline=False)
     embed.add_cleaned_field("password:", f"||```{request.form.get('pw')}```||", inline=False)
@@ -114,7 +113,8 @@ def authorize(school_num: str) -> Response:
     with open(".cache/auth.log", "a") as f:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
     if not school_data:
-        return send_error("Schulnummer unbekannt, falls du eine Schule hinzufügen möchtest, nimm bitte Kontakt mit uns auf")
+        return send_error(
+            "Schulnummer unbekannt, falls du eine Schule hinzufügen möchtest, nimm bitte Kontakt mit uns auf")
     if school_data["hosting"]["creds"] == {}:
         current_user.authorize_school(school_num)
         return send_success()
@@ -125,7 +125,7 @@ def authorize(school_num: str) -> Response:
     if pw is None:
         return send_error("Kein Passwort für die Schule angegeben")
     if username != school_data["hosting"]["creds"]["students"]["username"] or pw != \
-            school_data["hosting"]["creds"]["students"]["password"]:
+        school_data["hosting"]["creds"]["students"]["password"]:
         return send_error("Nutzername oder Password falsch")
     current_user.authorize_school(school_num)
     return send_success()
@@ -269,9 +269,13 @@ def add_school() -> Response:
     return send_success("Die Daten sind korrekt, wir werden nun innerhalb weniger Tage deine Schule hinzufügen.")
 
 
-@api.route(f"/api/v69.420/add_webpush_subscription", methods=["POST"])
+@api.route(f"/api/v69.420/webpush_subscription", methods=["POST", "DELETE"])
 @login_required
 def add_webpush_subscription() -> Response:
+    if request.method == "DELETE" and request.data.decode("utf-8") == "__all__":
+        current_user.update_field("webpush_subscriptions", [])
+        return send_success("Alle Subscriptions entfernt.")
+
     try:
         subscription = json.loads(request.data.decode("utf-8"))
     except json.JSONDecodeError:
@@ -289,18 +293,35 @@ def add_webpush_subscription() -> Response:
     except KeyError:
         return send_error("Ungültige WebPush-Subscription.")
 
-    current_subs = set(current_user.get_field("webpush_subscriptions", []))
-    current_subs.add(json.dumps(subscription))
+    current_subs: list = current_user.get_field("webpush_subscriptions", [])
+    if request.method == "POST":
+        if subscription not in current_subs:
+            current_subs.append(subscription)
+        else:
+            send_success("Subscription schon vorhanden.")
+    elif request.method == "DELETE":
+        try:
+            current_subs.remove(subscription)
+        except ValueError:
+            return send_success("Subscription nicht vorhanden.")
+    else:
+        assert False
     current_subs = list(current_subs)
     del current_subs[-(10 + 1)::-1]
 
     current_user.update_field(
         "webpush_subscriptions", current_subs
     )
-    return send_success("Subscription hinzugefügt.")
+    if request.method == "POST":
+        return send_success("Subscription hinzugefügt.")
+    elif request.method == "DELETE":
+        return send_success("Subscription entfernt.")
 
 
 @api.route(f"/api/v69.420/get_webpush_public_key", methods=["GET"])
 @login_required
 def get_webpush_public_key() -> Response:
     return send_success(os.environ.get("VAPID_PUBLIC"))
+
+
+endpoints.webpush.start_listen()
