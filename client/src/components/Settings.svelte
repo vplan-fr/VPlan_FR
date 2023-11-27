@@ -4,7 +4,7 @@
     import {clear_plan_cache, customFetch, update_colors} from "../utils.js";
     import Modal from "../base_components/Modal.svelte";
     import Button from "../base_components/Button.svelte";
-    import {get_webpush_public_key, webpush_subscribe, webpush_unsubscribe, webpush_unsubscribe_all} from "../webpush_handler.js";
+    import {get_webpush_public_key, webpush_subscribe, webpush_unsubscribe, webpush_unsubscribe_all, webpush_test} from "../webpush_handler.js";
 
     let temp_settings;
 
@@ -88,6 +88,12 @@
                 await webpush_unsubscribe_all(await get_webpush_public_key());
             }
         } class="nav-button">für alle Browser ausschalten
+        </Button>
+        <Button on:click={
+            async () => {
+                await webpush_test(await get_webpush_public_key());
+            }
+        } class="nav-button">Push-Benachrichtigungen testen
         </Button>
 
         <h2 class="category-heading">Aussehen</h2>

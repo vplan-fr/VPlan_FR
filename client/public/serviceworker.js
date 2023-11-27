@@ -101,6 +101,11 @@ self.addEventListener('push', (event) => {
             }
         );
         });
+    } else if (obj.type === "test") {
+        self.registration.showNotification("Test", {
+            body: obj.data,
+            icon: "/public/base_static/icons/favicon.ico",
+        })
     }
 
     // self.registration.showNotification('Hello world!', options);

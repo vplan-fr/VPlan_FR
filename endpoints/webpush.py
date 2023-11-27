@@ -20,6 +20,15 @@ _CLAIM = {
 _USERS_COLLECTION = mongodb.DATABASE.get_collection("users") if mongodb.DATABASE is not None else None
 
 
+def send_message(subscription: dict, data: dict):
+    pywebpush.webpush(
+        subscription_info=subscription,
+        data=json.dumps(data),
+        vapid_private_key=_PRIVATE_KEY,
+        vapid_claims=_CLAIM
+    )
+
+
 def msg_handler(msg: comm.Message) -> comm.Message | None:
     if isinstance(msg, comm.NewRevisionAvailable):
         if not mongodb.ENABLED:
@@ -30,16 +39,13 @@ def msg_handler(msg: comm.Message) -> comm.Message | None:
         })
         for user in res:
             for subscription in user.get("webpush_subscriptions", []):
+                data = {
+                    "type": "new-revision-available",
+                    "data": msg.serialize()
+                }
+
                 try:
-                    pywebpush.webpush(
-                        subscription_info=subscription,
-                        data=json.dumps({
-                            "type": "new-revision-available",
-                            "data": msg.serialize()
-                        }),
-                        vapid_private_key=_PRIVATE_KEY,
-                        vapid_claims=_CLAIM
-                    )
+                    send_message(subscription, data)
                 except pywebpush.WebPushException as e:
                     print(e.response.text)
                     return None

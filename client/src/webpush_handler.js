@@ -58,3 +58,22 @@ export async function webpush_unsubscribe_all(public_key) {
             notifications.danger(`Fehler: ${error}`)
         })
 }
+
+export async function webpush_test(public_key) {
+    let sw = await navigator.serviceWorker.ready;
+
+    customFetch("/api/v69.420/webpush_test", {
+        "method": "POST", "body": JSON.stringify(
+            await sw.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: public_key
+            })
+        )
+    })
+        .then(data => {
+            notifications.success("Test-Benachrichtigung in bearbeitung.")
+        })
+        .catch(error => {
+            notifications.danger(`Fehler: ${error}`)
+        })
+}
