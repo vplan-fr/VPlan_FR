@@ -1,12 +1,12 @@
-import asyncio
 import concurrent.futures
 import dataclasses
 import datetime
 import logging
 import typing
 
-import dotenv.main as dotenv
 import pymongo
+
+import shared.mongodb
 
 
 @dataclasses.dataclass
@@ -118,22 +118,22 @@ def _submit_event(event: Event):
         "data": out
     }
 
-    _EVENTS_COLLECTION.insert_one(entity)
+    _COLLECTION.insert_one(entity)
 
 
 def submit_event(event: Event):
-    if _DISABLED:
+    if not shared.mongodb.ENABLED:
         logging.debug("MongoDB event collection disabled. Not submitting event.")
         return
 
-    return _thread_pool_executor.submit(_submit_event, event)
+    return _THREAD_POOL_EXECUTOR.submit(_submit_event, event)
 
 
 _T2 = typing.TypeVar("_T2", bound=Event)
 
 
 def iterate_events(type_: typing.Type[_T2], school_number: str | None = None) -> typing.Iterator[_T2]:
-    cursor = _EVENTS_COLLECTION.find(
+    cursor = _COLLECTION.find(
         {
             **({"type": type_.__name__} if type_ is not None else {}),
             **({"school_number": school_number} if school_number is not None else {}),
@@ -169,31 +169,9 @@ def now() -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)
 
 
-_DISABLED: bool
-_EVENTS_COLLECTION: pymongo.collection.Collection | None
-_thread_pool_executor: concurrent.futures.ProcessPoolExecutor | None
+_COLLECTION = shared.mongodb.DATABASE.get_collection("events") if shared.mongodb.DATABASE is not None else None
 
-
-def init_mongodb_event_collection():
-    global _DISABLED, _EVENTS_COLLECTION, _thread_pool_executor
-    env = dotenv.DotEnv(dotenv_path=dotenv.find_dotenv())
-
-    _DISABLED = False
-    if not env.get("PRODUCTION"):
-        logging.warning("Not in production mode. Not submitting events.")
-        _DISABLED = True
-
-    if (mongo_uri := env.get("MONGO_URL")) is not None:
-        collection = pymongo.MongoClient(mongo_uri).get_database("vplan").get_collection("events")
-        logging.info("Event collection found.")
-        _EVENTS_COLLECTION = collection
-    else:
-        logging.warning("No MONGO_URI found in .env file.")
-        _DISABLED = True
-        _EVENTS_COLLECTION = None
-
-    if not _DISABLED:
-        _thread_pool_executor = concurrent.futures.ProcessPoolExecutor(max_workers=2)
-
-
-init_mongodb_event_collection()
+if shared.mongodb.ENABLED:
+    _THREAD_POOL_EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=2)
+else:
+    _THREAD_POOL_EXECUTOR = None
