@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import json
@@ -316,6 +317,38 @@ def add_webpush_subscription() -> Response:
         return send_success("Subscription hinzugefügt.")
     elif request.method == "DELETE":
         return send_success("Subscription entfernt.")
+
+
+@api.route(f"/api/v69.420/webpush_test", methods=["POST"])
+@login_required
+def webpush_test() -> Response:
+    try:
+        subscription = json.loads(request.data.decode("utf-8"))
+    except json.JSONDecodeError:
+        return send_error("Subscription ist kein JSON")
+
+    try:
+        subscription = {
+            "endpoint": subscription["endpoint"],
+            "expirationTime": subscription["expirationTime"],
+            "keys": {
+                "p256dh": subscription["keys"]["p256dh"],
+                "auth": subscription["keys"]["auth"]
+            }
+        }
+    except KeyError:
+        return send_error("Ungültige WebPush-Subscription.")
+
+    try:
+        endpoints.webpush.send_message(
+            subscription,
+            {"type": "test", "data": "Hallo Welt!"}
+        )
+    except endpoints.webpush.pywebpush.WebPushException as e:
+        logging.error(f"WebPushException: {e.response.text}", exc_info=e)
+        return send_error("Fehler!")
+
+    return send_success("Benachrichtigung gesendet.")
 
 
 @api.route(f"/api/v69.420/get_webpush_public_key", methods=["GET"])
