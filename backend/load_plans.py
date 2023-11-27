@@ -133,6 +133,8 @@ async def main():
     argument_parser.add_argument("--never-raise-out-of-proxies", action="store_true",
                                  help="Never crash the program if no more proxies seem to be available. "
                                       "Keep trying instead.")
+    argument_parser.add_argument("-interval", "-i", type=int, default=60,
+                                 help="Interval in seconds between each download cycle.")
     argument_parser.add_argument("-loglevel", "-l", default="INFO")
 
     args = argument_parser.parse_args()
@@ -164,12 +166,14 @@ async def main():
                 )
             else:
                 await asyncio.gather(
-                    *[crawler.plan_downloader.check_infinite(ignore_exceptions=args.ignore_exceptions)
+                    *[crawler.plan_downloader.check_infinite(ignore_exceptions=args.ignore_exceptions,
+                                                             interval=args.interval)
                       for crawler in crawlers.values()]
                 )
         else:
             await asyncio.gather(
-                *[crawler.check_infinite(once=args.once, ignore_exceptions=args.ignore_exceptions)
+                *[crawler.check_infinite(once=args.once, ignore_exceptions=args.ignore_exceptions,
+                                         interval=args.interval)
                   for crawler in crawlers.values()]
             )
     finally:
