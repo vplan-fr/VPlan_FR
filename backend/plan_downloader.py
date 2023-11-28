@@ -212,7 +212,8 @@ class PlanDownloader:
                     self._logger.debug(f" -> Stopping substitution plan download at date {plan_date!s}.")
                     break
 
-        await asyncio.gather(iter_backwards(), iter_forward())
+        # await asyncio.gather(iter_backwards(), iter_forward())
+        await iter_forward()
 
         return out
 
