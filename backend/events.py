@@ -30,6 +30,7 @@ class PlanDownload(Event):
     date: datetime.date
     last_modified: datetime.datetime
     file_length: int
+    proxies_used: int | None = None
 
 
 @dataclasses.dataclass
@@ -103,10 +104,8 @@ def _submit_event(event: Event):
     event_base_dict = event.get_base_dict()
 
     out = {}
+    # noinspection PyDataclass
     for key, value in dataclasses.asdict(event).items():
-        if key in event_base_dict:
-            continue
-
         if isinstance(value, (datetime.datetime, datetime.date)):
             out[key] = value.isoformat()
         else:
@@ -144,17 +143,13 @@ def iterate_events(type_: typing.Type[_T2], school_number: str | None = None) ->
     for event in cursor:
         obj = type_.__new__(type_)
 
-        for field in dataclasses.fields(obj):
-            if field.name in event:
-                continue
+        obj.__dict__ = event["data"]
 
+        for field in dataclasses.fields(obj):
             if field.type is datetime.datetime:
-                obj.__dict__[field.name] = datetime.datetime.fromisoformat(event["data"][field.name])
-            else:
-                try:
-                    obj.__dict__[field.name] = event["data"][field.name]
-                except KeyError:
-                    pass
+                obj.__dict__[field.name] = datetime.datetime.fromisoformat(obj.__dict__[field.name])
+            elif field.type is datetime.date:
+                obj.__dict__[field.name] = datetime.date.fromisoformat(obj.__dict__[field.name])
 
         obj.__dict__["school_number"] = event["school_number"]
         obj.__dict__["start_time"] = datetime.datetime.fromisoformat(event["start_time"])
