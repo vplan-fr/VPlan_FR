@@ -83,7 +83,7 @@ class MetaExtractor:
 
         self._rooms: set[str] | None = None
         self._daily_extractors: dict[tuple[datetime.date, datetime.datetime], DailyMetaExtractor] = {}
-        self._max_cached_extractors = 30
+        self._max_cached_extractors = 10
 
     def iterate_daily_extractors(self) -> typing.Generator[DailyMetaExtractor, None, None]:
         for day in self.cache.get_days()[:self.num_last_days]:
