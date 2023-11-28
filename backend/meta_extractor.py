@@ -135,6 +135,9 @@ class MetaExtractor:
 
         for extractor in self.iterate_daily_extractors():
             forms.update(extractor.forms())
+            # takes wayyy to long to iterate all extractors
+            if forms:
+                break
 
         return sorted(forms)
 
