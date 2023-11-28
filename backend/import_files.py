@@ -30,7 +30,7 @@ async def main():
         )
 
     await asyncio.gather(
-        *[client.plan_processor.update_all() for client in clients.values()]
+        *[client.plan_processor.do_full_update() for client in clients.values()]
     )
 
 

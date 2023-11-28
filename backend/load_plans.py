@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import aiohttp
 import asyncio
 import logging
@@ -25,29 +26,31 @@ class PlanCrawler:
         self.school_number = school_number
         self.plan_downloader = plan_downloader
         self.plan_processor = plan_processor
+        self._plan_compute_thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
     async def check_infinite(self, interval: int = 60, *, once: bool = False, ignore_exceptions: bool = False):
         self.plan_downloader.migrate_all()
-        self.plan_processor.update_all()
+        self.plan_processor.do_full_update()
 
         while True:
             _t1 = events.now()
             try:
-                downloaded_files = await self.plan_downloader.update_fetch()
+                updated_dates = await self.plan_downloader.update_fetch()
 
-                if downloaded_files:
+                if updated_dates:
                     self.plan_processor._logger.debug("* Processing plans...")
                     self.plan_processor.meta_extractor.invalidate_cache()
                 else:
                     self.plan_processor._logger.debug("* No plans to process.")
 
-                for (date, revision), downloaded_files_metadata in downloaded_files.items():
-                    self.plan_processor.update_plans(date, revision)
+                for date in updated_dates:
+                    self._plan_compute_thread_pool.submit(
+                        self.plan_processor.update_day_plans, date
+                    )
 
-                if downloaded_files:
-                    self.plan_processor.store_teachers()
-                    self.plan_processor.update_meta()
-                    self.plan_processor.update_default_plan()
+                if updated_dates:
+                    self.plan_processor.update_after_plan_processing()
+
             except Exception as e:
                 if not ignore_exceptions:
                     raise
@@ -156,7 +159,7 @@ async def main():
         if args.only_process:
             for crawler in crawlers.values():
                 crawler.plan_downloader.migrate_all()
-                crawler.plan_processor.update_all()
+                crawler.plan_processor.do_full_update()
         elif args.only_download:
             if args.once:
                 for crawler in crawlers.values():

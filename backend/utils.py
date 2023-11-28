@@ -28,11 +28,9 @@ async def main():
 
                 for revision in crawler.plan_processor.cache.get_timestamps(day):
                     crawler.plan_processor._logger.info(f"Computing plans for {day} {revision}...")
-                    crawler.plan_processor.compute_plans(day, revision)
+                    crawler.plan_processor.compute_plan_revision(day, revision)
 
-            crawler.plan_processor.update_meta()
-            crawler.plan_processor.update_default_plan()
-            crawler.plan_processor.store_teachers()
+            crawler.plan_processor.update_after_plan_processing()
 
     elif args.subcommand == "extract-all-teachers":
         logging.basicConfig(level="DEBUG", format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
