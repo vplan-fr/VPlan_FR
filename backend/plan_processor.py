@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import json
 import logging
+import xml.etree.ElementTree as ET
 
 from shared import comm
 from . import schools, default_plan, events
@@ -72,12 +73,9 @@ class PlanProcessor:
         return True
 
     def compute_plan_revision(self, date: datetime.date, timestamp: datetime.datetime):
+        _t1 = events.now()
         try:
             plan_kl = self.cache.get_plan_file(date, timestamp, "PlanKl.xml", newest_before=True)
-        except FileNotFoundError:
-            self._logger.warning(f"=> Could not find Indiware form plan for date {date!s} and timestamp {timestamp!s}.")
-        else:
-            _t1 = events.now()
             try:
                 vplan_kl = self.cache.get_plan_file(date, timestamp, "VplanKl.xml", newest_before=True)
             except FileNotFoundError:
@@ -86,7 +84,11 @@ class PlanProcessor:
             students_plan_extractor = StudentsPlanExtractor(
                 plan_kl, vplan_kl, self.teachers, logger=self._logger
             )
-
+        except FileNotFoundError:
+            self._logger.warning(f"=> Could not find Indiware form plan for date {date!s} and timestamp {timestamp!s}.")
+        except ET.ParseError:
+            self._logger.error(f"=> Failed to parse student's plan {date!s} {timestamp!s}.")
+        else:
             self.cache.store_plan_file(
                 date, timestamp,
                 json.dumps({
@@ -173,17 +175,18 @@ class PlanProcessor:
                 revision=timestamp
             ))
 
+            _t1 = events.now()
             try:
                 plan_le = self.cache.get_plan_file(date, timestamp, "PlanLe.xml", newest_before=True)
-            except FileNotFoundError:
-                pass
-            else:
-                _t1 = events.now()
                 try:
                     plan_ra = self.cache.get_plan_file(date, timestamp, "PlanRa.xml", newest_before=True)
                 except FileNotFoundError:
                     plan_ra = None
-
+            except ET.ParseError:
+                self._logger.error(f"=> Failed to parse teacher's plan for {date!s} {timestamp!s}.")
+            except FileNotFoundError:
+                pass
+            else:
                 teachers_plan_extractor = TeachersPlanExtractor(
                     plan_le, plan_ra, self.teachers, logger=self._logger
                 )
