@@ -144,8 +144,12 @@ def iterate_events(type_: typing.Type[_T2], school_number: str | None = None) ->
         obj = type_.__new__(type_)
 
         obj.__dict__ = event["data"]
+        base_keys = [f.name for f in dataclasses.fields(Event)]
 
         for field in dataclasses.fields(obj):
+            if field.name in base_keys:
+                continue
+
             if field.type is datetime.datetime:
                 obj.__dict__[field.name] = datetime.datetime.fromisoformat(obj.__dict__[field.name])
             elif field.type is datetime.date:
