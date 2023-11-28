@@ -29,7 +29,15 @@ class MongoDbCredsProvider(CredsProvider):
     def get_creds(self) -> dict:
         pipeline = [
             {
-                "$sort": {"count": pymongo.DESCENDING}
+                "$match": {
+                    "$or": [
+                        {"is_disabled": {"$exists": False}},
+                        {"is_disabled": False},
+                    ]
+                }
+            },
+            {
+                "$sort": {"count": pymongo.DESCENDING},
             },
             {
                 "$project": {
