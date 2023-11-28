@@ -45,16 +45,19 @@ class PlanProcessor:
 
         self._logger.info(f"=> Loaded {len(self.teachers.teachers)} cached teachers.")
 
-    def migrate_all(self):
+    def update_all_plans(self):
         self._logger.info("* Migrating cache...")
 
         for day in self.cache.get_days():
-            self.cache.update_newest(day)
+            self.update_day_plans(day)
 
-            for revision in self.cache.get_timestamps(day):
-                self.update_plans(day, revision)
+    def update_day_plans(self, day: datetime.date):
+        self.cache.update_newest(day)
 
-    def update_plans(self, day: datetime.date, timestamp: datetime.datetime) -> bool:
+        for revision in self.cache.get_timestamps(day):
+            self.update_plan_revision(day, revision)
+
+    def update_plan_revision(self, day: datetime.date, timestamp: datetime.datetime) -> bool:
         if self.cache.plan_file_exists(day, timestamp, ".processed"):
             if (cur_ver := self.cache.get_plan_file(day, timestamp, ".processed")) == self.VERSION:
                 return False
@@ -64,11 +67,11 @@ class PlanProcessor:
         else:
             self._logger.info(f"=> Processing plan for {day!s} {timestamp!s}...")
 
-        self.compute_plans(day, timestamp)
+        self.compute_plan_revision(day, timestamp)
 
         return True
 
-    def compute_plans(self, date: datetime.date, timestamp: datetime.datetime):
+    def compute_plan_revision(self, date: datetime.date, timestamp: datetime.datetime):
         try:
             plan_kl = self.cache.get_plan_file(date, timestamp, "PlanKl.xml", newest_before=True)
         except FileNotFoundError:
@@ -344,8 +347,11 @@ class PlanProcessor:
                 continue
             break
 
-    def update_all(self):
+    def do_full_update(self):
         self.update_meta()
-        self.migrate_all()
+        self.update_after_plan_processing()
+
+    def update_after_plan_processing(self):
+        self.update_all_plans()
         self.update_default_plan()
         self.store_teachers()

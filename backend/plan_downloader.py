@@ -70,7 +70,7 @@ class PlanDownloader:
             self._logger.debug(f"Waiting {interval} s.")
             await asyncio.sleep(interval)
 
-    async def update_fetch(self) -> dict[tuple[datetime.date, datetime.datetime], list[PlanFileMetadata]]:
+    async def update_fetch(self) -> list[datetime.date]:
         self._logger.debug("* Checking for new plans...")
 
         new: set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]] = set()
@@ -90,11 +90,8 @@ class PlanDownloader:
             "last_fetch.json"
         )
 
-        out: dict[tuple[datetime.date, datetime.datetime], list[PlanFileMetadata]] = defaultdict(list)
-        for date, revision, file_metadata in new:
-            out[date, revision].append(file_metadata)
-
-        return out
+        out = {date for date, revision, file_metadata in new}
+        return sorted(out)
 
     async def fetch_indiware_mobil(
         self,
