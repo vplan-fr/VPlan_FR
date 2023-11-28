@@ -9,7 +9,7 @@ from dotenv.main import DotEnv, find_dotenv
 
 class CredsProvider(abc.ABC):
     @abc.abstractmethod
-    def get_creds(self) -> dict:
+    def get_creds(self, ignore_disabled: bool = False) -> dict:
         pass
 
 
@@ -17,7 +17,7 @@ class FileCredsProvider(CredsProvider):
     def __init__(self, path: Path):
         self.path = path
 
-    def get_creds(self) -> dict:
+    def get_creds(self, ignore_disabled: bool = False) -> dict:
         with open(self.path, "r", encoding="utf-8") as f:
             return json.load(f)
 
@@ -26,16 +26,16 @@ class MongoDbCredsProvider(CredsProvider):
     def __init__(self, collection: pymongo.database.Collection):
         self.collection = collection
 
-    def get_creds(self) -> dict:
+    def get_creds(self, ignore_disabled: bool = False) -> dict:
         pipeline = [
-            {
+            *([{
                 "$match": {
                     "$or": [
                         {"is_disabled": {"$exists": False}},
                         {"is_disabled": False},
                     ]
                 }
-            },
+            }] if not ignore_disabled else []),
             {
                 "$sort": {"count": pymongo.DESCENDING},
             },
