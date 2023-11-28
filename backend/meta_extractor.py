@@ -97,7 +97,10 @@ class MetaExtractor:
                     except FileNotFoundError:
                         continue
 
-                    extractor = DailyMetaExtractor(plan_kl)
+                    try:
+                        extractor = DailyMetaExtractor(plan_kl)
+                    except ET.ParseError:
+                        self._logger.error(f"Failed to parse PlanKl.xml for {day!s} {timestamp!s}.")
 
                     self._daily_extractors[(day, timestamp)] = extractor
                     while len(self._daily_extractors) > self._max_cached_extractors:
