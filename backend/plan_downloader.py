@@ -144,8 +144,10 @@ class PlanDownloader:
                     etag=plan_response.etag,
                 )
 
+                # noinspection PyUnresolvedReferences
                 timer.submit(plan_type=plan_filename, last_modified=plan_response.last_modified,
-                             file_length=len(plan_response.content), date=date)
+                             file_length=len(plan_response.content), date=date,
+                             proxies_used=plan_response.response._num_proxy_tries)
 
                 self.cache.store_plan_file(date, revision, plan_response.content, plan_filename)
                 self.cache.store_plan_file(date, revision, json.dumps(downloaded_file.serialize()),
