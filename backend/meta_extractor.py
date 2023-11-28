@@ -101,6 +101,7 @@ class MetaExtractor:
                         extractor = DailyMetaExtractor(plan_kl)
                     except ET.ParseError:
                         self._logger.error(f"Failed to parse PlanKl.xml for {day!s} {timestamp!s}.")
+                        continue
 
                     self._daily_extractors[(day, timestamp)] = extractor
                     while len(self._daily_extractors) > self._max_cached_extractors:
