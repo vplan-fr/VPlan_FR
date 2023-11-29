@@ -1,32 +1,32 @@
 import threading
-from pathlib import Path
-from typing import List
-
 import os
 import json
-import pymongo
-from bson import ObjectId
-from werkzeug.security import safe_join
-from copy import deepcopy
 import contextlib
 import hashlib
+from pathlib import Path
+from typing import List
+from copy import deepcopy
 
+from werkzeug.security import safe_join
 from flask import Flask, Response, jsonify
 from flask_login import UserMixin
-
+import pymongo
+from bson import ObjectId
 from dotenv import load_dotenv
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-from var import *
 import shared.cache
+import shared.mongodb
+from user_settings import SETTINGS, TYPE_FUNCTIONS, DEFAULT_SETTINGS
 
 load_dotenv()
 
-db = pymongo.MongoClient(os.getenv("MONGO_URL") if os.getenv("MONGO_URL") else "", 27017).vplan
-users = db["users"]
-creds = db["creds"]
+assert shared.mongodb.DATABASE is not None
+
+users = shared.mongodb.DATABASE.get_collection("users")
+creds = shared.mongodb.DATABASE.get_collection("creds")
 VALID_SCHOOLS = [elem["_id"] for elem in list(creds.find({}))]
-meta = db["meta"]
+meta = shared.mongodb.DATABASE.get_collection("meta")
 
 
 # RESPONSE WRAPPERS
@@ -107,6 +107,7 @@ class User(UserMixin):
 
     def get_favourites(self) -> Response:
         return send_success(self.user.get("favourites", {}))
+
     """
         what does a favourite need:
             -> name by user (default "Favourit {n}")
@@ -285,6 +286,7 @@ def run_in_background(func):
         thread = threading.Thread(target=func, args=args, kwargs=kwargs)
         thread.start()
         return thread
+
     return wrapper
 
 
@@ -342,6 +344,3 @@ def meta_to_database(request_data):
 if __name__ == "__main__":
     # json_to_mongo()
     ...
-
-
-
