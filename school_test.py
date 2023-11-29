@@ -47,7 +47,7 @@ class SchoolCandidate:
     def test(self) -> tuple[bool, bool]:
         try:
             r = requests.get(self.test_url)
-        except requests.exceptions.ConnectionError or requests.exceptions.SSLError:
+        except (requests.exceptions.ConnectionError, requests.exceptions.SSLError):
             return self.school_exists, self.is_valid
         self.school_exists, self.is_valid = match_status_code(r.status_code)
         if not self.school_exists:
@@ -57,7 +57,7 @@ class SchoolCandidate:
             return self.school_exists, self.is_valid
         try:
             r = requests.get(self.test_url, auth=(self.username, self.password))
-        except requests.exceptions.ConnectionError or requests.exceptions.SSLError:
+        except (requests.exceptions.ConnectionError, requests.exceptions.SSLError):
             self.school_exists = False
             return self.school_exists, self.is_valid
         self.school_exists, self.is_valid = match_status_code(r.status_code)
