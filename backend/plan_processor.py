@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 from shared import comm
 from . import schools, default_plan, events
-from .cache import Cache
+from shared.cache import Cache
 from .meta_extractor import MetaExtractor
 from .teacher import Teachers
 from .models import PlanLesson, Exam

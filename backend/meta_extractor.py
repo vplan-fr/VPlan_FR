@@ -7,7 +7,7 @@ from xml.etree import ElementTree as ET
 
 from stundenplan24_py import indiware_mobil
 
-from .cache import Cache
+from shared.cache import Cache
 from .models import DefaultTimesInfo, Plan
 from .teacher import Teacher
 
