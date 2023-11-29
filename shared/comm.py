@@ -87,8 +87,8 @@ def _deserialize(data: bytes) -> Message | None:
 
 
 async def send_message_async(message: Message) -> Message | None:
-    async with asyncio.timeout(10):
-        try:
+    try:
+        async with asyncio.timeout(10):
             async with aiohttp.ClientSession() as session:
                 session: aiohttp.ClientSession
 
@@ -98,15 +98,15 @@ async def send_message_async(message: Message) -> Message | None:
 
                 async with session.post(str(url), data=data, timeout=5) as response:
                     return _deserialize(await response.content.read())
-        except aiohttp.ClientConnectorError as e:
-            if e.errno == 111:
-                logging.getLogger("comm").warning(f"Error while sending message. Error: {str(e)}")
-                return None
-            else:
-                raise
-        except Exception as e:
-            logging.getLogger("comm").error("Error while sending message.", exc_info=e)
+    except aiohttp.ClientConnectorError as e:
+        if e.errno == 111:
+            logging.getLogger("comm").warning(f"Error while sending message. Error: {str(e)}")
             return None
+        else:
+            raise
+    except Exception as e:
+        logging.getLogger("comm").error("Error while sending message.", exc_info=e)
+        return None
 
 
 _process_pool_executor = concurrent.futures.ProcessPoolExecutor(max_workers=2)
@@ -117,7 +117,11 @@ def _send_message_sync(message):
 
 
 def send_message(message: Message) -> Message | None:
-    return _process_pool_executor.submit(_send_message_sync, message).result()
+    try:
+        return _process_pool_executor.submit(_send_message_sync, message).result()
+    except Exception as e:
+        logging.getLogger("comm").error("Error while sending message.", exc_info=e)
+        return None
 
 
 def _listen_messages(callback: typing.Callable[[Message], None | Message]):
