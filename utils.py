@@ -106,58 +106,58 @@ class User(UserMixin):
         self.get_user()
         return self.user.get("settings", {}).get(setting_key, DEFAULT_SETTINGS.get(setting_key, None))
 
-    def get_favourites(self) -> Response:
-        return send_success(self.user.get("favourites", {}))
+    def get_favorites(self) -> Response:
+        return send_success(self.user.get("favorites", {}))
 
     """
-        what does a favourite need:
+        what does a favorite need:
             -> name by user (default "Favourit {n}")
             -> priority
             -> school_id, plan_type, plan_value
     """
 
-    def set_favourites(self, favourites) -> Response:
-        new_favourites = []
-        for cur_favourite in favourites:
+    def set_favorites(self, favorites) -> Response:
+        new_favorites = []
+        for cur_favorite in favorites:
             valid_fields = ["school_num", "name", "priority", "plan_type", "plan_value", "preferences"]
-            favourite = {elem: cur_favourite.get(elem) for elem in valid_fields}
-            for key in favourite:
-                if favourite[key] is None:
-                    if favourite["plan_type"] == "room_overview" and key == "plan_value":
+            favorite = {elem: cur_favorite.get(elem) for elem in valid_fields}
+            for key in favorite:
+                if favorite[key] is None:
+                    if favorite["plan_type"] == "room_overview" and key == "plan_value":
                         continue
                     return send_error(f"{key} nicht angegeben")
-            if favourite["school_num"] not in self.get_authorized_schools():
+            if favorite["school_num"] not in self.get_authorized_schools():
                 return send_error("Schule nicht autorisiert")
-            if len(favourite["name"]) > 40:
+            if len(favorite["name"]) > 40:
                 return send_error("Name zu lang")
-            if not isinstance(favourite["priority"], int) or favourite["priority"] < 0 or favourite["priority"] > 100:
+            if not isinstance(favorite["priority"], int) or favorite["priority"] < 0 or favorite["priority"] > 100:
                 return send_error("Priorität muss eine Zahl zwischen 0 und 100 sein")
-            if favourite["plan_type"] not in ["forms", "teachers", "rooms", "room_overview"]:
+            if favorite["plan_type"] not in ["forms", "teachers", "rooms", "room_overview"]:
                 return send_error("invalide Planart")
-            cache = shared.cache.Cache(Path(".cache") / favourite["school_num"])
-            if favourite["plan_type"] == "room_overview":
-                favourite["plan_value"] = None
-                favourite["preferences"] = None
-                new_favourites.append(favourite)
+            cache = shared.cache.Cache(Path(".cache") / favorite["school_num"])
+            if favorite["plan_type"] == "room_overview":
+                favorite["plan_value"] = None
+                favorite["preferences"] = None
+                new_favorites.append(favorite)
                 continue
-            available_plans = json.loads(cache.get_meta_file(f"{favourite['plan_type']}.json"))
-            if favourite["plan_type"] in available_plans:
-                available_plans = available_plans[favourite["plan_type"]].keys()
+            available_plans = json.loads(cache.get_meta_file(f"{favorite['plan_type']}.json"))
+            if favorite["plan_type"] in available_plans:
+                available_plans = available_plans[favorite["plan_type"]].keys()
             else:
                 available_plans = available_plans.keys()
-            if favourite["plan_value"] not in available_plans:
+            if favorite["plan_value"] not in available_plans:
                 return send_error("invalider Plan (Klasse/Lehrer/Raum) existiert nicht")
-            if favourite["plan_type"] != "forms":
-                favourite["preferences"] = None
-                new_favourites.append(favourite)
+            if favorite["plan_type"] != "forms":
+                favorite["preferences"] = None
+                new_favorites.append(favorite)
                 continue
             available_preferences = json.loads(
                 cache.get_meta_file("forms.json")
-            )["forms"][favourite["plan_value"]]["class_groups"].keys()
-            favourite["preferences"] = [elem for elem in favourite["preferences"] if elem in available_preferences]
-            new_favourites.append(favourite)
-        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'favourites': new_favourites}})
-        return send_success(new_favourites)
+            )["forms"][favorite["plan_value"]]["class_groups"].keys()
+            favorite["preferences"] = [elem for elem in favorite["preferences"] if elem in available_preferences]
+            new_favorites.append(favorite)
+        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'favorites': new_favorites}})
+        return send_success(new_favorites)
 
 
 def get_user(user_id):

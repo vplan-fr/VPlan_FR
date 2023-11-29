@@ -6,12 +6,12 @@
     import Navbar from "./components/Navbar.svelte";
     import Settings from "./components/Settings.svelte";
     import AboutUs from "./components/AboutUs.svelte";
-    import Favourites from "./components/Favourites.svelte";
+    import Favorites from "./components/Favorites.svelte";
     import Stats from "./Dashboard/Stats/Stats.svelte";
     import SveltyPicker from 'svelty-picker';
-    import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache, get_favourites} from "./utils.js";
+    import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache, get_favorites} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, settings, active_modal, pwa_prompt, indexed_db, selected_favourite, favourites} from './stores.js'
+    import {logged_in, title, current_page, settings, active_modal, pwa_prompt, indexed_db, selected_favorite, favorites} from './stores.js'
     import SchoolManager from "./components/SchoolManager.svelte";
     import Changelog from "./components/Changelog.svelte";
     import Select from "./base_components/Select.svelte";
@@ -273,14 +273,14 @@
         }
     }
 
-    function select_plan(favourites, selected_favourite) {
-        // check if selected_favourite is in favourites (selected_favourite is the index)
-        if (selected_favourite !== -1 && favourites[selected_favourite]) {
-            selected_favourite = favourites[selected_favourite];
-            school_num = selected_favourite.school_num;
+    function select_plan(favorites, selected_favorite) {
+        // check if selected_favorite is in favorites (selected_favorite is the index)
+        if (selected_favorite !== -1 && favorites[selected_favorite]) {
+            selected_favorite = favorites[selected_favorite];
+            school_num = selected_favorite.school_num;
             localStorage.setItem('school_num', school_num);
-            plan_type = selected_favourite.plan_type;
-            plan_value = selected_favourite.plan_value;
+            plan_type = selected_favorite.plan_type;
+            plan_value = selected_favorite.plan_value;
             selected_form = null;
             selected_teacher = null;
             selected_room = null;
@@ -293,22 +293,22 @@
             return;
         }
         navigate_page('plan');
-        if($favourites.length === 0) {
+        if($favorites.length === 0) {
             return;
         }
-        $selected_favourite = 0;
+        $selected_favorite = 0;
         load_favorite = false;
     }
 
-    function reset_favourite() {
-        selected_favourite.set(-1);
+    function reset_favorite() {
+        selected_favorite.set(-1);
     }
-    // reset favourite when selecting new plan
-    $: (selected_form || selected_teacher || selected_room) && reset_favourite();
-    $: if ($selected_favourite !== -1) {
-        // check if selected_favourite is in favourites
-        if ($favourites.length <= $selected_favourite) {
-            selected_favourite.set(-1);
+    // reset favorite when selecting new plan
+    $: (selected_form || selected_teacher || selected_room) && reset_favorite();
+    $: if ($selected_favorite !== -1) {
+        // check if selected_favorite is in favorites
+        if ($favorites.length <= $selected_favorite) {
+            selected_favorite.set(-1);
         }
     }
 
@@ -396,8 +396,8 @@
         {:else if $logged_in}
             {#if $current_page.substring(0, 4) === "plan" || $current_page.substring(0, 8) === "weekplan"}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
-                <!-- {#if $selected_favourite !== -1 && $favourites[$selected_favourite]}
-                    Gewählter Favorit: {$favourites[$selected_favourite].name}
+                <!-- {#if $selected_favorite !== -1 && $favorites[$selected_favorite]}
+                    Gewählter Favorit: {$favorites[$selected_favorite].name}
                     <br>
                 {/if} -->
                 <div class="controls-wrapper">
@@ -436,7 +436,7 @@
                     <div class="control" id="c5">
                         <Button on:click={() => {
                             //set_plan("room_overview", "");
-                            reset_favourite();
+                            reset_favorite();
                             // console.log("going to room overview");
                             plan_type = "room_overview";
                             plan_value = "";
@@ -457,7 +457,7 @@
             {:else if $current_page === "favorite"}
                 <span class="responsive-text">Lade deine Favoriten...</span>
             {:else if $current_page === "favorites"}
-                <Favourites />
+                <Favorites />
             {:else if $current_page === "pwa_install"}
                 <PwaInstallHelper />
             {:else if $current_page === "stats"}
