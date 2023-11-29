@@ -9,9 +9,10 @@ from copy import deepcopy
 
 from werkzeug.security import safe_join
 from flask import Flask, Response, jsonify
-from flask_login import UserMixin
 import pymongo
 from bson import ObjectId
+from flask_login import UserMixin, current_user
+
 from dotenv import load_dotenv
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
@@ -164,6 +165,18 @@ def get_user(user_id):
         return users.find_one({'_id': ObjectId(user_id)})
     except Exception:
         return
+
+
+# DOESNT WORK
+def is_admin(func):
+    def wrapper(*args, **kwargs):
+        if not current_user.user:
+            current_user.get_user()
+        if not current_user.user.get("admin"):
+            return send_error("Du bist kein Admin")
+        return func(*args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return wrapper
 
 
 class AddStaticFileHashFlask(Flask):
