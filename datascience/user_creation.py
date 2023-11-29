@@ -93,7 +93,7 @@ def plot_school_counts():
 
 
 def get_settings_usage():
-    excluded = ["favorite"]
+    excluded = ["favourite"]
     settings = users.find({"settings": {"$exists": True}}, {"settings": 1})
     settings = [user_settings["settings"] for user_settings in settings]
     settings_counts = {}

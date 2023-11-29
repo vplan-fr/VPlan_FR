@@ -112,7 +112,7 @@
             })
     }
 
-    // FAVOURITE MANAGEMENT
+    // FAVORITE MANAGEMENT
     function add_favorite() {
         cur_favorites = [...cur_favorites, {"school_num": "", "name": "", "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}];
     }

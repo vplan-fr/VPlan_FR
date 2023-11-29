@@ -107,7 +107,7 @@ class User(UserMixin):
         return self.user.get("settings", {}).get(setting_key, DEFAULT_SETTINGS.get(setting_key, None))
 
     def get_favorites(self) -> Response:
-        return send_success(self.user.get("favorites", {}))
+        return send_success(self.user.get("favourites", {}))
 
     """
         what does a favorite need:
@@ -156,7 +156,7 @@ class User(UserMixin):
             )["forms"][favorite["plan_value"]]["class_groups"].keys()
             favorite["preferences"] = [elem for elem in favorite["preferences"] if elem in available_preferences]
             new_favorites.append(favorite)
-        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'favorites': new_favorites}})
+        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'favourites': new_favorites}})
         return send_success(new_favorites)
 
 
