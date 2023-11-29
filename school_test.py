@@ -1,5 +1,4 @@
 import os
-from typing import Dict, Tuple
 from dotenv import load_dotenv
 
 import requests
@@ -7,7 +6,7 @@ import requests
 load_dotenv()
 
 
-def match_status_code(code) -> Tuple[bool, bool]:
+def match_status_code(code) -> tuple[bool, bool]:
     if code == 200:
         return True, True
     elif code == 401 or code == 403:
@@ -19,7 +18,7 @@ def match_status_code(code) -> Tuple[bool, bool]:
 
 
 # returns a dict with keys school nums and values urls
-def get_other_servers() -> Dict[str, str]:
+def get_other_servers() -> dict[str, str]:
     url = f"https://www.stundenplan24.de/extern/links24k.txt"
     if not os.getenv("LINKS24_USER") or not os.getenv("LINKS24_PASSWORD"):
         return {}
@@ -33,7 +32,7 @@ class SchoolCandidate:
     test_url: str = ""
     school_exists: bool = False
     is_valid: bool = False
-    servers: Dict[str, str] = {}
+    servers: dict[str, str] = {}
     needs_password: bool = True
 
     def __init__(self, abbreviation: str, school_num: str, username: str, password: str, test: bool = True) -> None:
@@ -45,7 +44,7 @@ class SchoolCandidate:
         self.test_url = self.servers[school_num] if self.school_num in self.servers else f"https://www.stundenplan24.de/{self.school_num}/mobil/"
         self.test() if test else ...
 
-    def test(self) -> Tuple[bool, bool]:
+    def test(self) -> tuple[bool, bool]:
         try:
             r = requests.get(self.test_url)
         except requests.exceptions.ConnectionError or requests.exceptions.SSLError:
