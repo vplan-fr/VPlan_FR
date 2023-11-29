@@ -335,6 +335,7 @@ class BetterEmbed(DiscordEmbed):
 
 
 def update_database():
+    global VALID_SCHOOLS
     add_database_icons()
     update_school_authorization_count()
     VALID_SCHOOLS = [elem["_id"] for elem in list(creds.find({}))]
