@@ -12,6 +12,7 @@ from bson import ObjectId
 from endpoints.authorization import authorization
 from endpoints.api import api
 from endpoints.stats import stats
+import endpoints.webpush
 
 from utils import User, AddStaticFileHashFlask, get_user, send_error, update_database, meta_to_database
 
@@ -96,4 +97,5 @@ def sw() -> Response:
 
 if __name__ == "__main__":
     update_database()
+    endpoints.webpush.start_listen()
     app.run(debug=DEBUG)
