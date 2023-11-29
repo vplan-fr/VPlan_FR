@@ -1,20 +1,20 @@
 <script>
-    import {customFetch, get_favourites, load_meta} from "../utils.js";
+    import {customFetch, get_favorites, load_meta} from "../utils.js";
     import Select from "../base_components/Select.svelte";
     import Button from "../base_components/Button.svelte";
     import {notifications} from "../notifications.js";
 
-    import {favourites, title, settings} from "../stores.js";
+    import {favorites, title, settings} from "../stores.js";
     import CollapsibleWrapper from "../base_components/CollapsibleWrapper.svelte";
     import Collapsible from "../base_components/Collapsible.svelte";
     import { onMount } from "svelte";
 
-    let cur_favourites = [];
+    let cur_favorites = [];
     let loading = true;
     let all_schools = {};
     let authorized_school_ids = [];
     let school_nums = [];
-    $: school_nums = [...new Set(cur_favourites.map(obj => obj.school_num).filter(school_num => school_num !== ""))];
+    $: school_nums = [...new Set(cur_favorites.map(obj => obj.school_num).filter(school_num => school_num !== ""))];
     let all_meta = {};
     let duplicated_courses_match = {};
     let plan_types = [
@@ -32,9 +32,9 @@
 
     get_schools();
     get_authorized_schools();
-    get_favourites()
+    get_favorites()
         .then(data => {
-            load_favourites()
+            load_favorites()
         });
 
     onMount(() => {
@@ -72,34 +72,34 @@
 
         - duplicated courses are unified: for each course c1 that already exists as course c0, the pair c1: c0 is put into an object -> later, the check-value of c1 is set to that of c0
     */
-    function load_favourites() {
+    function load_favorites() {
         loading = true;
         // change preferences to dict
-        let temp_fav = $favourites;
+        let temp_fav = $favorites;
         console.log(temp_fav);
         temp_fav = temp_fav.map(item => ({ ...item, preferences: (item.preferences || []).reduce((obj, preference) => ({ ...obj, [preference]: false }), {}) }));
-        cur_favourites = temp_fav;
-        console.log(cur_favourites);
+        cur_favorites = temp_fav;
+        console.log(cur_favorites);
         loading = false;
     }
-    function save_favourites() {
-        let new_favourites = [];
-        for (let favourite = 0; favourite < cur_favourites.length; favourite++) {
-            let cur_favourite = {...cur_favourites[favourite]};
-            // check if favourite in duplicated_courses_match
-            if (duplicated_courses_match.hasOwnProperty(favourite)) {
-                for (const cur_key of Object.keys(duplicated_courses_match[favourite])) {
-                    cur_favourite.preferences[cur_key] = cur_favourite.preferences[duplicated_courses_match[favourite][cur_key]];
+    function save_favorites() {
+        let new_favorites = [];
+        for (let favorite = 0; favorite < cur_favorites.length; favorite++) {
+            let cur_favorite = {...cur_favorites[favorite]};
+            // check if favorite in duplicated_courses_match
+            if (duplicated_courses_match.hasOwnProperty(favorite)) {
+                for (const cur_key of Object.keys(duplicated_courses_match[favorite])) {
+                    cur_favorite.preferences[cur_key] = cur_favorite.preferences[duplicated_courses_match[favorite][cur_key]];
                 }
             }
-            cur_favourite.preferences = Object.keys(cur_favourite.preferences).filter(key => cur_favourite.preferences[key] === false);
-            new_favourites.push(cur_favourite);
+            cur_favorite.preferences = Object.keys(cur_favorite.preferences).filter(key => cur_favorite.preferences[key] === false);
+            new_favorites.push(cur_favorite);
         }
-        favourites.set(new_favourites);
+        favorites.set(new_favorites);
         // now the post request
-        customFetch("/api/v69.420/favourites", {
+        customFetch("/api/v69.420/favorites", {
             method: "POST",
-            body: JSON.stringify(new_favourites),
+            body: JSON.stringify(new_favorites),
             headers: {
                 "Content-Type": "application/json"
             }
@@ -113,19 +113,19 @@
     }
 
     // FAVOURITE MANAGEMENT
-    function add_favourite() {
-        cur_favourites = [...cur_favourites, {"school_num": "", "name": "", "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}];
+    function add_favorite() {
+        cur_favorites = [...cur_favorites, {"school_num": "", "name": "", "priority": 0, "plan_type": "", "plan_value": "", "preferences": {}}];
     }
-    // clear everything except for the school num of a favourite
-    function clear_favourite(favourite) {
-        cur_favourites[favourite] = {"school_num": cur_favourites[favourite].school_num, "name": cur_favourites[favourite].name, "priority": 0, "plan_type":cur_favourites[favourite].plan_type, "plan_value": "", "preferences": {}}
-        cur_favourites = cur_favourites;
+    // clear everything except for the school num of a favorite
+    function clear_favorite(favorite) {
+        cur_favorites[favorite] = {"school_num": cur_favorites[favorite].school_num, "name": cur_favorites[favorite].name, "priority": 0, "plan_type":cur_favorites[favorite].plan_type, "plan_value": "", "preferences": {}}
+        cur_favorites = cur_favorites;
     }
-    // delete a favourite
-    function delete_favourite(favourite) {
-        let new_array = cur_favourites;
-        new_array.splice(favourite, 1);
-        cur_favourites = new_array;
+    // delete a favorite
+    function delete_favorite(favorite) {
+        let new_array = cur_favorites;
+        new_array.splice(favorite, 1);
+        cur_favorites = new_array;
     }
 
     // load all metadata for all schools needed
@@ -170,27 +170,27 @@
         return [];
     }
     // get subjects for one form
-    function get_subjects(favourite, stored_meta) {
-        let school_num = cur_favourites[favourite].school_num;
-        let form = cur_favourites[favourite].plan_value;
+    function get_subjects(favorite, stored_meta) {
+        let school_num = cur_favorites[favorite].school_num;
+        let form = cur_favorites[favorite].plan_value;
         if (!stored_meta.hasOwnProperty(school_num)) {
             return []
         }
         if (!stored_meta[school_num].forms.forms.hasOwnProperty(form)) {
             return []
         }
-        duplicated_courses_match[favourite] = {};
+        duplicated_courses_match[favorite] = {};
         for (const class_group of Object.keys(stored_meta[school_num].forms.forms[form].class_groups)) {
-            if (cur_favourites[favourite].preferences[class_group] === undefined) {
-                cur_favourites[favourite].preferences[class_group] = true;
+            if (cur_favorites[favorite].preferences[class_group] === undefined) {
+                cur_favorites[favorite].preferences[class_group] = true;
             }
         }
 
-        return sort_courses_by_subject(favourite, stored_meta[school_num].forms.forms[form].class_groups)
+        return sort_courses_by_subject(favorite, stored_meta[school_num].forms.forms[form].class_groups)
         //return Object.entries(stored_meta[school_num].forms.forms[form].class_groups);
     }
 
-    function sort_courses_by_subject(favourite, obj) {
+    function sort_courses_by_subject(favorite, obj) {
         const courses_by_subject = {};
 
         Object.entries(obj).forEach(([class_number, class_data]) => {
@@ -208,7 +208,7 @@
                         .filter(key => key !== "class_number")
                         .every(key => obj[key] === class_data[key])
                 ) {
-                    duplicated_courses_match[favourite][class_number] = obj.class_number;
+                    duplicated_courses_match[favorite][class_number] = obj.class_number;
                     object_exists = true;
                     break;
                 }
@@ -241,35 +241,35 @@
 
 <h1 class="responsive-heading">Favoriten</h1>
 <CollapsibleWrapper class="extra-accordion-padding" let:closeOtherPanels>
-    {#each cur_favourites as _, favourite}
+    {#each cur_favorites as _, favorite}
         <Collapsible on:panel-open={closeOtherPanels} let:toggle>
-            <button slot="handle" on:click={toggle} class="toggle-button" class:first={favourite == 0} class:load_first_favorite={$settings.load_first_favorite}>{cur_favourites[favourite].name ? cur_favourites[favourite].name : "Unbenannter Favorit"}</button>
+            <button slot="handle" on:click={toggle} class="toggle-button" class:first={favorite == 0} class:load_first_favorite={$settings.load_first_favorite}>{cur_favorites[favorite].name ? cur_favorites[favorite].name : "Unbenannter Favorit"}</button>
             <div class="wrapper-content">
-                <label for="favourite_name">Name des Favoriten</label>
-                <input name="favourite_name" type="text" maxlength="40" class="textfield" bind:value={cur_favourites[favourite].name}>
-                <Select data={authorized_schools} bind:selected_id={cur_favourites[favourite].school_num} onchange={() => clear_favourite(favourite)}>Schule auswählen</Select>
+                <label for="favorite_name">Name des Favoriten</label>
+                <input name="favorite_name" type="text" maxlength="40" class="textfield" bind:value={cur_favorites[favorite].name}>
+                <Select data={authorized_schools} bind:selected_id={cur_favorites[favorite].school_num} onchange={() => clear_favorite(favorite)}>Schule auswählen</Select>
 
-                <Select data={plan_types} bind:selected_id={cur_favourites[favourite].plan_type} onchange={() => {cur_favourites[favourite].plan_value = ""; cur_favourites[favourite].preferences = {}}}>Planart auswählen</Select>
-                {#if cur_favourites[favourite].plan_type}
-                    {#if cur_favourites[favourite].plan_type === "forms"}
-                        <Select data={get_values(cur_favourites[favourite].school_num, cur_favourites[favourite].plan_type, all_meta)} grouped={true} bind:selected_id={cur_favourites[favourite].plan_value} data_name="{cur_favourites[favourite].plan_type}">{plan_type_map[cur_favourites[favourite].plan_type]} auswählen</Select>
+                <Select data={plan_types} bind:selected_id={cur_favorites[favorite].plan_type} onchange={() => {cur_favorites[favorite].plan_value = ""; cur_favorites[favorite].preferences = {}}}>Planart auswählen</Select>
+                {#if cur_favorites[favorite].plan_type}
+                    {#if cur_favorites[favorite].plan_type === "forms"}
+                        <Select data={get_values(cur_favorites[favorite].school_num, cur_favorites[favorite].plan_type, all_meta)} grouped={true} bind:selected_id={cur_favorites[favorite].plan_value} data_name="{cur_favorites[favorite].plan_type}">{plan_type_map[cur_favorites[favorite].plan_type]} auswählen</Select>
                         <!--choosable courses-->
                         <div class="course_chooser">
                             {#each Object.entries(
-                                get_subjects(favourite, all_meta)
+                                get_subjects(favorite, all_meta)
                             ).sort(([subj1, _], [subj2, __]) => subj1.localeCompare(subj2)).sort(([_, courses1], [__, courses2]) => courses2.length - courses1.length) as [subject, courses]}
                                 <div class="horizontal-align margin-bottom">
                                     <h1 class="responsive-heading subject-heading">{subject}</h1>
                                     {#if courses.length > 2}
                                         <Button on:click={() => {
                                             for (const course of courses) {
-                                                cur_favourites[favourite].preferences[course.class_number] = true;
+                                                cur_favorites[favorite].preferences[course.class_number] = true;
                                             }
                                         }}
                                         small={true}>Alle Auswählen</Button>
                                         <Button on:click={() => {
                                             for (const course of courses) {
-                                                cur_favourites[favourite].preferences[course.class_number] = false;
+                                                cur_favorites[favorite].preferences[course.class_number] = false;
                                             }
                                         }}
                                         small={true}>Keinen Auswählen</Button>
@@ -280,7 +280,7 @@
                                         <li>
                                             <input
                                                 type="checkbox"
-                                                bind:checked={cur_favourites[favourite].preferences[course.class_number]}
+                                                bind:checked={cur_favorites[favorite].preferences[course.class_number]}
                                             />
                                             <!-- {course.class_number} -->
                                             {#if course.group != null}
@@ -296,11 +296,11 @@
                                 Wähle eine Klasse um die Kurse für sie zu wählen
                             {/each}
                         </div>
-                    {:else if cur_favourites[favourite].plan_type !== "room_overview"}
-                        <Select data={get_values(cur_favourites[favourite].school_num, cur_favourites[favourite].plan_type, all_meta)} grouped={false} bind:selected_id={cur_favourites[favourite].plan_value} data_name="{cur_favourites[favourite].plan_type}">{plan_type_map[cur_favourites[favourite].plan_type]} auswählen</Select>
+                    {:else if cur_favorites[favorite].plan_type !== "room_overview"}
+                        <Select data={get_values(cur_favorites[favorite].school_num, cur_favorites[favorite].plan_type, all_meta)} grouped={false} bind:selected_id={cur_favorites[favorite].plan_value} data_name="{cur_favorites[favorite].plan_type}">{plan_type_map[cur_favorites[favorite].plan_type]} auswählen</Select>
                     {/if}
                 {/if}
-                <Button on:click={() => {delete_favourite(favourite);}} background="var(--cancelled-color)">Favorit löschen</Button>
+                <Button on:click={() => {delete_favorite(favorite);}} background="var(--cancelled-color)">Favorit löschen</Button>
             </div>
         </Collapsible>
     {:else}
@@ -311,10 +311,10 @@
         {/if}
     {/each}
     <Collapsible on:panel-open={closeOtherPanels}>
-        <button slot="handle" on:click={add_favourite} class="toggle-button last" style="font-weight: 600;"><span class="material-symbols-outlined">add</span> Favorit hinzufügen</button>
+        <button slot="handle" on:click={add_favorite} class="toggle-button last" style="font-weight: 600;"><span class="material-symbols-outlined">add</span> Favorit hinzufügen</button>
     </Collapsible>
 </CollapsibleWrapper>
-<Button on:click={save_favourites} background="var(--accent-color)">Speichern</Button>
+<Button on:click={save_favorites} background="var(--accent-color)">Speichern</Button>
 
 <style lang="scss">
     :global(.extra-accordion-padding) {

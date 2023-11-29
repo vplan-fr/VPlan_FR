@@ -9,5 +9,5 @@ export const active_modal = writable("");
 export const notifications_list = writable([]);
 export const pwa_prompt = writable();
 export const new_changelogs_available = writable(false);
-export const favourites = writable([]);
-export const selected_favourite = writable(0);
+export const favorites = writable([]);
+export const selected_favorite = writable(0);

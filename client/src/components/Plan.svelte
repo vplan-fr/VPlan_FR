@@ -4,7 +4,7 @@
     import Rooms from "./Rooms.svelte";
     import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
-    import {indexed_db, settings, title, selected_favourite, favourites} from '../stores.js';
+    import {indexed_db, settings, title, selected_favorite, favorites} from '../stores.js';
     import {arraysEqual, format_date, navigate_page, format_timestamp} from "../utils.js";
     import {periods_to_block_label, sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences} from "../plan.js";
     import Dropdown from '../base_components/Dropdown.svelte';
@@ -171,7 +171,7 @@
     // Load the new lessons on change to selected plan
     $: meta && load_lessons(plan_data, plan_type, plan_value, $settings.use_grouped_form_plans, meta, reset_plan_vars, update_lessons);
     // Apply Preferences to lessons
-    $: lessons = apply_preferences(plan_type, preferences_apply, $selected_favourite, $favourites, all_lessons);
+    $: lessons = apply_preferences(plan_type, preferences_apply, $selected_favorite, $favorites, all_lessons);
 
     // === Load Extra Teacher Data ===
     // Get teacher data (Name, Contact and Image Link)
@@ -199,7 +199,7 @@
 <div class:plan={plan_type !== "room_overview"} class:extra-height={extra_height}>
     {#if plan_type !== "room_overview"}
         {#if show_title && info && plan_type && plan_value}
-            {#if plan_type === "forms" && ($selected_favourite !== -1)}
+            {#if plan_type === "forms" && ($selected_favorite !== -1)}
                 <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "Alle Stunden anzeigen" : "Nur ausgewählte anzeigen"}</button>
             {/if}
             <h1 class="plan-heading">
@@ -259,7 +259,7 @@
                                         date = text_segment.link.date;
                                         plan_type = text_segment.link.type;
                                         plan_value = text_segment.link.value[0];
-                                        selected_favourite.set(-1);
+                                        selected_favorite.set(-1);
                                     }}>
                                         <div class="clickable">{text_segment.text}</div>
                                     </button>
@@ -276,7 +276,7 @@
                                                     date=text_segment.link.date;
                                                     plan_type = text_segment.link.type;
                                                     plan_value = item;
-                                                    selected_favourite.set(-1);
+                                                    selected_favorite.set(-1);
                                                 }}>{item}</button>
                                             {/each}
                                         </Dropdown>

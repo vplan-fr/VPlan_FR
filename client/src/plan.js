@@ -169,17 +169,17 @@ export function load_lessons(data, plan_type, plan_value, use_grouped_form_plans
     }
 }
 
-export function apply_preferences(plan_type, preferences_apply, selected_favourite, favourites, lessons) {
+export function apply_preferences(plan_type, preferences_apply, selected_favorite, favorites, lessons) {
     if (plan_type !== "forms") {
         return lessons
     }
     if (!preferences_apply) {
         return lessons
     }
-    if (selected_favourite === -1) {
+    if (selected_favorite === -1) {
         return lessons
     }
-    let cur_preferences = favourites[selected_favourite].preferences || [];
+    let cur_preferences = favorites[selected_favorite].preferences || [];
     let new_lessons = [];
     for (const lesson of lessons) {
         if (!(cur_preferences.includes(lesson.class_number))) {
