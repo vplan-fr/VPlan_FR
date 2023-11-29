@@ -106,7 +106,7 @@ async def get_crawlers(session: aiohttp.ClientSession | None = None,
                 plan_client.no_delay = True
 
             for plan_client in client.indiware_mobil_clients:
-                plan_client.proxy_provider = proxy_provider
+                # plan_client.proxy_provider = proxy_provider
                 plan_client.no_delay = True
         else:
             client = None
