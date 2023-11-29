@@ -150,16 +150,16 @@ def instant_authorize(school_num: str) -> Response:
     return send_success()
 
 
-@api.route(f"/api/v69.420/favourites", methods=["GET", "POST"])
+@api.route(f"/api/v69.420/favorites", methods=["GET", "POST"])
 @login_required
-def favourites() -> Response:
+def favorites() -> Response:
     if request.method == "GET":
-        return send_success(current_user.get_user().get("favourites", []))
+        return send_success(current_user.get_user().get("favorites", []))
     try:
         data = json.loads(request.data)
     except json.JSONDecodeError:
         return send_error("Invalid JSON data.")
-    return current_user.set_favourites(data)
+    return current_user.set_favorites(data)
 
 
 @api.route(f"/api/v69.420/changelog", methods=["GET", "POST"])

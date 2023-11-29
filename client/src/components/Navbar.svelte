@@ -4,7 +4,7 @@
     import Dropdown from '../base_components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
     import {customFetch, navigate_page} from "../utils.js";
-    import {selected_favourite, favourites} from "../stores.js";
+    import {selected_favorite, favorites} from "../stores.js";
 
     function logout() {
         customFetch('/auth/logout')
@@ -16,7 +16,7 @@
             });
     }
 
-    let favourite_icon_map = {
+    let favorite_icon_map = {
         "forms": "school",
         "teachers": "elderly",
         "rooms": "sensor_door",
@@ -25,7 +25,7 @@
 </script>
 
 <nav transition:fly={{y:-64}}>
-    <button class="logo-button" on:click={() => {navigate_page("plan"); selected_favourite.set(-1)}}>
+    <button class="logo-button" on:click={() => {navigate_page("plan"); selected_favorite.set(-1)}}>
         <img class="logo" src="/public/base_static/images/better_vp_white.svg" alt="Better VPlan Logo">
     </button>
     <ul class="nav-element-wrapper">
@@ -33,12 +33,12 @@
         <li>
             <Dropdown let:toggle>
                 <button slot="toggle_button" on:click={toggle} class="nav-button">
-                    <span class="material-symbols-outlined" class:favourite-selected={$selected_favourite !== -1}>star</span>
+                    <span class="material-symbols-outlined" class:favorite-selected={$selected_favorite !== -1}>star</span>
                 </button>
-                {#each $favourites as favourite, index}
-                    <button class="nav-button" on:click={() => {selected_favourite.set(index); navigate_page("plan")}}>
-                        <span class="material-symbols-outlined" class:favourite-selected={$selected_favourite === index}>{favourite_icon_map[favourite.plan_type]}</span>
-                    {favourite.name}</button>
+                {#each $favorites as favorite, index}
+                    <button class="nav-button" on:click={() => {selected_favorite.set(index); navigate_page("plan")}}>
+                        <span class="material-symbols-outlined" class:favorite-selected={$selected_favorite === index}>{favorite_icon_map[favorite.plan_type]}</span>
+                    {favorite.name}</button>
                 {/each}
                 <button class="nav-button" on:click={() => navigate_page("favorites")}><span class="material-symbols-outlined">settings</span> Favoriten verwalten</button>
             </Dropdown>
@@ -156,7 +156,7 @@
             border-radius: 999vw;
         }
     }
-    .favourite-selected {
+    .favorite-selected {
         background: rgba(255, 255, 255, 0.2);
         outline: 4px solid rgba(255, 255, 255, 0.2);
         border-radius: 999vw;

@@ -1,6 +1,6 @@
 <script>
     import Dropdown from "../base_components/Dropdown.svelte";
-    import {selected_favourite, settings} from "../stores";
+    import {selected_favorite, settings} from "../stores";
     import {arraysEqual} from "../utils.js";
 
     export let lesson;
@@ -81,14 +81,14 @@
                         <button on:click={() => {
                             plan_type = "teachers";
                             plan_value = teacher;
-                            selected_favourite.set(-1);
+                            selected_favorite.set(-1);
                         }}>{teacher}</button>
                     {/each}
                     {#each s_teachers || [] as teacher}
                         <button on:click={() => {
                             plan_type = "teachers";
                             plan_value = teacher;
-                            selected_favourite.set(-1);
+                            selected_favorite.set(-1);
                         }}><s>{teacher}</s></button>
                     {/each}
                 {:else}
@@ -104,7 +104,7 @@
                         <button on:click={() => {
                             plan_type = "rooms";
                             plan_value = room;
-                            selected_favourite.set(-1);
+                            selected_favorite.set(-1);
                         }}>{room}</button>
                     {:else}
                         <span class="extra_padding">-</span>
@@ -113,7 +113,7 @@
                         <button on:click={() => {
                             plan_type = "rooms";
                             plan_value = room;
-                            selected_favourite.set(-1);
+                            selected_favorite.set(-1);
                         }}><s>{room}</s></button>
                     {/each}
                 {:else}
@@ -132,7 +132,7 @@
                 <button on:click={() => {
                     plan_type = "forms";
                     plan_value = forms[0];
-                    selected_favourite.set(-1);
+                    selected_favorite.set(-1);
                 }}>{forms[0]}</button>
             </div>
             {:else if forms.length === 0 && s_forms.length === 1}
@@ -140,7 +140,7 @@
                 <button on:click={() => {
                     plan_type = "forms";
                     plan_value = s_forms[0];
-                    selected_favourite.set(-1);
+                    selected_favorite.set(-1);
                 }}><s>{s_forms[0]}</s></button>
             </div>
             {:else}
@@ -155,14 +155,14 @@
                         <button on:click={() => {
                             plan_type = "forms";
                             plan_value = form;
-                            selected_favourite.set(-1);
+                            selected_favorite.set(-1);
                         }}>{form}</button>
                     {/each}
                     {#each s_forms as form}
                         <button on:click={() => {
                             plan_type = "forms";
                             plan_value = form;
-                            selected_favourite.set(-1);
+                            selected_favorite.set(-1);
                         }}><s>{form}</s></button>
                     {/each}
                 </Dropdown>
@@ -184,7 +184,7 @@
                                             date = text_segment.link.date;
                                             plan_type = text_segment.link.type;
                                             plan_value = text_segment.link.value[0];
-                                            selected_favourite.set(-1);
+                                            selected_favorite.set(-1);
                                         }}>
                                             <div class="clickable">{text_segment.text}</div>
                                         </button>
@@ -201,7 +201,7 @@
                                                         date=text_segment.link.date;
                                                         plan_type = text_segment.link.type;
                                                         plan_value = item;
-                                                        selected_favourite.set(-1);
+                                                        selected_favorite.set(-1);
                                                     }}>{item}</button>
                                                 {/each}
                                             </Dropdown>
@@ -273,7 +273,7 @@
                                     <button on:click={() => {
                                         plan_type = "rooms";
                                         plan_value = room;
-                                        selected_favourite.set(-1);
+                                        selected_favorite.set(-1);
                                     }}>{room}</button>
                                 {/each}
                             </Dropdown>

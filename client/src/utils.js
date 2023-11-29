@@ -1,7 +1,7 @@
 import {current_page, indexed_db, settings} from "./stores.js";
 import {notifications} from "./notifications.js";
 import { get } from "svelte/store";
-import { favourites } from "./stores.js";
+import { favorites } from "./stores.js";
 
 const MAX_CACHED_PLANS = 10; // 2 Weeks
 
@@ -466,19 +466,19 @@ export async function load_meta(school_num) {
         })
 }
 
-export function get_favourites(callback = () => {}) {
-    return customFetch("/api/v69.420/favourites")
+export function get_favorites(callback = () => {}) {
+    return customFetch("/api/v69.420/favorites")
         .then(data => {
-            localStorage.setItem("favourites", JSON.stringify(data));
-            favourites.set(data);
+            localStorage.setItem("favorites", JSON.stringify(data));
+            favorites.set(data);
             callback();
         }).catch(error => {
-            console.log("Favourites couldn't be loaded from server.");
-            // check if favourites in localstorage
-            if(!localStorage.getItem("favourites")) {
-                favourites.set([]);
+            console.log("Favorites couldn't be loaded from server.");
+            // check if favorites in localstorage
+            if(!localStorage.getItem("favorites")) {
+                favorites.set([]);
             } else {
-                favourites.set(JSON.parse(localStorage.getItem("favourites")));
+                favorites.set(JSON.parse(localStorage.getItem("favorites")));
             }
             callback();
         })
