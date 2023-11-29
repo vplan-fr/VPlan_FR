@@ -1,9 +1,5 @@
 import datetime
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import mplcyberpunk
-
 from utils import users, creds
 from datascience.helpers import load_database, download_databases
 
@@ -22,6 +18,8 @@ def get_monthly_signups():
 
 
 def plot_user_times():
+    import matplotlib.pyplot as plt
+
     month_counts = get_monthly_signups()
     months = list(month_counts.keys())
     counts = list(month_counts.values())
@@ -46,6 +44,10 @@ def get_users_by_time():
 
 
 def plot_users_by_time():
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    import mplcyberpunk
+
     times, count = get_users_by_time()
 
     fig, ax = plt.subplots()
