@@ -17,8 +17,8 @@ from flask_login import UserMixin
 from dotenv import load_dotenv
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-import backend.cache
 from var import *
+import shared.cache
 
 load_dotenv()
 
@@ -131,7 +131,7 @@ class User(UserMixin):
                 return send_error("Priorität muss eine Zahl zwischen 0 und 100 sein")
             if favourite["plan_type"] not in ["forms", "teachers", "rooms", "room_overview"]:
                 return send_error("invalide Planart")
-            cache = backend.cache.Cache(Path(".cache") / favourite["school_num"])
+            cache = shared.cache.Cache(Path(".cache") / favourite["school_num"])
             if favourite["plan_type"] == "room_overview":
                 favourite["plan_value"] = None
                 favourite["preferences"] = None

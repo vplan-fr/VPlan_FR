@@ -14,7 +14,7 @@ from stundenplan24_py import (
 )
 from . import events
 
-from .cache import Cache
+from shared.cache import Cache
 
 import stundenplan24_py.client
 

@@ -11,8 +11,7 @@ from flask_login import login_required, current_user
 from endpoints.authorization import school_authorized
 import endpoints.webpush
 
-import backend.cache
-import backend.load_plans
+import shared.cache
 from backend.vplan_utils import find_closest_date
 from utils import send_success, send_error, get_all_schools, get_school_by_id, webhook_send, BetterEmbed, VALID_SCHOOLS
 from school_test import SchoolCandidate
@@ -37,7 +36,7 @@ def meta(school_num) -> Response:
     if school_num not in VALID_SCHOOLS:
         return send_error("Schulnummer unbekannt")
 
-    cache: backend.cache.Cache = backend.cache.Cache(Path(".cache") / school_num)
+    cache: shared.cache.Cache = shared.cache.Cache(Path(".cache") / school_num)
     meta_data: dict = json.loads(cache.get_meta_file("meta.json"))
     teachers_data: dict = json.loads(cache.get_meta_file("teachers.json"))["teachers"]
     forms_data: dict = json.loads(cache.get_meta_file("forms.json"))
@@ -65,7 +64,7 @@ def plan(school_num: str) -> Response:
     if school_num not in VALID_SCHOOLS:
         return send_error("Schulnummer unbekannt")
 
-    cache = backend.cache.Cache(Path(".cache") / school_num)
+    cache = shared.cache.Cache(Path(".cache") / school_num)
 
     _date = request.args.get("date")
     if not _date:
