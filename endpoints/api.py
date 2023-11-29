@@ -355,6 +355,3 @@ def webpush_test() -> Response:
 @login_required
 def get_webpush_public_key() -> Response:
     return send_success(os.environ.get("VAPID_PUBLIC"))
-
-
-endpoints.webpush.start_listen()
