@@ -7,6 +7,13 @@
     import {get_webpush_public_key, webpush_subscribe, webpush_unsubscribe, webpush_unsubscribe_all, webpush_test} from "../webpush_handler.js";
 
     let temp_settings;
+    let is_admin = false;
+
+    customFetch("/auth/is_admin")
+        .then(data => {
+            is_admin = data;
+        })
+        .catch(error =>{});
 
     function change_settings() {
         $settings = structuredClone(temp_settings);
@@ -70,32 +77,33 @@
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.load_first_favorite}>Beim Start den ersten Favoriten laden</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.swipe_day_change}>Swipen um Tag zu wechseln</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.day_switch_keys}>Pfeiltasten (Tastatur) zum Tag wechseln nutzen</span>
-        <h2 class="category-heading">Push-Benachrichtigungen</h2>
-        <Button on:click={
-            async () => {
-                await webpush_subscribe(await get_webpush_public_key());
-            }
-        } class="nav-button">für diesen Browser einschalten
-        </Button>
-        <Button on:click={
-            async () => {
-                await webpush_unsubscribe(await get_webpush_public_key());
-            }
-        } class="nav-button">für diesen Browser ausschalten
-        </Button>
-        <Button on:click={
-            async () => {
-                await webpush_unsubscribe_all(await get_webpush_public_key());
-            }
-        } class="nav-button">für alle Browser ausschalten
-        </Button>
-        <Button on:click={
-            async () => {
-                await webpush_test(await get_webpush_public_key());
-            }
-        } class="nav-button">Push-Benachrichtigungen testen
-        </Button>
-
+        {#if is_admin}
+            <h2 class="category-heading">Push-Benachrichtigungen</h2>
+            <Button on:click={
+                async () => {
+                    await webpush_subscribe(await get_webpush_public_key());
+                }
+            } class="nav-button">für diesen Browser einschalten
+            </Button>
+            <Button on:click={
+                async () => {
+                    await webpush_unsubscribe(await get_webpush_public_key());
+                }
+            } class="nav-button">für diesen Browser ausschalten
+            </Button>
+            <Button on:click={
+                async () => {
+                    await webpush_unsubscribe_all(await get_webpush_public_key());
+                }
+            } class="nav-button">für alle Browser ausschalten
+            </Button>
+            <Button on:click={
+                async () => {
+                    await webpush_test(await get_webpush_public_key());
+                }
+            } class="nav-button">Push-Benachrichtigungen testen
+            </Button>
+        {/if}
         <h2 class="category-heading">Aussehen</h2>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.background_color}>Hintergrundfarbe</span>
         <span class="responsive-text"><input type="color" bind:value={temp_settings.text_color}>Textfarbe</span>
