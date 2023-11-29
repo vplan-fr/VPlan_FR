@@ -24,7 +24,7 @@ AUTH_PATH = "/auth"
 def login() -> Response:
     nickname = request.form.get('nickname')
     password = request.form.get('pw')
-    
+
     user = users.find_one({'nickname': nickname})
 
     if user is not None and check_password_hash(user["password_hash"], password):
@@ -100,7 +100,9 @@ def account() -> Response:
         # embed.set_timestamp()
         webhook_send("WEBHOOK_USER_CREATION", "", embeds=[embed])
         x = users.delete_one({'_id': ObjectId(current_user.mongo_id)})
-        return send_success() if x.deleted_count == 1 else send_error("Account konnte nicht gelöscht werden, bitte wende dich an den Support")
+        return send_success() if x.deleted_count == 1 else send_error(
+            "Account konnte nicht gelöscht werden, bitte wende dich an den Support"
+        )
 
 
 @authorization.route(f"{AUTH_PATH}/settings", methods=['GET', 'DELETE', 'POST'])
@@ -132,6 +134,7 @@ def school_authorized(func):
             if kwargs.get("school_num") not in current_user.user.get("authorized_schools"):
                 return send_error("Benutzer nicht für gewählte Schule autorisiert")
         return func(*args, **kwargs)
+
     return wrapper_thing
 
 
@@ -167,4 +170,3 @@ def greeting():
         greetings = ["Was bitte hast du gegen Begrüßungen? 😯"]
     random_greeting = choice(greetings).format(name=current_user.user["nickname"])
     return send_success(random_greeting)
-
