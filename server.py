@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 
 import os
@@ -97,5 +98,8 @@ def sw() -> Response:
 
 if __name__ == "__main__":
     update_database()
-    endpoints.webpush.start_listen()
+    try:
+        endpoints.webpush.start_listen()
+    except Exception as e:
+        logging.getLogger("server.py").error("Failed to setup webpush listener.", exc_info=e)
     app.run(debug=DEBUG)
