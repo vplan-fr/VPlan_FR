@@ -100,7 +100,10 @@ class PlanDownloader:
     ) -> set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]]:
         try:
             self._logger.debug(f"=> Fetching Indiware Mobil available files.")
-            plan_files = await indiware_client.fetch_dates()
+            with events.Timer(self.school_number, events.PlanDownload) as timer:
+                plan_files = await indiware_client.fetch_dates()
+            timer.submit(plan_type="vpdir.php", last_modified=None, file_length=None, date=None,
+                         proxies_used=None)
         except PlanClientError as e:
             if e.status_code in (401, 404):
                 self._logger.debug(f"=> Insufficient credentials (or invalid URL) to fetch Indiware Mobil endpoint "
@@ -243,7 +246,8 @@ class PlanDownloader:
             last_modified = None
             etag = None
         try:
-            plan_response = await plan_client.fetch_plan(date, if_modified_since=last_modified, if_none_match=etag)
+            with events.Timer(self.school_number, events.PlanDownload) as timer:
+                plan_response = await plan_client.fetch_plan(date, if_modified_since=last_modified, if_none_match=etag)
         except stundenplan24_py.NotModifiedError:
             self._logger.debug(f" -> Newest revision of substitution plan of {date!s} already downloaded.")
             return set()
@@ -256,6 +260,11 @@ class PlanDownloader:
                 last_modified=plan_response.last_modified,
                 etag=plan_response.etag,
             )
+
+            # noinspection PyUnresolvedReferences
+            timer.submit(plan_type=plan_filename, last_modified=plan_response.last_modified,
+                         file_length=len(plan_response.content), date=date,
+                         proxies_used=plan_response.response._num_proxy_tries)
 
             self.cache.store_plan_file(date, revision, plan_response.content, plan_filename)
             self.cache.store_plan_file(date, revision, json.dumps(downloaded_file.serialize()), plan_filename + ".json")
