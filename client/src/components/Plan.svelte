@@ -249,7 +249,7 @@
             <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
         {/if}
     {/if}
-    {#if exams}
+    {#if exams && Object.keys(exams).length !== 0}
         <div class="additional-info exams">
             {#each Object.entries(exams) as [form, exam_list]}
                 {#if exam_list.length > 0}
