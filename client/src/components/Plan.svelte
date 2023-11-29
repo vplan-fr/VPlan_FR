@@ -257,14 +257,14 @@
                         Klausuren für <button on:click={() => {
                             plan_type = "forms";
                             plan_value = form;
-                            selected_favourite.set(-1);
+                            selected_favorite.set(-1);
                         }} class="no-btn-visuals clickable">{form}</button>:
                         <ul>
                             {#each exam_list as exam}
                                 <li>{exam.course} bei <button on:click={() => {
                                         plan_type = "teachers";
                                         plan_value = exam.course_teacher;
-                                        selected_favourite.set(-1);
+                                        selected_favorite.set(-1);
                                     }} class="no-btn-visuals clickable" style="color: var(--text-color); font-size: inherit; margin-top: 0.3em;">{exam.course_teacher}</button>: {exam.begin} Uhr ({exam.duration}min)</li>
                             {/each}
                         </ul>

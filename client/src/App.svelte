@@ -102,6 +102,14 @@
                 course_lists = meta.forms.forms;
                 //data_from_cache = data[1];
             })
+            .catch(error => {
+                if (data_from_cache) {
+                    // notifications.info("Metadaten aus Cache geladen", 2000);
+                    console.log("Metadaten aus Cache geladen");
+                } else {
+                    notifications.danger(error.message);
+                }
+            });
     }
 
     function check_login_status() {
@@ -311,13 +319,13 @@
 
     $: $logged_in && init_indexed_db();
     $: !$logged_in && logout();
+    $: select_plan($favorites, $selected_favorite);
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
     $: school_num && get_meta(school_num);
     $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
     //$: school_num && get_preferences();
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
     $: $logged_in && (get_settings(), get_favorites(navigate_favorite));
-    $: select_plan($favorites, $selected_favorite);
     $: (Object.keys($settings).length !== 0) && localStorage.setItem("settings", `${JSON.stringify($settings)}`);
     $: update_colors($settings);
     $: $logged_in && get_greeting();

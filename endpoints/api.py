@@ -154,7 +154,7 @@ def instant_authorize(school_num: str) -> Response:
 @login_required
 def favorites() -> Response:
     if request.method == "GET":
-        return send_success(current_user.get_user().get("favorites", []))
+        return send_success(current_user.get_user().get("favourites", []))
     try:
         data = json.loads(request.data)
     except json.JSONDecodeError:
