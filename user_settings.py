@@ -1,10 +1,6 @@
 import re
 
 
-API_BASE_URL = "/api/v69.420/<school_num>"
-AUTH_PATH = "/auth"
-
-
 def validate_bool(elem):
     try:
         bool(elem)
@@ -77,7 +73,6 @@ SETTINGS = {
         "type": "bool",
     },
 }
-
 TYPE_FUNCTIONS = {
     "bool": {
         "validation": validate_bool,
@@ -88,8 +83,6 @@ TYPE_FUNCTIONS = {
         "conversion": str,
     }
 }
-
 DEFAULT_SETTINGS = {
     key: value["default"] for key, value in SETTINGS.items()
 }
-

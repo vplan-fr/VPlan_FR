@@ -16,8 +16,6 @@ from backend.vplan_utils import find_closest_date
 from utils import send_success, send_error, get_all_schools, get_school_by_id, webhook_send, BetterEmbed, VALID_SCHOOLS
 from school_test import SchoolCandidate
 
-from var import *
-
 api = Blueprint('api', __name__)
 
 
@@ -27,6 +25,9 @@ def schools() -> Response:
     # school_data = get_all_schools_by_number()
     school_data = get_all_schools()
     return send_success(school_data)
+
+
+API_BASE_URL = "/api/v69.420/<school_num>"
 
 
 @api.route(f"{API_BASE_URL}/meta", methods=["GET"], endpoint="meta_api")

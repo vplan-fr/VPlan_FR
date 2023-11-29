@@ -10,12 +10,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from discord_webhook import DiscordEmbed
 
+from user_settings import DEFAULT_SETTINGS
 from utils import User, users
 from utils import send_error, send_success
 from utils import webhook_send
-from var import *
 
 authorization = Blueprint('authorization', __name__)
+
+AUTH_PATH = "/auth"
 
 
 @authorization.route(f"{AUTH_PATH}/login", methods=['POST'])
