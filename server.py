@@ -11,6 +11,7 @@ from bson import ObjectId
 
 from endpoints.authorization import authorization
 from endpoints.api import api
+from endpoints.stats import stats
 import endpoints.webpush
 
 from utils import User, AddStaticFileHashFlask, get_user, send_error, update_database, meta_to_database
@@ -39,6 +40,7 @@ login_manager.init_app(app)
 # endpoints
 app.register_blueprint(authorization)
 app.register_blueprint(api)
+app.register_blueprint(stats, url_prefix="/stats")
 
 
 @app.after_request

@@ -1,45 +1,16 @@
-import json
 import datetime
 
-from bson import ObjectId
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import mplcyberpunk
 
-from utils import creds, users, meta
-
-DATABASES = {
-    "creds": creds,
-    "users": users,
-    "meta": meta
-}
-USE_ONLINE = False
-
-plt.style.use("cyberpunk")
+from utils import users, creds
+from datascience.helpers import load_database, download_databases
 
 
-def json_default(value):
-    if isinstance(value, ObjectId):
-        return str(value)  # Convert ObjectId to a string
-    raise TypeError(f"Type {type(value)} is not JSON serializable")
-
-
-def download_databases():
-    for name in DATABASES:
-        with open(f"{name}.json", "w+") as f:
-            json.dump(list(DATABASES[name].find({})), f, default=json_default)
-
-
-def load_database(database):
-    if not USE_ONLINE:
-        with open(f"{database}.json", "r") as f:
-            return json.load(f)
-    return list(DATABASES[database].find({}))
-
-
-def plot_user_times():
-    user_data = load_database("users")
-    times = [datetime.datetime.fromtimestamp(user["time_joined"]) for user in user_data if user.get("time_joined")]
+def get_monthly_signups():
+    times = users.find({"time_joined": {"$exists": True}}, {"time_joined": 1})
+    times = [datetime.datetime.fromtimestamp(user_time["time_joined"]) for user_time in times]
     month_counts = {}
     for dt in times:
         month = dt.strftime("%Y-%m")  # Group by year and month
@@ -47,6 +18,11 @@ def plot_user_times():
             month_counts[month] += 1
         else:
             month_counts[month] = 1
+    return month_counts
+
+
+def plot_user_times():
+    month_counts = get_monthly_signups()
     months = list(month_counts.keys())
     counts = list(month_counts.values())
 
@@ -62,10 +38,15 @@ def plot_user_times():
     plt.show()
 
 
-def plot_users_by_time():
-    user_data = load_database("users")
-    times = [datetime.datetime.fromtimestamp(user["time_joined"]) for user in user_data if user.get("time_joined")]
+def get_users_by_time():
+    times = users.find({"time_joined": {"$exists": True}}, {"time_joined": 1})
+    times = [datetime.datetime.fromtimestamp(user_time["time_joined"]) for user_time in times]
     count = [i for i in range(len(times))]
+    return times, count
+
+
+def plot_users_by_time():
+    times, count = get_users_by_time()
 
     fig, ax = plt.subplots()
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
@@ -109,8 +90,25 @@ def plot_school_counts():
     plt.show()
 
 
+def get_settings_usage():
+    excluded = ["favorite"]
+    settings = users.find({"settings": {"$exists": True}}, {"settings": 1})
+    settings = [user_settings["settings"] for user_settings in settings]
+    settings_counts = {}
+    for setting in settings:
+        for key in setting:
+            if key in excluded:
+                continue
+            if key not in settings_counts:
+                settings_counts[key] = {}
+            if setting[key] in settings_counts[key]:
+                settings_counts[key][setting[key]] += 1
+            else:
+                settings_counts[key][setting[key]] = 1
+    return settings_counts
+
+
 if __name__ == "__main__":
-    download_databases()
     plot_user_times()
     plot_users_by_time()
     plot_school_counts()
