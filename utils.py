@@ -118,7 +118,8 @@ class User(UserMixin):
     def set_favourites(self, favourites) -> Response:
         new_favourites = []
         for cur_favourite in favourites:
-            favourite = {elem: cur_favourite.get(elem) for elem in ["school_num", "name", "priority", "plan_type", "plan_value", "preferences"]}
+            valid_fields = ["school_num", "name", "priority", "plan_type", "plan_value", "preferences"]
+            favourite = {elem: cur_favourite.get(elem) for elem in valid_fields}
             for key in favourite:
                 if favourite[key] is None:
                     if favourite["plan_type"] == "room_overview" and key == "plan_value":
@@ -149,7 +150,9 @@ class User(UserMixin):
                 favourite["preferences"] = None
                 new_favourites.append(favourite)
                 continue
-            available_preferences = json.loads(cache.get_meta_file("forms.json"))["forms"][favourite["plan_value"]]["class_groups"].keys()
+            available_preferences = json.loads(
+                cache.get_meta_file("forms.json")
+            )["forms"][favourite["plan_value"]]["class_groups"].keys()
             favourite["preferences"] = [elem for elem in favourite["preferences"] if elem in available_preferences]
             new_favourites.append(favourite)
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'favourites': new_favourites}})
@@ -218,9 +221,9 @@ def get_all_schools():
         },
         {
             "$project": {
-                #"_id": False,
+                # "_id": False,
                 "count": False,
-                #"hosting": False,
+                # "hosting": False,
                 "comment": False,
             }
         }
@@ -302,7 +305,8 @@ def webhook_send(key: str, message: str = "", embeds: List[DiscordEmbed] = None)
     if not os.getenv(key):
         return
     url = os.getenv(key)
-    webhook = DiscordWebhook(url=url, content=message, username="VPlan-Bot", avatar_url="https://vplan.fr/static/images/icons/android-chrome-192x192.png")
+    webhook = DiscordWebhook(url=url, content=message, username="VPlan-Bot",
+                             avatar_url="https://vplan.fr/static/images/icons/android-chrome-192x192.png")
 
     for embed in embeds:
         webhook.add_embed(embed)
