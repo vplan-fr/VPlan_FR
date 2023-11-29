@@ -29,6 +29,7 @@
     let all_lessons = [];
     let rooms_data = {};
     let info;
+    let exams;
     let loading = false;
     let loading_failed = false;
     let cache_loading_failed = false;
@@ -72,6 +73,7 @@
     function handle_plan_data(data) {
         plan_data = data;
         info = data.info;
+        exams = data.exams;
         week_letter = info.week;
     }
 
@@ -246,6 +248,32 @@
         {:else}
             <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
         {/if}
+    {/if}
+    {#if exams && Object.keys(exams).length !== 0}
+        <div class="additional-info exams">
+            {#each Object.entries(exams) as [form, exam_list]}
+                {#if exam_list.length > 0}
+                    <div class="inline-wrapper">
+                        Klausuren für <button on:click={() => {
+                            plan_type = "forms";
+                            plan_value = form;
+                            selected_favourite.set(-1);
+                        }} class="no-btn-visuals clickable">{form}</button>:
+                        <ul>
+                            {#each exam_list as exam}
+                                <li>{exam.course} bei <button on:click={() => {
+                                        plan_type = "teachers";
+                                        plan_value = exam.course_teacher;
+                                        selected_favourite.set(-1);
+                                    }} class="no-btn-visuals clickable" style="color: var(--text-color); font-size: inherit; margin-top: 0.3em;">{exam.course_teacher}</button>: {exam.begin} Uhr ({exam.duration}min)</li>
+                            {/each}
+                        </ul>
+                    </div>
+                {:else}
+                    <div class="info-spacer"></div>
+                {/if}
+            {/each}
+        </div>
     {/if}
     {#if info}
         {#if info.additional_info.length > 0}
@@ -563,6 +591,10 @@
             top: 0;
             left: 20px;
             transform: translateY(-50%);
+        }
+
+        &.exams::before {
+            content: "Klausuren";
         }
     }
 

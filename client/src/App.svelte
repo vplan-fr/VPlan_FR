@@ -394,7 +394,7 @@
         {:else if $current_page === "impressum"}
             <Impressum />
         {:else if $logged_in}
-            {#if $current_page.substring(0, 4) === "plan" || $current_page === "weekplan"}
+            {#if $current_page.substring(0, 4) === "plan" || $current_page.substring(0, 8) === "weekplan"}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
                 <!-- {#if $selected_favorite !== -1 && $favorites[$selected_favorite]}
                     Gewählter Favorit: {$favorites[$selected_favorite].name}
