@@ -5,7 +5,6 @@ import dataclasses
 import datetime
 import json
 import logging
-from collections import defaultdict
 from xml.etree import ElementTree as ET
 
 from stundenplan24_py import (
@@ -76,10 +75,12 @@ class PlanDownloader:
         new: set[tuple[datetime.date, datetime.datetime, PlanFileMetadata]] = set()
 
         with events.Timer(self.school_number, events.AllPlansDownloaded) as timer:
-            fetched = await asyncio.gather(
+            fetched = list(await asyncio.gather(
                 *(self.fetch_indiware_mobil(indiware_client) for indiware_client in self.client.indiware_mobil_clients),
-                self.fetch_substitution_plans()
-            )
+            ))
+            if any(fetched):
+                fetched.append(await self.fetch_substitution_plans())
+
         timer.submit()
 
         for fetched_set in fetched:
