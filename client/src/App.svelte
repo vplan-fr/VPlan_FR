@@ -311,13 +311,13 @@
 
     $: $logged_in && init_indexed_db();
     $: !$logged_in && logout();
+    $: select_plan($favourites, $selected_favourite);
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
     $: school_num && get_meta(school_num);
     $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
     //$: school_num && get_preferences();
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
     $: $logged_in && (get_settings(), get_favourites(navigate_favorite));
-    $: select_plan($favourites, $selected_favourite);
     $: (Object.keys($settings).length !== 0) && localStorage.setItem("settings", `${JSON.stringify($settings)}`);
     $: update_colors($settings);
     $: $logged_in && get_greeting();
