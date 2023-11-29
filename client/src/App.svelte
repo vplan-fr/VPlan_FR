@@ -7,6 +7,7 @@
     import Settings from "./components/Settings.svelte";
     import AboutUs from "./components/AboutUs.svelte";
     import Favourites from "./components/Favourites.svelte";
+    import Stats from "./Dashboard/Stats/Stats.svelte";
     import SveltyPicker from 'svelty-picker';
     import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache, get_favourites} from "./utils.js";
     import {notifications} from './notifications.js';
@@ -451,6 +452,8 @@
                 <Favourites />
             {:else if $current_page === "pwa_install"}
                 <PwaInstallHelper />
+            {:else if $current_page === "stats"}
+                <Stats />
             {:else}
                 <span class="responsive-text">Seite nicht gefunden!</span>
             {/if}
