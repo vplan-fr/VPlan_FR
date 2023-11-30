@@ -1,4 +1,5 @@
 import datetime
+import typing
 
 from utils import users, creds
 from datascience.helpers import load_database, download_databases
@@ -93,13 +94,12 @@ def plot_school_counts():
 
 
 def get_settings_usage():
-    excluded = ["favourite"]
     settings = users.find({"settings": {"$exists": True}}, {"settings": 1})
     settings = [user_settings["settings"] for user_settings in settings]
     settings_counts = {}
     for setting in settings:
         for key in setting:
-            if key in excluded:
+            if not isinstance(setting[key], typing.Hashable):
                 continue
             if key not in settings_counts:
                 settings_counts[key] = {}
