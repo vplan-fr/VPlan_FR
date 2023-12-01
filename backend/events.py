@@ -150,9 +150,9 @@ def iterate_events(type_: typing.Type[_T2], school_number: str | None = None) ->
             if field.name in base_keys:
                 continue
 
-            if field.type is datetime.datetime:
+            if field.type is datetime.datetime and obj.__dict__[field.name] is not None:
                 obj.__dict__[field.name] = datetime.datetime.fromisoformat(obj.__dict__[field.name])
-            elif field.type is datetime.date:
+            elif field.type is datetime.date and obj.__dict__[field.name] is not None:
                 obj.__dict__[field.name] = datetime.date.fromisoformat(obj.__dict__[field.name])
 
         obj.__dict__["school_number"] = event["school_number"]
