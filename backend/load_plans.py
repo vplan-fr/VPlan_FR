@@ -26,7 +26,7 @@ class PlanCrawler:
         self.school_number = school_number
         self.plan_downloader = plan_downloader
         self.plan_processor = plan_processor
-        self._plan_compute_thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        self._plan_compute_executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
 
     async def check_infinite(self, interval: int = 60, *, once: bool = False, ignore_exceptions: bool = False):
         self.plan_downloader.migrate_all()
@@ -44,7 +44,7 @@ class PlanCrawler:
                     self.plan_processor._logger.debug("* No plans to process.")
 
                 for date in updated_dates:
-                    self._plan_compute_thread_pool.submit(
+                    self._plan_compute_executor.submit(
                         self.plan_processor.update_day_plans, date
                     )
 
@@ -182,6 +182,12 @@ async def main():
     finally:
         logging.info("Exit.")
         logging.debug("Closing clients...")
+        for crawler in crawlers.values():
+            crawler.plan_processor._logger.debug("Closing plan compute executor...")
+            crawler._plan_compute_executor.shutdown(wait=True)
+
+        logging.debug("Closed all executors.")
+
         if not args.only_process:
             await asyncio.gather(*(client.plan_downloader.client.close() for client in crawlers.values()),
                                  return_exceptions=True)
