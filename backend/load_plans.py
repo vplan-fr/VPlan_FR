@@ -26,7 +26,7 @@ class PlanCrawler:
         self.school_number = school_number
         self.plan_downloader = plan_downloader
         self.plan_processor = plan_processor
-        self._plan_compute_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        self._plan_compute_executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
 
     async def check_infinite(self, interval: int = 60, *, once: bool = False, ignore_exceptions: bool = False):
         self.plan_downloader.migrate_all()
@@ -37,20 +37,18 @@ class PlanCrawler:
             try:
                 updated_dates = await self.plan_downloader.update_fetch()
 
+                def _process_plans():
+                    self._plan_compute_executor.map(
+                        self.plan_processor.update_day_plans, updated_dates
+                    )
+                    self.plan_processor.update_after_plan_processing()
+
                 if updated_dates:
                     self.plan_processor._logger.debug("* Processing plans...")
                     self.plan_processor.meta_extractor.invalidate_cache()
+                    self._plan_compute_executor.submit(_process_plans)
                 else:
                     self.plan_processor._logger.debug("* No plans to process.")
-
-                for date in updated_dates:
-                    self._plan_compute_executor.submit(
-                        self.plan_processor.update_day_plans, date
-                    )
-
-                if updated_dates:
-                    self.plan_processor.update_after_plan_processing()
-
             except Exception as e:
                 if not ignore_exceptions:
                     raise
