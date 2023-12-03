@@ -106,7 +106,10 @@ class Cache:
         target_path = self.get_plan_path(day, timestamp)
 
         newest_path.unlink(missing_ok=True)
-        newest_path.symlink_to(target_path, target_is_directory=True)
+        try:
+            newest_path.symlink_to(target_path, target_is_directory=True)
+        except FileExistsError:
+            pass
 
     def update_newest(self, day: datetime.date):
         timestamps = self.get_timestamps(day)
