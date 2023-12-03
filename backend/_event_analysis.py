@@ -18,8 +18,13 @@ def main():
         v["_id"]: v["display_name"] for v in creds.values()
     }
 
+    cutoff = datetime.datetime(2023, 11, 30, tzinfo=datetime.timezone.utc)
+
     def plot_basic(is_log: bool, data, title: str, unit: typing.Literal["seconds", None] = "seconds"):
         fig, ax = plt.subplots(layout='constrained')
+
+        for school_number, points in data.items():
+            data[school_number] = filter(lambda x: x[0] > cutoff, points)
 
         for school_number, points in data.items():
             ax.plot(*zip(*points), label=school_number, marker="x", linestyle="solid", alpha=0.5, linewidth=1,
@@ -30,7 +35,7 @@ def main():
             l.set_marker(marker_type)
             l.set_linestyle(line_style)
 
-        ax.set_ylim(bottom=0, top=max(max(y for x, y in points) for points in data.values()) * 1.1)
+        # ax.set_ylim(bottom=0, top=max(max(y for x, y in points) for points in data.values()) * 1.1)
 
         if unit == "seconds":
             ax.set_ylabel('Sekunden')
@@ -52,6 +57,20 @@ def main():
         plt.title(title)
         plt.show()
 
+    def plan_size(is_log: bool = False):
+        data: dict[str, list[tuple[datetime.datetime, float]]] = defaultdict(list)
+        for event in events.iterate_events(events.PlanDownload):
+            if event.file_length is None or event.plan_type != "PlanKl.xml":
+                continue
+            y = event.file_length
+            x = event.start_time
+
+            data[creds[event.school_number]].append((x, y))
+
+        title = "Größe des heruntergeladenen Plans"
+
+        plot_basic(is_log, data, title, unit=None)
+
     def time_from_upload_till_available(is_log: bool = False):
         title = "Zeit von Planupload bis Bereitstellung auf VPlan.fr"
 
@@ -59,9 +78,6 @@ def main():
         for event in events.iterate_events(events.StudentsRevisionProcessed):
             y = (event.start_time - event.revision).total_seconds()
             x = event.start_time
-
-            if x < datetime.datetime(2023, 11, 26, tzinfo=datetime.timezone.utc):
-                continue
 
             data[creds[event.school_number]].append((x, y))
 
@@ -71,11 +87,10 @@ def main():
         data: dict[str, list[tuple[datetime.datetime, float]]] = defaultdict(list)
         for event in events.iterate_events(events.PlanDownload):
             # TODO: Differentiate PlanKl and VplanKl
+            if not event.plan_type == "PlanKl.xml":
+                continue
             y = (event.start_time - event.last_modified).total_seconds()
             x = event.start_time
-
-            if x < datetime.datetime(2023, 11, 26, tzinfo=datetime.timezone.utc):
-                continue
 
             data[creds[event.school_number]].append((x, y))
 
@@ -88,8 +103,7 @@ def main():
         for event in events.iterate_events(event_type):
             y = (event.end_time - event.start_time).total_seconds()
             x = event.start_time
-            # if x < datetime.datetime(2023, 11, 26, tzinfo=datetime.timezone.utc):
-            #     continue
+
             data[creds[event.school_number]].append((x, y))
 
         title = f"Dauer von: {event_type.__name__}"
@@ -103,30 +117,33 @@ def main():
             if y is None:
                 continue
             x = event.start_time
-            # if x < datetime.datetime(2023, 11, 26, tzinfo=datetime.timezone.utc):
-            #     continue
+
             data[creds[event.school_number]].append((x, y))
 
         title = f"Anzahl benutzer Proxies pro Download"
 
         plot_basic(is_log, data, title, unit=None)
 
-    # total = 0
-    #
-    # for event in events.iterate_events(events.PlanDownload):
-    #     x = event.start_time
-    #     if x < datetime.datetime(2023, 11, 29, tzinfo=datetime.timezone.utc):
-    #         continue
-    #
-    #     total += event.file_length
-    #
-    # print(total)
+    total = 0
 
-    time_from_upload_till_available()
-    time_from_upload_till_download()
-    duration_of(events.PlanCrawlCycle)
-    duration_of(events.StudentsRevisionProcessed)
-    num_proxies()
+    for event in events.iterate_events(events.PlanDownload):
+        x = event.start_time
+
+        if event.file_length is None:
+            continue
+
+        total += event.file_length
+
+    print(total)
+
+    plan_size(is_log=True)
+    time_from_upload_till_available(is_log=True)
+    time_from_upload_till_download(is_log=True)
+    duration_of(events.PlanCrawlCycle, is_log=True)
+    duration_of(events.StudentsRevisionProcessed, is_log=True)
+    duration_of(events.TeacherScrape, is_log=True)
+    duration_of(events.MetaUpdate, is_log=True)
+    num_proxies(is_log=True)
 
 
 if __name__ == '__main__':
