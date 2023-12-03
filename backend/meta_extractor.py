@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import threading
 import typing
 from xml.etree import ElementTree as ET
 
@@ -83,6 +84,7 @@ class MetaExtractor:
 
         self._rooms: set[str] | None = None
         self._daily_extractors: dict[tuple[datetime.date, datetime.datetime], DailyMetaExtractor] = {}
+        self._daily_extractors_lock = threading.Lock()
         self._max_cached_extractors = 10
 
     def iterate_daily_extractors(self) -> typing.Generator[DailyMetaExtractor, None, None]:
@@ -103,9 +105,10 @@ class MetaExtractor:
                         self._logger.error(f"Failed to parse PlanKl.xml for {day!s} {timestamp!s}.")
                         continue
 
-                    self._daily_extractors[(day, timestamp)] = extractor
-                    while len(self._daily_extractors) > self._max_cached_extractors:
-                        self._daily_extractors.pop(next(iter(self._daily_extractors)))
+                    with self._daily_extractors_lock:
+                        self._daily_extractors[(day, timestamp)] = extractor
+                        while len(self._daily_extractors) > self._max_cached_extractors:
+                            self._daily_extractors.pop(next(iter(self._daily_extractors)))
 
                     yield extractor
 
