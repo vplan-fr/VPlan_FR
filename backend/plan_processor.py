@@ -351,10 +351,10 @@ class PlanProcessor:
             break
 
     def do_full_update(self):
-        self.update_meta()
+        self.update_all_plans()
         self.update_after_plan_processing()
 
     def update_after_plan_processing(self):
-        self.update_all_plans()
+        self.update_meta()
         self.update_default_plan()
         self.store_teachers()
