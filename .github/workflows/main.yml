@@ -18,6 +18,29 @@ jobs:
         port: ${{ secrets.PORT }}
         script: |
           cd programming/VPlan_FR/
+
+          name: Remote SSH
+on:
+  push:
+    branches:
+        - master
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.IP }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          cd programming/games-VPlan_FR/
+          
+          kill -INT (lsof -t nohup.out)
           
           git checkout production
           git pull
@@ -30,3 +53,8 @@ jobs:
           npm run build
           
           sudo service apache2 restart
+
+          rm nohup.out
+          nohup node build > nohup.out 2> nohup.err < /dev/null &
+
+          disown (lsof -t nohup.out)
