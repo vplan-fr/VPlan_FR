@@ -33,8 +33,9 @@ jobs:
           
           sudo service apache2 restart
 
+          cd ..
           rm nohup.out || true
-          nohup node build > nohup.out 2> nohup.err < /dev/null &
+          nohup venv/bin/python3 -m backend.load_plans --ignore-exceptions --never-raise-out-of-proxies -l DEBUG - i 300 > nohup.out 2> nohup.err < /dev/null &
 
           disown (lsof -t nohup.out) || true
           
