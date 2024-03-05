@@ -12,6 +12,8 @@ from shared import creds_provider
 def main():
     plt.style.use('Solarize_Light2')
 
+    SINCE = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
+
     creds = creds_provider.creds_provider_factory(None).get_creds(ignore_disabled=True)
 
     creds = {
@@ -59,7 +61,7 @@ def main():
 
     def plan_size(is_log: bool = False):
         data: dict[str, list[tuple[datetime.datetime, float]]] = defaultdict(list)
-        for event in events.iterate_events(events.PlanDownload):
+        for event in events.iterate_events(events.PlanDownload, since=SINCE):
             if event.file_length is None or event.plan_type != "PlanKl.xml":
                 continue
             y = event.file_length
@@ -75,7 +77,7 @@ def main():
         title = "Zeit von Planupload bis Bereitstellung auf VPlan.fr"
 
         data: dict[str, list[tuple[datetime.datetime, float]]] = defaultdict(list)
-        for event in events.iterate_events(events.StudentsRevisionProcessed):
+        for event in events.iterate_events(events.StudentsRevisionProcessed, since=SINCE):
             y = (event.start_time - event.revision).total_seconds()
             x = event.start_time
 
@@ -85,7 +87,7 @@ def main():
 
     def time_from_upload_till_download(is_log: bool = False):
         data: dict[str, list[tuple[datetime.datetime, float]]] = defaultdict(list)
-        for event in events.iterate_events(events.PlanDownload):
+        for event in events.iterate_events(events.PlanDownload, since=SINCE):
             # TODO: Differentiate PlanKl and VplanKl
             if not event.plan_type == "PlanKl.xml":
                 continue
@@ -100,7 +102,7 @@ def main():
 
     def duration_of(event_type, is_log: bool = False):
         data: dict[str, list[tuple[datetime.datetime, float]]] = defaultdict(list)
-        for event in events.iterate_events(event_type):
+        for event in events.iterate_events(event_type, since=SINCE):
             y = (event.end_time - event.start_time).total_seconds()
             x = event.start_time
 
@@ -112,7 +114,7 @@ def main():
 
     def num_proxies(is_log: bool = False):
         data: dict[str, list[tuple[datetime.datetime, float]]] = defaultdict(list)
-        for event in events.iterate_events(events.PlanDownload):
+        for event in events.iterate_events(events.PlanDownload, since=SINCE):
             y = event.proxies_used
             if y is None:
                 continue
@@ -123,18 +125,6 @@ def main():
         title = f"Anzahl benutzer Proxies pro Download"
 
         plot_basic(is_log, data, title, unit=None)
-
-    total = 0
-
-    for event in events.iterate_events(events.PlanDownload):
-        x = event.start_time
-
-        if event.file_length is None:
-            continue
-
-        total += event.file_length
-
-    print(total)
 
     plan_size(is_log=True)
     time_from_upload_till_available(is_log=True)
