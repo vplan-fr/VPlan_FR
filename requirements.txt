@@ -6,7 +6,7 @@ Flask-WTF~=1.1.1
 Flask-Compress~=1.13
 pymongo~=4.3.3
 python-dotenv~=1.0.0
-stundenplan24-wrapper@ git+https://github.com/Belissimo-T/stundenplan24-wrapper@3efd522f
+stundenplan24-wrapper@ git+https://github.com/Belissimo-T/stundenplan24-wrapper@d10e55b8
 Werkzeug~=2.3.6
 discord-webhook~=1.3.0
 brotlicffi~=1.1.0.0
