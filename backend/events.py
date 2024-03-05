@@ -131,11 +131,15 @@ def submit_event(event: Event):
 _T2 = typing.TypeVar("_T2", bound=Event)
 
 
-def iterate_events(type_: typing.Type[_T2], school_number: str | None = None) -> typing.Iterator[_T2]:
+def iterate_events(type_: typing.Type[_T2], school_number: str | None = None,
+                   since: datetime.datetime | None = None,
+                   until: datetime.datetime | None = None) -> typing.Iterator[_T2]:
     cursor = _COLLECTION.find(
         {
             **({"type": type_.__name__} if type_ is not None else {}),
             **({"school_number": school_number} if school_number is not None else {}),
+            **({"start_time": {"$gte": since.isoformat()}} if since is not None else {}),
+            **({"end_time": {"$lte": until.isoformat()}} if until is not None else {}),
         },
         sort=[("start_time", pymongo.ASCENDING)]
     )
