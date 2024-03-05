@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
-import aiohttp
+import datetime
 import asyncio
 import logging
 from pathlib import Path
+
+import requests
 
 from stundenplan24_py import (
     IndiwareStundenplanerClient, Hosting, proxies
@@ -29,24 +31,37 @@ class PlanCrawler:
         self._plan_compute_executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
 
     async def check_infinite(self, interval: int = 60, *, once: bool = False, ignore_exceptions: bool = False):
-        self.plan_downloader.migrate_all()
-        self.plan_processor.do_full_update()
+        try:
+            self.plan_downloader.migrate_all()
+            self.plan_processor.do_full_update()
+        except Exception as e:
+            if not ignore_exceptions:
+                raise
+            else:
+                self.plan_processor._logger.error("An error occurred.", exc_info=e)
 
         while True:
             _t1 = events.now()
             try:
                 updated_dates = await self.plan_downloader.update_fetch()
 
-                def _process_plans():
+                def _process_plans(t_start: datetime.datetime):
                     self._plan_compute_executor.map(
                         self.plan_processor.update_day_plans, updated_dates
                     )
                     self.plan_processor.update_after_plan_processing()
+                    events.submit_event(
+                        events.PlanCrawlCycle(
+                            school_number=self.school_number,
+                            start_time=t_start,
+                            end_time=events.now(),
+                        )
+                    )
 
                 if updated_dates:
                     self.plan_processor._logger.debug("* Processing plans...")
                     self.plan_processor.meta_extractor.invalidate_cache()
-                    self._plan_compute_executor.submit(_process_plans)
+                    self._plan_compute_executor.submit(_process_plans, t_start=_t1)
                 else:
                     self.plan_processor._logger.debug("* No plans to process.")
             except Exception as e:
@@ -54,15 +69,6 @@ class PlanCrawler:
                     raise
                 else:
                     self.plan_processor._logger.error("An error occurred.", exc_info=e)
-            else:
-                _t2 = events.now()
-                events.submit_event(
-                    events.PlanCrawlCycle(
-                        school_number=self.school_number,
-                        start_time=_t1,
-                        end_time=_t2,
-                    )
-                )
 
             if once:
                 break
@@ -71,7 +77,7 @@ class PlanCrawler:
             await asyncio.sleep(interval)
 
 
-async def get_crawlers(session: aiohttp.ClientSession | None = None,
+async def get_crawlers(session: requests.Session | None = None,
                        proxy_provider: proxies.ProxyProvider | None = None,
                        create_clients: bool = True) -> dict[str, PlanCrawler]:
     creds_provider = creds_provider_factory(Path("creds.json"))
