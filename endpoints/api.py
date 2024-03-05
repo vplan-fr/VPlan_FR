@@ -91,7 +91,7 @@ def plan(school_num: str) -> Response:
             "exams": json.loads(cache.get_plan_file(date, revision, "exams.json")),
             "grouped_form_plans": json.loads(cache.get_plan_file(date, revision, "grouped_form_plans.json")),
         }
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         return send_error("Invalid date or revision.")
 
     return send_success(data)
