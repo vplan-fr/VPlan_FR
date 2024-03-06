@@ -1,4 +1,4 @@
-import {current_page, indexed_db, settings} from "./stores.js";
+import {current_page, indexed_db, register_button_visible, settings} from "./stores.js";
 import {notifications} from "./notifications.js";
 import { get } from "svelte/store";
 import { favorites } from "./stores.js";
@@ -118,6 +118,7 @@ export function navigate_page(page_id) {
     if(page_id === "plan" && get(current_page).startsWith("plan")) {return;}
     current_page.set(page_id);
     location.hash = `#${page_id}`;
+    register_button_visible.set(false);
     // console.log(`Changed Location to: "${page_id}"`);
 }
 
@@ -340,11 +341,22 @@ export function format_date(date) {
         "August", "September", "Oktober", "November", "Dezember"
     ];
 
+    const days = [
+        "So",
+        "Mo",
+        "Di",
+        "Mi",
+        "Do",
+        "Fr",
+        "Sa"
+    ];
+
+    const weekday = days[date.getDay()];
     const day = date.getDate();
     const monthIndex = date.getMonth();
     const year = date.getFullYear();
 
-    return `${day}. ${months[monthIndex]} ${year}`;
+    return `${weekday}., ${day}. ${months[monthIndex]} ${year}`;
 
 }
 

@@ -34,7 +34,7 @@
         <p class="responsive-text">
             Man kann uns mit unserem <button on:click={() => navigate_page("contact")} class="link-button" type="button">Kontaktformular</button> oder per Mail unter <a href="mailto:elanus4506@gmail.com">elanus4506@gmail.com</a> erreichen.
             <br>
-            Hier ist außerdem unser <a href="https://github.com/ArtrenH/VPlan_FR">Github-Repository</a>.
+            Hier ist außerdem unser <a href="https://github.com/vplan-fr/VPlan_FR">Github-Repository</a>.
         </p>
     </div>
 </main>
