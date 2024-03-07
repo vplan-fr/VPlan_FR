@@ -23,8 +23,10 @@
     ]
     let currentMottoIndex = 0;
     let startSection;
-    let fg_img;
-    let slider_btn;
+    let compareSliderValue = "10";
+    let lastKnownScrollPosition = 0;
+    let ticking = false;
+    let ticking3d = false;
 
     setTimeout(updateCurrentMottoIndex, 5000);
     function updateCurrentMottoIndex() {
@@ -46,15 +48,46 @@
     }
 
     function update3DRotation(event) {
-        if(!$register_button_visible) return;
-        const middleX = startSection.offsetLeft + startSection.offsetWidth / 2;
-        const middleY = startSection.offsetTop + startSection.offsetHeight / 2;
+        if(!$register_button_visible || window.screen.width < 900) return;
+        const middleX = startSection.offsetLeft + startSection.offsetWidth / 2 - document.documentElement.scrollLeft;
+        const middleY = startSection.offsetTop + startSection.offsetHeight / 2 - document.documentElement.scrollTop;
         const offsetX = ((event.clientX - middleX) / middleX) * 45;
         const offsetY = (((event.clientY - 30) - middleY) / middleY) * 45;
 
         startSection.animate({
             transform: `perspective(5000px) rotateY(${Math.min(offsetX, 35) + 'deg'}) rotateX(${Math.min(offsetY, 35) * -1 + 'deg'})`
         }, { duration: 1000, fill: "forwards" });
+    }
+
+    function update3DRotationScroll(event) {
+        if(!$register_button_visible || window.screen.width >= 900) return;
+
+        if (!ticking3d) {
+            window.requestAnimationFrame(() => {
+                const middleY = startSection.offsetTop + startSection.offsetHeight / 2;
+                const offsetY = (((document.documentElement.scrollTop + window.screen.height / 2 - 30) - middleY) / middleY) * 45;
+
+                startSection.animate({
+                    transform: `perspective(5000px) rotateY(0deg) rotateX(${Math.min(offsetY, 35) * -1 + 'deg'})`
+                }, {duration: 50, fill: "forwards"});
+                ticking3d = false;
+            });
+
+            ticking3d = true;
+        }
+    }
+
+    function addToSlider(event) {
+        let deltaY = window.scrollY - lastKnownScrollPosition;
+        lastKnownScrollPosition = window.scrollY;
+
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                compareSliderValue = (Math.min(100, Math.max(0, parseInt(compareSliderValue) + (deltaY > 0 ? 1 : -1)))).toString();
+                ticking = false;
+            });
+            ticking = true;
+        }
     }
 
     function viewport(element) {
@@ -71,6 +104,7 @@
 </script>
 
 <svelte:body on:mousemove={update3DRotation}></svelte:body>
+<svelte:window on:scroll={() => {update3DRotationScroll(); addToSlider()}}></svelte:window>
 
 <div style="display: flex; flex-direction: column; gap: 2rem;">
     <section class="start" bind:this={startSection}>
@@ -91,7 +125,7 @@
         </div>
     </section>
     <section class="plans">
-        <div style="display: flex; flex-direction: row; gap: 2rem; align-items: center;">
+        <div style="display: flex; flex-direction: row; gap: 2rem; align-items: center; margin-bottom: 2rem;">
             <h2 class="responsive-heading">Pläne <span class="fancy-text" data-text="unlocked">unlocked</span></h2>
             <div style="display: flex;align-items: center;justify-content: center;">
                 <span use:viewport
@@ -100,20 +134,19 @@
                       class:unlocked={lockVisible} class="lock" style="--locked-color: #ff8888; --unlocked-color: #ffffff"></span>
             </div>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; width: auto;">
-            <h2 class="responsive-heading" style="color: rgb(80, 80, 80)">Klassenplan</h2>
+        <div class="presentation">
+            <h2 class="responsive-heading" style="color: rgb(80, 80, 80)">Klassenplan<br>Wahrer Lehrerplan<br>Raumplan</h2>
             <div class="compare-slider">
                 <div class="bg"></div>
-                <div class="fg" bind:this={fg_img}></div>
-                <input type="range" min="1" max="100" value="20" on:input={(evt) => {
-                    fg_img.style.width = evt.target.value + "%";
-                    slider_btn.style.left = "calc(" + evt.target.value + "% - 18px)"}} class="slider" name='slider' id="slider">
-                <button type="button" bind:this={slider_btn} tabindex="-1"></button>
+                <div class="fg" style="width: {compareSliderValue}%"></div>
+                <input type="range" min="1" max="100" bind:value={compareSliderValue} class="slider" name='slider' id="slider">
+                <button type="button" style="left: calc({compareSliderValue}% - 18px)" tabindex="-1"></button>
             </div>
         </div>
-        <!--
-            Freie Räume, Lehrerplan, Raumplan, Klassenplan, Überblick über alte Pläne
-        -->
+        <div class="presentation reverse">
+            <h2 class="responsive-heading" style="color: rgb(80, 80, 80)">Freie Räume</h2>
+            <img src="/public/base_static/images/landing_page/vplanfr_room_overview.png" alt="Raum-Übersicht in Better VPlan">
+        </div>
     </section>
     <section>
         <h2 class="responsive-heading">Mobile Daten übrig für wichtigeres</h2> <!-- Scrollt durch Whatsapp, Discord, Spotify, wichtigeres -->
@@ -132,8 +165,10 @@
     <section>
         <h2 class="responsive-heading"><span class="fancy-text" data-text="Quality">Quality</span> of Life</h2>
         <!--
-            Cooles Design
-            Customizable
+            Cooles Customizable Design
+            Beliebig viele Favoriten
+            Alle Vorkommen von Klassen, Räumen, Lehrern etc. führen bei klicken zu ihrem jeweiligen Plan
+            Überblick über alte Pläne
             GAMES :DDD
         -->
     </section>
@@ -148,6 +183,36 @@
 </div>
 
 <style lang="scss">
+  .plans {
+    .presentation {
+      width: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 4rem;
+
+      @media only screen and (min-width: 900px) {
+        flex-direction: row;
+        &.reverse {
+          flex-direction: row-reverse;
+        }
+        justify-content: space-around;
+        h2 {
+          color: rgb(150, 150, 150) !important;
+        }
+      }
+
+      img {
+        $height: 80vh;
+        height: $height;
+        width: calc($height * 360 / 770);
+        aspect-ratio: 360 / 770;
+        border-radius: 1rem;
+        overflow: hidden;
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+      }
+    }
+  }
   .compare-slider {
     $height: 80vh;
     position: relative;
@@ -231,13 +296,12 @@
       }
     }
   }
-
   .fancy-text {
     position: relative;
     transform-style: preserve-3d;
     z-index: 0;
   }
-    .fancy-text::before {
+  .fancy-text::before {
       content: attr(data-text);
       position: absolute;
       inset: 0;
@@ -250,7 +314,7 @@
       font-weight: bolder;
       margin-top: 5px;
     }
-    .start {
+  .start {
       position: relative;
       display: flex;
       flex-direction: column;
@@ -259,15 +323,17 @@
       width: auto;
       min-height: 60vh;
       padding: 2rem;
-      background-color: black;
-      background-image: linear-gradient(134deg, rgba(80, 0, 179, 0.8) 20%, rgba(0, 33, 179, 0.6) 80%), url("data:image/svg+xml,%3Csvg viewBox='0 0 80 80 ' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.73' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E") !important;
+      background-color: rgb(0, 33, 179);
+      background-image: url("/public/base_static/images/landing_page/start_bg.webp");
+      background-size: cover;
+      background-position: 50% 50%;
       box-sizing: border-box;
       border: 2px solid var(--accent-color);
       border-radius: 1rem;
       overflow: hidden;
 
       transform-style: preserve-3d;
-    }
+  }
     .circle-bg {
       background-color: #6e6e80;
       background-image: radial-gradient(circle at center center, rgb(138, 74, 217), #110043), repeating-radial-gradient(circle at center center, rgb(138, 74, 217), var(--background), 10px, transparent 20px, transparent 10px);

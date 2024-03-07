@@ -3,6 +3,7 @@
     let clientX = 0;
     let clientY = 0;
     function moveBlob(event) {
+        if(window.screen.width < 900) {return;}
         clientX = event["clientX"];
         clientY = event["clientY"];
 
@@ -11,9 +12,17 @@
             top: `${clientY + document.documentElement.scrollTop}px`
         }, { duration: 2000, fill: "forwards" });
     }
+    function moveScrollBlob(event) {
+        if(window.screen.width >= 900) {return;}
+        blob.animate({
+            left: `${window.screen.width/2 + document.documentElement.scrollLeft}px`,
+            top: `${window.screen.height/2 + document.documentElement.scrollTop}px`
+        }, { duration: 6000, fill: "forwards" });
+    }
 </script>
 
 <svelte:body on:mousemove={moveBlob}></svelte:body>
+<svelte:window on:scroll={moveScrollBlob}></svelte:window>
 <svelte:head>
     <style>
         body {
