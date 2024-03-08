@@ -43,7 +43,7 @@
         width: 100%;
         position: absolute;
         z-index: -1;
-        background-image:  radial-gradient(#333333 0.5px, transparent 0.5px), radial-gradient(#333333 0.5px, transparent 0.5px);
+        background-image:  radial-gradient(#666666 0.5px, transparent 0.5px), radial-gradient(#666666 0.5px, transparent 0.5px);
         background-repeat: repeat;
         background-size: 20px 20px;
         background-position: 0 0, 10px 10px;

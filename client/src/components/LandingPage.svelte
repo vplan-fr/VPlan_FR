@@ -23,10 +23,10 @@
     ]
     let currentMottoIndex = 0;
     let startSection;
-    let compareSliderValue = "10";
+    let realSliderValue = 10;
+    let compareSliderValue;
+    $: compareSliderValue = (Math.max(Math.min(realSliderValue, 100), 0)).toString();
     let lastKnownScrollPosition = 0;
-    let ticking = false;
-    let ticking3d = false;
 
     setTimeout(updateCurrentMottoIndex, 5000);
     function updateCurrentMottoIndex() {
@@ -49,45 +49,32 @@
 
     function update3DRotation(event) {
         if(!$register_button_visible || window.screen.width < 900) return;
-        const middleX = startSection.offsetLeft + startSection.offsetWidth / 2 - document.documentElement.scrollLeft;
-        const middleY = startSection.offsetTop + startSection.offsetHeight / 2 - document.documentElement.scrollTop;
-        const offsetX = ((event.clientX - middleX) / middleX) * 45;
-        const offsetY = (((event.clientY - 30) - middleY) / middleY) * 45;
+        const middleX = startSection.offsetLeft + startSection.offsetWidth / 2;
+        const middleY = startSection.offsetTop + startSection.offsetHeight / 2;
+        const offsetX = ((event.clientX + document.documentElement.scrollLeft - middleX) / middleX) * 45;
+        const offsetY = (((event.clientY + document.documentElement.scrollTop - 30) - middleY) / middleY) * 45;
 
         startSection.animate({
-            transform: `perspective(5000px) rotateY(${Math.min(offsetX, 35) + 'deg'}) rotateX(${Math.min(offsetY, 35) * -1 + 'deg'})`
+            transform: `perspective(5000px) rotateY(${Math.max(Math.min(offsetX, 35), -35)}deg) rotateX(${Math.max(Math.min(offsetY, 35), -35) * -1}deg)`
         }, { duration: 1000, fill: "forwards" });
     }
 
     function update3DRotationScroll(event) {
         if(!$register_button_visible || window.screen.width >= 900) return;
 
-        if (!ticking3d) {
-            window.requestAnimationFrame(() => {
-                const middleY = startSection.offsetTop + startSection.offsetHeight / 2;
-                const offsetY = (((document.documentElement.scrollTop + window.screen.height / 2 - 30) - middleY) / middleY) * 45;
+        const middleY = startSection.offsetTop + startSection.offsetHeight / 2;
+        const offsetY = (((document.documentElement.scrollTop + window.screen.height / 2 - 80) - middleY) / middleY) * 45;
 
-                startSection.animate({
-                    transform: `perspective(5000px) rotateY(0deg) rotateX(${Math.min(offsetY, 35) * -1 + 'deg'})`
-                }, {duration: 50, fill: "forwards"});
-                ticking3d = false;
-            });
-
-            ticking3d = true;
-        }
+        startSection.animate({
+            transform: `perspective(5000px) rotateY(0deg) rotateX(${Math.max(Math.min(offsetY, 80), -80) * -1 + 'deg'})`
+        }, {duration: 50, fill: "forwards"});
     }
 
     function addToSlider(event) {
         let deltaY = window.scrollY - lastKnownScrollPosition;
         lastKnownScrollPosition = window.scrollY;
 
-        if (!ticking) {
-            window.requestAnimationFrame(() => {
-                compareSliderValue = (Math.min(100, Math.max(0, parseInt(compareSliderValue) + (deltaY > 0 ? 1 : -1)))).toString();
-                ticking = false;
-            });
-            ticking = true;
-        }
+        realSliderValue = realSliderValue + deltaY/10;
     }
 
     function viewport(element) {
@@ -106,7 +93,12 @@
 <svelte:body on:mousemove={update3DRotation}></svelte:body>
 <svelte:window on:scroll={() => {update3DRotationScroll(); addToSlider()}}></svelte:window>
 
-<div style="display: flex; flex-direction: column; gap: 2rem;">
+<div style="display: flex; flex-direction: column; gap: 2rem; position: relative;">
+    <div class="bubble-container">
+        <div class="bubble one"></div>
+        <div class="bubble two"></div>
+        <div class="bubble three"></div>
+    </div>
     <section class="start" bind:this={startSection}>
         <h1 class="responsive-heading">
             Better VPlan
@@ -135,16 +127,18 @@
             </div>
         </div>
         <div class="presentation">
-            <h2 class="responsive-heading" style="color: rgb(80, 80, 80)">Klassenplan<br>Wahrer Lehrerplan<br>Raumplan</h2>
+            <h2 class="responsive-heading" style="color: rgb(120, 120, 120)">Klassenplan<br>Wahrer Lehrerplan<br>Raumplan</h2>
             <div class="compare-slider">
                 <div class="bg"></div>
                 <div class="fg" style="width: {compareSliderValue}%"></div>
-                <input type="range" min="1" max="100" bind:value={compareSliderValue} class="slider" name='slider' id="slider">
-                <button type="button" style="left: calc({compareSliderValue}% - 18px)" tabindex="-1"></button>
+                <input type="range" min="1" max="100" value={compareSliderValue} on:input={(evt) => realSliderValue = parseFloat(evt.target.value)} class="slider" name='slider' id="slider">
+                <button type="button" style="left: calc({compareSliderValue}% - 18px)" tabindex="-1">
+                    <div class="arrows"></div>
+                </button>
             </div>
         </div>
         <div class="presentation reverse">
-            <h2 class="responsive-heading" style="color: rgb(80, 80, 80)">Freie Räume</h2>
+            <h2 class="responsive-heading" style="color: rgb(150, 150, 150)">Freie Räume</h2>
             <img src="/public/base_static/images/landing_page/vplanfr_room_overview.png" alt="Raum-Übersicht in Better VPlan">
         </div>
     </section>
@@ -155,7 +149,7 @@
             Funktioniert offline
         -->
         <div class="circle-bg" style="display: flex; justify-content: center;">
-            <div style="display: flex; flex-direction: column; gap: 1rem; " class="responsive-text">
+            <div style="display: flex; flex-direction: column; gap: 1rem; font-size: min(5vw, 1.4rem);" class="responsive-text">
                 <span style="filter: drop-shadow(0px 0px 4px black)">🚀 4x weniger API-Requests als die Indiware App</span>
                 <span style="filter: drop-shadow(0px 0px 4px black)">⚡ Near-instant Ladezeiten</span>
                 <span style="filter: drop-shadow(0px 0px 4px black)">🚵‍♂️ Funktioniert genauso offline (mit Planstatusindikatoren)</span>
@@ -183,6 +177,52 @@
 </div>
 
 <style lang="scss">
+  .bubble-container {
+    position: absolute;
+    height: 60vh;
+    width: 100%;
+    z-index: 999;
+
+    .bubble {
+      position: absolute;
+      aspect-ratio: 1;
+      border-radius: 999vw;
+      backdrop-filter: blur(5px);
+      background: radial-gradient(circle, rgba(0,0,0,0) 0%, var(--bubble-color) 100%);
+
+      &.one {
+        top: 0;
+        left: 0;
+        transform: translate(-50%, -50%);
+        width: 6rem;
+        --bubble-color: rgba(202, 41, 255, 0.4);
+      }
+      &.two {
+        top: 50%;
+        right: 0;
+        transform: translate(50%, -50%);
+        width: 10rem;
+        --bubble-color: rgba(63, 101, 255, 0.4);
+
+        @media only screen and (max-width: 900px) {
+          top: 30%;
+          width: 8rem;
+        }
+      }
+      &.three {
+        bottom: 0;
+        left: 35%;
+        transform: translate(50%, 50%);
+        width: 3rem;
+        --bubble-color: rgba(67, 126, 253, 0.4);
+
+        @media only screen and (max-height: 350px) {
+          left: 13%;
+          width: 3rem;
+        }
+      }
+    }
+  }
   .plans {
     .presentation {
       width: auto;
@@ -197,9 +237,6 @@
           flex-direction: row-reverse;
         }
         justify-content: space-around;
-        h2 {
-          color: rgb(150, 150, 150) !important;
-        }
       }
 
       img {
@@ -286,13 +323,27 @@
         border: solid white;
         border-width: 0 2px 2px 0;
       }
-      &::after {
-        @include arrow-helper();
-        transform: rotate(-45deg);
-      }
+
       &::before {
-        @include arrow-helper();
-        transform: rotate(135deg);
+        content: "";
+        position: absolute;
+        z-index: 0;
+        inset: -5px;
+        border-radius: 99vw;
+        background: linear-gradient(180deg, purple, #6200ff);
+        filter: blur(5px);
+      }
+
+      .arrows {
+          @include center;
+          &::after {
+            @include arrow-helper();
+            transform: rotate(-45deg);
+          }
+          &::before {
+            @include arrow-helper();
+            transform: rotate(135deg);
+          }
       }
     }
   }
@@ -336,10 +387,22 @@
   }
     .circle-bg {
       background-color: #6e6e80;
-      background-image: radial-gradient(circle at center center, rgb(138, 74, 217), #110043), repeating-radial-gradient(circle at center center, rgb(138, 74, 217), var(--background), 10px, transparent 20px, transparent 10px);
+      background-image: radial-gradient(circle at center center, rgb(154, 82, 242), #110043), repeating-radial-gradient(circle at center center, rgb(154, 82, 242), var(--background), 10px, transparent 20px, transparent 10px);
       background-blend-mode: multiply;
       border-radius: 2rem;
       padding: 2rem;
+      position: relative;
+
+      &::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset: -5px;
+        border-radius: 2rem;
+        background: linear-gradient(180deg, purple, #6200ff);
+        filter: blur(20px);
+        opacity: 0.4;
+      }
     }
     /* Locked */
     .lock {
