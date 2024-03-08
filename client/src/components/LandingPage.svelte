@@ -169,21 +169,24 @@
     </section>
     <section>
         <h2 class="responsive-heading"><span class="fancy-text" data-text="Quality">Quality</span> of Life</h2>
-        <!--
-            Cooles Customizable Design
-            Beliebig viele Favoriten
-            Alle Vorkommen von Klassen, Räumen, Lehrern etc. führen bei klicken zu ihrem jeweiligen Plan
-            Überblick über alte Pläne
-            GAMES :DDD
-        -->
+        <ul class="responsive-text">
+            <li>Cleanes Customizable Design</li>
+            <li>Beliebig viele Favoriten</li>
+            <li>Alle Vorkommen von Klassen, Räumen, Lehrern etc. führen bei klicken zu ihrem jeweiligen Plan</li>
+            <li>Überblick über alte Pläne</li>
+            <li>GAMES :DDD</li>
+        </ul>
     </section>
     <section>
-        <h2 class="responsive-heading">Geplante Features</h2>
-        <!--
-            Push Notifications
-            Kalendersynchronisation
-            Wochenplan
-        -->
+        <div style="height: 10px; width: auto; overflow: hidden; border-radius: 9vw; margin-top: 2rem; margin-bottom: 2rem;">
+            <hr style="margin: 0; border-top: solid 10px; border-image: repeating-linear-gradient(-75deg, #fcd53f, #fcd53f 10px, #533566 10px, #533566 20px) 20;">
+        </div>
+        <h2 class="responsive-heading">Geplante Features 🚧</h2>
+        <ul class="responsive-text">
+            <li>Push Notifications</li>
+            <li>Kalendersynchronisation</li>
+            <li>Wochenplan</li>
+        </ul>
     </section>
 </div>
 
