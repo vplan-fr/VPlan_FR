@@ -27,6 +27,7 @@
     let compareSliderValue;
     $: compareSliderValue = (Math.max(Math.min(realSliderValue, 100), 0)).toString();
     let lastKnownScrollPosition = 0;
+    let rotating_text;
 
     setTimeout(updateCurrentMottoIndex, 5000);
     function updateCurrentMottoIndex() {
@@ -143,11 +144,21 @@
         </div>
     </section>
     <section>
-        <h2 class="responsive-heading">Mobile Daten übrig für wichtigeres</h2> <!-- Scrollt durch Whatsapp, Discord, Spotify, wichtigeres -->
-        <!--
-            Daten für einen Tag heruntergeladen -> Alle Pläne verfügbar
-            Funktioniert offline
-        -->
+        <h2 class="responsive-heading">
+            Mobile Daten übrig für
+            <div style="position: relative; color: transparent; display: inline-block;">
+                wichtigeres
+                <div bind:this={rotating_text} class="rotating-text"
+                     use:viewport
+                     on:enterViewport={() => setTimeout(() => {rotating_text.style.setProperty('--transform-val', '-300%')}, 1500)}
+                     on:exitViewport={() => {}}>
+                    <span>WhatsApp</span>
+                    <span>Discord</span>
+                    <span>Spotify</span>
+                    <span>wichtigeres</span>
+                </div>
+            </div>
+        </h2> <!-- Scrollt durch Whatsapp, Discord, Spotify, wichtigeres -->
         <div class="circle-bg" style="display: flex; justify-content: center;">
             <div style="display: flex; flex-direction: column; gap: 1rem; font-size: min(5vw, 1.4rem);" class="responsive-text">
                 <span style="filter: drop-shadow(0px 0px 4px black)">🚀 4x weniger API-Requests als die Indiware App</span>
@@ -177,6 +188,20 @@
 </div>
 
 <style lang="scss">
+  .rotating-text {
+    position: absolute;
+    inset: 0;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    color: white;
+    --transform-val: 0%;
+
+    span {
+      transition: transform 2s cubic-bezier(0, 0, 0.5, 1);
+      transform: translateY(var(--transform-val));
+    }
+  }
   .bubble-container {
     position: absolute;
     height: 60vh;
@@ -193,14 +218,14 @@
       &.one {
         top: 0;
         left: 0;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -40%);
         width: 6rem;
         --bubble-color: rgba(202, 41, 255, 0.4);
       }
       &.two {
         top: 50%;
         right: 0;
-        transform: translate(50%, -50%);
+        transform: translate(60%, -50%);
         width: 10rem;
         --bubble-color: rgba(63, 101, 255, 0.4);
 
@@ -211,8 +236,9 @@
       }
       &.three {
         bottom: 0;
+        will-change: left;
         left: 35%;
-        transform: translate(50%, 50%);
+        transform: translate(45%, 55%);
         width: 3rem;
         --bubble-color: rgba(67, 126, 253, 0.4);
 
