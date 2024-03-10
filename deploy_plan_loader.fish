@@ -16,14 +16,21 @@ end
 # Remove existing nohup.out
 echo "=> Removing existing nohup.out..."
 if rm -f nohup.out
-    echo " -> Sucess"
+    echo " -> Success"
 else
     echo " -> No existing nohup.out file. (or error)"
 end
 
+echo "=> Removing existing nohup.out2..."
+if rm -f nohup.out2
+    echo " -> Success"
+else
+    echo " -> No existing nohup.out2 file. (or error)"
+end
+
 # Start the plan loader
 echo "=> Starting plan loader..."
-nohup venv/bin/python3 -m backend.load_plans --ignore-exceptions --never-raise-out-of-proxies -l DEBUG -i 300 > nohup.out 2> /dev/null < /dev/null &
+nohup venv/bin/python3 -m backend.load_plans --ignore-exceptions --never-raise-out-of-proxies -l DEBUG -i 300 > nohup.out2 2> nohup.out < /dev/null &
 
 # Disown the process
 echo "=> Disowning..."
