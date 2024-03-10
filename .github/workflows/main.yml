@@ -19,7 +19,7 @@ jobs:
         script: |
           cd programming/VPlan_FR/
           
-          kill -INT (lsof -t nohup.out)  || true
+          # kill -INT (lsof -t nohup.out)  || true
           
           git checkout production
           git pull
@@ -34,8 +34,8 @@ jobs:
           sudo service apache2 restart
 
           cd ..
-          rm nohup.out || true
-          nohup venv/bin/python3 -m backend.load_plans --ignore-exceptions --never-raise-out-of-proxies -l DEBUG - i 300 > nohup.out 2> nohup.err < /dev/null &
+          # rm nohup.out || true
+          # nohup venv/bin/python3 -m backend.load_plans --ignore-exceptions --never-raise-out-of-proxies -l DEBUG - i 300 > nohup.out 2> nohup.err < /dev/null &
 
-          disown (lsof -t nohup.out) || true
+          # disown (lsof -t nohup.out) || true
           

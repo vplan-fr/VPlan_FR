@@ -123,7 +123,6 @@
             return {};
         }
         for (let school of schools) {
-            console.log(school);
             if (school.id === school_id.toString()) {
                 return school
             }
@@ -150,7 +149,6 @@
     $: authorize_school_data = get_school_by_id(authorize_school_id);
 
     function add_school() {
-        console.log(add_school_name, add_school_num, add_school_username, add_school_password);
 
         let formData = new FormData();
         formData.append('display_name', add_school_name);

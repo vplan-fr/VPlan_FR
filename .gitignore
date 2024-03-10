@@ -163,6 +163,7 @@ cython_debug/
 
 client/node_modules
 backend/schools/private_data
+client/public/base_static/teachers
 creds.json
 proxies.json
 

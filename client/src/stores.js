@@ -11,3 +11,5 @@ export const pwa_prompt = writable();
 export const new_changelogs_available = writable(false);
 export const favorites = writable([]);
 export const selected_favorite = writable(0);
+
+export const register_button_visible = writable(false);

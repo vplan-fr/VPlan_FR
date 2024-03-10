@@ -2,6 +2,8 @@
     import Plan from "./components/Plan.svelte";
     import Weekplan from "./components/Weekplan.svelte";
     import Authentication from "./components/Authentication.svelte";
+    import LandingPage from "./components/LandingPage.svelte";
+    import LandingPageNavbar from "./components/LandingPageNavbar.svelte";
 	import Toast from './base_components/Toast.svelte';
     import Navbar from "./components/Navbar.svelte";
     import Settings from "./components/Settings.svelte";
@@ -24,6 +26,8 @@
     import {animateScroll} from 'svelte-scrollto-element';
     import Button from "./base_components/Button.svelte";
     import { fade } from "svelte/transition";
+    import FancyBackground from "./components/FancyBackground.svelte";
+    import NotFound from "./components/NotFound.svelte";
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
     let school_num;
@@ -356,7 +360,6 @@
             history.go(1);
             return;
         }
-        if(new_location === "") {new_location = "plan";}
         navigate_page(new_location);
         if (new_location.startsWith("plan")) {
             refresh_plan_vars();
@@ -365,7 +368,6 @@
 
     let new_location = location.hash.slice(1);
     if(!((new_location === "login" || new_location === "register") && $logged_in)) {
-        if(new_location === "") {new_location = "plan";}
         if(new_location === "favorite") {
             load_favorite = true;
             new_location = "plan";
@@ -380,6 +382,12 @@
 
 {#if $logged_in}
     <Navbar />
+{:else if $current_page !== "login" && $current_page !== "register"}
+    <LandingPageNavbar />
+{/if}
+
+{#if $current_page === ""}
+    <FancyBackground />
 {/if}
 
 <Settings />
@@ -393,6 +401,8 @@
             <AboutUs />
         {:else if $current_page === "impressum"}
             <Impressum />
+        {:else if $current_page === ""}
+            <LandingPage></LandingPage>
         {:else if $logged_in}
             {#if $current_page.substring(0, 4) === "plan" || $current_page.substring(0, 8) === "weekplan"}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
@@ -455,7 +465,10 @@
             {:else if $current_page === "school_manager"}
                 <SchoolManager bind:school_num bind:date bind:plan_type bind:plan_value />
             {:else if $current_page === "favorite"}
-                <span class="responsive-text">Lade deine Favoriten...</span>
+                <div style="display: flex; flex-direction: column; gap: 2rem; width: auto; min-height: 50vh; justify-content: center; align-items: center;">
+                    <div class="rotating"><span class="material-symbols-outlined fancy-text" style="font-size: max(3rem, 5vw)">sync</span></div>
+                    <span class="responsive-text" style="text-align: center;">Lade deine Favoriten...</span>
+                </div>
             {:else if $current_page === "favorites"}
                 <Favorites />
             {:else if $current_page === "pwa_install"}
@@ -463,10 +476,12 @@
             {:else if $current_page === "stats"}
                 <Stats />
             {:else}
-                <span class="responsive-text">Seite nicht gefunden!</span>
+                <NotFound />
             {/if}
-        {:else}
+        {:else if $current_page === "login" || $current_page === "register"}
             <Authentication></Authentication>
+        {:else}
+            <NotFound />
         {/if}
     </main>
     <Toast />
@@ -474,8 +489,9 @@
 <footer class:padding={footer_padding}>
     <Dropdown let:toggle small={true} transform_origin_x="100%" flipped={true}>
         <button slot="toggle_button" on:click={toggle}><span class="material-symbols-outlined">menu</span></button>
-        
+
         {#if !$logged_in}<button on:click={() => {navigate_page("login")}}>Login</button>{/if}
+        <button on:click={() => {navigate_page("")}}>Startseite</button>
         <button on:click={() => {navigate_page("impressum")}}>Impressum</button>
         <button on:click={() => {navigate_page("contact")}}>Kontakt</button>
         <button on:click={() => {navigate_page("about_us")}}>Über Uns</button>
@@ -484,6 +500,44 @@
 </footer>
 
 <style lang="scss">
+  .rotating {
+    animation: rotate 2s linear infinite;
+  }
+  @keyframes rotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+  .fancy-text {
+    background: linear-gradient(310deg, #cc33ff, #3358ff, #33bbff);
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    background-size: 600% 600%;
+
+    -webkit-animation: colorScroll 3s ease infinite;
+    -moz-animation: colorScroll 3s ease infinite;
+    animation: colorScroll 3s ease infinite;
+  }
+
+  @-webkit-keyframes colorScroll {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+  }
+  @-moz-keyframes colorScroll {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+  }
+  @keyframes colorScroll {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+  }
     .plan-status {
         pointer-events: none;
         position: absolute;
@@ -504,11 +558,11 @@
             &[data-plan-type=cached] {
                 color: rgba(255, 255, 255, 0.5);
             }
-            
+
             &[data-plan-type=network_cached] {
                 color: #00db00;
             }
-            
+
             &[data-plan-type=network_uncached] {
                 color: #dbae00;
             }
@@ -523,6 +577,8 @@
     }
 
     #page-container {
+        max-width: 100%;
+        overflow-x: hidden;
         position: relative;
         min-height: calc(100vh - 56px);
         padding-bottom: 15px;

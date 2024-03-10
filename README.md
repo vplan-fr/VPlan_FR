@@ -4,7 +4,7 @@
 
 # vplan.fr
 
-This repository contains the code of the website [vplan.fr](https://vplan.fr/), which is free to use and already supports many schools in (eastern) Germany! If you want to contribute to the project, [contact us](https://vplan.fr/#contact), [submit an issue](https://github.com/ArtrenH/VPlan_FR/issues/new) or [fork this repo](https://github.com/ArtrenH/VPlan_FR/fork) and create a pull request for changes.
+This repository contains the code of the website [vplan.fr](https://vplan.fr/), which is free to use and already supports many schools in (eastern) Germany! If you want to contribute to the project, [contact us](https://vplan.fr/#contact), [submit an issue](https://github.com/vplan-fr/VPlan_FR/issues/new) or [fork this repo](https://github.com/vplan-fr/VPlan_FR/fork) and create a pull request for changes.
 
 ![Preview Image of example school](readme_preview.png)
 
@@ -66,4 +66,4 @@ and in another terminal, the npm dev server using:
 - `cd client`
 - `npm run dev`
 
-If you have any more questions or need help with the setup, don't hesitate to [contact us](https://vplan.fr/#contact). :)
+If you have any more questions or need help with the setup, don't hesitate to [contact us](https://vplan.fr/#contact). :) 
