@@ -32,7 +32,26 @@ function getPeriodsOfBlock(block) {
     return [block * 2 - 1, block * 2];
 }
 
-export function getLabelOfPeriods(periods) {
+function periods_to_block_label(periods) {
+    periods.sort(function (a, b) {
+        return a - b;
+    });
+
+    const rests = {
+        0: "/Ⅱ",
+        1: "/Ⅰ",
+    };
+
+    if (periods.length === 1) {
+        return `${Math.floor((periods[0] - 1) / 2) + 1}${rests[periods[0] % 2]}`;
+    } else if (periods.length === 2 && periods[0] % 2 === 1) {
+        return `${Math.floor(periods[periods.length - 1] / 2)}`;
+    } else {
+        return periods.map(p => periods_to_block_label([p])).join(", ");
+    }
+}
+
+function periods_to_block_or_periods_label(periods) {
     periods = [...new Set(periods)].sort();
 
     // work out whether we can display as "Block X" or "Stunde X"
@@ -83,4 +102,8 @@ export function getLabelOfPeriods(periods) {
             return `Stunden ${out.join(',')}`;
         }
     }
+}
+
+export function getLabelOfPeriods(periods) {
+    return "Block " + periods_to_block_label(periods);
 }
