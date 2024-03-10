@@ -147,7 +147,7 @@
         <h2 class="responsive-heading">
             Mobile Daten übrig für
             <div style="position: relative; color: transparent; display: inline-block;">
-                wichtigeres
+                Wichtigeres
                 <div bind:this={rotating_text} class="rotating-text"
                      use:viewport
                      on:enterViewport={() => setTimeout(() => {rotating_text.style.setProperty('--transform-val', '-300%')}, 1500)}
@@ -155,13 +155,13 @@
                     <span>WhatsApp</span>
                     <span>Discord</span>
                     <span>Spotify</span>
-                    <span>wichtigeres</span>
+                    <span>Wichtigeres</span>
                 </div>
             </div>
         </h2> <!-- Scrollt durch Whatsapp, Discord, Spotify, wichtigeres -->
         <div class="circle-bg" style="display: flex; justify-content: center;">
             <div style="display: flex; flex-direction: column; gap: 1rem; font-size: min(5vw, 1.4rem);" class="responsive-text">
-                <span style="filter: drop-shadow(0px 0px 4px black)">🚀 4x weniger API-Requests als die Indiware App</span>
+                <span style="filter: drop-shadow(0px 0px 4px black)">🚀 4x weniger API-Requests als die VpMobil24 App</span>
                 <span style="filter: drop-shadow(0px 0px 4px black)">⚡ Near-instant Ladezeiten</span>
                 <span style="filter: drop-shadow(0px 0px 4px black)">🚵‍♂️ Funktioniert genauso offline (mit Planstatusindikatoren)</span>
             </div>
@@ -169,6 +169,7 @@
     </section>
     <section>
         <h2 class="responsive-heading"><span class="fancy-text" data-text="Quality">Quality</span> of Life</h2>
+        <!-- Solo leveling fenster gelb lila magenta + so dreck auf den fenstern vibe -->
         <ul class="responsive-text">
             <li>Cleanes Customizable Design</li>
             <li>Beliebig viele Favoriten</li>
@@ -210,6 +211,7 @@
     height: 60vh;
     width: 100%;
     z-index: 999;
+    pointer-events: none;
 
     .bubble {
       position: absolute;
