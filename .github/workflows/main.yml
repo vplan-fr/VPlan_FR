@@ -19,8 +19,6 @@ jobs:
         script: |
           cd programming/VPlan_FR/
           
-          # kill -INT (lsof -t nohup.out)  || true
-          
           git checkout production
           git pull
           source venv/bin/activate.fish
@@ -34,8 +32,5 @@ jobs:
           sudo service apache2 restart
 
           cd ..
-          # rm nohup.out || true
-          # nohup venv/bin/python3 -m backend.load_plans --ignore-exceptions --never-raise-out-of-proxies -l DEBUG - i 300 > nohup.out 2> nohup.err < /dev/null &
-
-          # disown (lsof -t nohup.out) || true
           
+          fish deploy_plan_loader.fish
