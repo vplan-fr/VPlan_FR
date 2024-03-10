@@ -6,7 +6,8 @@
     import { swipe } from 'svelte-gestures';
     import {indexed_db, settings, title, selected_favorite, favorites} from '../stores.js';
     import {arraysEqual, format_date, navigate_page, format_timestamp} from "../utils.js";
-    import {periods_to_block_label, sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences} from "../plan.js";
+    import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences} from "../plan.js";
+    import {getLabelOfPeriods} from "../periods_utils.js";
     import Dropdown from '../base_components/Dropdown.svelte';
 
     export let api_base;
@@ -228,7 +229,7 @@
                 {#each lessons as lesson, i}
                     {#if external_times}    
                         {#if !all_lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
-                            <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{periods_to_block_label(lesson.periods)}{lesson.begin != null && lesson.end != null ? ": " + lesson.begin + " - " + lesson.end : ". Block"}</span>
+                            <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{getLabelOfPeriods(lesson.periods)}{lesson.begin != null && lesson.end != null ? ": " + lesson.begin + " - " + lesson.end : ""}</span>
                         {/if}
                     {/if}
                     <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />

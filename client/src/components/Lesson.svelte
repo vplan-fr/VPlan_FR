@@ -2,31 +2,13 @@
     import Dropdown from "../base_components/Dropdown.svelte";
     import {selected_favorite, settings} from "../stores";
     import {arraysEqual} from "../utils.js";
+    import {getLabelOfPeriods} from "../periods_utils.js";
 
     export let lesson;
     export let date;
     export let plan_type;
     export let plan_value;
     export let display_time = true;
-
-    function periods_to_block_label(periods) {
-        periods.sort(function (a, b) {
-            return a - b;
-        });
-
-        const rests = {
-            0: "/Ⅱ",
-            1: "/Ⅰ",
-        };
-
-        if (periods.length === 1) {
-            return `${Math.floor((periods[0] - 1) / 2) + 1}${rests[periods[0] % 2]}`;
-        } else if (periods.length === 2 && periods[0] % 2 === 1) {
-            return `${Math.floor(periods[periods.length - 1] / 2)}`;
-        } else {
-            return periods.map(p => periods_to_block_label([p])).join(", ");
-        }
-    }
 
     $: only_teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers?.length === 0 && lesson.takes_place;
 
@@ -52,7 +34,7 @@
         <!-- Optional: Time -->
         {#if display_time}
             <div class="vert-align max-width-center lesson-time-info">
-                <span class="lesson-period">{periods_to_block_label(lesson.periods)}</span>
+                <span class="lesson-period">{getLabelOfPeriods(lesson.periods)}</span>
                 <span class="lesson-time">{lesson.begin}</span>
             </div>
         {/if}
@@ -224,7 +206,7 @@
                                     <span class="grow">{forms_str}</span>
                                     <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
                                 </button>
-                                
+
                                 {#each forms as form}
                                     <button on:click={() => {
                                         plan_type = "forms";
@@ -246,7 +228,7 @@
                                     <span class="grow">{teachers.join(', ')}</span>
                                     <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
                                 </button>
-                                
+
                                 {#each teachers as teacher}
                                     <button on:click={() => {
                                         plan_type = "teachers";
@@ -268,7 +250,7 @@
                                     <span class="grow">{rooms.join(', ')}</span>
                                     <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
                                 </button>
-                                
+
                                 {#each rooms as room}
                                     <button on:click={() => {
                                         plan_type = "rooms";
@@ -295,7 +277,7 @@
         @media only screen and (min-width: 1501px) {
             font-size: 1em;
             margin-left: .2em;
-         
+
             &.centered_txt {
                 position: absolute;
                 right: 10px;
@@ -334,7 +316,7 @@
                 flex: 1;
                 white-space: nowrap;
             }
-            
+
             &.center-align {
                 text-align: center;
             }
@@ -458,7 +440,7 @@
         width: 100%;
         height: 100%;
     }
-    
+
     .teachers button, .rooms button, .forms button {
         flex: 1;
         transition: background-color .2s ease;
