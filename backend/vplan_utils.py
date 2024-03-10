@@ -205,23 +205,53 @@ def forms_to_str(forms: typing.Iterable[str]) -> str:
     return parsed_forms_to_str([ParsedForm.from_str(form) for form in forms])
 
 
-def periods_to_block_label(periods: typing.Iterable[int]) -> str:
-    periods = list(set(periods))
+def get_block_of_period(period: int) -> int:
+    return (period - 1) // 2 + 1
 
-    periods.sort()
 
-    rests = {
-        0: "/Ⅱ",  # "²⁄₂",
-        1: "/Ⅰ"  # "¹⁄₂",  # ½
-    }
-    if len(periods) == 1:
-        return f"{(periods[0] - 1) // 2 + 1}{rests[periods[0] % 2]}"
+def get_periods_of_block(block: int) -> list[int]:
+    return [block * 2 - 1, block * 2]
 
-    elif len(periods) == 2 and periods[0] % 2 == 1 and periods[1] - periods[0] == 1:
-        return f"{periods[-1] // 2}"
+
+def get_label_of_periods(periods: typing.Iterable[int]) -> str:
+    periods = sorted(set(periods))
+
+    # work out whether we can display as "Block X" or "Stunde X"
+    all_block_periods = set(sum((get_periods_of_block(get_block_of_period(p)) for p in periods), []))
+    if not all_block_periods - set(periods):
+        # block label
+        blocks = sorted(set(get_block_of_period(p) for p in periods))
+        seqs = _increasing_sequences(blocks)
+        out = []
+        for seq in seqs:
+            if len(seq) == 1:
+                out.append(f"{seq[0]}")
+            elif len(seq) == 2:
+                out.append(f"{seq[0]},{seq[-1]}")
+            else:
+                out.append(f"{seq[0]}-{seq[-1]}")
+
+        if len(blocks) == 1:
+            return f"Block {out[0]}"
+        else:
+            return f"Blöcke {','.join(out)}"
 
     else:
-        return ", ".join([periods_to_block_label([p]) for p in periods])
+        # stunde label
+        seqs = _increasing_sequences(periods)
+        out = []
+        for seq in seqs:
+            if len(seq) == 1:
+                out.append(f"{seq[0]}")
+            elif len(seq) == 2:
+                out.append(f"{seq[0]},{seq[-1]}")
+            else:
+                out.append(f"{seq[0]}-{seq[-1]}")
+
+        if len(periods) == 1:
+            return f"Stunde {out[0]}"
+        else:
+            return f"Stunden {','.join(out)}"
 
 
 def _parse_periods(period_str: str) -> list[int]:

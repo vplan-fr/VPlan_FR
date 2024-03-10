@@ -8,7 +8,7 @@ import re
 import typing
 
 from .vplan_utils import (
-    periods_to_block_label, parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str, forms_to_str,
+    get_label_of_periods, parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str, forms_to_str,
     _loose_parse_form_pattern
 )
 from . import teacher as teacher_model
@@ -167,7 +167,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
             return [
                 LessonInfoTextSegment("verlegt von "),
                 LessonInfoTextSegment(
-                    f"Block {periods_to_block_label(self.periods)}",
+                    get_label_of_periods(self.periods),
                     link=LessonInfoTextSegmentLink(
                         type=self.plan_type,
                         value=sorted(self.plan_value),
@@ -181,7 +181,7 @@ class MovedFrom(SerializeMixin, ParsedLessonInfoMessage):
                 LessonInfoTextSegment("statt "),
                 LessonInfoTextSegment(
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
-                    f"{periods_to_block_label(self.periods)}. Block",
+                    f"{get_label_of_periods(self.periods)}",
                     link=LessonInfoTextSegmentLink(
                         type=self.plan_type,
                         value=sorted(self.plan_value),
@@ -261,7 +261,7 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
                 *self._course_text_segments(lesson_date, None),
                 LessonInfoTextSegment(" verlegt nach "),
                 LessonInfoTextSegment(
-                    f"Block {periods_to_block_label(self.periods)}",
+                    get_label_of_periods(self.periods),
                     link=LessonInfoTextSegmentLink(
                         type=self.plan_type,
                         value=sorted(self.plan_value),
@@ -276,7 +276,7 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
                 LessonInfoTextSegment(" gehalten am "),
                 LessonInfoTextSegment(
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
-                    f"{periods_to_block_label(self.periods)}. Block",
+                    f"{get_label_of_periods(self.periods)}",
                     link=LessonInfoTextSegmentLink(
                         type=self.plan_type,
                         value=sorted(self.plan_value),
@@ -291,7 +291,7 @@ class MovedTo(SerializeMixin, AbstractParsedLessonInfoMessageWithCourseInfo):
                 LessonInfoTextSegment(" verlegt nach "),
                 LessonInfoTextSegment(
                     f"{de_weekday_to_str(self.date.weekday())} ({self.date.strftime('%d.%m.%Y')}) "
-                    f"{periods_to_block_label(self.periods)}. Block",
+                    f"{get_label_of_periods(self.periods)}",
                     link=LessonInfoTextSegmentLink(
                         type=self.plan_type,
                         value=sorted(self.plan_value),
