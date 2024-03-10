@@ -4,7 +4,7 @@
 
 # vplan.fr
 
-This repository contains the code of the website [vplan.fr](https://vplan.fr/), which is free to use and already supports many schools in (eastern) Germany! If you want to contribute to the project, [contact us](https://vplan.fr/#contact), [submit an issue](https://github.com/ArtrenH/VPlan_FR/issues/new) or [fork this repo](https://github.com/ArtrenH/VPlan_FR/fork) and create a pull request for changes.
+This repository contains the code of the website [vplan.fr](https://vplan.fr/), which is free to use and already supports many schools in (eastern) Germany! If you want to contribute to the project, [contact us](https://vplan.fr/#contact), [submit an issue](https://github.com/vplan-fr/VPlan_FR/issues/new) or [fork this repo](https://github.com/vplan-fr/VPlan_FR/fork) and create a pull request for changes.
 
 ![Preview Image of example school](readme_preview.png)
 
