@@ -404,6 +404,7 @@
         {:else if $current_page === ""}
             <LandingPage></LandingPage>
         {:else if $logged_in}
+            <!-- !!! Update NotFound protected_routes when adding a new route !!! -->
             {#if $current_page.substring(0, 4) === "plan" || $current_page.substring(0, 8) === "weekplan"}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
                 <!-- {#if $selected_favorite !== -1 && $favorites[$selected_favorite]}
@@ -503,6 +504,7 @@
   .rotating {
     animation: rotate 2s linear infinite;
   }
+
   @keyframes rotate {
     from {
       transform: rotate(0deg);
@@ -511,6 +513,7 @@
       transform: rotate(-360deg);
     }
   }
+
   .fancy-text {
     background: linear-gradient(310deg, #cc33ff, #3358ff, #33bbff);
     color: transparent;
@@ -524,225 +527,274 @@
   }
 
   @-webkit-keyframes colorScroll {
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
+    0% {
+      background-position: 0 50%
+    }
+    50% {
+      background-position: 100% 50%
+    }
+    100% {
+      background-position: 0 50%
+    }
   }
+
   @-moz-keyframes colorScroll {
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
+    0% {
+      background-position: 0 50%
+    }
+    50% {
+      background-position: 100% 50%
+    }
+    100% {
+      background-position: 0 50%
+    }
   }
+
   @keyframes colorScroll {
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
+    0% {
+      background-position: 0 50%
+    }
+    50% {
+      background-position: 100% 50%
+    }
+    100% {
+      background-position: 0 50%
+    }
   }
-    .plan-status {
-        pointer-events: none;
-        position: absolute;
-        top: 0;
-        left: 15px;
-        bottom: 0;
-        width: min(30%, 175px) !important;
-        display: flex;
-        gap: 5px;
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
 
-        .material-symbols-outlined {
-            font-size: var(--font-size-md);
-            transition: all .2s ease;
+  .plan-status {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 15px;
+    bottom: 0;
+    width: min(30%, 175px) !important;
+    display: flex;
+    gap: 5px;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
 
-            &[data-plan-type=cached] {
-                color: rgba(255, 255, 255, 0.5);
-            }
+    .material-symbols-outlined {
+      font-size: var(--font-size-md);
+      transition: all .2s ease;
 
-            &[data-plan-type=network_cached] {
-                color: #00db00;
-            }
+      &[data-plan-type=cached] {
+        color: rgba(255, 255, 255, 0.5);
+      }
 
-            &[data-plan-type=network_uncached] {
-                color: #dbae00;
-            }
-        }
+      &[data-plan-type=network_cached] {
+        color: #00db00;
+      }
 
-        .status-label {
-            font-size: var(--font-size-sm);
-            color: rgba(255, 255, 255, 0.5);
-            hyphens: auto;
-            text-align: left;
-        }
+      &[data-plan-type=network_uncached] {
+        color: #dbae00;
+      }
     }
 
-    #page-container {
-        max-width: 100%;
-        overflow-x: hidden;
+    .status-label {
+      font-size: var(--font-size-sm);
+      color: rgba(255, 255, 255, 0.5);
+      hyphens: auto;
+      text-align: left;
+    }
+  }
+
+  #page-container {
+    max-width: 100%;
+    overflow-x: hidden;
+    position: relative;
+    min-height: calc(100vh - 56px);
+    padding-bottom: 15px;
+
+    @media only screen and (min-width: 602px) {
+      min-height: calc(100vh - 64px);
+    }
+  }
+
+  footer {
+    float: right;
+    height: calc(var(--font-size-sm) * 2);
+    width: calc(var(--font-size-sm) * 2);
+    margin-top: calc(var(--font-size-sm) * -2);
+    display: flex;
+    background: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    flex-direction: row;
+    justify-content: flex-start;
+
+    &.padding {
+      padding-right: 16px;
+    }
+
+    button {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: none;
+      background: transparent;
+      font-size: var(--font-size-sm);
+      color: white;
+
+      span {
+        font-size: inherit;
+      }
+    }
+  }
+
+  :global(.responsive-heading) {
+    font-size: var(--font-size-xl);
+    margin-bottom: 15px;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  :global(.responsive-text) {
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  .controls-wrapper {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    grid-column-gap: 10px;
+    grid-row-gap: 15px;
+    margin-bottom: 40px;
+
+    .control {
+      & > :global(*) {
+        width: 100%;
+        height: 100%;
+      }
+
+      &#c1 {
+        grid-area: 1 / 1 / 2 / 3;
+      }
+
+      &#c2 {
+        grid-area: 2 / 1 / 3 / 2;
+      }
+
+      &#c3 {
+        grid-area: 2 / 2 / 3 / 3;
+      }
+
+      &#c4 {
+        grid-area: 3 / 1 / 4 / 2;
+      }
+
+      &#c5 {
+        grid-area: 3 / 2 / 4 / 3;
+      }
+
+      &#c1 {
         position: relative;
-        min-height: calc(100vh - 56px);
-        padding-bottom: 15px;
+        --sdt-bg-main: var(--background);
+        --sdt-shadow-color: var(--background);
+        --sdt-wrap-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
+        --sdt-radius: 5px;
+        --sdt-color: var(--text-color);
+        --sdt-color-selected: var(--text-color);
+        --sdt-header-color: var(--text-color);
+        --sdt-primary: var(--accent-color);
+        --sdt-disabled-date: var(--cancelled-color);
+        --sdt-disabled-date-bg: var(--sdt-bg-main);
+        --sdt-btn-bg-hover: rgba(255, 255, 255, 0.2);
+        --sdt-btn-header-bg-hover: var(--sdt-btn-bg-hover);
+        --sdt-today-indicator: var(--sdt-bg-main);
 
-        @media only screen and (min-width: 602px) {
-            min-height: calc(100vh - 64px);
+        :global(.datepicker-input) {
+          width: 100%;
+          height: 100%;
+          border: none;
+          border-radius: 5px;
+          background-color: rgba(255, 255, 255, 0.2);
+          color: var(--text-color);
+          font-size: var(--font-size-base);
+          text-align: center;
         }
+
+        :global(.std-calendar-wrap) {
+          left: 50% !important;
+          transform: translateX(-50%);
+          border-radius: 5px;
+          overflow: hidden;
+        }
+
+        :global(.is-selected) {
+          pointer-events: none;
+        }
+
+        :global(.std-calendar-wrap::before) {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: rgba(255, 255, 255, 0.05);
+        }
+      }
     }
 
-    footer {
-        float: right;
-        height: calc(var(--font-size-sm) * 2);
-        width: calc(var(--font-size-sm) * 2);
-        margin-top: calc(var(--font-size-sm) * -2);
-        display: flex;
-        background: rgba(0, 0, 0, 0.5);
-        align-items: center;
-        flex-direction: row;
-        justify-content: flex-start;
+    @media only screen and (min-width: 1501px) {
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 1fr);
 
-        &.padding {
-            padding-right: 16px;
+      .control {
+        &#c1 {
+          grid-area: 1 / 1 / 2 / 5;
         }
 
-        button {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: none;
-            background: transparent;
-            font-size: var(--font-size-sm);
-            color: white;
-
-            span {
-                font-size: inherit;
-            }
+        &#c2 {
+          grid-area: 2 / 1 / 3 / 2;
         }
+
+        &#c3 {
+          grid-area: 2 / 2 / 3 / 3;
+        }
+
+        &#c4 {
+          grid-area: 2 / 3 / 3 / 4;
+        }
+
+        &#c5 {
+          grid-area: 2 / 4 / 3 / 5;
+        }
+      }
     }
+  }
 
-    :global(.responsive-heading) {
-        font-size: var(--font-size-xl);
-        margin-bottom: 15px;
-        line-height: 1.2;
-        font-weight: 700;
+  main {
+    padding-top: 25px;
+    margin: 64px auto;
+    @media only screen and (max-width: 601px) {
+      margin: 56px auto;
     }
+    margin-bottom: 0px !important;
 
-    :global(.responsive-text) {
-        font-size: var(--font-size-base);
-        line-height: 1.6;
-        font-weight: 400;
+    max-width: 1280px;
+    width: 90%;
+    @media only screen and (min-width: 601px) {
+      width: 85%;
     }
-
-    .controls-wrapper {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: repeat(3, 1fr);
-        grid-column-gap: 10px;
-        grid-row-gap: 15px;
-        margin-bottom: 40px;
-
-        .control {
-            & > :global(*) {
-                width: 100%;
-                height: 100%;
-            }
-
-            &#c1 {grid-area: 1 / 1 / 2 / 3;}
-            &#c2 {grid-area: 2 / 1 / 3 / 2;}
-            &#c3 {grid-area: 2 / 2 / 3 / 3;}
-            &#c4 {grid-area: 3 / 1 / 4 / 2;}
-            &#c5 {grid-area: 3 / 2 / 4 / 3;}
-
-            &#c1 {
-                position: relative;
-                --sdt-bg-main: var(--background);
-                --sdt-shadow-color: var(--background);
-                --sdt-wrap-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
-                --sdt-radius: 5px;
-                --sdt-color: var(--text-color);
-                --sdt-color-selected: var(--text-color);
-                --sdt-header-color: var(--text-color);
-                --sdt-primary: var(--accent-color);
-                --sdt-disabled-date: var(--cancelled-color);
-                --sdt-disabled-date-bg: var(--sdt-bg-main);
-                --sdt-btn-bg-hover: rgba(255, 255, 255, 0.2);
-                --sdt-btn-header-bg-hover: var(--sdt-btn-bg-hover);
-                --sdt-color-selected: var(--text-color);
-                --sdt-today-indicator: var(--sdt-bg-main);
-
-                :global(.datepicker-input) {
-                    width: 100%;
-                    height: 100%;
-                    border: none;
-                    border-radius: 5px;
-                    background-color: rgba(255, 255, 255, 0.2);
-                    color: var(--text-color);
-                    font-size: var(--font-size-base);
-                    text-align: center;
-                }
-
-                :global(.std-calendar-wrap) {
-                    left: 50% !important;
-                    transform: translateX(-50%);
-                    border-radius: 5px;
-                    overflow: hidden;
-                }
-
-                :global(.is-selected) {
-                    pointer-events: none;
-                }
-
-                :global(.std-calendar-wrap::before) {
-                    content: "";
-                    position: absolute;
-                    inset: 0;
-                    background: rgba(255, 255, 255, 0.05);
-                }
-            }
-        }
-
-        @media only screen and (min-width: 1501px) {
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-
-            .control {
-                &#c1 {grid-area: 1 / 1 / 2 / 5;}
-                &#c2 {grid-area: 2 / 1 / 3 / 2;}
-                &#c3 {grid-area: 2 / 2 / 3 / 3;}
-                &#c4 {grid-area: 2 / 3 / 3 / 4;}
-                &#c5 {grid-area: 2 / 4 / 3 / 5;}
-            }
-        }
+    @media only screen and (min-width: 993px) {
+      width: 70%;
     }
-
-    main {
-        padding-top: 25px;
-        margin: 64px auto;
-        @media only screen and (max-width: 601px) {
-            margin: 56px auto;
-        }
-        margin-bottom: 0px !important;
-
-        max-width: 1280px;
-        width: 90%;
-        @media only screen and (min-width: 601px) {
-            width: 85%;
-        }
-        @media only screen and (min-width: 993px) {
-            width: 70%;
-        }
-        @media only screen and (max-width: 500px) {
-            width: 95%;
-        }
+    @media only screen and (max-width: 500px) {
+      width: 95%;
     }
-    :global {
-        ul, ol {
-            padding-left: 22px !important;
-            // padding-left: 40px !important;
-            // @media only screen and (max-width: 1501px) {
-            //     padding-left: 22px !important;
-            // }
-            list-style-type: disc !important;
-        }
+  }
+
+  :global {
+    ul, ol {
+      padding-left: 22px !important;
+      // padding-left: 40px !important;
+      // @media only screen and (max-width: 1501px) {
+      //     padding-left: 22px !important;
+      // }
+      list-style-type: disc !important;
     }
+  }
 </style>

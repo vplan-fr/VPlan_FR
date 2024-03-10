@@ -1,9 +1,26 @@
 <script>
     import {onMount} from "svelte";
-    import {title} from "../stores.js";
+    import {navigate_page} from "../utils.js";
+    import {current_page, logged_in, title} from "../stores.js";
 
     onMount(() => {
         title.set("Seite nicht gefunden");
+        const protected_routes = [
+            "plan",
+            "weekplan",
+            "school_manager",
+            "favorite",
+            "favorites",
+            "pwa_install",
+            "stats"
+        ];
+        let tmp_location = $current_page.split("|")[0];
+        if((tmp_location === "login") || (tmp_location === "register")) {
+            navigate_page("plan");
+        }
+        else if(protected_routes.includes(tmp_location)) {
+            navigate_page("login");
+        }
     });
 </script>
 
