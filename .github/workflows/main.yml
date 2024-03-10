@@ -33,4 +33,4 @@ jobs:
 
           cd ..
           
-          fish deploy_plan_loader.fish 2> /dev/null
+          fish deploy_plan_loader.fish
