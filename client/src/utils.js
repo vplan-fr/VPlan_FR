@@ -1,4 +1,4 @@
-import {current_page, indexed_db, register_button_visible, settings} from "./stores.js";
+import {current_page, indexed_db, logged_in, register_button_visible, settings} from "./stores.js";
 import {notifications} from "./notifications.js";
 import { get } from "svelte/store";
 import { favorites } from "./stores.js";
