@@ -90,6 +90,7 @@ def plan(school_num: str) -> Response:
             "plans": json.loads(cache.get_plan_file(date, revision, "plans.json")),
             "exams": json.loads(cache.get_plan_file(date, revision, "exams.json")),
             "grouped_form_plans": json.loads(cache.get_plan_file(date, revision, "grouped_form_plans.json")),
+            "last_fetch": json.loads(cache.get_meta_file("last_fetch.json"))["timestamp"]
         }
     except FileNotFoundError:
         return send_error("Invalid date or revision.")

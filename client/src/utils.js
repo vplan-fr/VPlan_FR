@@ -356,7 +356,7 @@ export function format_date(date) {
     const monthIndex = date.getMonth();
     const year = date.getFullYear();
 
-    return `${weekday}., ${day}. ${months[monthIndex]} ${year}`;
+    return `${weekday}, ${day}. ${months[monthIndex]} ${year}`;
 
 }
 

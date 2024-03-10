@@ -312,7 +312,7 @@ class PlanProcessor:
     def update_rooms(self):
         self._logger.info("* Updating rooms...")
 
-        parsed_rooms: dict[str, dict] = {room: None for room in self.meta_extractor.rooms()}
+        parsed_rooms: dict[str, dict | None] = {room: None for room in self.meta_extractor.rooms()}
         try:
             room_parser = schools.room_parsers[str(self.school_number)]
         except KeyError:
