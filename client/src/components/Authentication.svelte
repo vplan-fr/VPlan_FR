@@ -74,6 +74,13 @@
 
     $: title.set(register_visible ? "Registrieren" : "Login");
 </script>
+<svelte:head>
+    <style>
+        #page-container {
+            overflow-x: unset !important;
+        }
+    </style>
+</svelte:head>
 <main transition:fade>
     {#if !register_visible}
     <form on:submit|preventDefault={login} transition:fly|local={{x:-500}}>
@@ -121,166 +128,166 @@
     {/if}
 </main>
 <style lang="scss">
-    .extra-info {
-        font-size: var(--font-size-base);
-        margin: 10px 0px;
+  .extra-info {
+    font-size: var(--font-size-base);
+    margin: 10px 0px;
+  }
+
+  .no-account-info {
+    font-size: var(--font-size-base);
+  }
+
+  label {
+    margin-bottom: 8px;
+    font-size: var(--font-size-base);
+  }
+
+  main::before {
+    content: "";
+    top: 0;
+    left: 0;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-image: url('/public/base_static/images/blurry_gradient_bg.svg');
+    background-color: #906df5;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position-x: 50%;
+    filter: brightness(1);
+    z-index: -1;
+  }
+
+  #forgot_password {
+    margin-left: auto;
+  }
+
+  form {
+    position: absolute;
+    top: 50%;
+    left: calc(50% + (100vw - 100%) / 2);
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    min-width: min(400px, 75vw);
+
+    &::before {
+      content: "";
+      background-image: url('/public/base_static/images/logo.svg');
+      background-size: contain;
+      width: 90px;
+      aspect-ratio: 1;
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
+  }
 
-    .no-account-info {
-        font-size: var(--font-size-base);
-    }
-
-    label {
-        margin-bottom: 8px;
-        font-size: var(--font-size-base);
-    }
-
-    main::before {
-        content: "";
-        top: 0;
-        left: 0;
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        background-image: url('/public/base_static/images/blurry_gradient_bg.svg');
-        background-color: #906df5;
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position-x: 50%;
-        filter: brightness(1);
-        z-index: -1;
-    }
-
-    #forgot_password {
-        margin-left: auto;
-    }
-
-    form {
-        position: absolute;
-        top: 50%;
-        left: calc(50% + (100vw - 100%) / 2);
-        transform: translate(-50%, -50%);
-        display: flex;
-        flex-direction: column;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 5px;
-        padding: 30px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        min-width: min(400px, 75vw);
-
-        &::before {
-            content: "";
-            background-image: url('/public/base_static/images/logo.svg');
-            background-size: contain;
-            width: 90px;
-            aspect-ratio: 1;
-            position: absolute;
-            top: -50px;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-    }
-
-    .input_icon {
-        position: relative;
-        
-        .textfield {
-            padding-left: 40px;
-        }
-        
-        img {
-            position: absolute;
-            top: 14px;
-            left: 12px;
-            width: 20px;
-            height: 20px;
-            background-size: contain;
-            z-index: 1;
-        }
-    }
-
-    .password_field {
-        .textfield {
-            padding-right: 40px;
-        }
-
-        button {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 40px;
-            height: 48px;
-            z-index: 1;
-            border: none;
-            background: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            padding-left: 5.5px;
-
-            .material-symbols-outlined {
-                color: black !important;
-                font-size: 25px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-        }
-    }
+  .input_icon {
+    position: relative;
 
     .textfield {
-        width: 100%;
-        padding: 12px 20px;
-        margin-bottom: 8px;
-        box-sizing: border-box;
-        border: 2px solid white;
-        border-radius: 5px;
-        font-size: var(--font-size-sm);
+      padding-left: 40px;
     }
 
-    .default-button {
-        width: 100%;
-        text-align: center;
-        padding: 12px 20px;
-        margin-bottom: 8px;
-        margin-top: 8px;
-        border: 0;
-        border-radius: 99vw;
-        background: white;
-        color: black;
-        font-size: var(--font-size-base);
-        font-weight: 500;
-        transition: all .2s ease;
+    img {
+      position: absolute;
+      top: 14px;
+      left: 12px;
+      width: 20px;
+      height: 20px;
+      background-size: contain;
+      z-index: 1;
+    }
+  }
 
-        &:disabled {
-            color: #595959;
-            background: #b9b9b9;
-        }
+  .password_field {
+    .textfield {
+      padding-right: 40px;
     }
 
-    .link-button {
-        display: inline-block;
-        text-align: left;
-        padding: 0;
-        margin: 0;
-        color: #0f0fff;
-        background: transparent;
-        border: 0;
-        font-size: var(--font-size-base);
-    }
+    button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40px;
+      height: 48px;
+      z-index: 1;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding-left: 5.5px;
 
-    #back_button {
-        position: absolute;
-        top: 5px;
-        left: 5px;
-        padding: 0;
-        border: 0;
-        background: none;
-        color: white;
-        font-size: var(--font-size-md);
+      .material-symbols-outlined {
+        color: black !important;
+        font-size: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
     }
+  }
 
-    span, h1, label {
-        color: white !important;
+  .textfield {
+    width: 100%;
+    padding: 12px 20px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+    border: 2px solid white;
+    border-radius: 5px;
+    font-size: var(--font-size-sm);
+  }
+
+  .default-button {
+    width: 100%;
+    text-align: center;
+    padding: 12px 20px;
+    margin-bottom: 8px;
+    margin-top: 8px;
+    border: 0;
+    border-radius: 99vw;
+    background: white;
+    color: black;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    transition: all .2s ease;
+
+    &:disabled {
+      color: #595959;
+      background: #b9b9b9;
     }
+  }
+
+  .link-button {
+    display: inline-block;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    color: #0f0fff;
+    background: transparent;
+    border: 0;
+    font-size: var(--font-size-base);
+  }
+
+  #back_button {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: white;
+    font-size: var(--font-size-md);
+  }
+
+  span, h1, label {
+    color: white !important;
+  }
 </style>

@@ -28,6 +28,7 @@
     $: compareSliderValue = (Math.max(Math.min(realSliderValue, 100), 0)).toString();
     let lastKnownScrollPosition = 0;
     let rotating_text;
+    let wrapper;
 
     setTimeout(updateCurrentMottoIndex, 5000);
     function updateCurrentMottoIndex() {
@@ -50,10 +51,12 @@
 
     function update3DRotation(event) {
         if(!$register_button_visible || window.screen.width < 900) return;
-        const middleX = startSection.offsetLeft + startSection.offsetWidth / 2;
-        const middleY = startSection.offsetTop + startSection.offsetHeight / 2;
+        const middleX = wrapper.offsetLeft + startSection.offsetLeft + startSection.offsetWidth / 2;
+        const middleY = wrapper.offsetTop + startSection.offsetTop + startSection.offsetHeight / 2;
         const offsetX = ((event.clientX + document.documentElement.scrollLeft - middleX) / middleX) * 45;
-        const offsetY = (((event.clientY + document.documentElement.scrollTop - 30) - middleY) / middleY) * 45;
+        const offsetY = ((event.clientY + document.documentElement.scrollTop - middleY) / middleY) * 45;
+        console.log(middleX, middleY);
+        console.log(event.clientX, event.clientY, offsetX, offsetY);
 
         startSection.animate({
             transform: `perspective(5000px) rotateY(${Math.max(Math.min(offsetX, 35), -35)}deg) rotateX(${Math.max(Math.min(offsetY, 35), -35) * -1}deg)`
@@ -94,7 +97,7 @@
 <svelte:body on:mousemove={update3DRotation}></svelte:body>
 <svelte:window on:scroll={() => {update3DRotationScroll(); addToSlider()}}></svelte:window>
 
-<div style="display: flex; flex-direction: column; gap: 2rem; position: relative;">
+<div style="display: flex; flex-direction: column; gap: 2rem; position: relative;" bind:this={wrapper}>
     <div class="bubble-container">
         <div class="bubble one"></div>
         <div class="bubble two"></div>
@@ -170,12 +173,22 @@
     <section>
         <h2 class="responsive-heading"><span class="fancy-text" data-text="Quality">Quality</span> of Life</h2>
         <!-- Solo leveling fenster gelb lila magenta + so dreck auf den fenstern vibe -->
+        <div class="design-showcase">
+            <div>
+                <h2 class="responsive-heading">Clean</h2>
+                <h2 class="responsive-heading">Customizable</h2>
+                <h2 class="responsive-heading">Design</h2>
+            </div>
+        </div>
+        <div class="favorite-showcase">
+            <h2 class="responsive-heading">Beliebig viele Favoriten</h2>
+            <img alt="Favorite Showcase" src="/public/base_static/images/landing_page/favorite_showcase.png">
+        </div>
+        <br><br>
         <ul class="responsive-text">
-            <li>Cleanes Customizable Design</li>
-            <li>Beliebig viele Favoriten</li>
             <li>Alle Vorkommen von Klassen, Räumen, Lehrern etc. führen bei klicken zu ihrem jeweiligen Plan</li>
             <li>Überblick über alte Pläne</li>
-            <li>GAMES :DDD</li>
+            <li><a href="https://games.vplan.fr/">GAMES :DDD</a></li>
         </ul>
     </section>
     <section>
@@ -192,6 +205,94 @@
 </div>
 
 <style lang="scss">
+  .favorite-showcase {
+    padding: 2rem;
+    border-radius: 4rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    position: relative;
+    z-index: 0;
+    background: radial-gradient(circle at left 0%, var(--background) 20%, transparent 50%);
+
+    &::before {
+      z-index: -1;
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url('/public/base_static/images/landing_page/favorite_burst.png');
+      background-size: contain;
+      background-position: 0 50%;
+      background-repeat: no-repeat;
+    }
+
+    @media only screen and (max-width: 900px) {
+      flex-direction: column;
+      justify-content: center;
+
+      &::before {
+        background-position: 50% 0;
+      }
+      padding: 0.5rem;
+      border-radius: 2rem;
+    }
+
+    img {
+      max-height: 23rem;
+      border-radius: 1rem;
+      box-shadow: 5px 5px 15px rgb(10, 10, 10);
+    }
+  }
+
+  .design-showcase {
+    position: relative;
+    padding-top: 10rem;
+    padding-bottom: 10rem;
+    @media only screen and (max-width: 900px) {
+      padding-top: 5rem;
+      padding-bottom: 5rem;
+    }
+    background: radial-gradient(circle, var(--background) 20%, transparent 50%);
+    z-index: 0;
+
+    &::before {
+      z-index: -1;
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url('/public/base_static/images/landing_page/chaos_bg.png');
+      background-size: contain;
+      background-position: 50% 50%;
+      background-repeat: no-repeat;
+      animation: rotate 200s linear infinite;
+    }
+
+    & > div {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+
+      & > h2 {
+        text-align: center;
+        font-size: var(--font-size-xxl)
+      }
+    }
+
+    img {
+      position: absolute;
+      inset: 0;
+    }
+  }
+  @keyframes rotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
   .rotating-text {
     position: absolute;
     inset: 0;
