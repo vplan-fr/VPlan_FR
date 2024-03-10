@@ -97,6 +97,20 @@ def plan(school_num: str) -> Response:
     return send_success(data)
 
 
+@api.route(f"{API_BASE_URL}/last_fetch", methods=["GET"], endpoint="last_fetch_api")
+@login_required
+@school_authorized
+def last_fetched(school_num: str) -> Response:
+    if school_num not in VALID_SCHOOLS:
+        return send_error("Schulnummer unbekannt")
+
+    cache = shared.cache.Cache(Path(".cache") / school_num)
+
+    return send_success(json.loads(
+        cache.get_meta_file("last_fetch.json")
+    ))
+
+
 @api.route(f"{API_BASE_URL}/authorize", methods=["POST"])
 @login_required
 def authorize(school_num: str) -> Response:
