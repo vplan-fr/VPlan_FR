@@ -391,12 +391,16 @@ export function format_timestamp(timestamp) {
         timeZone: targetTimezone,
         weekday: 'long',
         month: 'long',
+        year: 'numeric',
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
     };
     const formatter = new Intl.DateTimeFormat('de-DE', options);
-    const formattedDate = formatter.format(date).replace("um", "-") + " Uhr";
+    let formattedDate = formatter.format(date).replace("um", "-") + " Uhr";
+    if((new Date()).toDateString() == date.toDateString()) {
+        formattedDate = `Heute -${formattedDate.split("-")[1]}`;
+    }
 
     return `${formattedDate}`;
 }

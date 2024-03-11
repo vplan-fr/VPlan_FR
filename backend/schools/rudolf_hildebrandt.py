@@ -10,7 +10,7 @@ def parse_room(room: str) -> Room:
 
     """
 
-    if room == "Au":
+    if room in ("Au", "Bibo"):
         return Room(room, None, None)
 
     house, number = room[0], room[1:].rjust(3, "0")

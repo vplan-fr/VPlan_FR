@@ -420,7 +420,7 @@
                             disableDatesFn={getDateDisabled}
                             i18n={de}
                             clearBtn={false}
-                            todayBtn={false}
+                            todayBtn={true}
                             inputClasses="datepicker-input"
                             bind:value={date}
                         />
@@ -734,6 +734,16 @@
           position: absolute;
           inset: 0;
           background: rgba(255, 255, 255, 0.05);
+          pointer-events: none;
+        }
+
+        :global(.sdt-today-btn) {
+          color: var(--text-color);
+          border: none;
+
+        }
+        :global(.sdt-today-btn:hover) {
+          background: var(--accent-color);
         }
       }
     }

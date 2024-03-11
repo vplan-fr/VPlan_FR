@@ -303,3 +303,50 @@ def find_closest_date(dates) -> datetime.date | None:
         return max(past_dates)
     else:
         return None
+
+
+def week_to_letter(week: int | None):
+    if week is None:
+        return None
+    if week < 1 or week > 26:
+        return "?"
+    else:
+        return chr(65 + week - 1)
+
+
+def get_future_week(holidays: list[datetime.date], weeks: int, ref_date: datetime.date, ref_week: int | None,
+                    date: datetime.date) -> int | None:
+    # weeks start at 1!!!
+
+    if ref_week is None:
+        return None
+
+    ref_week -= 1
+
+    assert date > ref_date
+
+    curr_week_i = ref_week
+    any_days_in_last_week = False
+    last_week_monday = ref_date - datetime.timedelta(days=ref_date.weekday())
+
+    curr_date = ref_date.replace()
+
+    while curr_date <= date:
+        new_week_monday = curr_date - datetime.timedelta(days=curr_date.weekday())
+
+        if new_week_monday != last_week_monday:
+            if any_days_in_last_week:
+                curr_week_i += 1
+                curr_week_i %= weeks
+
+            last_week_monday = new_week_monday
+            any_days_in_last_week = False
+
+        if (curr_date.weekday() in (5, 6)) or (curr_date in holidays):
+            pass
+        else:
+            any_days_in_last_week = True
+
+        curr_date += datetime.timedelta(days=1)
+
+    return curr_week_i + 1

@@ -12,7 +12,7 @@ from shared import creds_provider
 def main():
     plt.style.use('Solarize_Light2')
 
-    SINCE = datetime.datetime.combine(datetime.date.today(), datetime.time.min)
+    SINCE = datetime.datetime.combine(datetime.date.today() - datetime.timedelta(days=7), datetime.time.min)
 
     creds = creds_provider.creds_provider_factory(None).get_creds(ignore_disabled=True)
 

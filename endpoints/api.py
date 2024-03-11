@@ -12,7 +12,7 @@ from endpoints.authorization import school_authorized
 import endpoints.webpush
 
 import shared.cache
-from backend.vplan_utils import find_closest_date
+from backend import vplan_utils
 from utils import send_success, send_error, get_all_schools, get_school_by_id, webhook_send, BetterEmbed, VALID_SCHOOLS
 from school_test import SchoolCandidate
 
@@ -45,7 +45,7 @@ def meta(school_num) -> Response:
     dates_data: dict = json.loads(cache.get_meta_file("dates.json"))
 
     dates = sorted([datetime.datetime.strptime(elem, "%Y-%m-%d").date() for elem in list(dates_data.keys())])
-    date = find_closest_date(dates)
+    date = vplan_utils.find_closest_date(dates)
 
     return send_success({
         "school_num": school_num,
@@ -90,10 +90,48 @@ def plan(school_num: str) -> Response:
             "plans": json.loads(cache.get_plan_file(date, revision, "plans.json")),
             "exams": json.loads(cache.get_plan_file(date, revision, "exams.json")),
             "grouped_form_plans": json.loads(cache.get_plan_file(date, revision, "grouped_form_plans.json")),
-            "last_fetch": json.loads(cache.get_meta_file("last_fetch.json"))["timestamp"]
+            "is_default_plan": False
         }
     except FileNotFoundError:
-        return send_error("Invalid date or revision.")
+        # use default plan
+
+        if revision != ".newest":
+            return send_error("Only valid timestamp for predicted default plans is '.newest'.")
+
+        holidays = list(map(datetime.date.fromisoformat, json.loads(cache.get_meta_file("meta.json"))["free_days"]))
+        default_plan_data = json.loads(cache.get_meta_file("default_plan.json"))
+
+        newest_date = cache.get_days()[-1]
+        newest_date_week = json.loads(cache.get_plan_file(newest_date, ".newest", "_default_plan.json"))["week"]
+
+        week = vplan_utils.get_future_week(
+            holidays=holidays,
+            weeks=len(default_plan_data),
+            ref_date=newest_date,
+            ref_week=newest_date_week,
+            date=date
+        )
+        try:
+            plans = default_plan_data[str(week) if week is not None else "null"][str(date.weekday())]
+        except KeyError:
+            # raise
+            return send_error("No default plan available for this date.")
+
+        data = {
+            "info": {
+                "additional_info": [],
+                "processed_additional_info": [],
+                "timestamp": None,
+                "week": vplan_utils.week_to_letter(week)
+            },
+            "rooms": None,
+            "plans": plans,
+            "exams": {},
+            "grouped_form_plans": plans,
+            "is_default_plan": True
+        }
+
+    data["last_fetch"] = json.loads(cache.get_meta_file("last_fetch.json"))["timestamp"]
 
     return send_success(data)
 

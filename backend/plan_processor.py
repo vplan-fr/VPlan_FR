@@ -350,6 +350,11 @@ class PlanProcessor:
                 continue
             break
 
+        self.cache.store_meta_file(
+            json.dumps(d_plan.export(), default=PlanLesson.serialize),
+            "default_plan.json"
+        )
+
     def do_full_update(self):
         self.update_all_plans()
         self.update_after_plan_processing()
