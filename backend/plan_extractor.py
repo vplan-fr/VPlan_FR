@@ -81,7 +81,7 @@ class PlanExtractor:
                     self.plan.indiware_plan.date
                 )
             ],
-            "timestamp": self.plan.indiware_plan.timestamp.isoformat(),
+            "timestamp": self.plan.indiware_plan.timestamp.isoformat() if self.plan.indiware_plan.timestamp else None,
             "week": week_to_letter(self.plan.indiware_plan.week),
             "week_number": self.plan.indiware_plan.week,
         }
