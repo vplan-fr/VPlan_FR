@@ -23,6 +23,7 @@
     export let all_rooms;
     export let selected_revision;
     export let enabled_dates;
+    export let free_days;
     export let available_plan_version;
     let used_rooms_hidden = true;
 
@@ -32,6 +33,7 @@
     let info;
     let exams;
     let last_fetch;
+    let is_default_plan = false;
     let loading = false;
     let loading_failed = false;
     let cache_loading_failed = false;
@@ -76,6 +78,7 @@
         plan_data = data;
         info = data.info;
         last_fetch = data.last_fetch;
+        is_default_plan = data.is_default_plan;
         exams = data.exams;
         week_letter = info.week;
     }
@@ -115,7 +118,7 @@
         if (typeof tmp_date === 'undefined') {
             // Removed due to being more annoying than it bringing value to the UX
             // notifications.danger("Für dieses Datum existiert kein Vertretungsplan!");
-            return;
+            //return;
         }
         date = tmp_date;
     }
@@ -170,7 +173,8 @@
         school_num, 
         date, 
         selected_revision, 
-        enabled_dates, 
+        enabled_dates,
+        free_days,
         handle_last_updated, handle_loading_state, handle_plan_data, renew_abort_controller
     );
     // Load the new lessons on change to selected plan
@@ -209,7 +213,7 @@
             {/if}
             <h1 class="plan-heading">
                 <!--Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{#if teacher_image_path !== null}<img class="teacher-img" src="{teacher_image_path}" alt="Lehrer Portrait">{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>-->
-                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+                Plan{#if is_default_plan}vorhersage{/if} für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">{#if info.week}({info.week}-Woche){/if}</span>
             </h1>
         {/if}
         {#if loading}

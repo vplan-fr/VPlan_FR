@@ -14,6 +14,7 @@
     import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache, get_favorites} from "./utils.js";
     import {notifications} from './notifications.js';
     import {logged_in, title, current_page, settings, active_modal, pwa_prompt, indexed_db, selected_favorite, favorites} from './stores.js'
+    import {getDateDisabled} from './plan.js';
     import SchoolManager from "./components/SchoolManager.svelte";
     import Changelog from "./components/Changelog.svelte";
     import Select from "./base_components/Select.svelte";
@@ -42,6 +43,7 @@
     let selected_revision;
     let meta;
     let enabled_dates;
+    let free_days;
     let grouped_rooms;
     let course_lists;
     let selected_teacher;
@@ -75,6 +77,7 @@
         selected_revision = ".newest";
         meta = {};
         enabled_dates = [];
+        free_days = [];
         grouped_rooms = [];
         course_lists = {};
         selected_teacher = null;
@@ -100,6 +103,7 @@
                 teacher_dict = meta.teachers;
                 grouped_forms = meta.forms.grouped_forms;
                 enabled_dates = Object.keys(meta.dates);
+                free_days = meta.meta.free_days;
                 if(!date) {
                     date = meta.date;
                 }
@@ -244,8 +248,11 @@
         }
     }
 
-    function getDateDisabled(date) {
-        return !enabled_dates.includes(`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`);
+    function customGetDateDisabled(date) {
+        if(typeof date === "object") {
+            date = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+        }
+        return getDateDisabled(enabled_dates, free_days, date);
     }
 
     function logout() {
@@ -327,6 +334,15 @@
     $: school_num && (api_base = `/api/v69.420/${school_num}`);
     $: school_num && get_meta(school_num);
     $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
+    // If no date selected, default to today
+    $: !date && (() => {
+        let tmp_date = new Date();
+        date = `${tmp_date.getFullYear()}-${pad(tmp_date.getMonth()+1)}-${pad(tmp_date.getDate())}`
+    })();
+    // If the selected date is disabled, and meta date is not disabled, set to meta date
+    $: date && customGetDateDisabled(date) && (date !== meta.date) && (() => {
+        date = meta.date;
+    })();
     //$: school_num && get_preferences();
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
     $: $logged_in && (get_settings(), get_favorites(navigate_favorite));
@@ -417,7 +433,7 @@
                         <SveltyPicker
                             format="yyyy-mm-dd"
                             displayFormat="dd.mm.yyyy"
-                            disableDatesFn={getDateDisabled}
+                            disableDatesFn={customGetDateDisabled}
                             i18n={de}
                             clearBtn={false}
                             todayBtn={true}
@@ -455,7 +471,7 @@
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
-                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:selected_revision bind:enabled_dates bind:available_plan_version external_times={$settings.external_times} />
+                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:selected_revision bind:enabled_dates bind:free_days bind:available_plan_version external_times={$settings.external_times} />
                 {:else}
                     <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
                 {/if}

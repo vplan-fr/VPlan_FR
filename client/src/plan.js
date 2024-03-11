@@ -39,12 +39,22 @@ export function get_teacher_data(teacher_meta, teacher, school_num) {
     return [full_teacher_name, teacher_contact_link, teacher_image_path];
 }
 
+function isWeekend(date) {
+    let day = date.getDay();
+    return day === 0 || day === 6;
+}
+
+export function getDateDisabled(enabled_dates, free_days, date) {
+    return !(enabled_dates.includes(date) || (date > enabled_dates[0]) && !free_days.includes(date) && !isWeekend(new Date(date)));
+}
+
 export function load_plan(
     api_base,
     school_num,
     date, 
     revision=".newest", 
-    enabled_dates, 
+    enabled_dates,
+    free_days,
     last_updated_handler, 
     loading_state_updater, 
     plan_data_handler, 
@@ -53,7 +63,7 @@ export function load_plan(
     if (enabled_dates === null || enabled_dates === undefined) {
         return;
     }
-    if (date === null || date === undefined || !enabled_dates.includes(date)) {
+    if (date === null || date === undefined || getDateDisabled(enabled_dates, free_days, date)) {
         return;
     }
 
