@@ -211,13 +211,9 @@
     </section>
     <section class="final-cta">
         <h2 class="responsive-heading">Steige jetzt auf das neue Modell um</h2>
-        <div use:viewport
-             on:enterViewport={() => $register_button_visible = true}
-             on:exitViewport={() => $register_button_visible = false}>
-            <Button background='var(--accent-color)' on:click={() => navigate_page('login')}>
-                Anmelden
-            </Button>
-        </div>
+        <Button background='var(--accent-color)' on:click={() => navigate_page('login')}>
+            Anmelden
+        </Button>
     </section>
 </div>
 
