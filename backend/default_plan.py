@@ -6,7 +6,7 @@ import datetime
 import logging
 import typing
 
-from . import models
+from . import models, lesson_info
 
 
 @dataclasses.dataclass
@@ -70,7 +70,10 @@ class DefaultPlanInfo:
             info_lessons_by_class_number = info_lessons.group_by_key(lambda l: (l.class_opt.number,))
             other_info_lessons_by_class_number = other_info_lessons.group_by_key(lambda l: (l.class_opt.number,))
 
-            all_class_numbers = set(info_lessons_by_class_number.keys()) | set(other_info_lessons_by_class_number.keys())
+            all_class_numbers = (
+                set(info_lessons_by_class_number.keys())
+                | set(other_info_lessons_by_class_number.keys())
+            )
 
             for class_number in all_class_numbers:
                 info_lessons = info_lessons_by_class_number.get(class_number, models.Lessons())
@@ -90,17 +93,22 @@ class DefaultPlanInfo:
                 courses = {l.course for l in info_lessons + other_info_lessons if l.course is not None}
 
                 _any_lesson = next(iter(info_lessons + other_info_lessons))
-                if len(other_teachers & teachers) > 0 and (len(rooms & other_rooms) > 0 or not rooms or not other_rooms) and len(courses) == 1:
+                if (
+                    len(other_teachers & teachers) > 0
+                    and (len(rooms & other_rooms) > 0 or not rooms or not other_rooms)
+                    and len(courses) == 1
+                ):
                     all_lessons.append(models.Lesson(
                         periods=_any_lesson.periods,
                         begin=_any_lesson.begin,
                         end=_any_lesson.end,
                         forms=_any_lesson.forms,
                         course=next(iter(courses)),
-                        parsed_info=None,
+                        parsed_info=lesson_info.ParsedLessonInfo([]),
                         class_=models.ClassData(None, None, None, class_number),
                         teachers=teachers | other_teachers,
                         rooms=rooms | other_rooms,
+                        takes_place=False
                     ))
                 else:
                     return None
@@ -150,3 +158,28 @@ class DefaultPlan:
         week.default_plan_info_by_weekday[date.weekday()] = merged_info
 
         return True
+
+    @staticmethod
+    def make_plan(lessons: models.Lessons, plan_type: typing.Literal["forms", "teachers", "rooms"]) -> dict:
+        """
+        Run Lessons.make_plan but first insert a non-scheduled lesson (taking_place=True) for every lesson in lessons.
+        """
+
+        lessons.lessons += [dataclasses.replace(lesson, takes_place=True) for lesson in lessons]
+
+        # asserted in group_blocks_and_lesson_info
+        lessons.lessons = [dataclasses.replace(l, _origin_plan_type="forms") for l in lessons.lessons]
+
+        return lessons.group_blocks_and_lesson_info("forms").make_plan(plan_type, plan_type=plan_type)
+
+    def export(self):
+        return {
+            week_number: {
+                week_day: {
+                    plan_type: self.make_plan(models.Lessons(default_plan_info.unchanged_lessons), plan_type)
+                    for plan_type in ("forms", "teachers", "rooms")
+                }
+                for week_day, default_plan_info in week.default_plan_info_by_weekday.items()
+            }
+            for week_number, week in self.week_by_week_number.items()
+        }

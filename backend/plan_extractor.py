@@ -12,7 +12,7 @@ from . import lesson_info, default_plan
 from .lesson_info import process_additional_info
 from .teacher import Teacher, Teachers
 from .models import Lesson, Lessons, Plan
-from .vplan_utils import parse_absent_element, ParsedForm
+from .vplan_utils import parse_absent_element, ParsedForm, week_to_letter
 
 
 class PlanExtractor:
@@ -82,7 +82,8 @@ class PlanExtractor:
                 )
             ],
             "timestamp": self.plan.indiware_plan.timestamp.isoformat(),
-            "week": self.plan.week_letter()
+            "week": week_to_letter(self.plan.indiware_plan.week),
+            "week_number": self.plan.indiware_plan.week,
         }
 
 

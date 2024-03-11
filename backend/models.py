@@ -322,6 +322,9 @@ class PlanLesson:
         return plan_lesson
 
 
+lesson_sort_key = lambda l: (min(l.periods), -len(l.periods))
+
+
 @dataclasses.dataclass
 class Lessons:
     lessons: list[Lesson] = dataclasses.field(default_factory=list)
@@ -468,7 +471,7 @@ class Lessons:
         grouped_lessons = self.group_by(*group_attrs)
 
         return {
-            group: sorted(lessons.to_plan_lessons(plan_type, {group}), key=lambda l: (min(l.periods), -len(l.periods)))
+            group: sorted(lessons.to_plan_lessons(plan_type, {group}), key=lesson_sort_key)
             for group, lessons in grouped_lessons.items()
         }
 
@@ -989,12 +992,6 @@ class Plan:
             indiware_plan=room_plan,
             exams={}
         )
-
-    def week_letter(self):
-        return {
-            1: "A",
-            2: "B"
-        }.get(self.indiware_plan.week, "?")
 
     def get_all_classes(self) -> dict[str, Class]:
         out: dict[str, Class] = {}
