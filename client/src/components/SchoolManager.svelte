@@ -174,6 +174,14 @@
     }
 </script>
 
+<svelte:head>
+    <style>
+        #page-container {
+            overflow-x: unset !important;
+        }
+    </style>
+</svelte:head>
+
 <main>
     {#if !school_auth_visible && !school_add_visible}
     <form transition:fly|local={{x: -600}} on:submit|preventDefault={() => {
