@@ -60,7 +60,8 @@
     const available_plan_version_map = {
         "cached": "Offline Plan",
         "network_cached": "Aktueller Plan",
-        "network_uncached": "Online only Plan"
+        "network_uncached": "Online only Plan",
+        "default_plan": "Vorhersage"
     };
     let load_favorite = false;
 
@@ -442,7 +443,11 @@
                         />
                         {#if available_plan_version}
                             <div class="plan-status" transition:fade|local={{duration: 200}}>
-                                <span class="material-symbols-outlined" data-plan-type={available_plan_version}>check_circle</span>
+                                {#if available_plan_version === "default_plan"}
+                                    <span class="material-symbols-outlined" style="color: #dbae00">warning</span>
+                                {:else}
+                                    <span class="material-symbols-outlined" data-plan-type={available_plan_version}>check_circle</span>
+                                {/if}
                                 <span class="status-label">{available_plan_version_map[available_plan_version]}</span>
                             </div>
                         {/if}

@@ -21,8 +21,8 @@ export function sameBlock(a, b) {
     return a.includes(b[0]) || a.includes(b[1])
 }
 
-export function get_plan_version(data_from_cache, network_loading_failed, caching_successful) {
-    return data_from_cache ? "cached" : !network_loading_failed ? caching_successful ? "network_cached" : "network_uncached" : null;
+export function get_plan_version(is_default_plan, data_from_cache, network_loading_failed, caching_successful) {
+    return is_default_plan ? "default_plan" : data_from_cache ? "cached" : !network_loading_failed ? caching_successful ? "network_cached" : "network_uncached" : null;
 }
 
 export function get_teacher_data(teacher_meta, teacher, school_num) {

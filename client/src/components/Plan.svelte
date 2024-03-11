@@ -196,7 +196,7 @@
     $: loading_failed = (cache_loading_failed && network_loading_failed && !loading);
     
     // Get plan version string
-    $: available_plan_version = get_plan_version(data_from_cache, network_loading_failed, caching_successful);
+    $: available_plan_version = get_plan_version(is_default_plan, data_from_cache, network_loading_failed, caching_successful);
     
     // Update location hash
     $: location.hash = gen_location_hash("plan", school_num, date, plan_type, plan_value);
