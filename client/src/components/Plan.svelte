@@ -31,6 +31,7 @@
     let rooms_data = {};
     let info;
     let exams;
+    let last_fetch;
     let loading = false;
     let loading_failed = false;
     let cache_loading_failed = false;
@@ -74,6 +75,7 @@
     function handle_plan_data(data) {
         plan_data = data;
         info = data.info;
+        last_fetch = data.last_fetch;
         exams = data.exams;
         week_letter = info.week;
     }
@@ -321,7 +323,9 @@
                 {/each}
             </div>
         {/if}
-        <div class="last-updated">Stand der Daten: <span class="custom-badge">{format_timestamp(info.timestamp)}</span></div>
+        <div class="last-updated">
+            Plan zuletzt aktualisiert: <span class="custom-badge">{format_timestamp(info.timestamp)}</span><br>
+            Zuletzt auf neue Pläne überprüft: <span class="custom-badge">{format_timestamp(last_fetch)}</span></div>
     {/if}
 </div>
 <div class="day-controls">
