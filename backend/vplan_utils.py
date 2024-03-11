@@ -305,7 +305,9 @@ def find_closest_date(dates) -> datetime.date | None:
         return None
 
 
-def week_to_letter(week: int):
+def week_to_letter(week: int | None):
+    if week is None:
+        return None
     if week < 1 or week > 26:
         return "?"
     else:
