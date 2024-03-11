@@ -55,8 +55,6 @@
         const middleY = wrapper.offsetTop + startSection.offsetTop + startSection.offsetHeight / 2;
         const offsetX = ((event.clientX + document.documentElement.scrollLeft - middleX) / middleX) * 45;
         const offsetY = ((event.clientY + document.documentElement.scrollTop - middleY) / middleY) * 45;
-        console.log(middleX, middleY);
-        console.log(event.clientX, event.clientY, offsetX, offsetY);
 
         startSection.animate({
             transform: `perspective(5000px) rotateY(${Math.max(Math.min(offsetX, 35), -35)}deg) rotateX(${Math.max(Math.min(offsetY, 35), -35) * -1}deg)`
@@ -132,18 +130,22 @@
         </div>
         <div class="presentation">
             <h2 class="responsive-heading" style="color: rgb(120, 120, 120)">Klassenplan<br>Wahrer Lehrerplan<br>Raumplan</h2>
-            <div class="compare-slider">
-                <div class="bg"></div>
-                <div class="fg" style="width: {compareSliderValue}%"></div>
-                <input type="range" min="1" max="100" value={compareSliderValue} on:input={(evt) => realSliderValue = parseFloat(evt.target.value)} class="slider" name='slider' id="slider">
-                <button type="button" style="left: calc({compareSliderValue}% - 18px)" tabindex="-1">
-                    <div class="arrows"></div>
-                </button>
+            <div style="box-shadow: 5px 5px 15px rgb(10, 10, 10); border-radius: 1rem;">
+                <div class="compare-slider">
+                    <div class="bg"></div>
+                    <div class="fg" style="width: {compareSliderValue}%"></div>
+                    <input type="range" min="1" max="100" value={compareSliderValue} on:input={(evt) => realSliderValue = parseFloat(evt.target.value)} class="slider" name='slider' id="slider">
+                    <button type="button" style="left: calc({compareSliderValue}% - 18px)" tabindex="-1">
+                        <div class="arrows"></div>
+                    </button>
+                </div>
             </div>
         </div>
         <div class="presentation reverse">
             <h2 class="responsive-heading" style="color: rgb(150, 150, 150)">Freie Räume</h2>
-            <img src="/public/base_static/images/landing_page/vplanfr_room_overview.png" alt="Raum-Übersicht in Better VPlan">
+            <div style="box-shadow: 5px 5px 15px rgb(10, 10, 10); border-radius: 1rem;">
+                <img src="/public/base_static/images/landing_page/vplanfr_room_overview.png" alt="Raum-Übersicht in Better VPlan">
+            </div>
         </div>
     </section>
     <section>
@@ -181,30 +183,183 @@
             </div>
         </div>
         <div class="favorite-showcase">
-            <h2 class="responsive-heading">Beliebig viele Favoriten</h2>
+            <h2 class="responsive-heading" style="color: rgb(120, 120, 120); filter: drop-shadow(0px 0px 5px var(--background))">Beliebig viele Favoriten</h2>
             <img alt="Favorite Showcase" src="/public/base_static/images/landing_page/favorite_showcase.png">
         </div>
-        <br><br>
-        <ul class="responsive-text">
-            <li>Alle Vorkommen von Klassen, Räumen, Lehrern etc. führen bei klicken zu ihrem jeweiligen Plan</li>
-            <li>Überblick über alte Pläne</li>
-            <li><a href="https://games.vplan.fr/">GAMES :DDD</a></li>
-        </ul>
+        <div class="past-showcase">
+            <h2 class="responsive-heading" style="color: rgb(120, 120, 120)">Überblick über alte Pläne</h2>
+            <img alt="Favorite Showcase" src="/public/base_static/images/landing_page/overview_past_plans.png">
+        </div>
+        <div class="games-showcase">
+            <h2 class="responsive-heading" style="color: rgb(120, 120, 120)">Games (.vplan.fr)</h2>
+            <div>
+                <img id="img1" alt="Ultimate TicTacToe" src="/public/base_static/images/landing_page/ultimate_tictactoe.png">
+                <img id="img2" alt="Connect 4" src="/public/base_static/images/landing_page/connectfour.png">
+            </div>
+        </div>
     </section>
-    <section>
-        <div style="height: 10px; width: auto; overflow: hidden; border-radius: 9vw; margin-top: 2rem; margin-bottom: 2rem;">
+    <section class="scribble-bg">
+        <h2 class="responsive-heading">Geplante Features</h2>
+        <div style="margin-left: 0.2rem; height: 10px; width: 40%; overflow: hidden; border-radius: 9vw; margin-top: .5rem; margin-bottom: 1.5rem;">
             <hr style="margin: 0; border-top: solid 10px; border-image: repeating-linear-gradient(-75deg, #fcd53f, #fcd53f 10px, #533566 10px, #533566 20px) 20;">
         </div>
-        <h2 class="responsive-heading">Geplante Features 🚧</h2>
-        <ul class="responsive-text">
+        <ul class="responsive-text" style="margin-bottom: 2rem;">
             <li>Push Notifications</li>
             <li>Kalendersynchronisation</li>
             <li>Wochenplan</li>
         </ul>
     </section>
+    <section class="final-cta">
+        <h2 class="responsive-heading">Steige jetzt auf das neue Modell um</h2>
+        <div use:viewport
+             on:enterViewport={() => $register_button_visible = true}
+             on:exitViewport={() => $register_button_visible = false}>
+            <Button background='var(--accent-color)' on:click={() => navigate_page('login')}>
+                Anmelden
+            </Button>
+        </div>
+    </section>
 </div>
 
 <style lang="scss">
+  .final-cta {
+    position: relative;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+
+    h2 {
+      text-align: center;
+    }
+
+    &::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      background: url('/public/base_static/images/landing_page/final_cta_bg.webp');
+      background-size: cover;
+      background-position: 0% 50%;
+      border-radius: 1rem;
+    }
+  }
+  .scribble-bg {
+    z-index: 0;
+    position: relative;
+
+    &::before {
+      content: "";
+      z-index: -2;
+      position: absolute;
+      inset: 0;
+      background: var(--background);
+      opacity: 0.5;
+      mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 90%, transparent 100%);
+    }
+    &::after {
+      content: "";
+      z-index: -1;
+      position: absolute;
+      inset: 0;
+      background: url('/public/base_static/images/landing_page/scribble_bg.png');
+      mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 90%, transparent 100%);
+      background-size: cover;
+      background-position: 50% 50%;
+      opacity: 0.5;
+    }
+
+  }
+  .games-showcase {
+    display: flex;
+    padding: 2rem;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    h2 {
+      text-align: left;
+    }
+
+    & > div {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+
+      #img1 {
+        transform: translateY(20%);
+      }
+
+      #img2 {
+        transform: translate(-20%, -20%);
+      }
+
+      @media only screen and (max-width: 900px) {
+        #img1 {
+          transform: translate(0, 20%);
+        }
+
+        #img2 {
+          transform: translate(-20%, -5%);
+        }
+      }
+    }
+
+    @media only screen and (max-width: 900px) {
+      flex-direction: column;
+      justify-content: center;
+      padding: 0.5rem 0.5rem 1rem;
+      border-radius: 2rem;
+
+      h2 {
+        text-align: left;
+      }
+    }
+
+    img {
+      height: 15rem;
+      border-radius: 1rem;
+      box-shadow: 5px 5px 15px rgb(10, 10, 10);
+    }
+  }
+  .past-showcase {
+    display: flex;
+    padding: 2rem;
+    border-radius: 4rem;
+    overflow: hidden;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    h2 {
+      text-align: right;
+    }
+
+    @media only screen and (max-width: 900px) {
+      flex-direction: column;
+      justify-content: center;
+      padding: 0.5rem 0.5rem 1rem;
+      border-radius: 2rem;
+
+      h2 {
+        text-align: left;
+      }
+    }
+
+    img {
+      max-height: 23rem;
+      max-width: 100%;
+      border-radius: 1rem;
+      box-shadow: 5px 5px 15px rgb(10, 10, 10);
+    }
+  }
   .favorite-showcase {
     padding: 2rem;
     border-radius: 4rem;
@@ -216,6 +371,7 @@
     position: relative;
     z-index: 0;
     background: radial-gradient(circle at left 0%, var(--background) 20%, transparent 50%);
+    margin-bottom: 2rem;
 
     &::before {
       z-index: -1;
@@ -224,7 +380,7 @@
       inset: 0;
       background: url('/public/base_static/images/landing_page/favorite_burst.png');
       background-size: contain;
-      background-position: 0 50%;
+      background-position: 0 0;
       background-repeat: no-repeat;
     }
 
@@ -232,9 +388,6 @@
       flex-direction: column;
       justify-content: center;
 
-      &::before {
-        background-position: 50% 0;
-      }
       padding: 0.5rem 0.5rem 1rem;
       border-radius: 2rem;
     }
