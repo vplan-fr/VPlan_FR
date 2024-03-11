@@ -112,7 +112,7 @@ def plan(school_num: str) -> Response:
             date=date
         )
         try:
-            plans = default_plan_data[str(week)][str(date.weekday())]
+            plans = default_plan_data[str(week) if week is not None else "null"][str(date.weekday())]
         except KeyError:
             # raise
             return send_error("No default plan available for this date.")

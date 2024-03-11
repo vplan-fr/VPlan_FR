@@ -312,9 +312,12 @@ def week_to_letter(week: int):
         return chr(65 + week - 1)
 
 
-def get_future_week(holidays: list[datetime.date], weeks: int, ref_date: datetime.date, ref_week: int,
-                    date: datetime.date) -> int:
+def get_future_week(holidays: list[datetime.date], weeks: int, ref_date: datetime.date, ref_week: int | None,
+                    date: datetime.date) -> int | None:
     # weeks start at 1!!!
+
+    if ref_week is None:
+        return None
 
     ref_week -= 1
 
