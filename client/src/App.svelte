@@ -401,6 +401,10 @@
         }
         navigate_page(new_location);
     }
+    // bypass auto scrolling.
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
 </script>
 
 <svelte:head>
