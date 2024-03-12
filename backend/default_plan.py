@@ -19,13 +19,13 @@ class DefaultPlanInfo:
         out = cls(week=week)
 
         for lesson in lessons:
-            if len(lesson.parsed_info.paragraphs) != 0:
-                continue
-
-            if not lesson._is_scheduled or lesson.is_internal or lesson.subject_changed:
+            if not lesson._is_scheduled or lesson.is_internal or lesson.takes_place:
+                # we only want scheduled, not taking place lessons
                 continue
 
             lesson = copy.deepcopy(lesson)
+
+            lesson.parsed_info = lesson_info.ParsedLessonInfo([])
 
             if lesson.teacher_changed:
                 lesson.teachers = None
