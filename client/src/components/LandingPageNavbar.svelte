@@ -20,8 +20,8 @@
             </li>
         {/if}
         <li>
-            <Dropdown let:toggle>
-                <button slot="toggle_button" on:click={toggle} class="nav-button">
+            <Dropdown>
+                <button slot="toggle_button" let:toggle on:click={toggle} class="nav-button">
                     <span class="material-symbols-outlined" class:new_notification={$new_changelogs_available}>menu</span>
                 </button>
 

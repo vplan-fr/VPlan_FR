@@ -1,5 +1,5 @@
 <script>
-    import {customFetch, navigate_page} from "../utils.js";
+    import {customFetch, navigate_page, update_hash} from "../utils.js";
     import {notifications} from "../notifications.js";
     import Select from "../base_components/Select.svelte";
     import { onMount } from "svelte";
@@ -31,7 +31,7 @@
     }
 
     onMount(() => {
-        location.hash = "#contact";
+        update_hash("contact");
         title.set("Kontaktformular");
     });
 </script>

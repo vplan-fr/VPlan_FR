@@ -1,5 +1,5 @@
 <script>
-    import {customFetch, get_favorites, load_meta} from "../utils.js";
+    import {customFetch, get_favorites, load_meta, update_hash} from "../utils.js";
     import Select from "../base_components/Select.svelte";
     import Button from "../base_components/Button.svelte";
     import {notifications} from "../notifications.js";
@@ -38,7 +38,7 @@
         });
 
     onMount(() => {
-        location.hash = "#favorites";
+        update_hash("favorites");
         title.set("Favoriten");
     });
 
@@ -76,10 +76,8 @@
         loading = true;
         // change preferences to dict
         let temp_fav = $favorites;
-        console.log(temp_fav);
         temp_fav = temp_fav.map(item => ({ ...item, preferences: (item.preferences || []).reduce((obj, preference) => ({ ...obj, [preference]: false }), {}) }));
         cur_favorites = temp_fav;
-        console.log(cur_favorites);
         loading = false;
     }
     function save_favorites() {
@@ -148,8 +146,15 @@
         let meta = stored_meta[school_num];
         let return_lst = [];
         if (plan_type === "teachers") {
-            for (const teacher of Object.keys(meta.teachers)) {
-                return_lst.push({"id": teacher, "display_name": teacher})
+            for(let teacher of Object.values(meta.teachers)) {
+                let long_name = teacher.full_surname || teacher.plan_long;
+                let display_name = teacher.plan_short;
+
+                if (long_name != null) {
+                    display_name += ` (${long_name})`;
+                }
+
+                return_lst.push({"id": teacher.plan_short, "display_name": display_name})
             }
             return return_lst
         } else if (plan_type === "rooms") {
@@ -235,6 +240,10 @@
         }
     }
 
+    function swapFavorites(fav1, fav2) {
+        [cur_favorites[fav1], cur_favorites[fav2]] = [cur_favorites[fav2], cur_favorites[fav1]];
+    }
+
     let authorized_schools = [];
     $: authorized_school_ids, all_schools, update_authorized_schools();
 </script>
@@ -242,8 +251,26 @@
 <h1 class="responsive-heading">Favoriten</h1>
 <CollapsibleWrapper class="extra-accordion-padding" let:closeOtherPanels>
     {#each cur_favorites as _, favorite}
-        <Collapsible on:panel-open={closeOtherPanels} let:toggle>
-            <button slot="handle" on:click={toggle} class="toggle-button" class:first={favorite == 0} class:load_first_favorite={$settings.load_first_favorite}>{cur_favorites[favorite].name ? cur_favorites[favorite].name : "Unbenannter Favorit"}</button>
+        <Collapsible on:panel-open={closeOtherPanels}>
+            <div slot="handle" let:toggle style="position: relative;">
+                <button on:click={toggle} class="toggle-button" class:first={favorite == 0} class:load_first_favorite={$settings.load_first_favorite}>{cur_favorites[favorite].name ? cur_favorites[favorite].name : "Unbenannter Favorit"}</button>
+                <div style="position: absolute; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; gap: 0.1rem; justify-content: stretch; align-items: stretch; width: 2rem; background: rgba(255, 255, 255, 0.2)">
+                    {#if favorite !== 0}
+                        <button on:click={() => {swapFavorites(favorite, favorite-1)}} style="background: transparent; color: var(--text-color); flex: 1; border: none; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;">
+                            <span class="material-symbols-outlined" style="font-size: 1em;">arrow_upward</span>
+                        </button>
+                    {:else}
+                        <div style="flex: 1"></div>
+                    {/if}
+                    {#if favorite !== cur_favorites.length-1}
+                        <button on:click={() => {swapFavorites(favorite, favorite+1)}} style="background: transparent; color: var(--text-color); flex: 1; border: none; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;">
+                            <span class="material-symbols-outlined" style="font-size: 1em;">arrow_downward</span>
+                        </button>
+                    {:else}
+                        <div style="flex: 1"></div>
+                    {/if}
+                </div>
+            </div>
             <div class="wrapper-content">
                 <label for="favorite_name">Name des Favoriten</label>
                 <input name="favorite_name" type="text" maxlength="40" class="textfield" bind:value={cur_favorites[favorite].name}>
