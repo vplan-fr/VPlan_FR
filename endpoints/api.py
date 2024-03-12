@@ -101,7 +101,7 @@ def plan(school_num: str) -> Response:
         holidays = list(map(datetime.date.fromisoformat, json.loads(cache.get_meta_file("meta.json"))["free_days"]))
         default_plan_data = json.loads(cache.get_meta_file("default_plan.json"))
 
-        newest_date = cache.get_days()[-1]
+        newest_date = cache.get_days()[0]
         newest_date_week = json.loads(cache.get_plan_file(newest_date, ".newest", "_default_plan.json"))["week"]
 
         week = vplan_utils.get_future_week(
