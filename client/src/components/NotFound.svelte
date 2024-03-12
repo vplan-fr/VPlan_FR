@@ -1,6 +1,6 @@
 <script>
     import {onMount} from "svelte";
-    import {navigate_page} from "../utils.js";
+    import {replace_page} from "../utils.js";
     import {current_page, logged_in, title} from "../stores.js";
 
     onMount(() => {
@@ -16,10 +16,10 @@
         ];
         let tmp_location = $current_page.split("|")[0];
         if((tmp_location === "login") || (tmp_location === "register")) {
-            navigate_page("plan");
+            replace_page("plan");
         }
         else if(protected_routes.includes(tmp_location)) {
-            navigate_page("login");
+            replace_page("login");
         }
     });
 </script>

@@ -5,7 +5,7 @@
     import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
     import {indexed_db, settings, title, selected_favorite, favorites} from '../stores.js';
-    import {arraysEqual, format_date, navigate_page, format_timestamp} from "../utils.js";
+    import {arraysEqual, format_date, navigate_page, format_timestamp, replace_page} from "../utils.js";
     import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences, getDateDisabled} from "../plan.js";
     import {getLabelOfPeriods} from "../periods_utils.js";
     import Dropdown from '../base_components/Dropdown.svelte';
@@ -184,11 +184,10 @@
         last_updated[given_date] = new Date();
     }
 
-    if(!school_num) {
-        navigate_page('school_manager');
-    }
-
     onMount(() => {
+        if(!school_num) {
+            replace_page('school_manager');
+        }
         title.set("Plan");
     });
 

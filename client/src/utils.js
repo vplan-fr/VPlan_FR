@@ -115,11 +115,30 @@ export function get_settings() {
 }
 
 export function navigate_page(page_id) {
-    if(page_id === "plan" && get(current_page).startsWith("plan")) {return;}
+    if(change_page(page_id)) {
+        update_hash(page_id);
+    }
+}
+
+export function replace_page(page_id) {
+    if(change_page(page_id)) {
+        replace_hash(page_id);
+    }
+}
+
+function change_page(page_id) {
+    if(page_id === "plan" && get(current_page).startsWith("plan")) {return false;}
     current_page.set(page_id);
-    location.hash = `#${page_id}`;
     register_button_visible.set(false);
     // console.log(`Changed Location to: "${page_id}"`);
+}
+
+function replace_hash(page_id) {
+    history.replaceState(undefined, undefined, `#${page_id}`);
+}
+
+export function update_hash(page_id) {
+    location.hash = `#${page_id}`;
 }
 
 export function update_colors(settings) {
