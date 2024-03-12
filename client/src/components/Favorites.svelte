@@ -240,6 +240,10 @@
         }
     }
 
+    function swapFavorites(fav1, fav2) {
+        [cur_favorites[fav1], cur_favorites[fav2]] = [cur_favorites[fav2], cur_favorites[fav1]];
+    }
+
     let authorized_schools = [];
     $: authorized_school_ids, all_schools, update_authorized_schools();
 </script>
@@ -248,7 +252,25 @@
 <CollapsibleWrapper class="extra-accordion-padding" let:closeOtherPanels>
     {#each cur_favorites as _, favorite}
         <Collapsible on:panel-open={closeOtherPanels}>
-            <button slot="handle" let:toggle on:click={toggle} class="toggle-button" class:first={favorite == 0} class:load_first_favorite={$settings.load_first_favorite}>{cur_favorites[favorite].name ? cur_favorites[favorite].name : "Unbenannter Favorit"}</button>
+            <div slot="handle" let:toggle style="position: relative;">
+                <button on:click={toggle} class="toggle-button" class:first={favorite == 0} class:load_first_favorite={$settings.load_first_favorite}>{cur_favorites[favorite].name ? cur_favorites[favorite].name : "Unbenannter Favorit"}</button>
+                <div style="position: absolute; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; gap: 0.1rem; justify-content: stretch; align-items: stretch; width: 2rem; background: rgba(255, 255, 255, 0.2)">
+                    {#if favorite !== 0}
+                        <button on:click={() => {swapFavorites(favorite, favorite-1)}} style="background: transparent; color: var(--text-color); flex: 1; border: none; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;">
+                            <span class="material-symbols-outlined" style="font-size: 1em;">arrow_upward</span>
+                        </button>
+                    {:else}
+                        <div style="flex: 1"></div>
+                    {/if}
+                    {#if favorite !== cur_favorites.length-1}
+                        <button on:click={() => {swapFavorites(favorite, favorite+1)}} style="background: transparent; color: var(--text-color); flex: 1; border: none; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;">
+                            <span class="material-symbols-outlined" style="font-size: 1em;">arrow_downward</span>
+                        </button>
+                    {:else}
+                        <div style="flex: 1"></div>
+                    {/if}
+                </div>
+            </div>
             <div class="wrapper-content">
                 <label for="favorite_name">Name des Favoriten</label>
                 <input name="favorite_name" type="text" maxlength="40" class="textfield" bind:value={cur_favorites[favorite].name}>
