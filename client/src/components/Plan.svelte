@@ -5,7 +5,7 @@
     import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
     import {indexed_db, settings, title, selected_favorite, favorites} from '../stores.js';
-    import {arraysEqual, format_date, navigate_page, format_timestamp, replace_page} from "../utils.js";
+    import {arraysEqual, format_date, format_timestamp, replace_hash, replace_page} from "../utils.js";
     import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences, getDateDisabled} from "../plan.js";
     import {getLabelOfPeriods} from "../periods_utils.js";
     import Dropdown from '../base_components/Dropdown.svelte';
@@ -224,7 +224,13 @@
     $: available_plan_version = get_plan_version(is_default_plan, data_from_cache, network_loading_failed, caching_successful);
     
     // Update location hash
-    $: location.hash = gen_location_hash("plan", school_num, date, plan_type, plan_value);
+    $: school_num, date, plan_type, plan_value, (() => {
+        if(location.hash === "#plan") {
+            replace_hash(gen_location_hash("plan", school_num, date, plan_type, plan_value).substring(1))
+            return;
+        }
+        location.hash = gen_location_hash("plan", school_num, date, plan_type, plan_value);
+    })();
 </script>
 
 <svelte:window on:keydown={keydown_handler}/>

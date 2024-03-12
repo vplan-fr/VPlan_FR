@@ -131,10 +131,11 @@ function change_page(page_id) {
     current_page.set(page_id);
     register_button_visible.set(false);
     // console.log(`Changed Location to: "${page_id}"`);
+    return true;
 }
 
-function replace_hash(page_id) {
-    history.replaceState(undefined, undefined, `#${page_id}`);
+export function replace_hash(page_id) {
+    location.replace(`#${page_id}`);
 }
 
 export function update_hash(page_id) {
