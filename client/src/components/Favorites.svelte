@@ -76,10 +76,8 @@
         loading = true;
         // change preferences to dict
         let temp_fav = $favorites;
-        console.log(temp_fav);
         temp_fav = temp_fav.map(item => ({ ...item, preferences: (item.preferences || []).reduce((obj, preference) => ({ ...obj, [preference]: false }), {}) }));
         cur_favorites = temp_fav;
-        console.log(cur_favorites);
         loading = false;
     }
     function save_favorites() {
@@ -148,8 +146,15 @@
         let meta = stored_meta[school_num];
         let return_lst = [];
         if (plan_type === "teachers") {
-            for (const teacher of Object.keys(meta.teachers)) {
-                return_lst.push({"id": teacher, "display_name": teacher})
+            for(let teacher of Object.values(meta.teachers)) {
+                let long_name = teacher.full_surname || teacher.plan_long;
+                let display_name = teacher.plan_short;
+
+                if (long_name != null) {
+                    display_name += ` (${long_name})`;
+                }
+
+                return_lst.push({"id": teacher.plan_short, "display_name": display_name})
             }
             return return_lst
         } else if (plan_type === "rooms") {
@@ -242,8 +247,8 @@
 <h1 class="responsive-heading">Favoriten</h1>
 <CollapsibleWrapper class="extra-accordion-padding" let:closeOtherPanels>
     {#each cur_favorites as _, favorite}
-        <Collapsible on:panel-open={closeOtherPanels} let:toggle>
-            <button slot="handle" on:click={toggle} class="toggle-button" class:first={favorite == 0} class:load_first_favorite={$settings.load_first_favorite}>{cur_favorites[favorite].name ? cur_favorites[favorite].name : "Unbenannter Favorit"}</button>
+        <Collapsible on:panel-open={closeOtherPanels}>
+            <button slot="handle" let:toggle on:click={toggle} class="toggle-button" class:first={favorite == 0} class:load_first_favorite={$settings.load_first_favorite}>{cur_favorites[favorite].name ? cur_favorites[favorite].name : "Unbenannter Favorit"}</button>
             <div class="wrapper-content">
                 <label for="favorite_name">Name des Favoriten</label>
                 <input name="favorite_name" type="text" maxlength="40" class="textfield" bind:value={cur_favorites[favorite].name}>
