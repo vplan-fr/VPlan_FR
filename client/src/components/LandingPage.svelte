@@ -129,7 +129,7 @@
             </div>
         </div>
         <div class="presentation">
-            <h2 class="responsive-heading" style="color: rgb(120, 120, 120)">Klassenplan<br>Wahrer Lehrerplan<br>Raumplan</h2>
+            <h2 class="responsive-heading" style="color: rgb(120, 120, 120)">Klassenplan<br>Wahrer Lehrerplan<br>Raumplan<br>Planvorhersage</h2>
             <div style="box-shadow: 5px 5px 15px rgb(10, 10, 10); border-radius: 1rem;">
                 <div class="compare-slider">
                     <div class="bg"></div>

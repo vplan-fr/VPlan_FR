@@ -385,6 +385,9 @@ export function format_revision_date(date, latest) {
 
 export function format_timestamp(timestamp) {
     const date = new Date(timestamp);
+    if(date.getFullYear() === 1970) {
+        return "Kein Datum vorhanden";
+    }
 
     const targetTimezone = 'Europe/Berlin';
     const options = {

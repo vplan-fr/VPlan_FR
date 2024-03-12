@@ -6,7 +6,7 @@
     import { swipe } from 'svelte-gestures';
     import {indexed_db, settings, title, selected_favorite, favorites} from '../stores.js';
     import {arraysEqual, format_date, navigate_page, format_timestamp} from "../utils.js";
-    import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences} from "../plan.js";
+    import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences, getDateDisabled} from "../plan.js";
     import {getLabelOfPeriods} from "../periods_utils.js";
     import Dropdown from '../base_components/Dropdown.svelte';
 
@@ -27,6 +27,7 @@
     export let available_plan_version;
     let used_rooms_hidden = true;
 
+    const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
     let plan_data = [];
     let all_lessons = [];
     let rooms_data = {};
@@ -51,7 +52,9 @@
     let preferences_apply = true;
     let lessons = [];
     let show_left_key = true;
+    let left_key_default_plan = false;
     let show_right_key = true;
+    let right_key_default_plan = false;
     let last_updated = {};
     let caching_successful;
 
@@ -112,15 +115,35 @@
         return controller;
     }
 
-    function change_day(day_amount) {
+    function get_valid_date(date, direction) {
         let tmp_date;
-        tmp_date = enabled_dates[(enabled_dates.indexOf(date)+day_amount)];
-        if (typeof tmp_date === 'undefined') {
+        let date_index = enabled_dates.indexOf(date);
+        if(date_index !== -1 && enabled_dates.length > date_index+direction) {
+            tmp_date = enabled_dates[date_index+direction];
+        } else {
             // Removed due to being more annoying than it bringing value to the UX
             // notifications.danger("Für dieses Datum existiert kein Vertretungsplan!");
-            //return;
+            tmp_date = new Date(date);
+            tmp_date.setDate(tmp_date.getDate() + direction);
+            let tmp_str_date = `${tmp_date.getFullYear()}-${pad(tmp_date.getMonth()+1)}-${pad(tmp_date.getDate())}`;
+            console.log(tmp_str_date);
+            let tmp_disabled = getDateDisabled(enabled_dates, free_days, tmp_str_date);
+            while (tmp_disabled) {
+                tmp_date.setDate(tmp_date.getDate() + direction);
+                tmp_str_date = `${tmp_date.getFullYear()}-${pad(tmp_date.getMonth()+1)}-${pad(tmp_date.getDate())}`;
+                console.log(tmp_str_date);
+                // If Date is before first enabled_date, return
+                if (tmp_str_date < enabled_dates[0]) {return;}
+                tmp_disabled = getDateDisabled(enabled_dates, free_days, tmp_str_date);
+            }
+            tmp_date = tmp_str_date;
         }
-        date = tmp_date;
+        return tmp_date;
+    }
+
+    function change_day(direction) {
+        let tmp_valid_date = get_valid_date(date, direction);
+        if(tmp_valid_date) {date = tmp_valid_date}
     }
 
     function keydown_handler(event) {
@@ -146,8 +169,11 @@
     }
 
     function update_date_btns() {
-        show_left_key = enabled_dates.indexOf(date) > 0;
-        show_right_key = enabled_dates.indexOf(date) < (enabled_dates.length - 1);
+        let valid_prev_date = get_valid_date(date, -1);
+        left_key_default_plan = valid_prev_date && enabled_dates.indexOf(valid_prev_date) === -1;
+        show_left_key = !!valid_prev_date;
+        right_key_default_plan = enabled_dates.indexOf(date) === -1 || enabled_dates.indexOf(date) === enabled_dates.length - 1;
+        show_right_key = true;
     }
 
     function handle_last_updated(given_date, renew) {
@@ -333,8 +359,8 @@
     {/if}
 </div>
 <div class="day-controls">
-    <button tabindex="-1" on:click={() => {change_day(-1);}} class:hidden={!show_left_key}><span class="material-symbols-outlined left">arrow_back_ios_new</span></button>
-    <button tabindex="-1" on:click={() => {change_day(1);}} class:hidden={!show_right_key}><span class="material-symbols-outlined right">arrow_forward_ios</span></button>
+    <button tabindex="-1" on:click={() => {change_day(-1);}} class:hidden={!show_left_key} class:is_default_plan={left_key_default_plan}><span class="material-symbols-outlined left">arrow_back_ios_new</span></button>
+    <button tabindex="-1" on:click={() => {change_day(1);}} class:hidden={!show_right_key} class:is_default_plan={right_key_default_plan}><span class="material-symbols-outlined right">arrow_forward_ios</span></button>
 </div>
 
 <style lang="scss">
@@ -470,12 +496,17 @@
             overflow: hidden;
             position: relative;
             opacity: 1;
-            transition: opacity .2s ease;
+            transition: opacity .2s ease, outline .2s ease;
             box-shadow: 0px 0px 5px var(--background);
+            outline: 2px solid transparent;
             
             &.hidden {
                 opacity: 0;
                 pointer-events: none;
+            }
+
+            &.is_default_plan {
+              outline: 2px solid rgb(219, 174, 0);
             }
 
             &::before {

@@ -45,7 +45,7 @@ function isWeekend(date) {
 }
 
 export function getDateDisabled(enabled_dates, free_days, date) {
-    return !(enabled_dates.includes(date) || (date > enabled_dates[0]) && !free_days.includes(date) && !isWeekend(new Date(date)));
+    return !(enabled_dates.includes(date) || (date > enabled_dates[enabled_dates.length-1]) && !free_days.includes(date) && !isWeekend(new Date(date)));
 }
 
 export function load_plan(
@@ -105,7 +105,7 @@ export function load_plan(
         params.append("revision", revision);
         customFetch(`${api_base}/plan?${params.toString()}`, {signal: signal})
             .then(data => {
-                if (Object.keys(data).length !== 0 && revision === ".newest") {
+                if (Object.keys(data).length !== 0 && revision === ".newest" && !data.is_default_plan) {
                     cache_plan(school_num, date, data, () => {
                         loading_state_updater("caching_successful", true);
                         last_updated_handler(date, true);
