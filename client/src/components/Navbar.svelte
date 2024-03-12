@@ -31,8 +31,8 @@
     <ul class="nav-element-wrapper">
         <li><button on:click={() => {navigate_page("about_us")}} class="nav-button">Über uns</button></li>
         <li>
-            <Dropdown let:toggle>
-                <button slot="toggle_button" on:click={toggle} class="nav-button">
+            <Dropdown>
+                <button slot="toggle_button" let:toggle on:click={toggle} class="nav-button">
                     <span class="material-symbols-outlined" class:favorite-selected={$selected_favorite !== -1}>star</span>
                 </button>
                 {#each $favorites as favorite, index}
@@ -44,8 +44,8 @@
             </Dropdown>
         </li>
         <li>
-            <Dropdown let:toggle>
-                <button slot="toggle_button" on:click={toggle} class="nav-button">
+            <Dropdown>
+                <button slot="toggle_button" let:toggle on:click={toggle} class="nav-button">
                     <span class="material-symbols-outlined" class:new_notification={$new_changelogs_available}>tune</span>
                 </button>
 

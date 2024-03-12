@@ -326,8 +326,8 @@
                                     </button>
                                 {:else if text_segment.link?.value.length >= 2}
                                     <div class="fit-content-width">
-                                        <Dropdown let:toggle small={true} transform_origin_x="50%">
-                                            <button slot="toggle_button" on:click={toggle} class="toggle-button">
+                                        <Dropdown small={true} transform_origin_x="50%">
+                                            <button slot="toggle_button" let:toggle on:click={toggle} class="toggle-button">
                                                 <span class="grow">{text_segment.text}</span>
                                                 <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
                                             </button>

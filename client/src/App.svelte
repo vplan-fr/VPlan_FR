@@ -438,6 +438,7 @@
                             i18n={de}
                             clearBtn={false}
                             todayBtn={true}
+                            clearToggle={false}
                             inputClasses="datepicker-input"
                             bind:value={date}
                         />
@@ -509,8 +510,8 @@
     <Toast />
 </div>
 <footer class:padding={footer_padding}>
-    <Dropdown let:toggle small={true} transform_origin_x="100%" flipped={true}>
-        <button slot="toggle_button" on:click={toggle}><span class="material-symbols-outlined">menu</span></button>
+    <Dropdown small={true} transform_origin_x="100%" flipped={true}>
+        <button slot="toggle_button" let:toggle on:click={toggle}><span class="material-symbols-outlined">menu</span></button>
 
         {#if !$logged_in}<button on:click={() => {navigate_page("login")}}>Login</button>{/if}
         <button on:click={() => {navigate_page("")}}>Startseite</button>
@@ -721,12 +722,12 @@
         --sdt-color: var(--text-color);
         --sdt-color-selected: var(--text-color);
         --sdt-header-color: var(--text-color);
-        --sdt-primary: var(--accent-color);
+        --sdt-bg-selected: var(--accent-color);
         --sdt-disabled-date: var(--cancelled-color);
         --sdt-disabled-date-bg: var(--sdt-bg-main);
-        --sdt-btn-bg-hover: rgba(255, 255, 255, 0.2);
-        --sdt-btn-header-bg-hover: var(--sdt-btn-bg-hover);
-        --sdt-today-indicator: var(--sdt-bg-main);
+        --sdt-table-data-bg-hover: rgba(255, 255, 255, 0.2);
+        --sdt-header-btn-bg-hover: var(--sdt-table-data-bg-hover);
+        --sdt-table-today-indicator: var(--sdt-bg-main);
 
         :global(.datepicker-input) {
           width: 100%;
