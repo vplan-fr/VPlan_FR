@@ -5,7 +5,7 @@
     import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
     import {indexed_db, settings, title, selected_favorite, favorites} from '../stores.js';
-    import {arraysEqual, format_date, format_timestamp, replace_hash, replace_page} from "../utils.js";
+    import {arraysEqual, format_date, format_timestamp, replace_hash, replace_page, update_hash} from "../utils.js";
     import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences, getDateDisabled} from "../plan.js";
     import {getLabelOfPeriods} from "../periods_utils.js";
     import Dropdown from '../base_components/Dropdown.svelte';
@@ -226,10 +226,10 @@
     // Update location hash
     $: school_num, date, plan_type, plan_value, (() => {
         if(location.hash === "#plan") {
-            replace_hash(gen_location_hash("plan", school_num, date, plan_type, plan_value).substring(1))
+            replace_hash(gen_location_hash("plan", school_num, date, plan_type, plan_value))
             return;
         }
-        location.hash = gen_location_hash("plan", school_num, date, plan_type, plan_value);
+        update_hash(gen_location_hash("plan", school_num, date, plan_type, plan_value));
     })();
 </script>
 

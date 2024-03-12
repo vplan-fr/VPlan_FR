@@ -3,10 +3,10 @@
     import { onMount } from "svelte";
     import { title, register_button_visible } from "../stores";
     import Button from "../base_components/Button.svelte";
-    import {navigate_page} from "../utils.js";
+    import {navigate_page, update_hash} from "../utils.js";
 
     onMount(() => {
-        location.hash = "";
+        update_hash("");
         title.set("Startseite");
         // console.log("Mounted AboutUs.svelte");
     });

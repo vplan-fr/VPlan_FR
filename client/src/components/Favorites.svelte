@@ -1,5 +1,5 @@
 <script>
-    import {customFetch, get_favorites, load_meta} from "../utils.js";
+    import {customFetch, get_favorites, load_meta, update_hash} from "../utils.js";
     import Select from "../base_components/Select.svelte";
     import Button from "../base_components/Button.svelte";
     import {notifications} from "../notifications.js";
@@ -38,7 +38,7 @@
         });
 
     onMount(() => {
-        location.hash = "#favorites";
+        update_hash("favorites");
         title.set("Favoriten");
     });
 

@@ -1,9 +1,10 @@
 <script>
     import { onMount } from "svelte";
     import { title } from "../stores";
+    import { update_hash } from "../utils.js";
 
     onMount(() => {
-        location.hash = "#impressum";
+        update_hash("impressum");
         title.set("Impressum");
         // console.log("Mounted Impressum.svelte");
     });

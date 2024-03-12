@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import { pwa_prompt, title } from "../stores";
     import { notifications } from "../notifications";
-    import { navigate_page } from "../utils";
+    import {navigate_page, update_hash} from "../utils";
     import Button from "../base_components/Button.svelte";
 
     async function try_install() {
@@ -18,7 +18,7 @@
     }
 
     onMount(() => {
-        location.hash = "#pwa_install";
+        update_hash("pwa_install");
         title.set("Installieren");
     });
 </script>

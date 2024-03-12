@@ -136,11 +136,11 @@ export function load_plan(
 
 export function gen_location_hash(location_name, school_num, date, plan_type, plan_value) {
     if(school_num && date && plan_type) {
-        return `#${location_name}|${school_num}|${date}|${plan_type}|${plan_value}`;
+        return `${location_name}|${school_num}|${date}|${plan_type}|${plan_value}`;
     } else if(school_num && date) {
-        return `#${location_name}|${school_num}|${date}`;
+        return `${location_name}|${school_num}|${date}`;
     } else {
-        return `#${location_name}`
+        return location_name
     }
 }
 
