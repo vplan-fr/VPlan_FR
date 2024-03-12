@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import datetime
 import logging
 
 from backend import meta_extractor
@@ -15,6 +16,8 @@ async def main():
     subparsers = argparser.add_subparsers(dest="subcommand")
 
     migrate_all = subparsers.add_parser("migrate-all")
+    migrate_all.add_argument("-since", type=str, help="Only migrate plans since this date (YYYY-MM-DD).")
+
     extract_all_teachers = subparsers.add_parser("extract-all-teachers")
 
     args = argparser.parse_args()
@@ -22,8 +25,13 @@ async def main():
     crawlers = await get_crawlers(create_clients=False)
 
     if args.subcommand == "migrate-all":
+        since = datetime.datetime.strptime(args.since, "%Y-%m-%d").date() if args.since else None
+
         for crawler in crawlers.values():
             for day in crawler.plan_processor.cache.get_days():
+                if since is not None and day < since:
+                    continue
+
                 crawler.plan_processor.cache.update_newest(day)
 
                 for revision in crawler.plan_processor.cache.get_timestamps(day):
