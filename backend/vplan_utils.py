@@ -326,7 +326,7 @@ def get_future_week(holidays: list[datetime.date], weeks: int, ref_date: datetim
     assert date > ref_date
 
     curr_week_i = ref_week
-    any_days_in_last_week = False
+    any_days_in_last_week = True
     last_week_monday = ref_date - datetime.timedelta(days=ref_date.weekday())
 
     curr_date = ref_date.replace()
