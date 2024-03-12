@@ -2,7 +2,7 @@
     import {notifications} from '../notifications.js';
     import { onMount } from "svelte";
     import { title } from "../stores";
-    import {customFetch, navigate_page} from "../utils.js";
+    import {customFetch, navigate_page, update_hash} from "../utils.js";
     import Select from "../base_components/Select.svelte";
     import { fly } from 'svelte/transition';
     import Button from '../base_components/Button.svelte';
@@ -135,7 +135,7 @@
     get_admin_status();
     
     onMount(() => {
-        location.hash = "#school_manager";
+        update_hash("school_manager");
         title.set("Schule wählen");
     });
 

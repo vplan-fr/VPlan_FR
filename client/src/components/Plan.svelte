@@ -5,8 +5,8 @@
     import {notifications} from '../notifications.js';
     import { swipe } from 'svelte-gestures';
     import {indexed_db, settings, title, selected_favorite, favorites} from '../stores.js';
-    import {arraysEqual, format_date, navigate_page, format_timestamp} from "../utils.js";
-    import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences} from "../plan.js";
+    import {arraysEqual, format_date, format_timestamp, replace_hash, replace_page, update_hash} from "../utils.js";
+    import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences, getDateDisabled} from "../plan.js";
     import {getLabelOfPeriods} from "../periods_utils.js";
     import Dropdown from '../base_components/Dropdown.svelte';
 
@@ -23,15 +23,18 @@
     export let all_rooms;
     export let selected_revision;
     export let enabled_dates;
+    export let free_days;
     export let available_plan_version;
     let used_rooms_hidden = true;
 
+    const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
     let plan_data = [];
     let all_lessons = [];
     let rooms_data = {};
     let info;
     let exams;
     let last_fetch;
+    let is_default_plan = false;
     let loading = false;
     let loading_failed = false;
     let cache_loading_failed = false;
@@ -49,7 +52,9 @@
     let preferences_apply = true;
     let lessons = [];
     let show_left_key = true;
+    let left_key_default_plan = false;
     let show_right_key = true;
+    let right_key_default_plan = false;
     let last_updated = {};
     let caching_successful;
 
@@ -76,6 +81,7 @@
         plan_data = data;
         info = data.info;
         last_fetch = data.last_fetch;
+        is_default_plan = data.is_default_plan;
         exams = data.exams;
         week_letter = info.week;
     }
@@ -109,15 +115,33 @@
         return controller;
     }
 
-    function change_day(day_amount) {
+    function get_valid_date(date, direction) {
         let tmp_date;
-        tmp_date = enabled_dates[(enabled_dates.indexOf(date)+day_amount)];
-        if (typeof tmp_date === 'undefined') {
+        let date_index = enabled_dates.indexOf(date);
+        if(date_index !== -1 && enabled_dates.length > date_index+direction) {
+            tmp_date = enabled_dates[date_index+direction];
+        } else {
             // Removed due to being more annoying than it bringing value to the UX
             // notifications.danger("Für dieses Datum existiert kein Vertretungsplan!");
-            return;
+            tmp_date = new Date(date);
+            tmp_date.setDate(tmp_date.getDate() + direction);
+            let tmp_str_date = `${tmp_date.getFullYear()}-${pad(tmp_date.getMonth()+1)}-${pad(tmp_date.getDate())}`;
+            let tmp_disabled = getDateDisabled(enabled_dates, free_days, tmp_str_date);
+            while (tmp_disabled) {
+                tmp_date.setDate(tmp_date.getDate() + direction);
+                tmp_str_date = `${tmp_date.getFullYear()}-${pad(tmp_date.getMonth()+1)}-${pad(tmp_date.getDate())}`;
+                // If Date is before first enabled_date, return
+                if (tmp_str_date < enabled_dates[0]) {return;}
+                tmp_disabled = getDateDisabled(enabled_dates, free_days, tmp_str_date);
+            }
+            tmp_date = tmp_str_date;
         }
-        date = tmp_date;
+        return tmp_date;
+    }
+
+    function change_day(direction) {
+        let tmp_valid_date = get_valid_date(date, direction);
+        if(tmp_valid_date) {date = tmp_valid_date}
     }
 
     function keydown_handler(event) {
@@ -143,8 +167,11 @@
     }
 
     function update_date_btns() {
-        show_left_key = enabled_dates.indexOf(date) > 0;
-        show_right_key = enabled_dates.indexOf(date) < (enabled_dates.length - 1);
+        let valid_prev_date = get_valid_date(date, -1);
+        left_key_default_plan = valid_prev_date && enabled_dates.indexOf(valid_prev_date) === -1;
+        show_left_key = !!valid_prev_date;
+        right_key_default_plan = enabled_dates.indexOf(date) === -1 || enabled_dates.indexOf(date) === enabled_dates.length - 1;
+        show_right_key = true;
     }
 
     function handle_last_updated(given_date, renew) {
@@ -155,11 +182,10 @@
         last_updated[given_date] = new Date();
     }
 
-    if(!school_num) {
-        navigate_page('school_manager');
-    }
-
     onMount(() => {
+        if(!school_num) {
+            replace_page('school_manager');
+        }
         title.set("Plan");
     });
 
@@ -170,7 +196,8 @@
         school_num, 
         date, 
         selected_revision, 
-        enabled_dates, 
+        enabled_dates,
+        free_days,
         handle_last_updated, handle_loading_state, handle_plan_data, renew_abort_controller
     );
     // Load the new lessons on change to selected plan
@@ -192,10 +219,16 @@
     $: loading_failed = (cache_loading_failed && network_loading_failed && !loading);
     
     // Get plan version string
-    $: available_plan_version = get_plan_version(data_from_cache, network_loading_failed, caching_successful);
+    $: available_plan_version = get_plan_version(is_default_plan, data_from_cache, network_loading_failed, caching_successful);
     
     // Update location hash
-    $: location.hash = gen_location_hash("plan", school_num, date, plan_type, plan_value);
+    $: school_num, date, plan_type, plan_value, (() => {
+        if(location.hash === "#plan") {
+            replace_hash(gen_location_hash("plan", school_num, date, plan_type, plan_value))
+            return;
+        }
+        update_hash(gen_location_hash("plan", school_num, date, plan_type, plan_value));
+    })();
 </script>
 
 <svelte:window on:keydown={keydown_handler}/>
@@ -209,19 +242,19 @@
             {/if}
             <h1 class="plan-heading">
                 <!--Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{#if teacher_image_path !== null}<img class="teacher-img" src="{teacher_image_path}" alt="Lehrer Portrait">{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>-->
-                Plan für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">({info.week}-Woche)</span>
+                Plan{#if is_default_plan}vorhersage{/if} für {plan_type_map[plan_type]} <span class="custom-badge">{plan_value}{#if plan_type === "teachers"}{#if full_teacher_name !== null}{` (${full_teacher_name})`}{/if}{/if}</span> <span>am</span> <span class="custom-badge">{format_date(date)}</span> <span class="no-linebreak">{#if info.week}({info.week}-Woche){/if}</span>
             </h1>
         {/if}
         {#if loading}
             <span class="responsive-text">Lädt...</span>
         {:else if loading_failed}
-            <span class="responsive-text">Plan konnte nicht geladen werden.</span>
+            <span class="responsive-text">Plan{#if is_default_plan}vorhersage{/if} konnte nicht geladen werden.</span>
         {:else}
             {#if lessons.length === 0}
             {#if plan_type}    
                 <span class="responsive-text">Keine Stunden</span>
             {:else}
-                <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus, um einen Plan zu sehen.</span>
+                <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus, um {#if is_default_plan}eine Planvorhersage{:else}einen Plan{/if} zu sehen.</span>
             {/if}
             {:else}
             <div class="lessons-wrapper">
@@ -247,7 +280,7 @@
         {#if loading}
             <span class="responsive-text">Lädt...</span>
         {:else if loading_failed}
-            <span class="responsive-text">Plan konnte nicht geladen werden</span>
+            <span class="responsive-text">Plan{#if is_default_plan}vorhersage{/if} konnte nicht geladen werden</span>
         {:else}
             <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
         {/if}
@@ -296,8 +329,8 @@
                                     </button>
                                 {:else if text_segment.link?.value.length >= 2}
                                     <div class="fit-content-width">
-                                        <Dropdown let:toggle small={true} transform_origin_x="50%">
-                                            <button slot="toggle_button" on:click={toggle} class="toggle-button">
+                                        <Dropdown small={true} transform_origin_x="50%">
+                                            <button slot="toggle_button" let:toggle on:click={toggle} class="toggle-button">
                                                 <span class="grow">{text_segment.text}</span>
                                                 <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
                                             </button>
@@ -324,13 +357,13 @@
             </div>
         {/if}
         <div class="last-updated">
-            Plan zuletzt aktualisiert: <span class="custom-badge">{format_timestamp(info.timestamp)}</span><br>
+            {#if !is_default_plan}Plan zuletzt aktualisiert: <span class="custom-badge">{format_timestamp(info.timestamp)}</span><br>{/if}
             Zuletzt auf neue Pläne überprüft: <span class="custom-badge">{format_timestamp(last_fetch)}</span></div>
     {/if}
 </div>
 <div class="day-controls">
-    <button tabindex="-1" on:click={() => {change_day(-1);}} class:hidden={!show_left_key}><span class="material-symbols-outlined left">arrow_back_ios_new</span></button>
-    <button tabindex="-1" on:click={() => {change_day(1);}} class:hidden={!show_right_key}><span class="material-symbols-outlined right">arrow_forward_ios</span></button>
+    <button tabindex="-1" on:click={() => {change_day(-1);}} class:hidden={!show_left_key} class:is_default_plan={left_key_default_plan}><span class="material-symbols-outlined left">arrow_back_ios_new</span></button>
+    <button tabindex="-1" on:click={() => {change_day(1);}} class:hidden={!show_right_key} class:is_default_plan={right_key_default_plan}><span class="material-symbols-outlined right">arrow_forward_ios</span></button>
 </div>
 
 <style lang="scss">
@@ -466,12 +499,17 @@
             overflow: hidden;
             position: relative;
             opacity: 1;
-            transition: opacity .2s ease;
+            transition: opacity .2s ease, outline .2s ease;
             box-shadow: 0px 0px 5px var(--background);
+            outline: 2px solid transparent;
             
             &.hidden {
                 opacity: 0;
                 pointer-events: none;
+            }
+
+            &.is_default_plan {
+              outline: 2px solid rgb(219, 174, 0);
             }
 
             &::before {

@@ -21,8 +21,8 @@ export function sameBlock(a, b) {
     return a.includes(b[0]) || a.includes(b[1])
 }
 
-export function get_plan_version(data_from_cache, network_loading_failed, caching_successful) {
-    return data_from_cache ? "cached" : !network_loading_failed ? caching_successful ? "network_cached" : "network_uncached" : null;
+export function get_plan_version(is_default_plan, data_from_cache, network_loading_failed, caching_successful) {
+    return is_default_plan ? "default_plan" : data_from_cache ? "cached" : !network_loading_failed ? caching_successful ? "network_cached" : "network_uncached" : null;
 }
 
 export function get_teacher_data(teacher_meta, teacher, school_num) {
@@ -39,12 +39,22 @@ export function get_teacher_data(teacher_meta, teacher, school_num) {
     return [full_teacher_name, teacher_contact_link, teacher_image_path];
 }
 
+function isWeekend(date) {
+    let day = date.getDay();
+    return day === 0 || day === 6;
+}
+
+export function getDateDisabled(enabled_dates, free_days, date) {
+    return !(enabled_dates.includes(date) || (date > enabled_dates[enabled_dates.length-1]) && !free_days.includes(date) && !isWeekend(new Date(date)));
+}
+
 export function load_plan(
     api_base,
     school_num,
     date, 
     revision=".newest", 
-    enabled_dates, 
+    enabled_dates,
+    free_days,
     last_updated_handler, 
     loading_state_updater, 
     plan_data_handler, 
@@ -53,7 +63,7 @@ export function load_plan(
     if (enabled_dates === null || enabled_dates === undefined) {
         return;
     }
-    if (date === null || date === undefined || !enabled_dates.includes(date)) {
+    if (date === null || date === undefined || getDateDisabled(enabled_dates, free_days, date)) {
         return;
     }
 
@@ -83,7 +93,7 @@ export function load_plan(
             }
         }, () => {
             loading_state_updater("cache_loading_failed", true);
-            console.error("Cache loading failed!");
+            //console.error("Cache loading failed!");
         });
     }
 
@@ -95,7 +105,7 @@ export function load_plan(
         params.append("revision", revision);
         customFetch(`${api_base}/plan?${params.toString()}`, {signal: signal})
             .then(data => {
-                if (Object.keys(data).length !== 0 && revision === ".newest") {
+                if (Object.keys(data).length !== 0 && revision === ".newest" && !data.is_default_plan) {
                     cache_plan(school_num, date, data, () => {
                         loading_state_updater("caching_successful", true);
                         last_updated_handler(date, true);
@@ -126,11 +136,11 @@ export function load_plan(
 
 export function gen_location_hash(location_name, school_num, date, plan_type, plan_value) {
     if(school_num && date && plan_type) {
-        return `#${location_name}|${school_num}|${date}|${plan_type}|${plan_value}`;
+        return `${location_name}|${school_num}|${date}|${plan_type}|${plan_value}`;
     } else if(school_num && date) {
-        return `#${location_name}|${school_num}|${date}`;
+        return `${location_name}|${school_num}|${date}`;
     } else {
-        return `#${location_name}`
+        return location_name
     }
 }
 

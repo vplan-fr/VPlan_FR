@@ -20,8 +20,8 @@
 {:else}
     <CollapsibleWrapper let:closeOtherPanels>
         {#each Object.entries(rooms_data.free_rooms_by_block) as [block, all_free_rooms], i}
-            <Collapsible on:panel-open={closeOtherPanels} let:toggle>
-                <button slot="handle" on:click={toggle} class="toggle-button" class:first={i == 0} class:last={i == Object.entries(rooms_data.free_rooms_by_block).length-1}>{block}. Block</button>
+            <Collapsible on:panel-open={closeOtherPanels}>
+                <button slot="handle" let:toggle on:click={toggle} class="toggle-button" class:first={i == 0} class:last={i == Object.entries(rooms_data.free_rooms_by_block).length-1}>{block}. Block</button>
                 <div class="block">
                     <ul>
                         {#each group_rooms(Object.fromEntries(all_free_rooms.map(r => [r, all_rooms[r]]))) as [category, free_rooms] (category)}

@@ -2,7 +2,7 @@
     import {notifications} from '../notifications.js';
     import { fly, fade } from 'svelte/transition';
     import { logged_in, title } from '../stores.js';
-    import {customFetch, navigate_page} from "../utils.js";
+    import {customFetch, navigate_page, update_hash} from "../utils.js";
 
     let l_nickname;
     let l_password;
@@ -62,10 +62,10 @@
     }
 
     function toggle_form() {
-        location.hash = location.hash === "#register" ? "#login" : "#register";
+        update_hash(location.hash === "#register" ? "login" : "register")
     }
-    
-    location.hash = register_visible ? "#register" : "#login";
+
+    update_hash(register_visible ? "register" : "login");
     title.set(register_visible ? "Registrieren" : "Login");
 
     window.addEventListener('popstate', () => {
