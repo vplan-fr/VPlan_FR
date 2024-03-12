@@ -126,12 +126,10 @@
             tmp_date = new Date(date);
             tmp_date.setDate(tmp_date.getDate() + direction);
             let tmp_str_date = `${tmp_date.getFullYear()}-${pad(tmp_date.getMonth()+1)}-${pad(tmp_date.getDate())}`;
-            console.log(tmp_str_date);
             let tmp_disabled = getDateDisabled(enabled_dates, free_days, tmp_str_date);
             while (tmp_disabled) {
                 tmp_date.setDate(tmp_date.getDate() + direction);
                 tmp_str_date = `${tmp_date.getFullYear()}-${pad(tmp_date.getMonth()+1)}-${pad(tmp_date.getDate())}`;
-                console.log(tmp_str_date);
                 // If Date is before first enabled_date, return
                 if (tmp_str_date < enabled_dates[0]) {return;}
                 tmp_disabled = getDateDisabled(enabled_dates, free_days, tmp_str_date);
@@ -250,13 +248,13 @@
         {#if loading}
             <span class="responsive-text">Lädt...</span>
         {:else if loading_failed}
-            <span class="responsive-text">Plan konnte nicht geladen werden.</span>
+            <span class="responsive-text">Plan{#if is_default_plan}vorhersage{/if} konnte nicht geladen werden.</span>
         {:else}
             {#if lessons.length === 0}
             {#if plan_type}    
                 <span class="responsive-text">Keine Stunden</span>
             {:else}
-                <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus, um einen Plan zu sehen.</span>
+                <span class="responsive-text">Wähle eine Klasse, einen Lehrer, einen Raum oder die Raumübersicht aus, um {#if is_default_plan}eine Planvorhersage{:else}einen Plan{/if} zu sehen.</span>
             {/if}
             {:else}
             <div class="lessons-wrapper">
@@ -282,7 +280,7 @@
         {#if loading}
             <span class="responsive-text">Lädt...</span>
         {:else if loading_failed}
-            <span class="responsive-text">Plan konnte nicht geladen werden</span>
+            <span class="responsive-text">Plan{#if is_default_plan}vorhersage{/if} konnte nicht geladen werden</span>
         {:else}
             <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
         {/if}
@@ -359,7 +357,7 @@
             </div>
         {/if}
         <div class="last-updated">
-            Plan zuletzt aktualisiert: <span class="custom-badge">{format_timestamp(info.timestamp)}</span><br>
+            {#if !is_default_plan}Plan zuletzt aktualisiert: <span class="custom-badge">{format_timestamp(info.timestamp)}</span><br>{/if}
             Zuletzt auf neue Pläne überprüft: <span class="custom-badge">{format_timestamp(last_fetch)}</span></div>
     {/if}
 </div>

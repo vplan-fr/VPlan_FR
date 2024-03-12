@@ -146,6 +146,16 @@
         let curr_day = curr_date.getDay();
         let curr_hours = curr_date.getHours();
         let emoji = "👋";
+        if(free_days.includes(`${curr_date.getFullYear()}-${pad(curr_date.getMonth()+1)}-${pad(curr_date.getDate())}`)) {
+            if (curr_hours >= 4 && curr_hours < 8) {
+                emoji = "🥱";
+            } else if (curr_hours >= 20 || curr_hours < 4) {
+                emoji = "😴";
+            } else {
+                emoji = choose(["👋", "🕺", "💃", "🎮", "🎧"]);
+            }
+            return emoji;
+        }
         if(curr_day <= 5 && curr_day > 0 && curr_hours <= 17) {
             emoji = choose(["👨‍🏫", "👩‍🏫"]);
         }

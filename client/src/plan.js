@@ -93,7 +93,7 @@ export function load_plan(
             }
         }, () => {
             loading_state_updater("cache_loading_failed", true);
-            console.error("Cache loading failed!");
+            //console.error("Cache loading failed!");
         });
     }
 
