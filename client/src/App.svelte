@@ -52,9 +52,9 @@
     let footer_padding;
     let emoji;
     let greeting;
-    let form_arr;
-    let teacher_arr;
-    let room_arr;
+    let form_select_data;
+    let teacher_select_data;
+    let room_select_data;
     let revision_arr;
     let available_plan_version;
     const available_plan_version_map = {
@@ -87,9 +87,9 @@
         footer_padding = false;
         emoji = get_emoji();
         greeting = "";
-        form_arr = [];
-        teacher_arr = [];
-        room_arr = [];
+        form_select_data = [];
+        teacher_select_data = [];
+        room_select_data = [];
         revision_arr = [];
     }
 
@@ -213,18 +213,23 @@
     }
 
     function gen_form_arr(grouped_forms) {
-        form_arr = [];
+        form_select_data = [];
         for (const [form_group, forms] of Object.entries(grouped_forms)) {
             let converted_forms = [];
             for(let form of forms) {
                 converted_forms.push({"id": form, "display_name": form});
             }
-            form_arr.push([form_group !== "null" ? form_group : "Sonstige", converted_forms]);
+            form_select_data.push([form_group !== "null" ? form_group : "Sonstige", converted_forms]);
         }
     }
 
     function gen_teacher_arr(teacher_dict) {
-        teacher_arr = [];
+        let relevant_teachers = [];
+        let old_teachers = [];
+        // two weeks ago
+        console.log(date);
+        const cutoff = new Date((new Date(date) - 12096e5)).toISOString().split("T")[0];
+
         for(let teacher of Object.values(teacher_dict)) {
             let long_name = teacher.full_surname || teacher.plan_long;
             let display_name = teacher.plan_short;
@@ -233,18 +238,31 @@
                 display_name += ` (${long_name})`;
             }
 
-            teacher_arr.push({"id": teacher.plan_short, "display_name": display_name});
+            if (teacher.last_seen > cutoff) {
+                relevant_teachers.push({"id": teacher.plan_short, "display_name": display_name});
+            } else {
+                old_teachers.push({"id": teacher.plan_short, "display_name": display_name});
+            }
         }
+        console.log(relevant_teachers, old_teachers);
+        teacher_select_data = [[
+            "Aktiv",
+            relevant_teachers
+        ], [
+            "Inaktiv",
+            old_teachers
+        ]];
+
     }
 
     function gen_room_arr(grouped_rooms) {
-        room_arr = [];
+        room_select_data = [];
         for (let room_group of grouped_rooms) {
             let converted_rooms = [];
             for(let room of room_group[1]) {
                 converted_rooms.push({"id": room, "display_name": room});
             }
-            room_arr.push([room_group[0], converted_rooms]);
+            room_select_data.push([room_group[0], converted_rooms]);
         }
     }
 
@@ -364,7 +382,7 @@
     $: selected_form && set_plan("forms", selected_form);
     $: gen_form_arr(grouped_forms);
     $: selected_teacher && set_plan("teachers", selected_teacher);
-    $: gen_teacher_arr(teacher_dict);
+    $: date && gen_teacher_arr(teacher_dict);
     $: selected_room && set_plan("rooms", selected_room);
     $: gen_room_arr(grouped_rooms);
     $: gen_revision_arr(all_revisions);
@@ -469,15 +487,15 @@
                     </div>
                     <!-- Select Form -->
                     <div class="control" id="c2">
-                        <Select data={form_arr} grouped={true} bind:selected_id={selected_form} data_name="Klassen">Klasse auswählen</Select>
+                        <Select data={form_select_data} grouped={true} bind:selected_id={selected_form} data_name="Klassen">Klasse auswählen</Select>
                     </div>
                     <!-- Select Teacher -->
                     <div class="control" id="c3">
-                        <Select data={teacher_arr} bind:selected_id={selected_teacher} data_name="Lehrer">Lehrer auswählen</Select>
+                        <Select data={teacher_select_data} grouped={true} bind:selected_id={selected_teacher} data_name="Lehrer">Lehrer auswählen</Select>
                     </div>
                     <!-- Select Room -->
                     <div class="control" id="c4">
-                        <Select data={room_arr} grouped={true} bind:selected_id={selected_room} data_name="Räume">Raum auswählen</Select>
+                        <Select data={room_select_data} grouped={true} bind:selected_id={selected_room} data_name="Räume">Raum auswählen</Select>
                     </div>
                     <!-- Show room overview -->
                     <div class="control" id="c5">
