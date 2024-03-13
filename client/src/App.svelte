@@ -227,7 +227,6 @@
         let relevant_teachers = [];
         let old_teachers = [];
         // two weeks ago
-        console.log(date);
         const cutoff = new Date((new Date(date) - 12096e5)).toISOString().split("T")[0];
 
         for(let teacher of Object.values(teacher_dict)) {
@@ -244,7 +243,6 @@
                 old_teachers.push({"id": teacher.plan_short, "display_name": display_name});
             }
         }
-        console.log(relevant_teachers, old_teachers);
         teacher_select_data = [[
             "Aktiv",
             relevant_teachers
