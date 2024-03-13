@@ -80,7 +80,7 @@
     function handle_plan_data(data) {
         plan_data = data;
         info = data.info;
-        last_fetch = data.last_fetch;
+        last_fetch = data.last_fetch ?? '1970-01-01';
         is_default_plan = data.is_default_plan;
         exams = data.exams;
         week_letter = info.week;
