@@ -76,6 +76,9 @@ class DefaultPlanInfo:
             )
 
             for class_number in all_class_numbers:
+                if class_number is None:
+                    continue
+
                 info_lessons = info_lessons_by_class_number.get(class_number, models.Lessons())
                 other_info_lessons = other_info_lessons_by_class_number.get(class_number, models.Lessons())
 
@@ -85,10 +88,10 @@ class DefaultPlanInfo:
                     continue
 
                 teachers = set(sum((list(l.teachers) for l in info_lessons if l.teachers is not None), []))
-                # other_teachers = set(sum((list(l.teachers) for l in other_info_lessons if l.teachers is not None), []))
+                other_teachers = set(sum((list(l.teachers) for l in other_info_lessons if l.teachers is not None), []))
 
                 rooms = set(sum((list(l.rooms) for l in info_lessons if l.rooms is not None), []))
-                # other_rooms = set(sum((list(l.rooms) for l in other_info_lessons if l.rooms is not None), []))
+                other_rooms = set(sum((list(l.rooms) for l in other_info_lessons if l.rooms is not None), []))
 
                 courses = {l.course for l in info_lessons + other_info_lessons if l.course is not None}
 
@@ -106,8 +109,8 @@ class DefaultPlanInfo:
                         course=next(iter(courses), None),
                         parsed_info=lesson_info.ParsedLessonInfo([]),
                         class_=models.ClassData(None, None, None, class_number),
-                        teachers=teachers,
-                        rooms=rooms,
+                        teachers=teachers if teachers else other_teachers,
+                        rooms=rooms if rooms else other_rooms,
                         takes_place=False
                     ))
                 else:
@@ -165,7 +168,12 @@ class DefaultPlan:
         Run Lessons.make_plan but first insert a non-scheduled lesson (taking_place=True) for every lesson in lessons.
         """
 
-        lessons.lessons += [dataclasses.replace(lesson, takes_place=True) for lesson in lessons]
+        taking_place_lessons = []
+        for i, lesson in enumerate(lessons):
+            lesson._origin_plan_lesson_id = i
+            taking_place_lessons.append(dataclasses.replace(lesson, takes_place=True, _origin_plan_lesson_id=i))
+
+        lessons.lessons += taking_place_lessons
 
         # asserted in group_blocks_and_lesson_info
         lessons.lessons = [dataclasses.replace(l, _origin_plan_type="forms") for l in lessons.lessons]
