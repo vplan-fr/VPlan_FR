@@ -85,29 +85,29 @@ class DefaultPlanInfo:
                     continue
 
                 teachers = set(sum((list(l.teachers) for l in info_lessons if l.teachers is not None), []))
-                other_teachers = set(sum((list(l.teachers) for l in other_info_lessons if l.teachers is not None), []))
+                # other_teachers = set(sum((list(l.teachers) for l in other_info_lessons if l.teachers is not None), []))
 
                 rooms = set(sum((list(l.rooms) for l in info_lessons if l.rooms is not None), []))
-                other_rooms = set(sum((list(l.rooms) for l in other_info_lessons if l.rooms is not None), []))
+                # other_rooms = set(sum((list(l.rooms) for l in other_info_lessons if l.rooms is not None), []))
 
                 courses = {l.course for l in info_lessons + other_info_lessons if l.course is not None}
 
                 _any_lesson = next(iter(info_lessons + other_info_lessons))
                 if (
-                    len(other_teachers & teachers) > 0
-                    and (len(rooms & other_rooms) > 0 or not rooms or not other_rooms)
-                    and len(courses) == 1
+                    # len(other_teachers & teachers) > 0
+                    # and (len(rooms & other_rooms) > 0 or not rooms or not other_rooms) and
+                    len(courses) <= 1
                 ):
                     all_lessons.append(models.Lesson(
                         periods=_any_lesson.periods,
                         begin=_any_lesson.begin,
                         end=_any_lesson.end,
                         forms=_any_lesson.forms,
-                        course=next(iter(courses)),
+                        course=next(iter(courses), None),
                         parsed_info=lesson_info.ParsedLessonInfo([]),
                         class_=models.ClassData(None, None, None, class_number),
-                        teachers=teachers | other_teachers,
-                        rooms=rooms | other_rooms,
+                        teachers=teachers,
+                        rooms=rooms,
                         takes_place=False
                     ))
                 else:
