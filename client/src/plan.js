@@ -45,7 +45,7 @@ function isWeekend(date) {
 }
 
 export function getDateDisabled(enabled_dates, free_days, date) {
-    return !(enabled_dates.includes(date) || (date > enabled_dates[enabled_dates.length-1]) && !free_days.includes(date) && !isWeekend(new Date(date)));
+    return !(enabled_dates.includes(date) || (date > enabled_dates[enabled_dates.length-1]) && !free_days.includes(date) && !isWeekend(new Date(date)) && date < free_days[free_days.length-1]);
 }
 
 export function load_plan(

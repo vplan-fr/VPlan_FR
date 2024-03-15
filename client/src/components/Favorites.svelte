@@ -17,6 +17,7 @@
     $: school_nums = [...new Set(cur_favorites.map(obj => obj.school_num).filter(school_num => school_num !== ""))];
     let all_meta = {};
     let duplicated_courses_match = {};
+    let values_grouped = false;
     let plan_types = [
         {"display_name": "Klassenplan", "id": "forms"},
         {"display_name": "Lehrerplan", "id": "teachers"},
@@ -138,6 +139,7 @@
                 })
         }
     }
+
     // getting available teachers/rooms/forms
     function get_values(school_num, plan_type, stored_meta) {
         if (!stored_meta.hasOwnProperty(school_num)) {
@@ -145,7 +147,14 @@
         }
         let meta = stored_meta[school_num];
         let return_lst = [];
+        values_grouped = false;
         if (plan_type === "teachers") {
+            values_grouped = true;
+            let relevant_teachers = [];
+            let old_teachers = [];
+            // two weeks ago
+            const cutoff = new Date((new Date() - 12096e5)).toISOString().split("T")[0];
+
             for(let teacher of Object.values(meta.teachers)) {
                 let long_name = teacher.full_surname || teacher.plan_long;
                 let display_name = teacher.plan_short;
@@ -154,9 +163,19 @@
                     display_name += ` (${long_name})`;
                 }
 
-                return_lst.push({"id": teacher.plan_short, "display_name": display_name})
+                if (teacher.last_seen > cutoff) {
+                    relevant_teachers.push({"id": teacher.plan_short, "display_name": display_name});
+                } else {
+                    old_teachers.push({"id": teacher.plan_short, "display_name": display_name});
+                }
             }
-            return return_lst
+            return [[
+                "Aktiv",
+                relevant_teachers
+            ], [
+                "Inaktiv",
+                old_teachers
+            ]];
         } else if (plan_type === "rooms") {
             for (const room of Object.keys(meta.rooms)) {
                 return_lst.push({"id": room, "display_name": room})
@@ -279,7 +298,7 @@
                 <Select data={plan_types} bind:selected_id={cur_favorites[favorite].plan_type} onchange={() => {cur_favorites[favorite].plan_value = ""; cur_favorites[favorite].preferences = {}}}>Planart auswählen</Select>
                 {#if cur_favorites[favorite].plan_type}
                     {#if cur_favorites[favorite].plan_type === "forms"}
-                        <Select data={get_values(cur_favorites[favorite].school_num, cur_favorites[favorite].plan_type, all_meta)} grouped={true} bind:selected_id={cur_favorites[favorite].plan_value} data_name="{cur_favorites[favorite].plan_type}">{plan_type_map[cur_favorites[favorite].plan_type]} auswählen</Select>
+                        <Select data={get_values(cur_favorites[favorite].school_num, cur_favorites[favorite].plan_type, all_meta)} grouped={true} bind:selected_id={cur_favorites[favorite].plan_value} data_name="{plan_type_map[cur_favorites[favorite].plan_type]}">{plan_type_map[cur_favorites[favorite].plan_type]} auswählen</Select>
                         <!--choosable courses-->
                         <div class="course_chooser">
                             {#each Object.entries(
@@ -324,7 +343,7 @@
                             {/each}
                         </div>
                     {:else if cur_favorites[favorite].plan_type !== "room_overview"}
-                        <Select data={get_values(cur_favorites[favorite].school_num, cur_favorites[favorite].plan_type, all_meta)} grouped={false} bind:selected_id={cur_favorites[favorite].plan_value} data_name="{cur_favorites[favorite].plan_type}">{plan_type_map[cur_favorites[favorite].plan_type]} auswählen</Select>
+                        <Select data={get_values(cur_favorites[favorite].school_num, cur_favorites[favorite].plan_type, all_meta)} grouped={values_grouped} bind:selected_id={cur_favorites[favorite].plan_value} data_name="{cur_favorites[favorite].plan_type}">{plan_type_map[cur_favorites[favorite].plan_type]} auswählen</Select>
                     {/if}
                 {/if}
                 <Button on:click={() => {delete_favorite(favorite);}} background="var(--cancelled-color)">Favorit löschen</Button>
