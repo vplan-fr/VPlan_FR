@@ -1,14 +1,14 @@
 <script>
     import {onMount} from 'svelte';
     import Lesson from './Lesson.svelte';
-    import Rooms from "./Rooms.svelte";
-    import {notifications} from '../notifications.js';
+    import Rooms from "../Rooms.svelte";
+    import {notifications} from '../../notifications.js';
     import { swipe } from 'svelte-gestures';
-    import {indexed_db, settings, title, selected_favorite, favorites} from '../stores.js';
-    import {arraysEqual, format_date, format_timestamp, replace_hash, replace_page, update_hash} from "../utils.js";
-    import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences, getDateDisabled} from "../plan.js";
-    import {getLabelOfPeriods} from "../periods_utils.js";
-    import Dropdown from '../base_components/Dropdown.svelte';
+    import {indexed_db, settings, title, selected_favorite, favorites} from '../../stores.js';
+    import {arraysEqual, format_date, format_timestamp, replace_hash, replace_page, update_hash} from "../../utils.js";
+    import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences, getDateDisabled} from "../../plan.js";
+    import {getLabelOfPeriods} from "../../periods_utils.js";
+    import Dropdown from '../../base_components/Dropdown.svelte';
 
     export let api_base;
     export let school_num;

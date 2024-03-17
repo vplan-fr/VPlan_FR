@@ -1,6 +1,6 @@
 <script>
-    import Plan from "./components/Plan.svelte";
-    import Weekplan from "./components/Weekplan.svelte";
+    import Plan from "./components/Plan/Plan.svelte";
+    import Weekplan from "./components/Weekplan/Weekplan.svelte";
     import Authentication from "./components/Authentication.svelte";
     import LandingPage from "./components/LandingPage.svelte";
     import LandingPageNavbar from "./components/LandingPageNavbar.svelte";
@@ -509,7 +509,7 @@
                 {#if $current_page.substring(0, 4) === "plan"}
                     <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:selected_revision bind:enabled_dates bind:free_days bind:available_plan_version external_times={$settings.external_times} />
                 {:else}
-                    <Weekplan bind:api_base bind:week_start={date} bind:plan_type bind:plan_value />
+                    <Weekplan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:selected_revision bind:enabled_dates bind:free_days bind:available_plan_version />
                 {/if}
                 <!-- Select Revision (Plan Version) -->
                 {#if $settings.show_revision_selector}

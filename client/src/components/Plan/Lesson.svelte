@@ -1,8 +1,8 @@
 <script>
-    import Dropdown from "../base_components/Dropdown.svelte";
-    import {selected_favorite, settings} from "../stores";
-    import {arraysEqual} from "../utils.js";
-    import {getLabelOfPeriods} from "../periods_utils.js";
+    import Dropdown from "../../base_components/Dropdown.svelte";
+    import {selected_favorite, settings} from "../../stores.js";
+    import {arraysEqual} from "../../utils.js";
+    import {getLabelOfPeriods} from "../../periods_utils.js";
 
     export let lesson;
     export let date;
