@@ -102,7 +102,11 @@ def plan(school_num: str) -> Response:
         default_plan_data = json.loads(cache.get_meta_file("default_plan.json"))
 
         newest_date = cache.get_days()[0]
-        newest_date_week = json.loads(cache.get_plan_file(newest_date, ".newest", "_default_plan.json"))["week"]
+        try:
+            newest_date_week = json.loads(cache.get_plan_file(newest_date, ".newest", "_default_plan.json"))["week"]
+        except FileNotFoundError:
+            # TODO temporary fix oops, use newest _default_plan.json instead
+            return send_error("No default plan available for this date.")
 
         week = vplan_utils.get_future_week(
             holidays=holidays,
