@@ -143,7 +143,7 @@
         </div>
         <div class="presentation reverse">
             <h2 class="responsive-heading" style="color: rgb(150, 150, 150)">Freie Räume</h2>
-            <div style="box-shadow: 5px 5px 15px rgb(10, 10, 10); border-radius: 1rem;">
+            <div style="box-shadow: 5px 5px 15px rgb(10, 10, 10); border-radius: 1rem; height: 80vh;">
                 <img src="/public/base_static/images/landing_page/vplanfr_room_overview.png" alt="Raum-Übersicht in Better VPlan">
             </div>
         </div>
