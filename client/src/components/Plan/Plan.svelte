@@ -16,7 +16,6 @@
     export let plan_type;
     export let plan_value;
     export let meta;
-    export let show_title = true;
     export let extra_height = true;
     export let week_letter = "";
     export let external_times = true;
@@ -40,7 +39,7 @@
     let cache_loading_failed = false;
     let network_loading_failed = false;
     let data_from_cache = false;
-    let plan_type_map = {
+    const plan_type_map = {
         "forms": "Klasse",
         "rooms": "Raum",
         "teachers": "Lehrer"
@@ -229,6 +228,8 @@
         }
         update_hash(gen_location_hash("plan", school_num, date, plan_type, plan_value));
     })();
+
+    $: console.log(rooms_data);
 </script>
 
 <svelte:window on:keydown={keydown_handler}/>
@@ -236,7 +237,7 @@
 
 <div class:plan={plan_type !== "room_overview"} class:extra-height={extra_height}>
     {#if plan_type !== "room_overview"}
-        {#if show_title && info && plan_type && plan_value}
+        {#if info && plan_type && plan_value}
             {#if plan_type === "forms" && ($selected_favorite !== -1)}
                 <button on:click={() => {preferences_apply = !preferences_apply}} class="plus-btn">{preferences_apply ? "Alle Stunden anzeigen" : "Nur ausgewählte anzeigen"}</button>
             {/if}
