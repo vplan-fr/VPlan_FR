@@ -235,7 +235,7 @@
                         {#if lessons[i][0].length > 0}
                             <div class="blocks-container">
                                 {#each lessons[i][0] as lesson}
-                                    <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date />
+                                    <Lesson lesson={lesson} bind:plan_type bind:plan_value />
                                 {/each}
                             </div>
                         {/if}
@@ -243,12 +243,12 @@
                             <div class="lessons-container">
                                 <div class="lesson top">
                                     {#each lessons[i][1] as lesson}
-                                        <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date />
+                                        <Lesson lesson={lesson} bind:plan_type bind:plan_value />
                                     {/each}
                                 </div>
                                 <div class="lesson bottom">
                                     {#each lessons[i][2] as lesson}
-                                        <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date />
+                                        <Lesson lesson={lesson} bind:plan_type bind:plan_value />
                                     {/each}
                                 </div>
                             </div>
@@ -263,8 +263,6 @@
 </div>
 
 <style lang="scss">
-  $lesson_height: 4.9rem; // Needs to be changed in Weekplan.svelte as well
-
   .invalid_date > h2 > .info-btn {
     display: none;
   }
@@ -278,6 +276,11 @@
     height: calc(var(--font-size-base) + var(--padding) * 2);
     width: calc(var(--font-size-base) + var(--padding) * 2);
     line-height: var(--font-size-base);
+    @media only screen and (max-width: 900px) {
+      height: calc(var(--font-size-sm) + var(--padding) * 2);
+      width: calc(var(--font-size-sm) + var(--padding) * 2);
+      line-height: var(--font-size-sm);
+    }
     border-radius: 9vw;
 
     &.infos-available {
@@ -298,6 +301,9 @@
 
     .material-symbols-outlined {
       font-size: var(--font-size-base);
+      @media only screen and (max-width: 900px) {
+        font-size: var(--font-size-sm);
+      }
       padding: 0;
       color: rgba(255, 255, 255, 0.2);
     }
@@ -340,19 +346,33 @@
     &.first {
       border-right: 1.5px solid rgba(255, 255, 255, 0.4);
       border-radius: 1rem 0 0 0;
+      @media only screen and (max-width: 900px) {
+        border-radius: .5rem 0 0 0;
+      }
     }
 
     &.last {
       border-right: 1.5px solid rgba(255, 255, 255, 0.4);
       border-radius: 0 1rem 0 0;
+      @media only screen and (max-width: 900px) {
+        border-radius: 0 .5rem 0 0;
+      }
     }
 
     padding: 0 .5rem;
+    @media only screen and (max-width: 900px) {
+      padding: 0 .3rem;
+    }
 
     .day-heading {
       height: var(--font-size-lg);
       line-height: var(--font-size-lg);
       font-size: var(--font-size-lg);
+      @media only screen and (max-width: 900px) {
+        font-size: var(--font-size-base);
+        height: var(--font-size-base);
+        line-height: var(--font-size-base);
+      }
       font-weight: bold;
       margin-bottom: 0.5rem;
       margin-top: 0.3rem;
@@ -362,6 +382,9 @@
       justify-content: space-between;
       align-items: center;
       gap: 0.5rem;
+      @media only screen and (max-width: 900px) {
+        gap: 0.3rem;
+      }
     }
 
     .block {
@@ -390,12 +413,12 @@
         transform: translateX(-50%);
       }
 
-      height: calc(2 * $lesson_height);
+      height: calc(2 * var(--lesson-height));
       display: flex;
       flex-direction: row;
 
       .blocks-container {
-        height: calc(2 * $lesson_height);
+        height: calc(2 * var(--lesson-height));
         display: flex;
         flex-direction: row;
         gap: .4rem;
@@ -404,12 +427,12 @@
       }
 
       .lessons-container {
-        height: calc(2 * $lesson_height);
+        height: calc(2 * var(--lesson-height));
         display: flex;
         flex-direction: column;
 
         .lesson {
-          height: $lesson_height;
+          height: var(--lesson-height);
           gap: .4rem;
           padding: .2rem;
           box-sizing: border-box;

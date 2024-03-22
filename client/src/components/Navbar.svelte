@@ -73,105 +73,112 @@
 </nav>
 
 <style lang="scss">
-    nav {
-        z-index: 9999;
-        background: var(--background);
-        box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
-        height: 64px;
-        @media only screen and (max-width: 601px) {
-            height: 56px;
-            padding: 0px 5px;
-        }
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        margin-right: calc(100% - 100vw);
-        padding: 0px 20px;
+  nav {
+    z-index: 9999;
+    background: var(--background);
+    box-shadow: 0 3px 4px rgba(0, 0, 0, 0.2);
+    height: 64px;
+    @media only screen and (max-width: 601px) {
+      height: 56px;
+      padding: 0 5px;
+    }
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    margin-right: calc(100% - 100vw);
+    padding: 0 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.07);
+      pointer-events: none;
+    }
+
+    .logo-button {
+      height: 100%;
+      box-sizing: border-box;
+      border: none;
+      background: transparent;
+
+      .logo {
         box-sizing: border-box;
-
-        &::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.07);
-            pointer-events: none;
+        height: 100%;
+        padding: 10px;
+        @media only screen and (max-width: 601px) {
+          padding: 8px;
         }
-
-        .logo-button {
-            height: 100%;
-            box-sizing: border-box;
-            border: none;
-            background: transparent;
-            .logo {
-                box-sizing: border-box;
-                height: 100%;
-                padding: 10px;
-                @media only screen and (max-width: 601px) {
-                    padding: 8px;
-                }
-            }
-        }
-
-        .nav-element-wrapper {
-            position: relative;
-            display: flex;
-            flex-direction: row;
-            height: 100%;
-            float: right;
-
-            li {
-                height: 100%;
-                list-style-type: none;
-            }
-        }
-
-        .nav-button {
-            width: 100%;
-            height: 100%;
-            padding: 15px;
-            background-color: transparent;
-            border: none;
-            font-size: var(--font-size-base);
-            color: var(--text-color);
-            transition: background-color 200ms ease;
-            display: flex;
-            flex-direction: row;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 10px;
-
-            &:hover, &:focus-visible {
-                background-color: rgba(0, 0, 0, 0.3);
-            }
-
-            span {
-                position: relative;
-                font-size: 1.4em;
-            }
-        }
+      }
     }
-    .new_notification {
+
+    .nav-element-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      height: 100%;
+      float: right;
+      padding: 0 !important;
+
+      li {
+        height: 100%;
+        list-style-type: none;
+      }
+    }
+
+    .nav-button {
+      width: 100%;
+      height: 100%;
+      padding: 15px;
+      background-color: transparent;
+      border: none;
+      font-size: var(--font-size-base);
+      color: var(--text-color);
+      transition: background-color 200ms ease;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 10px;
+
+      &:hover, &:focus-visible {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+
+      span {
         position: relative;
+        font-size: 1.4em;
+      }
+    }
+  }
 
-        &::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            transform: translate(50%, -50%);
-            background: var(--accent-color);
-            width: 10px;
-            aspect-ratio: 1;
-            border-radius: 999vw;
-        }
+  .new_notification {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      transform: translate(50%, -50%);
+      background: var(--accent-color);
+      width: 10px;
+      aspect-ratio: 1;
+      border-radius: 999vw;
     }
-    .favorite-selected {
-        background: rgba(255, 255, 255, 0.2);
-        outline: 4px solid rgba(255, 255, 255, 0.2);
-        border-radius: 999vw;
-    }
+  }
+
+  .favorite-selected {
+    background: rgba(255, 255, 255, 0.2);
+    outline: 4px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999vw;
+  }
 </style>

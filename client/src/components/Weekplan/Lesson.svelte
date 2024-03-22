@@ -2,10 +2,8 @@
     import Dropdown from "../../base_components/Dropdown.svelte";
     import {active_modal, selected_favorite, settings, inspecting_lesson, inspecting_plan_type} from "../../stores.js";
     import {arraysEqual} from "../../utils.js";
-    import {getLabelOfPeriods} from "../../periods_utils.js";
 
     export let lesson;
-    export let date;
     export let plan_type;
     export let plan_value;
 
@@ -174,13 +172,13 @@
     }
 
     border: none;
-    height: calc(var(--font-size-sm) + var(--padding) * 2);
-    width: calc(var(--font-size-sm) + var(--padding) * 2);
-    line-height: var(--font-size-sm);
+    height: calc(var(--card-font-size) + var(--padding) * 2);
+    width: calc(var(--card-font-size) + var(--padding) * 2);
+    line-height: var(--card-font-size);
     border-radius: 9vw;
 
     .material-symbols-outlined {
-      font-size: var(--font-size-sm);
+      font-size: var(--card-font-size);
       padding: 0;
       color: var(--text-color);
     }
@@ -206,11 +204,7 @@
     transform: rotate(180deg);
   }
 
-  .fit-content-width {
-    width: fit-content;
-  }
-
-  .fit-content-width .dropdown-wrapper button, .form-dropdown-wrapper .dropdown-wrapper button {
+  .form-dropdown-wrapper .dropdown-wrapper button {
     &.toggle-button {
       display: flex;
       flex-direction: row;
@@ -249,52 +243,11 @@
     }
   }
 
-  .no-btn-visuals {
-    border: 0;
-    background: none;
-    padding: 0;
-    margin: 0;
-    text-align: start;
-  }
-
   .horizontal-align {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: .3em;
-  }
-
-  .lesson-info {
-    margin-top: 10px;
-    padding: .1rem !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    ul {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    min-height: unset !important;
-    font-weight: 300;
-
-    button {
-      font-weight: inherit;
-      color: var(--text-color);
-    }
-
-    .clickable {
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 5px;
-      padding: 0;
-      transition: background-color 0.2s ease;
-
-      &:hover, &:focus-visible {
-        background-color: rgba(255, 255, 255, 0.2);
-      }
-    }
-
-    .fit-content-width .dropdown-wrapper button, .form-dropdown-wrapper .dropdown-wrapper button {
-      padding: 0;
-    }
   }
 
   .info-element {
@@ -335,6 +288,7 @@
   .rooms button,
   .forms button {
     color: var(--text-color);
+    font-size: inherit;
     font-weight: 400;
     border: none;
     padding: .1rem .3rem;
@@ -386,14 +340,18 @@
   }
 
   .card {
+    --card-font-size: var(--font-size-sm);
+    @media only screen and (max-width: 900px) {
+      --card-font-size: 0.6rem;
+    }
     position: relative;
     background: var(--background);
     border-radius: .5rem;
     height: 100%;
-    min-width: 6rem;
+    min-width: 4rem;
     padding: .2rem .4rem;
     box-sizing: border-box;
-    font-size: var(--font-size-sm);
+    font-size: var(--card-font-size);
 
     &::before {
       content: "";
