@@ -147,6 +147,12 @@
                 <img src="/public/base_static/images/landing_page/vplanfr_room_overview.png" alt="Raum-Übersicht in Better VPlan">
             </div>
         </div>
+        <div class="wide-presentation">
+            <h2 class="responsive-heading" style="color: rgb(150, 150, 150)">Wochenplan</h2>
+            <div style="box-shadow: 5px 5px 15px rgb(10, 10, 10); border-radius: 1rem;">
+                <img src="/public/base_static/images/landing_page/weekplan.png" alt="Wochenplan in Better VPlan">
+            </div>
+        </div>
     </section>
     <section>
         <h2 class="responsive-heading">
@@ -504,6 +510,23 @@
     }
   }
   .plans {
+    .wide-presentation {
+      width: auto;
+      height: min-content;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 4rem;
+
+      img {
+        width: 100%;
+        border-radius: 1rem;
+        overflow: hidden;
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+        display: block;
+      }
+    }
+
     .presentation {
       width: auto;
       display: flex;
