@@ -1,6 +1,6 @@
 <script>
     import Dropdown from "../../base_components/Dropdown.svelte";
-    import {active_modal, selected_favorite, settings, inspecting_lesson} from "../../stores.js";
+    import {active_modal, selected_favorite, settings, inspecting_lesson, inspecting_plan_type} from "../../stores.js";
     import {arraysEqual} from "../../utils.js";
     import {getLabelOfPeriods} from "../../periods_utils.js";
 
@@ -33,6 +33,7 @@
         <button class="info-btn" on:click={() => {
             $active_modal = "lesson-inspect";
             $inspecting_lesson = lesson;
+            $inspecting_plan_type = plan_type;
         }}>
             <span class="material-symbols-outlined">info</span>
         </button>

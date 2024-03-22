@@ -13,6 +13,7 @@ export const favorites = writable([]);
 export const selected_favorite = writable(0);
 export const api_base = writable("");
 export const inspecting_lesson = writable(null);
+export const inspecting_plan_type = writable(null);
 export const inspecting_day = writable(null);
 
 export const register_button_visible = writable(false);

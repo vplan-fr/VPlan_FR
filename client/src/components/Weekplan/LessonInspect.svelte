@@ -1,5 +1,5 @@
 <script>
-    import {active_modal, inspecting_lesson} from "../../stores.js";
+    import {active_modal, inspecting_lesson, inspecting_plan_type} from "../../stores.js";
     import Modal from "../../base_components/Modal.svelte";
     import Button from "../../base_components/Button.svelte";
     import Lesson from "../Plan/Lesson.svelte";
@@ -11,7 +11,7 @@
     {#if $inspecting_lesson}
         <Lesson
             lesson={$inspecting_lesson}
-            plan_type={null}
+            plan_type={$inspecting_plan_type}
             plan_value={null}
             date={null}
             display_time={true}
