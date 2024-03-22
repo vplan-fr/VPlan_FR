@@ -1,10 +1,10 @@
 <script>
     import {notifications} from '../notifications.js';
-    import {logged_in, active_modal, new_changelogs_available} from '../stores.js';
+    import {logged_in, active_modal, new_changelogs_available, current_page} from '../stores.js';
     import Dropdown from '../base_components/Dropdown.svelte';
     import { fly } from 'svelte/transition';
     import {customFetch, navigate_page} from "../utils.js";
-    import {selected_favorite, favorites} from "../stores.js";
+    import {selected_favorite, favorites, settings} from "../stores.js";
 
     function logout() {
         customFetch('/auth/logout')
@@ -25,10 +25,20 @@
 </script>
 
 <nav transition:fly={{y:-64}}>
-    <button class="logo-button" on:click={() => {navigate_page("plan"); selected_favorite.set(-1)}}>
+    <button class="logo-button" on:click={() => {navigate_page($settings.weekplan_default ? "weekplan" : "plan"); selected_favorite.set(-1)}}>
         <img class="logo" src="/public/base_static/images/better_vp_white.svg" alt="Better VPlan Logo">
     </button>
     <ul class="nav-element-wrapper">
+        <li><button on:click={() => {
+            navigate_page(
+                ($current_page.startsWith("weekplan") || $current_page.startsWith("plan")) ?
+                ($current_page.startsWith("weekplan") ? "plan" : "weekplan") :
+                ($settings.weekplan_default ? "weekplan" : "plan"))}
+            } class="nav-button"><span class="material-symbols-outlined">{
+                ($current_page.startsWith("weekplan") || $current_page.startsWith("plan")) ?
+                ($current_page.startsWith("weekplan") ? "calendar_view_day" : "calendar_view_week") :
+                ($settings.weekplan_default ? "calendar_view_week" : "calendar_view_day")
+        }</span></button></li>
         <li><button on:click={() => {navigate_page("about_us")}} class="nav-button">Über uns</button></li>
         <li>
             <Dropdown>
@@ -36,7 +46,10 @@
                     <span class="material-symbols-outlined" class:favorite-selected={$selected_favorite !== -1}>star</span>
                 </button>
                 {#each $favorites as favorite, index}
-                    <button class="nav-button" on:click={() => {selected_favorite.set(index); navigate_page("plan")}}>
+                    <button class="nav-button" on:click={() => {
+                        selected_favorite.set(index);
+                        if(!$current_page.startsWith("weekplan")) navigate_page("plan");
+                    }}>
                         <span class="material-symbols-outlined" class:favorite-selected={$selected_favorite === index}>{favorite_icon_map[favorite.plan_type]}</span>
                     {favorite.name}</button>
                 {/each}

@@ -3,7 +3,7 @@
     import {notifications} from "../notifications.js";
     import Select from "../base_components/Select.svelte";
     import { onMount } from "svelte";
-    import { title } from "../stores.js";
+    import {settings, title} from "../stores.js";
     import Button from "../base_components/Button.svelte";
 
     let category = "bug";
@@ -23,7 +23,7 @@
         })
             .then(data => {
                 notifications.success("Nachricht übermittelt");
-                navigate_page("plan");
+                navigate_page($settings.weekplan_default ? "weekplan" : "plan");
             })
             .catch(error => {
                 notifications.danger(error.message);
