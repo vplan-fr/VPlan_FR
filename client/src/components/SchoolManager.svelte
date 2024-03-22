@@ -1,7 +1,7 @@
 <script>
     import {notifications} from '../notifications.js';
     import { onMount } from "svelte";
-    import { title } from "../stores";
+    import {settings, title} from "../stores";
     import {customFetch, navigate_page, update_hash} from "../utils.js";
     import Select from "../base_components/Select.svelte";
     import { fly } from 'svelte/transition';
@@ -110,7 +110,7 @@
                 school_num = authorize_school_id;
                 localStorage.setItem("school_num", school_num);
                 authorized_school_ids = [...authorized_school_ids, authorize_school_id];
-                navigate_page('plan');
+                navigate_page($settings.weekplan_default ? "weekplan" : "plan");
             })
             .catch(error => {
                 notifications.danger(error.message);
@@ -194,7 +194,7 @@
                     }
                     school_num = authorize_school_id;
                     localStorage.setItem("school_num", school_num);
-                    navigate_page("plan");
+                    navigate_page($settings.weekplan_default ? "weekplan" : "plan");
                 } else {
                     school_auth_visible = true;
                 }

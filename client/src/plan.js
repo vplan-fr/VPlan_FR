@@ -1,4 +1,4 @@
-import {get_from_db, customFetch, cache_plan} from "./utils.js";
+import {get_from_db, customFetch, cache_plan, format_revision_date} from "./utils.js";
 
 export function periods_to_block_label(periods) {
     periods.sort(function (a, b) {  return a - b;  });
@@ -197,4 +197,16 @@ export function apply_preferences(plan_type, preferences_apply, selected_favorit
         }
     }
     return new_lessons;
+}
+
+export function gen_revision_arr(all_revisions) {
+    let revision_arr = [];
+    for(const [index, revision] of Object.entries(all_revisions)) {
+        if (index == 1) {continue;}
+        revision_arr.push({
+            "id": revision,
+            "display_name": format_revision_date(revision, all_revisions[1])
+        });
+    }
+    return revision_arr;
 }

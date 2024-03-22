@@ -1,14 +1,15 @@
 <script>
-    import Dropdown from "../base_components/Dropdown.svelte";
-    import {selected_favorite, settings} from "../stores";
-    import {arraysEqual} from "../utils.js";
-    import {getLabelOfPeriods} from "../periods_utils.js";
+    import Dropdown from "../../base_components/Dropdown.svelte";
+    import {selected_favorite, settings} from "../../stores.js";
+    import {arraysEqual} from "../../utils.js";
+    import {getLabelOfPeriods} from "../../periods_utils.js";
 
     export let lesson;
     export let date;
     export let plan_type;
     export let plan_value;
     export let display_time = true;
+    export let disable_interactions = false;
 
     $: only_teacher_absent = lesson.scheduled_teachers?.length !== 0 && lesson.current_teachers?.length === 0 && lesson.takes_place;
 
@@ -61,6 +62,7 @@
                 {#if teachers.length !== 0 || s_teachers.length !== 0}
                     {#each teachers || [] as teacher}
                         <button on:click={() => {
+                            if(disable_interactions) return;
                             plan_type = "teachers";
                             plan_value = teacher;
                             selected_favorite.set(-1);
@@ -68,6 +70,7 @@
                     {/each}
                     {#each s_teachers || [] as teacher}
                         <button on:click={() => {
+                            if(disable_interactions) return;
                             plan_type = "teachers";
                             plan_value = teacher;
                             selected_favorite.set(-1);
@@ -84,6 +87,7 @@
                 {#if rooms.length !== 0 || s_rooms.length !== 0}
                     {#each rooms || [] as room}
                         <button on:click={() => {
+                            if(disable_interactions) return;
                             plan_type = "rooms";
                             plan_value = room;
                             selected_favorite.set(-1);
@@ -93,6 +97,7 @@
                     {/each}
                     {#each s_rooms || [] as room}
                         <button on:click={() => {
+                            if(disable_interactions) return;
                             plan_type = "rooms";
                             plan_value = room;
                             selected_favorite.set(-1);
@@ -112,6 +117,7 @@
             {:else if forms.length === 1 && s_forms.length === 0}
             <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
                 <button on:click={() => {
+                    if(disable_interactions) return;
                     plan_type = "forms";
                     plan_value = forms[0];
                     selected_favorite.set(-1);
@@ -120,6 +126,7 @@
             {:else if forms.length === 0 && s_forms.length === 1}
             <div class="forms max-width-center info-element vert-align" class:changed={forms_changed}>
                 <button on:click={() => {
+                    if(disable_interactions) return;
                     plan_type = "forms";
                     plan_value = s_forms[0];
                     selected_favorite.set(-1);
@@ -135,6 +142,7 @@
 
                     {#each forms as form}
                         <button on:click={() => {
+                            if(disable_interactions) return;
                             plan_type = "forms";
                             plan_value = form;
                             selected_favorite.set(-1);
@@ -142,6 +150,7 @@
                     {/each}
                     {#each s_forms as form}
                         <button on:click={() => {
+                            if(disable_interactions) return;
                             plan_type = "forms";
                             plan_value = form;
                             selected_favorite.set(-1);
@@ -163,6 +172,7 @@
                                 {#each info_message.text_segments as text_segment}
                                     {#if text_segment.link?.value.length === 1}
                                         <button class="no-btn-visuals" on:click={() => {
+                                            if(disable_interactions) return;
                                             date = text_segment.link.date;
                                             plan_type = text_segment.link.type;
                                             plan_value = text_segment.link.value[0];
@@ -180,6 +190,7 @@
 
                                                 {#each text_segment.link.value as item}
                                                     <button on:click={() => {
+                                                        if(disable_interactions) return;
                                                         date=text_segment.link.date;
                                                         plan_type = text_segment.link.type;
                                                         plan_value = item;
@@ -209,6 +220,7 @@
 
                                 {#each forms as form}
                                     <button on:click={() => {
+                                        if(disable_interactions) return;
                                         plan_type = "forms";
                                         plan_value = form;
                                     }}>{form}</button>
@@ -231,6 +243,7 @@
 
                                 {#each teachers as teacher}
                                     <button on:click={() => {
+                                        if(disable_interactions) return;
                                         plan_type = "teachers";
                                         plan_value = teacher;
                                     }}>{teacher}</button>
@@ -253,6 +266,7 @@
 
                                 {#each rooms as room}
                                     <button on:click={() => {
+                                        if(disable_interactions) return;
                                         plan_type = "rooms";
                                         plan_value = room;
                                         selected_favorite.set(-1);
