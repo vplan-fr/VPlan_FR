@@ -150,7 +150,7 @@
         <div class="wide-presentation">
             <h2 class="responsive-heading" style="color: rgb(150, 150, 150)">Wochenplan</h2>
             <div style="box-shadow: 5px 5px 15px rgb(10, 10, 10); border-radius: 1rem;">
-                <img src="/public/base_static/images/landing_page/weekplan.png" alt="Wochenplan in Better VPlan">
+                <img src="/public/base_static/images/landing_page/weekplan_desktop.png" alt="Wochenplan in Better VPlan">
             </div>
         </div>
     </section>
@@ -524,6 +524,14 @@
         overflow: hidden;
         -webkit-mask-image: -webkit-radial-gradient(white, black);
         display: block;
+
+        @media only screen and (max-width: 900px) {
+          content:url("/public/base_static/images/landing_page/weekplan.png");
+          $height: 80vh;
+          height: $height;
+          width: calc($height * 360 / 770);
+          aspect-ratio: 360 / 770;
+        }
       }
     }
 
