@@ -206,7 +206,6 @@
         <ul class="responsive-text" style="margin-bottom: 2rem;">
             <li>Push Notifications</li>
             <li>Kalendersynchronisation</li>
-            <li>Wochenplan</li>
         </ul>
     </section>
     <section class="final-cta">

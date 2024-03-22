@@ -23,7 +23,7 @@
     export let free_days;
     export let available_plan_version;
     let used_rooms_hidden = true;
-    let selected_revision;
+    let selected_revision = ".newest";
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
     let plan_data = [];

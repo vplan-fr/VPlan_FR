@@ -40,7 +40,7 @@
     {/if}
     <div class="vertical-align" style="height: 100%;">
         <!-- Subject -->
-        <div class="subject" class:changed={subject_changed} class:changed_filled_in={$settings.filled_in_buttons && subject_changed}>
+        <div class="subject extra_padding" class:changed={subject_changed} class:changed_filled_in={$settings.filled_in_buttons && subject_changed}>
             {#if lesson.scheduled_class == null && lesson.current_class == null}
                 -
             {:else}
