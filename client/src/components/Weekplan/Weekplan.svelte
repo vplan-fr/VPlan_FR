@@ -185,13 +185,14 @@
 </div>
 
 <style lang="scss">
-  $lesson_height: 4.9rem; // Needs to be changed in Day.svelte as well
-
   .week {
+    --lesson-height: 4.9rem;
+    @media only screen and (max-width: 900px) {
+        --lesson-height: 4rem;
+    }
     display: flex;
     flex-direction: row;
-    border-radius: 1rem;
-    padding-left: 10px;
+    border-radius: .5rem;
 
     width: 100%;
     overflow-x: auto;
@@ -201,6 +202,9 @@
       flex-direction: row;
       gap: 0.5rem;
       margin-right: 0.5rem;
+      @media only screen and (max-width: 900px) {
+        margin-top: calc(var(--font-size-base) + .8rem);
+      }
       margin-top: calc(var(--font-size-lg) + .8rem);
 
       &.hidden {
@@ -212,8 +216,8 @@
         flex-direction: column;
 
         span {
-          height: calc(2 * $lesson_height + .5rem);
-          line-height: calc(2 * $lesson_height + .5rem);
+          height: calc(2 * var(--lesson-height) + .5rem);
+          line-height: calc(2 * var(--lesson-height) + .5rem);
           font-weight: bold;
           font-size: var(--font-size-lg);
           text-align: center;
@@ -225,8 +229,8 @@
         flex-direction: column;
 
         span {
-          height: calc($lesson_height + .25rem);
-          line-height: calc($lesson_height + .25rem);
+          height: calc(var(--lesson-height) + .25rem);
+          line-height: calc(var(--lesson-height) + .25rem);
           opacity: 0.5;
           text-align: center;
         }
