@@ -46,69 +46,71 @@
 </dialog>
 
 <style lang="scss">
-    dialog {
-        transition: all .3s ease;
-        display: flex;
-        flex-direction: column;
-        position: fixed;
-        top: 50%;
-        left: calc(50% + (100vw - 100%) / 2);
-        transform: translate(-50%, calc(-50% - 20px));
-        margin: 0;
-        opacity: 0;
-        visibility: hidden;
-        padding: 0;
-        pointer-events: none;
-        border: none;
-        border-radius: 5px;
-        background: var(--background);
-        color: var(--text-color);
-        overflow-y: hidden;
-        min-height: 50vh;
-        max-height: calc((100% - 6px) - 2em);
-        max-width: calc(100% - 6px - 2em);
-        width: clamp(700px, 60vw, 1400px);
-        z-index: 9999;
+  dialog {
+    transition: all .3s ease;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 50%;
+    left: calc(50% + (100vw - 100%) / 2);
+    transform: translate(-50%, calc(-50% - 20px));
+    margin: 0;
+    opacity: 0;
+    visibility: hidden;
+    padding: 0;
+    pointer-events: none;
+    border: none;
+    border-radius: 5px;
+    background: var(--background);
+    color: var(--text-color);
+    overflow-y: hidden;
+    min-height: 50vh;
+    max-height: calc((100% - 6px) - 2em);
+    max-width: calc(100% - 6px - 2em);
+    width: clamp(700px, 60vw, 1400px);
+    z-index: 9999;
 
-        &.full_height {
-            height: calc((100% - 6px) - 2em);
-        }
-
-        .content-scroll {
-            overflow-y: auto;
-            padding: 20px;
-            max-height: calc((100% - 46px) - 2em);
-            flex: 1;
-        }
-
-        &::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background-color: rgba(255, 255, 255, 0.08);
-            z-index: -1;
-            pointer-events: none;
-        }
-    }
-    
-    dialog[open] {
-        transform: translate(-50%, -50%);
-        opacity: 1;
-        visibility: visible;
-        pointer-events: all;
-    }
-    
-    dialog::backdrop {
-        background-color: rgba(0, 0, 0, 0.5);
+    &.full_height {
+      height: calc((100% - 6px) - 2em);
     }
 
-    .footer {
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-end;
+    .content-scroll {
+      overflow-y: auto;
+      padding: 20px;
+      @media only screen and (max-width: 900px) {
         padding: 10px;
-        background: rgba(255, 255, 255, 0.05);
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      max-height: calc((100% - 46px) - 2em);
+      flex: 1;
     }
 
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.08);
+      z-index: -1;
+      pointer-events: none;
+    }
+  }
+
+  dialog[open] {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+  }
+
+  dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
 </style>

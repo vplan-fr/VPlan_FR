@@ -72,6 +72,10 @@ SETTINGS = {
         "default": True,
         "type": "bool",
     },
+    "weekplan_default": {
+        "default": False,
+        "type": "bool",
+    }
 }
 TYPE_FUNCTIONS = {
     "bool": {

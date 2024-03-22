@@ -1,6 +1,6 @@
 <script>
     import Dropdown from "../../base_components/Dropdown.svelte";
-    import {selected_favorite, settings} from "../../stores.js";
+    import {active_modal, selected_favorite, settings, inspecting_lesson} from "../../stores.js";
     import {arraysEqual} from "../../utils.js";
     import {getLabelOfPeriods} from "../../periods_utils.js";
 
@@ -29,6 +29,14 @@
 </script>
 
 <div class="card" class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>
+    {#if (lesson.info.length > 0) || (plan_type === "forms" && (forms.length > 1)) || (plan_type === "teachers" && (teachers.length > 1)) || (plan_type === "rooms" && (rooms.length > 1))}
+        <button class="info-btn" on:click={() => {
+            $active_modal = "lesson-inspect";
+            $inspecting_lesson = lesson;
+        }}>
+            <span class="material-symbols-outlined">info</span>
+        </button>
+    {/if}
     <div class="vertical-align" style="height: 100%;">
         <!-- Subject -->
         <div class="subject" class:changed={subject_changed} class:changed_filled_in={$settings.filled_in_buttons && subject_changed}>
@@ -48,7 +56,7 @@
         </div>
         <!-- Teachers -->
         {#if plan_type !== "teachers"}
-            <div class="teachers" class:changed={teacher_changed} class:changed_filled_in={$settings.filled_in_buttons && teacher_changed}
+            <div class="teachers info-element" class:changed={teacher_changed} class:changed_filled_in={$settings.filled_in_buttons && teacher_changed}
                  class:teacher_absent={only_teacher_absent} class:cancelled_filled_in={$settings.filled_in_buttons && only_teacher_absent}>
                 {#if teachers.length !== 0 || s_teachers.length !== 0}
                     {#each teachers || [] as teacher}
@@ -144,124 +152,38 @@
             {/if}
         {/if}
     </div>
-    <!-- TODO: Popup for Additional Infos and clickable elements -->
-    <div style="display: none !important;">
-        {#if (lesson.info.length > 0) || (plan_type === "forms" && (forms.length > 1)) || (plan_type === "teachers" && (teachers.length > 1)) || (plan_type === "rooms" && (rooms.length > 1))}
-            <div class="info-element lesson-info">
-                <ul>
-                    {#each lesson.info as info_paragraph}
-                        {#each info_paragraph as info_message}
-                            <li>
-                                <div class="horizontal-align">
-                                    {#each info_message.text_segments as text_segment}
-                                        {#if text_segment.link?.value.length === 1}
-                                            <button class="no-btn-visuals" on:click={() => {
-                                                date = text_segment.link.date;
-                                                plan_type = text_segment.link.type;
-                                                plan_value = text_segment.link.value[0];
-                                                selected_favorite.set(-1);
-                                            }}>
-                                                <div class="clickable">{text_segment.text}</div>
-                                            </button>
-                                        {:else if text_segment.link?.value.length >= 2}
-                                            <div class="fit-content-width">
-                                                <Dropdown small={true} transform_origin_x="50%">
-                                                    <button slot="toggle_button" let:toggle on:click={toggle} class="toggle-button">
-                                                        <span class="grow">{text_segment.text}</span>
-                                                        <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
-                                                    </button>
-
-                                                    {#each text_segment.link.value as item}
-                                                        <button on:click={() => {
-                                                            date=text_segment.link.date;
-                                                            plan_type = text_segment.link.type;
-                                                            plan_value = item;
-                                                            selected_favorite.set(-1);
-                                                        }}>{item}</button>
-                                                    {/each}
-                                                </Dropdown>
-                                            </div>
-                                        {:else}
-                                            <button class="no-btn-visuals">{text_segment.text}</button>
-                                        {/if}
-                                    {/each}
-                                </div>
-                            </li>
-                        {/each}
-                    {/each}
-                    {#if plan_type === "forms" && (forms.length > 1)}
-                        <li>
-                            <div class="horizontal-align">
-                                Beteiligte Klassen:
-                                <div class="fit-content-width">
-                                    <Dropdown small={true} transform_origin_x="50%">
-                                        <button slot="toggle_button" let:toggle on:click={toggle} class="toggle-button">
-                                            <span class="grow">{forms_str}</span>
-                                            <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
-                                        </button>
-
-                                        {#each forms as form}
-                                            <button on:click={() => {
-                                            plan_type = "forms";
-                                            plan_value = form;
-                                        }}>{form}</button>
-                                        {/each}
-                                    </Dropdown>
-                                </div>
-                            </div>
-                        </li>
-                    {/if}
-                    {#if plan_type === "teachers" && (teachers.length > 1)}
-                        <li>
-                            <div class="horizontal-align">
-                                Beteiligte Lehrer:
-                                <div class="fit-content-width">
-                                    <Dropdown small={true} transform_origin_x="50%">
-                                        <button slot="toggle_button" let:toggle on:click={toggle} class="toggle-button">
-                                            <span class="grow">{teachers.join(', ')}</span>
-                                            <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
-                                        </button>
-
-                                        {#each teachers as teacher}
-                                            <button on:click={() => {
-                                            plan_type = "teachers";
-                                            plan_value = teacher;
-                                        }}>{teacher}</button>
-                                        {/each}
-                                    </Dropdown>
-                                </div>
-                            </div>
-                        </li>
-                    {/if}
-                    {#if plan_type === "rooms" && (rooms.length > 1)}
-                        <li>
-                            <div class="horizontal-align">
-                                In Räumen:
-                                <div class="fit-content-width">
-                                    <Dropdown small={true} transform_origin_x="50%">
-                                        <button slot="toggle_button" let:toggle on:click={toggle} class="toggle-button">
-                                            <span class="grow">{rooms.join(', ')}</span>
-                                            <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
-                                        </button>
-
-                                        {#each rooms as room}
-                                            <button on:click={() => {
-                                            plan_type = "rooms";
-                                            plan_value = room;
-                                            selected_favorite.set(-1);
-                                        }}>{room}</button>
-                                        {/each}
-                                    </Dropdown>
-                                </div>
-                            </div>
-                        </li>
-                    {/if}
-                </ul>
-            </div>
-        {/if}
-    </div>
 </div>
 <style lang="scss">
+  .info-btn {
+    overflow: hidden;
+    --padding: .2rem;
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(30%, -20%);
+    z-index: 1;
+    padding: var(--padding);
+    background: var(--background);
+
+    &::before {
+      content: "";
+      background: rgba(255, 255, 255, 0.2);
+      position: absolute;
+      inset: 0;
+    }
+
+    border: none;
+    height: calc(var(--font-size-sm) + var(--padding) * 2);
+    width: calc(var(--font-size-sm) + var(--padding) * 2);
+    line-height: var(--font-size-sm);
+    border-radius: 9vw;
+
+    .material-symbols-outlined {
+      font-size: var(--font-size-sm);
+      padding: 0;
+      color: var(--text-color);
+    }
+  }
   .dropdown-arrow {
     font-size: 1.4em;
     display: block;
@@ -399,8 +321,8 @@
   }
 
   .changed {
-    outline: solid 3px var(--accent-color);
-    outline-offset: -3px;
+    outline: solid 1.5px var(--accent-color);
+    outline-offset: -1.5px;
   }
 
   .changed_filled_in {
@@ -414,8 +336,18 @@
     color: var(--text-color);
     font-weight: 400;
     border: none;
+    padding: .1rem .3rem;
     background: none;
     text-align: center;
+    border-radius: 5px;
+  }
+
+  .subject {
+    white-space: nowrap;
+  }
+
+  .extra_padding {
+    padding: .05rem .5rem;
   }
 
   .rooms.horizontal-align {
@@ -436,8 +368,8 @@
   }
 
   .cancelled {
-    outline: var(--cancelled-color) solid 3px;
-    outline-offset: -3px;
+    outline: var(--cancelled-color) solid 1.5px;
+    outline-offset: -1.5px;
   }
 
   .cancelled_filled_in {
@@ -457,8 +389,8 @@
     background: var(--background);
     border-radius: .5rem;
     height: 100%;
-    width: 6rem;
-    padding: .2rem;
+    min-width: 6rem;
+    padding: .2rem .4rem;
     box-sizing: border-box;
     font-size: var(--font-size-sm);
 

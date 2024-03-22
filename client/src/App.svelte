@@ -13,7 +13,7 @@
     import SveltyPicker from 'svelty-picker';
     import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache, get_favorites} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, settings, active_modal, pwa_prompt, indexed_db, selected_favorite, favorites} from './stores.js'
+    import {logged_in, title, current_page, settings, active_modal, pwa_prompt, selected_favorite, favorites, api_base} from './stores.js'
     import {getDateDisabled} from './plan.js';
     import SchoolManager from "./components/SchoolManager.svelte";
     import Changelog from "./components/Changelog.svelte";
@@ -29,6 +29,9 @@
     import { fade } from "svelte/transition";
     import FancyBackground from "./components/FancyBackground.svelte";
     import NotFound from "./components/NotFound.svelte";
+    import {gen_revision_arr} from "./plan.js";
+    import LessonInspect from "./components/Weekplan/LessonInspect.svelte";
+    import DayInspect from "./components/Weekplan/DayInspect.svelte";
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
     let school_num;
@@ -39,7 +42,6 @@
     let teacher_dict;
     let all_rooms;
     let grouped_forms;
-    let api_base;
     let selected_revision;
     let meta;
     let enabled_dates;
@@ -74,7 +76,7 @@
         teacher_dict = {};
         all_rooms = null;
         grouped_forms = [];
-        api_base = null;
+        $api_base = null;
         selected_revision = ".newest";
         meta = {};
         enabled_dates = [];
@@ -264,17 +266,6 @@
         }
     }
 
-    function gen_revision_arr(all_revisions) {
-        revision_arr = [];
-        for(const [index, revision] of Object.entries(all_revisions)) {
-            if (index == 1) {continue;}
-            revision_arr.push({
-                "id": revision,
-                "display_name": format_revision_date(revision, all_revisions[1])
-            });
-        }
-    }
-
     function customGetDateDisabled(date) {
         if(typeof date === "object") {
             date = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
@@ -330,7 +321,7 @@
         if(!load_favorite || !$settings.load_first_favorite) {
             return;
         }
-        navigate_page('plan');
+        navigate_page($settings.weekplan_default ? "weekplan" : "plan");
         if($favorites.length === 0) {
             return;
         }
@@ -358,16 +349,16 @@
     $: $logged_in && init_indexed_db();
     $: !$logged_in && logout();
     $: select_plan($favorites, $selected_favorite);
-    $: school_num && (api_base = `/api/v69.420/${school_num}`);
+    $: school_num && ($api_base = `/api/v69.420/${school_num}`);
     $: school_num && get_meta(school_num);
-    $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || []);
+    $: all_revisions = [".newest"].concat((meta?.dates || {})[date] || [])
     // If no date selected, default to today
     $: !date && (() => {
         let tmp_date = new Date();
         date = `${tmp_date.getFullYear()}-${pad(tmp_date.getMonth()+1)}-${pad(tmp_date.getDate())}`
     })();
     // If the selected date is disabled, and meta date is not disabled, set to meta date
-    $: date && customGetDateDisabled(date) && (date !== meta.date) && (() => {
+    $: date && !$current_page.startsWith("weekplan") && customGetDateDisabled(date) && (date !== meta.date) && (() => {
         date = meta.date;
     })();
     //$: school_num && get_preferences();
@@ -383,7 +374,7 @@
     $: date && gen_teacher_arr(teacher_dict);
     $: selected_room && set_plan("rooms", selected_room);
     $: gen_room_arr(grouped_rooms);
-    $: gen_revision_arr(all_revisions);
+    $: revision_arr = gen_revision_arr(all_revisions);
     $: reset_selects(plan_type);
 
     const resizeObserver = new ResizeObserver((entries) => {
@@ -404,7 +395,7 @@
             return;
         }
         navigate_page(new_location);
-        if (new_location.startsWith("plan")) {
+        if (new_location.startsWith("plan") || new_location.startsWith("weekplan")) {
             refresh_plan_vars();
         }
     });
@@ -413,7 +404,7 @@
     if(!((new_location === "login" || new_location === "register") && $logged_in)) {
         if(new_location === "favorite") {
             load_favorite = true;
-            new_location = "plan";
+            new_location = $settings.weekplan_default ? "weekplan" : "plan";
         }
         navigate_page(new_location);
     }
@@ -439,6 +430,8 @@
 
 <Settings />
 <Changelog />
+<LessonInspect />
+<DayInspect />
 
 <div id="page-container">
     <main>
@@ -472,7 +465,7 @@
                             inputClasses="datepicker-input"
                             bind:value={date}
                         />
-                        {#if available_plan_version}
+                        {#if available_plan_version && $current_page.startsWith("plan")}
                             <div class="plan-status" transition:fade|local={{duration: 200}}>
                                 {#if available_plan_version === "default_plan"}
                                     <span class="material-symbols-outlined" style="color: #dbae00">warning</span>
@@ -507,13 +500,9 @@
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
-                    <Plan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:selected_revision bind:enabled_dates bind:free_days bind:available_plan_version external_times={$settings.external_times} />
+                    <Plan bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta revision_arr={revision_arr} bind:enabled_dates bind:free_days bind:available_plan_version external_times={$settings.external_times} />
                 {:else}
-                    <Weekplan bind:api_base bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:selected_revision bind:enabled_dates bind:free_days bind:available_plan_version />
-                {/if}
-                <!-- Select Revision (Plan Version) -->
-                {#if $settings.show_revision_selector}
-                <Select data={revision_arr} bind:selected_id={selected_revision} data_name="Revisions">Zeitstempel des Planuploads auswählen</Select>
+                    <Weekplan bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:enabled_dates bind:free_days />
                 {/if}
             {:else if $current_page === "school_manager"}
                 <SchoolManager bind:school_num bind:date bind:plan_type bind:plan_value />

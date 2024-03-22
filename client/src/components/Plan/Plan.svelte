@@ -2,15 +2,13 @@
     import {onMount} from 'svelte';
     import Lesson from './Lesson.svelte';
     import Rooms from "../Rooms.svelte";
-    import {notifications} from '../../notifications.js';
     import { swipe } from 'svelte-gestures';
-    import {indexed_db, settings, title, selected_favorite, favorites} from '../../stores.js';
+    import {indexed_db, settings, title, selected_favorite, favorites, api_base} from '../../stores.js';
     import {arraysEqual, format_date, format_timestamp, replace_hash, replace_page, update_hash} from "../../utils.js";
     import {sameBlock, get_plan_version, get_teacher_data, load_plan, gen_location_hash, load_lessons, apply_preferences, getDateDisabled} from "../../plan.js";
     import {getLabelOfPeriods} from "../../periods_utils.js";
-    import Dropdown from '../../base_components/Dropdown.svelte';
+    import DayInfos from "./DayInfos.svelte";
 
-    export let api_base;
     export let school_num;
     export let date;
     export let plan_type;
@@ -20,11 +18,12 @@
     export let week_letter = "";
     export let external_times = true;
     export let all_rooms;
-    export let selected_revision;
+    export let revision_arr;
     export let enabled_dates;
     export let free_days;
     export let available_plan_version;
     let used_rooms_hidden = true;
+    let selected_revision;
 
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
     let plan_data = [];
@@ -191,7 +190,7 @@
     // === Load Plan + Lessons ===
     // Check if new plan has to be loaded and load it
     $: $indexed_db, load_plan(
-        api_base, 
+        $api_base,
         school_num, 
         date, 
         selected_revision, 
@@ -228,8 +227,6 @@
         }
         update_hash(gen_location_hash("plan", school_num, date, plan_type, plan_value));
     })();
-
-    $: console.log(rooms_data);
 </script>
 
 <svelte:window on:keydown={keydown_handler}/>
@@ -286,81 +283,17 @@
             <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
         {/if}
     {/if}
-    {#if exams && Object.keys(exams).length !== 0}
-        <div class="additional-info exams">
-            {#each Object.entries(exams) as [form, exam_list]}
-                {#if exam_list.length > 0}
-                    <div class="inline-wrapper">
-                        Klausuren für <button on:click={() => {
-                            plan_type = "forms";
-                            plan_value = form;
-                            selected_favorite.set(-1);
-                        }} class="no-btn-visuals clickable">{form}</button>:
-                        <ul>
-                            {#each exam_list as exam}
-                                <li>{exam.course} bei <button on:click={() => {
-                                        plan_type = "teachers";
-                                        plan_value = exam.course_teacher;
-                                        selected_favorite.set(-1);
-                                    }} class="no-btn-visuals clickable" style="color: var(--text-color); font-size: inherit; margin-top: 0.3em;">{exam.course_teacher}</button>: {exam.begin} Uhr ({exam.duration}min)</li>
-                            {/each}
-                        </ul>
-                    </div>
-                {:else}
-                    <div class="info-spacer"></div>
-                {/if}
-            {/each}
-        </div>
-    {/if}
-    {#if info}
-        {#if info.additional_info.length > 0}
-            <div class="additional-info">
-                {#each info.processed_additional_info as info_paragraph}
-                    {#if info_paragraph.length > 0}
-                        <div class="inline-wrapper">
-                            {#each info_paragraph as text_segment}
-                                {#if text_segment.link?.value.length === 1}
-                                    <button class="no-btn-visuals" on:click={() => {
-                                        date = text_segment.link.date;
-                                        plan_type = text_segment.link.type;
-                                        plan_value = text_segment.link.value[0];
-                                        selected_favorite.set(-1);
-                                    }}>
-                                        <div class="clickable">{text_segment.text}</div>
-                                    </button>
-                                {:else if text_segment.link?.value.length >= 2}
-                                    <div class="fit-content-width">
-                                        <Dropdown small={true} transform_origin_x="50%">
-                                            <button slot="toggle_button" let:toggle on:click={toggle} class="toggle-button">
-                                                <span class="grow">{text_segment.text}</span>
-                                                <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
-                                            </button>
-
-                                            {#each text_segment.link.value as item}
-                                                <button on:click={() => {
-                                                    date=text_segment.link.date;
-                                                    plan_type = text_segment.link.type;
-                                                    plan_value = item;
-                                                    selected_favorite.set(-1);
-                                                }}>{item}</button>
-                                            {/each}
-                                        </Dropdown>
-                                    </div>
-                                {:else}
-                                    {text_segment.text}
-                                {/if}
-                            {/each}
-                        </div>
-                    {:else}
-                        <div class="info-spacer"></div>
-                    {/if}
-                {/each}
-            </div>
-        {/if}
-        <div class="last-updated">
-            {#if !is_default_plan}Plan zuletzt aktualisiert: <span class="custom-badge">{format_timestamp(info.timestamp)}</span><br>{/if}
-            Zuletzt auf neue Pläne überprüft: <span class="custom-badge">{format_timestamp(last_fetch)}</span></div>
-    {/if}
+    <DayInfos
+        {exams}
+        {info}
+        {revision_arr}
+        {is_default_plan}
+        {last_fetch}
+        bind:selected_revision
+        bind:date
+        bind:plan_type
+        bind:plan_value
+    />
 </div>
 <div class="day-controls">
     <button tabindex="-1" on:click={() => {change_day(-1);}} class:hidden={!show_left_key} class:is_default_plan={left_key_default_plan}><span class="material-symbols-outlined left">arrow_back_ios_new</span></button>
@@ -375,17 +308,6 @@
         border-radius: 10px;
         box-sizing: border-box;
         padding: .08em 0;
-    }
-
-    .inline-wrapper > * {
-        font-size: inherit;
-        color: var(--text-color);
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
-
-    .info-spacer {
-        height: 5px;
     }
 
     .dropdown-arrow {
@@ -407,70 +329,6 @@
 
     :global(.open) .dropdown-arrow {
         transform: rotate(180deg);
-    }
-
-    .fit-content-width {
-        width: fit-content;
-    }
-
-    .fit-content-width .dropdown-wrapper button, .max-width .dropdown-wrapper button {
-        border: none;
-        background: transparent;
-        color: var(--text-color);
-        transition: background-color .2s ease;
-        width: 100%;
-        padding: 2px 0px 2px 5px;
-        font-size: inherit;
-
-        &:hover, &:focus-visible {
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
-        &.toggle-button {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 5px;
-            overflow: hidden;
-            text-align: left;
-            font-size: inherit;
-            font-weight: inherit;
-            color: var(--text-color);
-
-            span.grow {
-                flex: 1;
-                white-space: nowrap;
-            }
-            
-            &.center-align {
-                text-align: center;
-            }
-
-            &:hover, &:focus-visible {
-                background-color: rgba(255, 255, 255, 0.15);
-            }
-        }
-    }
-
-    .no-btn-visuals {
-        border: 0;
-        background: none;
-        padding: 0;
-        margin: 0;
-        text-align: start;
-    }
-
-    .clickable {
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 5px;
-        padding: 2px 5px;
-        transition: background-color 0.2s ease;
-
-        &:hover, &:focus-visible {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
     }
 
     .day-controls {
@@ -596,50 +454,16 @@
     }
 
     .custom-badge {
-        display: inline-flex;
-        flex-direction: row;
-        column-gap: .3em;
-        align-items: center;
+      display: inline-flex;
+      flex-direction: row;
+      column-gap: .3em;
+      align-items: center;
 
-        background: rgba(255, 255, 255, 0.07);
-        padding: 2px 7px;
-        border-radius: 5px;
-        white-space: nowrap;
-        margin-bottom: .2em;
-    }
-
-    .last-updated {
-        font-size: var(--font-size-base);
-        line-height: 1.5;
-        margin-top: 20px;
-        display: block !important;
-    }
-
-    .additional-info {
-        position: relative;
-        font-size: var(--font-size-base);
-        line-height: 1.5;
-        border: clamp(1px, .3vmax, 3px) solid rgba(255, 255, 255, 0.2);
-        padding: 10px;
-        padding-top: calc(10px + var(--font-size-md) / 2);
-        margin-top: 30px;
-        border-radius: 5px;
-
-        &::before {
-            content: "Informationen";
-            font-size: var(--font-size-md);
-            color: rgba(255, 255, 255, 0.2);
-            background: var(--background);
-            padding: 0px 5px;
-            position: absolute;
-            top: 0;
-            left: 20px;
-            transform: translateY(-50%);
-        }
-
-        &.exams::before {
-            content: "Klausuren";
-        }
+      background: rgba(255, 255, 255, 0.07);
+      padding: 2px 7px;
+      border-radius: 5px;
+      white-space: nowrap;
+      margin-bottom: .2em;
     }
 
     .no-linebreak {

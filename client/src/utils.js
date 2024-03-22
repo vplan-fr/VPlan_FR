@@ -127,7 +127,7 @@ export function replace_page(page_id) {
 }
 
 function change_page(page_id) {
-    if(page_id === "plan" && get(current_page).startsWith("plan")) {return false;}
+    if((page_id === "plan" || page_id === "weekplan") && get(current_page).startsWith(page_id)) {return false;}
     current_page.set(page_id);
     register_button_visible.set(false);
     // console.log(`Changed Location to: "${page_id}"`);

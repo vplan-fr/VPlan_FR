@@ -75,9 +75,22 @@
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.normal_greetings}>Normale Begrüßungen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.chatgpt_greetings}>ChatGPT Begrüßungen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.load_first_favorite}>Beim Start den ersten Favoriten laden</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.weekplan_default}>Standardmäßig den Wochenplan öffnen</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.swipe_day_change}>Swipen um Tag zu wechseln</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.day_switch_keys}>Pfeiltasten (Tastatur) zum Tag wechseln nutzen</span>
+        <h2 class="category-heading">Aussehen</h2>
+        <span class="responsive-text"><input type="color" bind:value={temp_settings.background_color}>Hintergrundfarbe</span>
+        <span class="responsive-text"><input type="color" bind:value={temp_settings.text_color}>Textfarbe</span>
+        <span class="responsive-text"><input type="color" bind:value={temp_settings.accent_color}>Akzentfarbe</span>
+        <span class="responsive-text"><input type="color" bind:value={temp_settings.cancelled_color}>Ausfallfarbe</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.external_times}>Externe Unterrichtszeiten</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.filled_in_buttons}>Ausgefüllte Buttons (Bei Änderungen / Ausfall)</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.rainbow}>Regenbogen 🌈</span>
+        <h2 class="category-heading">Nerd Section</h2>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.show_revision_selector}>Planversion auswählbar machen</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.use_grouped_form_plans}>Lehrer/Raumpläne nur als umgeordnete Klassenpläne anzeigen. (Bsp.: Lehreränderung bei Klassenplan wird nicht zu Ausfall im Lehrerplan des ursprünglichen Lehrers)</span>
         {#if is_admin}
+            <h2 class="category-heading">Admin-Section</h2>
             <h2 class="category-heading">Push-Benachrichtigungen</h2>
             <Button on:click={
                 async () => {
@@ -104,17 +117,6 @@
             } class="nav-button">Push-Benachrichtigungen testen
             </Button>
         {/if}
-        <h2 class="category-heading">Aussehen</h2>
-        <span class="responsive-text"><input type="color" bind:value={temp_settings.background_color}>Hintergrundfarbe</span>
-        <span class="responsive-text"><input type="color" bind:value={temp_settings.text_color}>Textfarbe</span>
-        <span class="responsive-text"><input type="color" bind:value={temp_settings.accent_color}>Akzentfarbe</span>
-        <span class="responsive-text"><input type="color" bind:value={temp_settings.cancelled_color}>Ausfallfarbe</span>
-        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.external_times}>Externe Unterrichtszeiten</span>
-        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.filled_in_buttons}>Ausgefüllte Buttons (Bei Änderungen / Ausfall)</span>
-        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.rainbow}>Regenbogen 🌈</span>
-        <h2 class="category-heading">Nerd Section</h2>
-        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.show_revision_selector}>Planversion auswählbar machen</span>
-        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.use_grouped_form_plans}>Lehrer/Raumpläne nur als umgeordnete Klassenpläne anzeigen. (Bsp.: Lehreränderung bei Klassenplan wird nicht zu Ausfall im Lehrerplan des ursprünglichen Lehrers)</span>
         <br>
         <div class="horizontal-container">
             <Button on:click={reset_settings} class="split">Einstellungen zurücksetzen</Button>

@@ -1,6 +1,6 @@
 <script>
     import { onMount } from "svelte";
-    import { pwa_prompt, title } from "../stores";
+    import { pwa_prompt, title, settings } from "../stores";
     import { notifications } from "../notifications";
     import {navigate_page, update_hash} from "../utils";
     import Button from "../base_components/Button.svelte";
@@ -11,7 +11,7 @@
         $pwa_prompt = null;
         if(outcome === "accepted") {
             notifications.success("App erfolgreich installiert!");
-            navigate_page('plan');
+            navigate_page($settings.weekplan_default ? "weekplan" : "plan");
         } else if (outcome === "dismissed") {
             notifications.danger("App konnte nicht installiert werden.");
         }
@@ -30,7 +30,7 @@
         Um <b>online</b> und <b>offline</b> schnell an deinen Stundenplan zu kommen, lade die Website als <b>App</b> herunter:
     </span>
     <Button on:click={try_install} id="pwa-install-btn" background="var(--accent-color)">Installieren <span class="material-symbols-outlined">install_mobile</span></Button>
-    <button class="skip-btn" on:click={() => {navigate_page('plan')}}>Weiter</button>
+    <button class="skip-btn" on:click={() => {navigate_page($settings.weekplan_default ? "weekplan" : "plan")}}>Weiter</button>
     {:else}
     <span class="responsive-text">
         Um <b>online</b> und <b>offline</b> schnell an deinen Stundenplan zu kommen, lade die Website als <b>App</b> herunter:<br><br>
@@ -49,7 +49,7 @@
             <li>Klicke in der Suchleiste (rechts) auf <div class="custom-badge">Better VPlan installieren <span class="material-symbols-outlined">install_desktop</span></div></li>
         </ul>
     </span>
-    <Button on:click={() => {navigate_page('plan')}} background="var(--accent-color)" id="pwa-continue-btn">Weiter <span class="material-symbols-outlined">chevron_right</span></Button>
+    <Button on:click={() => {navigate_page($settings.weekplan_default ? "weekplan" : "plan")}} background="var(--accent-color)" id="pwa-continue-btn">Weiter <span class="material-symbols-outlined">chevron_right</span></Button>
     {/if}
 </main>
 
