@@ -352,6 +352,7 @@
     padding: .2rem .4rem;
     box-sizing: border-box;
     font-size: var(--card-font-size);
+    flex: 1;
 
     &::before {
       content: "";

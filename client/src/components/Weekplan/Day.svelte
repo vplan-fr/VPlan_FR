@@ -424,6 +424,7 @@
         gap: .4rem;
         padding: .2rem;
         box-sizing: border-box;
+        flex: 1
       }
 
       .lessons-container {
