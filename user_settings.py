@@ -57,7 +57,7 @@ SETTINGS = {
         "type": "bool",
     },
     "filled_in_buttons": {
-        "default": False,
+        "default": True,
         "type": "bool",
     },
     "swipe_day_change": {
@@ -75,6 +75,10 @@ SETTINGS = {
     "weekplan_default": {
         "default": False,
         "type": "bool",
+    },
+    "filled_in_weekplan": {
+        "default": False,
+        "type": "bool"
     }
 }
 TYPE_FUNCTIONS = {

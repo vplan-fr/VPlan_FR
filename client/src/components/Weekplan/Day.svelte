@@ -233,14 +233,14 @@
                 {#each {length: block_count} as _, i}
                     <div class="block">
                         {#if lessons[i][0].length > 0}
-                            <div class="blocks-container">
+                            <div class="blocks-container" class:filled_in_weekplan={$settings.filled_in_weekplan}>
                                 {#each lessons[i][0] as lesson}
                                     <Lesson lesson={lesson} bind:plan_type bind:plan_value />
                                 {/each}
                             </div>
                         {/if}
                         {#if lessons[i][1].length > 0 || lessons[i][2].length > 0}
-                            <div class="lessons-container">
+                            <div class="lessons-container" class:filled_in_weekplan={$settings.filled_in_weekplan}>
                                 <div class="lesson top">
                                     {#each lessons[i][1] as lesson}
                                         <Lesson lesson={lesson} bind:plan_type bind:plan_value />
@@ -424,12 +424,20 @@
         gap: .4rem;
         padding: .2rem;
         box-sizing: border-box;
+
+        &.filled_in_weekplan {
+            flex: 1
+        }
       }
 
       .lessons-container {
         height: calc(2 * var(--lesson-height));
         display: flex;
         flex-direction: column;
+
+        &.filled_in_weekplan {
+          flex: 1
+        }
 
         .lesson {
           height: var(--lesson-height);

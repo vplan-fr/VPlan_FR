@@ -85,6 +85,7 @@
         <span class="responsive-text"><input type="color" bind:value={temp_settings.cancelled_color}>Ausfallfarbe</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.external_times}>Externe Unterrichtszeiten</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.filled_in_buttons}>Ausgefüllte Buttons (Bei Änderungen / Ausfall)</span>
+        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.filled_in_weekplan}>Unterrichtsstunden füllen die komplette Breite beim Wochenplan</span>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.rainbow}>Regenbogen 🌈</span>
         <h2 class="category-heading">Nerd Section</h2>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.show_revision_selector}>Planversion auswählbar machen</span>

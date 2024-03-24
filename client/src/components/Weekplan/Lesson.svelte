@@ -26,7 +26,7 @@
     $: forms_changed = lesson.forms_changed && lesson.takes_place && !lesson.is_unplanned;
 </script>
 
-<div class="card" class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>
+<div class="card" class:filled_in_weekplan={$settings.filled_in_weekplan} class:cancelled={!lesson.takes_place} class:changed={lesson.is_unplanned}>
     {#if (lesson.info.length > 0) || (plan_type === "forms" && (forms.length > 1)) || (plan_type === "teachers" && (teachers.length > 1)) || (plan_type === "rooms" && (rooms.length > 1))}
         <button class="info-btn" on:click={() => {
             $active_modal = "lesson-inspect";
@@ -352,6 +352,10 @@
     padding: .2rem .4rem;
     box-sizing: border-box;
     font-size: var(--card-font-size);
+
+    &.filled_in_weekplan {
+        flex: 1;
+    }
 
     &::before {
       content: "";
