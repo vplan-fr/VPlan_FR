@@ -257,8 +257,8 @@
 
     &.teacher_absent {
       background: rgba(255, 255, 255, 0.08);
-      outline: 3px solid var(--cancelled-color);
-      outline-offset: -3px;
+      outline: 1.5px solid var(--cancelled-color);
+      outline-offset: -1.5px;
     }
 
     & > button {
@@ -295,6 +295,7 @@
     background: none;
     text-align: center;
     border-radius: 5px;
+    line-height: normal;
   }
 
   .subject {
@@ -303,6 +304,7 @@
 
   .extra_padding {
     padding: .05rem .5rem;
+    line-height: normal;
   }
 
   .rooms.horizontal-align {
