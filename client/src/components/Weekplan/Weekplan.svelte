@@ -186,7 +186,7 @@
 
 <style lang="scss">
   .week {
-    --lesson-height: 4.9rem;
+    --lesson-height: 5.2rem;
     @media only screen and (max-width: 900px) {
         --lesson-height: 4rem;
     }
