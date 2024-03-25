@@ -220,6 +220,9 @@
           line-height: calc(2 * var(--lesson-height) + .5rem);
           font-weight: bold;
           font-size: var(--font-size-lg);
+          @media only screen and (max-width: 900px) {
+            font-size: var(--font-size-base);
+          }
           text-align: center;
         }
       }
@@ -229,6 +232,10 @@
         flex-direction: column;
 
         span {
+          font-size: var(--font-size-base);
+          @media only screen and (max-width: 900px) {
+            font-size: var(--font-size-sm);
+          }
           height: calc(var(--lesson-height) + .25rem);
           line-height: calc(var(--lesson-height) + .25rem);
           opacity: 0.5;
