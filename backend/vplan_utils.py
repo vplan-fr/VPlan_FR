@@ -10,7 +10,7 @@ from collections import defaultdict
 _parse_form_pattern = re.compile(
     r"(?<!\S)(?:"
     r"(?P<major>\d{1,2}(?!\d)|[A-Za-zÄÖÜäöüß]+(?![A-Za-zÄÖÜäöüß]))"
-    r"(?P<sep> |[/._]|[^A-Za-zÄÖÜäöüß0-9() \n]?)(?:(?<! ) )?"
+    r"(?P<sep> |[/._]|[^A-Za-zÄÖÜäöüß0-9():;\[\]{} \n]?)(?:(?<! ) )?"
     r"(?P<minor>"
     r"(?:\d{1,2}[A-Za-zÄÖÜäöüß]?|[A-Za-zÄÖÜäöüß]+\d{0,2})"
     r"(?:,(?:\d{1,2}[A-Za-zÄÖÜäöüß]?|[A-Za-zÄÖÜäöüß]+\d{0,2}))*"
@@ -20,7 +20,7 @@ _parse_form_pattern = re.compile(
 _loose_parse_form_pattern = re.compile(
     r"(?<!\S)(?:"
     r"(?P<major>\d{1,2}(?!\d)|[A-Za-zÄÖÜäöüß]+(?![A-Za-zÄÖÜäöüß]))"
-    r"(?P<sep> |[/._]|[^A-Za-zÄÖÜäöüß0-9() \n]?)(?:(?<! ) )?"
+    r"(?P<sep> |[/._]|[^A-Za-zÄÖÜäöüß0-9():;\[\]{} \n]?)(?:(?<! ) )?"
     r"(?P<minor>"
     r"(?:\d{1,2}[A-Za-zÄÖÜäöüß]?|[A-Za-zÄÖÜäöüß]+\d{0,2})"
     r"(?:,(?:\d{1,2}[A-Za-zÄÖÜäöüß]?|[A-Za-zÄÖÜäöüß]+\d{0,2}))*"
