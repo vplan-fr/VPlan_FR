@@ -38,7 +38,7 @@
     {/if}
     <div class="vertical-align" style="height: 100%;">
         <!-- Subject -->
-        <div class="subject extra_padding" class:changed={subject_changed} class:changed_filled_in={$settings.filled_in_buttons && subject_changed}>
+        <div class="subject" class:changed={subject_changed} class:changed_filled_in={$settings.filled_in_buttons && subject_changed}>
             {#if lesson.scheduled_class == null && lesson.current_class == null}
                 -
             {:else}
@@ -295,7 +295,6 @@
     background: none;
     text-align: center;
     border-radius: 5px;
-    line-height: normal;
   }
 
   .subject {
@@ -303,7 +302,10 @@
   }
 
   .extra_padding {
-    padding: .05rem .5rem;
+    padding: .1rem .5rem;
+    @media only screen and (max-width: 900px) {
+      padding: .05rem .5rem;
+    }
     line-height: normal;
   }
 
