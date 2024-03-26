@@ -172,6 +172,7 @@
                 notifications.danger(error.message);
             });
     }
+    let auth_btn_disabled = false;
 </script>
 
 <svelte:head>
@@ -236,12 +237,20 @@
                 <button type="button" on:click={() => {password_visible = !password_visible}} tabindex="-1">
                     <span class="material-symbols-outlined">{password_visible ? "visibility_off" : "visibility"}</span>
                 </button>
-                <input disabled={!school_auth_visible} autocomplete="off" name="school_password" on:input={(event) => {password = event.target.value}} type={password_visible ? "text" : "password"} required class="textfield" placeholder="Schul-Passwort"/>
+                <input disabled={!school_auth_visible} autocomplete="off" name="school_password" on:input={(event) => {
+                    password = event.target.value;
+                    // if autofilled, warn user that they're probably trying the wrong password
+                    if(window.getComputedStyle(event.target, ":-webkit-autofill").getPropertyValue("background-color") !== "rgba(255, 255, 255, 0.1)") {
+                        auth_btn_disabled = true;
+                        notifications.warning("Denk daran, dass nicht dein Accountpasswort gefragt ist ;)", 4000);
+                        setTimeout(function(){auth_btn_disabled = false;}, 4000);
+                    }
+                }} type={password_visible ? "text" : "password"} required class="textfield" placeholder="Schul-Passwort"/>
             </div>
         {:else}
             <span class="responsive-text">(Für diese Schule benötigst du keine Zugangsdaten)</span>
         {/if}
-        <Button type="submit" background="var(--accent-color)">Autorisieren</Button>
+        <Button type="submit" background="var(--accent-color)" disabled={auth_btn_disabled}>Autorisieren</Button>
     </form>
     {:else}
         <form transition:fly|local={{x: 600}} on:submit|preventDefault={add_school} autocomplete="off">
