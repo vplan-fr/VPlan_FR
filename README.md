@@ -66,4 +66,4 @@ and in another terminal, the npm dev server using:
 - `cd client`
 - `npm run dev`
 
-If you have any more questions or need help with the setup, don't hesitate to [contact us](https://vplan.fr/#contact). :) 
+If you have any more questions or need help with the setup, don't hesitate to [contact us](https://vplan.fr/#contact). :)
