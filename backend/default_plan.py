@@ -6,7 +6,7 @@ import datetime
 import logging
 import typing
 
-from . import models, lesson_info
+from . import models, lesson_info, blocks
 
 
 @dataclasses.dataclass
@@ -163,7 +163,8 @@ class DefaultPlan:
         return True
 
     @staticmethod
-    def make_plan(lessons: models.Lessons, plan_type: typing.Literal["forms", "teachers", "rooms"]) -> dict:
+    def make_plan(lessons: models.Lessons, plan_type: typing.Literal["forms", "teachers", "rooms"],
+                  block_config: blocks.BlockConfiguration) -> dict:
         """
         Run Lessons.make_plan but first insert a non-scheduled lesson (taking_place=True) for every lesson in lessons.
         """
@@ -178,13 +179,22 @@ class DefaultPlan:
         # asserted in group_blocks_and_lesson_info
         lessons.lessons = [dataclasses.replace(l, _origin_plan_type="forms") for l in lessons.lessons]
 
-        return lessons.group_blocks_and_lesson_info("forms").make_plan(plan_type, plan_type=plan_type)
+        return (
+            lessons
+            .group_blocks_and_lesson_info(origin_plan_type="forms", block_config=block_config)
+            .make_plan(plan_type, plan_type=plan_type)
+        )
 
-    def export(self):
+    def export(self, block_config: blocks.BlockConfiguration):
+        # noinspection PyTypeChecker
         return {
             week_number: {
                 week_day: {
-                    plan_type: self.make_plan(models.Lessons(default_plan_info.unchanged_lessons), plan_type)
+                    plan_type: self.make_plan(
+                        models.Lessons(default_plan_info.unchanged_lessons),
+                        plan_type,
+                        block_config=block_config
+                    )
                     for plan_type in ("forms", "teachers", "rooms")
                 }
                 for week_day, default_plan_info in week.default_plan_info_by_weekday.items()

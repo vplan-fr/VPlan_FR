@@ -21,6 +21,7 @@
     export let revision_arr;
     export let enabled_dates;
     export let free_days;
+    export let block_config;
     export let available_plan_version;
     let used_rooms_hidden = true;
     let selected_revision = ".newest";
@@ -262,10 +263,10 @@
                 {#each lessons as lesson, i}
                     {#if external_times}    
                         {#if !all_lessons[i-1] || (!arraysEqual(lesson.periods, lessons[i-1].periods))}
-                            <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{getLabelOfPeriods(lesson.periods)}{lesson.begin != null && lesson.end != null ? ": " + lesson.begin + " - " + lesson.end : ""}</span>
+                            <span class="lesson-time" class:gap={lessons[i-1] && !sameBlock(lesson.periods, lessons[i-1].periods)}>{getLabelOfPeriods(lesson.periods, block_config)}{lesson.begin != null && lesson.end != null ? ": " + lesson.begin + " - " + lesson.end : ""}</span>
                         {/if}
                     {/if}
-                    <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date display_time={!external_times} />
+                    <Lesson lesson={lesson} bind:plan_type bind:plan_value bind:date bind:block_config display_time={!external_times} />
                 {/each}
             </div>
             {/if}
@@ -280,7 +281,7 @@
         {:else if loading_failed}
             <span class="responsive-text">Plan{#if is_default_plan}vorhersage{/if} konnte nicht geladen werden</span>
         {:else}
-            <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
+            <Rooms rooms_data={rooms_data} bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden bind:block_config/>
         {/if}
     {/if}
     <DayInfos

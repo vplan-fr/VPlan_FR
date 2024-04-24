@@ -8,6 +8,7 @@
     export let date;
     export let plan_type;
     export let plan_value;
+    export let block_config;
     export let display_time = true;
     export let disable_interactions = false;
 
@@ -35,7 +36,7 @@
         <!-- Optional: Time -->
         {#if display_time}
             <div class="vert-align max-width-center lesson-time-info">
-                <span class="lesson-period">{getLabelOfPeriods(lesson.periods)}</span>
+                <span class="lesson-period">{getLabelOfPeriods(lesson.periods, block_config)}</span>
                 <span class="lesson-time">{lesson.begin}</span>
             </div>
         {/if}

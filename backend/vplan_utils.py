@@ -205,55 +205,6 @@ def forms_to_str(forms: typing.Iterable[str]) -> str:
     return parsed_forms_to_str([ParsedForm.from_str(form) for form in forms])
 
 
-def get_block_of_period(period: int) -> int:
-    return (period - 1) // 2 + 1
-
-
-def get_periods_of_block(block: int) -> list[int]:
-    return [block * 2 - 1, block * 2]
-
-
-def get_label_of_periods(periods: typing.Iterable[int]) -> str:
-    periods = sorted(set(periods))
-
-    # work out whether we can display as "Block X" or "Stunde X"
-    all_block_periods = set(sum((get_periods_of_block(get_block_of_period(p)) for p in periods), []))
-    if not all_block_periods - set(periods):
-        # block label
-        blocks = sorted(set(get_block_of_period(p) for p in periods))
-        seqs = _increasing_sequences(blocks)
-        out = []
-        for seq in seqs:
-            if len(seq) == 1:
-                out.append(f"{seq[0]}")
-            elif len(seq) == 2:
-                out.append(f"{seq[0]},{seq[-1]}")
-            else:
-                out.append(f"{seq[0]}-{seq[-1]}")
-
-        if len(blocks) == 1:
-            return f"Block {out[0]}"
-        else:
-            return f"Blöcke {','.join(out)}"
-
-    else:
-        # stunde label
-        seqs = _increasing_sequences(periods)
-        out = []
-        for seq in seqs:
-            if len(seq) == 1:
-                out.append(f"{seq[0]}")
-            elif len(seq) == 2:
-                out.append(f"{seq[0]},{seq[-1]}")
-            else:
-                out.append(f"{seq[0]}-{seq[-1]}")
-
-        if len(periods) == 1:
-            return f"Stunde {out[0]}"
-        else:
-            return f"Stunden {','.join(out)}"
-
-
 def _parse_periods(period_str: str) -> list[int]:
     try:
         def period_str_to_int(string: str) -> int:

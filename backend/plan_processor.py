@@ -6,7 +6,7 @@ import logging
 import xml.etree.ElementTree as ET
 
 from shared import comm
-from . import schools, default_plan, events
+from . import schools, default_plan, events, blocks
 from shared.cache import Cache
 from .meta_extractor import MetaExtractor
 from .teacher import Teachers
@@ -25,9 +25,22 @@ class PlanProcessor:
         self.cache = cache
         self.school_number = school_number
         self.meta_extractor = MetaExtractor(self.cache, logger=self._logger)
+        # TODO: Pass from outside
+        self.block_config: blocks.BlockConfiguration = None
         self.teachers = Teachers()
 
         self.load_teachers()
+
+        if self.block_config is None:
+            default_times_by_form = self.meta_extractor.default_times()
+
+            default_times_info = sorted(default_times_by_form.values(), key=lambda x: len(x.data))
+            if default_times_info:
+                self.block_config = blocks.BlockConfiguration.from_default_times(
+                    default_times_info[-1]
+                )
+            else:
+                self.block_config = blocks.BlockConfiguration({})
 
     def load_teachers(self):
         self._logger.debug("* Loading cached teachers...")
@@ -82,7 +95,7 @@ class PlanProcessor:
                 vplan_kl = None
 
             students_plan_extractor = StudentsPlanExtractor(
-                plan_kl, vplan_kl, self.teachers, logger=self._logger
+                plan_kl, vplan_kl, self.teachers, self.block_config, logger=self._logger
             )
         except FileNotFoundError:
             self._logger.warning(f"=> Could not find Indiware form plan for date {date!s} and timestamp {timestamp!s}.")
@@ -95,7 +108,7 @@ class PlanProcessor:
                     "forms": (form_plan := students_plan_extractor.form_plan_extractor.plan()),
                     "teachers": students_plan_extractor.teacher_plan_extractor.plan(),
                     "rooms": students_plan_extractor.room_plan_extractor.plan(),
-                }, default=PlanLesson.serialize),
+                }, default=lambda plan_lesson: PlanLesson.serialize(plan_lesson, block_config=self.block_config)),
                 "plans.json"
             )
             self.cache.store_plan_file(
@@ -106,8 +119,10 @@ class PlanProcessor:
 
             self.cache.store_plan_file(
                 date, timestamp,
-                json.dumps(students_plan_extractor.form_plan_extractor.grouped_form_plans(),
-                           default=PlanLesson.serialize),
+                json.dumps(
+                    students_plan_extractor.form_plan_extractor.grouped_form_plans(),
+                    default=lambda plan_lesson: PlanLesson.serialize(plan_lesson, block_config=self.block_config)
+                ),
                 "grouped_form_plans.json"
             )
 
@@ -188,7 +203,7 @@ class PlanProcessor:
                 pass
             else:
                 teachers_plan_extractor = TeachersPlanExtractor(
-                    plan_le, plan_ra, self.teachers, logger=self._logger
+                    plan_le, plan_ra, self.teachers, logger=self._logger, block_config=self.block_config
                 )
 
                 teachers_plans = {
@@ -199,7 +214,10 @@ class PlanProcessor:
 
                 self.cache.store_plan_file(
                     date, timestamp,
-                    json.dumps(teachers_plans, default=PlanLesson.serialize),
+                    json.dumps(
+                        teachers_plans,
+                        default=lambda plan_lesson: PlanLesson.serialize(plan_lesson, block_config=self.block_config)
+                    ),
                     "plans.teachers.json"
                 )
 
@@ -249,7 +267,13 @@ class PlanProcessor:
 
         with events.Timer(self.school_number, events.MetaUpdate) as timer:
             data = {
-                "free_days": [date.isoformat() for date in self.meta_extractor.free_days()]
+                "free_days": [date.isoformat() for date in self.meta_extractor.free_days()],
+                "block_configuration": {
+                    block: {
+                        "periods": periods,
+                        "label": self.block_config.get_label_of_periods(periods)
+                    } for block, periods in self.block_config.blocks.items()
+                }
             }
             self.cache.store_meta_file(json.dumps(data), "meta.json")
             self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")
@@ -351,7 +375,10 @@ class PlanProcessor:
             break
 
         self.cache.store_meta_file(
-            json.dumps(d_plan.export(), default=PlanLesson.serialize),
+            json.dumps(
+                d_plan.export(block_config=self.block_config),
+                default=lambda plan_lesson: PlanLesson.serialize(plan_lesson, block_config=self.block_config)
+            ),
             "default_plan.json"
         )
 

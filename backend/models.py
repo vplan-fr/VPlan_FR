@@ -10,7 +10,7 @@ import stundenplan24_py
 from stundenplan24_py import indiware_mobil
 
 from .lesson_info import ParsedLessonInfo, LessonInfoParagraph, LessonInfoMessage
-from . import vplan_utils, lesson_info
+from . import vplan_utils, lesson_info, blocks
 
 
 @dataclasses.dataclass
@@ -164,7 +164,7 @@ class PlanLesson:
     is_internal: bool = False
     _lesson_date: datetime.date = None
 
-    def serialize(self) -> dict:
+    def serialize(self, block_config: blocks.BlockConfiguration) -> dict:
         return {
             "periods": sorted(self.periods),
             "scheduled_forms": sorted(self.scheduled_forms) if self.scheduled_forms is not None else None,
@@ -185,7 +185,7 @@ class PlanLesson:
             "room_changed": self.room_changed,
             "forms_changed": self.forms_changed,
             "is_unplanned": self.is_unplanned,
-            "info": self.parsed_info.serialize(self._lesson_date),
+            "info": self.parsed_info.serialize(self._lesson_date, block_config),
             "begin": self.begin.strftime("%H:%M") if self.begin else None,
             "takes_place": self.takes_place,
             "end": self.end.strftime("%H:%M") if self.end else None,
@@ -534,7 +534,7 @@ class Lessons:
         out.sort_original()
         return out
 
-    def group_blocks_and_lesson_info(self, origin_plan_type: typing.Literal["forms", "teachers", "rooms"]) -> Lessons:
+    def group_blocks_and_lesson_info(self, block_config: blocks.BlockConfiguration, origin_plan_type: typing.Literal["forms", "teachers", "rooms"]) -> Lessons:
         assert all(len(x.periods) <= 1 for x in self.lessons), \
             "Lessons must be ungrouped. (Must only have one period.)"
 
@@ -597,8 +597,8 @@ class Lessons:
                 can_get_grouped &= grouped_additional_info is not None
 
                 # block must be the same
-                previous_lesson_block = (next(iter(previous_lesson.periods)) + 1) // 2
-                current_lesson_block = (next(iter(lesson.periods)) + 1) // 2
+                previous_lesson_block = block_config.get_block_of_period(next(iter(previous_lesson.periods)))
+                current_lesson_block = block_config.get_block_of_period(next(iter(lesson.periods)))
                 can_get_grouped &= previous_lesson_block == current_lesson_block
 
                 if can_get_grouped:

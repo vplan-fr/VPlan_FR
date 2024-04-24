@@ -4,12 +4,14 @@
     import Collapsible from "../base_components/Collapsible.svelte";
     import { fade } from "svelte/transition";
     import { flip } from "svelte/animate";
+    import { getLabelOfBlock } from "../periods_utils.js";
 
     export let rooms_data;
     export let all_rooms;
     export let plan_type;
     export let plan_value;
     export let used_rooms_hidden = true;
+    export let block_config;
 
     $: all_rooms_grouped = all_rooms ? group_rooms(all_rooms) : []
     $: all_rooms_grouped_dict = Object.fromEntries(all_rooms_grouped)
@@ -21,7 +23,7 @@
     <CollapsibleWrapper let:closeOtherPanels>
         {#each Object.entries(rooms_data.free_rooms_by_block) as [block, all_free_rooms], i}
             <Collapsible on:panel-open={closeOtherPanels}>
-                <button slot="handle" let:toggle on:click={toggle} class="toggle-button" class:first={i == 0} class:last={i == Object.entries(rooms_data.free_rooms_by_block).length-1}>{block}. Block</button>
+                <button slot="handle" let:toggle on:click={toggle} class="toggle-button" class:first={i == 0} class:last={i == Object.entries(rooms_data.free_rooms_by_block).length-1}>{getLabelOfBlock(block, block_config)}</button>
                 <div class="block">
                     <ul>
                         {#each group_rooms(Object.fromEntries(all_free_rooms.map(r => [r, all_rooms[r]]))) as [category, free_rooms] (category)}

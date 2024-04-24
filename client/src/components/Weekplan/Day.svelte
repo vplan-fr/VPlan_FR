@@ -256,7 +256,8 @@
                     </div>
                 {/each}
             {:else}
-                <Rooms bind:rooms_data bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden />
+                <!--TODO: pass in block config-->
+                <Rooms bind:rooms_data bind:plan_type bind:plan_value bind:all_rooms bind:used_rooms_hidden block_config="{null}"/>
             {/if}
         {/if}
     {/if}

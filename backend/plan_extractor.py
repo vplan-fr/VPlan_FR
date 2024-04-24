@@ -8,7 +8,7 @@ from xml.etree import ElementTree as ET
 
 from stundenplan24_py import indiware_mobil, substitution_plan
 
-from . import lesson_info, default_plan
+from . import lesson_info, default_plan, blocks
 from .lesson_info import process_additional_info
 from .teacher import Teacher, Teachers
 from .models import Lesson, Lessons, Plan
@@ -19,6 +19,7 @@ class PlanExtractor:
     _logger: logging.Logger
     plan: Plan
     teachers: Teachers
+    block_config: blocks.BlockConfiguration
 
     def fill_in_lesson_times(self):
         forms: dict[str, indiware_mobil.Form] = {form.short_name: form for form in self.plan.indiware_plan.forms}
@@ -56,12 +57,11 @@ class PlanExtractor:
             for period, used_rooms in self.used_rooms_by_period().items()
         }
 
-    @staticmethod
-    def rooms_by_block(free_or_used_rooms_by_period: dict[int, set[str]]) -> dict[int, set[str]]:
+    def rooms_by_block(self, free_or_used_rooms_by_period: dict[int, set[str]]) -> dict[int, set[str]]:
         out: dict[int, set[str]] = {}
 
         for period, rooms in free_or_used_rooms_by_period.items():
-            block = (period + 1) // 2
+            block = self.block_config.get_block_of_period(period)
 
             if block not in out:
                 out[block] = set(rooms)
@@ -88,10 +88,11 @@ class PlanExtractor:
 
 
 class StudentsPlanExtractor(PlanExtractor):
-    def __init__(self, plan_kl: str, vplan_kl: str | None, teachers: Teachers, *,
-                 logger: logging.Logger):
+    def __init__(self, plan_kl: str, vplan_kl: str | None, teachers: Teachers, block_config: blocks.BlockConfiguration,
+                 *, logger: logging.Logger):
         self._logger = logger
         self.teachers = teachers
+        self.block_config = block_config
 
         form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = Plan.from_form_plan(form_plan)
@@ -107,21 +108,24 @@ class StudentsPlanExtractor(PlanExtractor):
         self.fill_in_lesson_times()
 
         self.form_plan_extractor = SubPlanExtractor(
-            self.plan,
-            "forms",
-            self.teachers,
+            forms_plan=self.plan,
+            plan_type="forms",
+            teachers=self.teachers,
+            block_config=self.block_config,
             logger=self._logger
         )
         self.room_plan_extractor = SubPlanExtractor(
-            self.plan,
-            "rooms",
-            self.teachers,
+            forms_plan=self.plan,
+            plan_type="rooms",
+            teachers=self.teachers,
+            block_config=self.block_config,
             logger=self._logger
         )
         self.teacher_plan_extractor = SubPlanExtractor(
-            self.plan,
-            "teachers",
-            self.teachers,
+            forms_plan=self.plan,
+            plan_type="teachers",
+            teachers=self.teachers,
+            block_config=self.block_config,
             logger=self._logger
         )
 
@@ -184,13 +188,13 @@ class StudentsPlanExtractor(PlanExtractor):
 
 class SubPlanExtractor:
     def __init__(self, forms_plan: Plan, plan_type: typing.Literal["forms", "rooms", "teachers"],
-                 teachers: Teachers, *, logger: logging.Logger):
+                 teachers: Teachers, block_config: blocks.BlockConfiguration, *, logger: logging.Logger):
         self._logger = logger
         self.plan_type = plan_type
         self.forms_lessons_grouped = (
             forms_plan.lessons
             .filter_plan_type_messages(plan_type)
-            .group_blocks_and_lesson_info(origin_plan_type="forms")
+            .group_blocks_and_lesson_info(origin_plan_type="forms", block_config=block_config)
         )
 
         if self.plan_type in ("rooms", "teachers"):
@@ -241,14 +245,15 @@ class SubPlanExtractor:
 
 
 class TeachersPlanExtractor:
-    def __init__(self, plan_le: str, plan_ra: str | None, teachers: Teachers, *,
-                 logger: logging.Logger):
+    def __init__(self, plan_le: str, plan_ra: str | None, teachers: Teachers, block_config: blocks.BlockConfiguration,
+                 *, logger: logging.Logger):
         self._logger = logger
 
         teacher_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_le))
         self.teacher_plan_extractor = PlanExtractor()
         self.teacher_plan_extractor.plan = Plan.from_teacher_plan(teacher_plan)
         self.teacher_plan_extractor.teachers = teachers
+        self.teacher_plan_extractor.block_config = block_config
         self.teacher_plan_extractor._logger = logger
         self.teacher_plan_extractor.fill_in_lesson_times()
 
@@ -257,11 +262,14 @@ class TeachersPlanExtractor:
             self.room_plan_extractor = PlanExtractor()
             self.room_plan_extractor.plan = Plan.from_room_plan(room_plan)
             self.room_plan_extractor.teachers = teachers
+            self.room_plan_extractor.block_config = block_config
             self.room_plan_extractor._logger = logger
             self.room_plan_extractor.fill_in_lesson_times()
 
     def teacher_plan(self):
-        lessons_grouped = self.teacher_plan_extractor.plan.lessons.group_blocks_and_lesson_info("teachers")
+        lessons_grouped = self.teacher_plan_extractor.plan.lessons.group_blocks_and_lesson_info(
+            origin_plan_type="teachers", block_config=self.teacher_plan_extractor.block_config
+        )
         SubPlanExtractor.extrapolate_lesson_times(lessons_grouped)
         return lessons_grouped.make_plan("teachers", plan_type="teachers")
 
@@ -269,6 +277,8 @@ class TeachersPlanExtractor:
         if not hasattr(self, "room_plan_extractor"):
             return {}
         else:
-            lessons_grouped = self.room_plan_extractor.plan.lessons.group_blocks_and_lesson_info("rooms")
+            lessons_grouped = self.room_plan_extractor.plan.lessons.group_blocks_and_lesson_info(
+                origin_plan_type="rooms", block_config=self.room_plan_extractor.block_config
+            )
             SubPlanExtractor.extrapolate_lesson_times(lessons_grouped)
             return lessons_grouped.make_plan("rooms", plan_type="rooms")

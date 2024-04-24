@@ -46,6 +46,7 @@
     let meta;
     let enabled_dates;
     let free_days;
+    let block_config;
     let grouped_rooms;
     let course_lists;
     let selected_teacher;
@@ -81,6 +82,7 @@
         meta = {};
         enabled_dates = [];
         free_days = [];
+        block_config = {};
         grouped_rooms = [];
         course_lists = {};
         selected_teacher = null;
@@ -107,6 +109,7 @@
                 grouped_forms = meta.forms.grouped_forms;
                 enabled_dates = Object.keys(meta.dates);
                 free_days = meta.meta.free_days;
+                block_config = meta.meta.block_configuration;
                 if(!date) {
                     date = meta.date;
                 }
@@ -500,7 +503,7 @@
                     </div>
                 </div>
                 {#if $current_page.substring(0, 4) === "plan"}
-                    <Plan bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta revision_arr={revision_arr} bind:enabled_dates bind:free_days bind:available_plan_version external_times={$settings.external_times} />
+                    <Plan bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta revision_arr={revision_arr} bind:enabled_dates bind:free_days bind:block_config bind:available_plan_version external_times={$settings.external_times} />
                 {:else}
                     <Weekplan bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:enabled_dates bind:free_days />
                 {/if}
