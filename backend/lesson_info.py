@@ -66,7 +66,7 @@ class _InfoParsers:
     # 11spo3 Frau Musterfrau fällt aus
     # GRW Frau Musterfrau fällt aus
     # 10Et12 Frau Musterfrau fällt aus
-    cancelled = re.compile(rf'(?P<course>{_course}) (?P<teachers>{_teachers}) fällt aus')
+    cancelled = re.compile(rf'(?P<course>{_course}) (?P<teachers>{_teachers}) (fällt aus|entfällt)')
 
     # Not Quite Cancelled
     # selbst. (v), Aufgaben stehen im LernSax, bitte in der Bibo bearbeiten
