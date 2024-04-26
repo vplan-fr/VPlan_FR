@@ -17,6 +17,7 @@ async def main():
 
     migrate_all = subparsers.add_parser("migrate-all")
     migrate_all.add_argument("-since", type=str, help="Only migrate plans since this date (YYYY-MM-DD).")
+    migrate_all.add_argument("-school-number", action="append", help="Only migrate plans for this school number.", default=[])
 
     extract_all_teachers = subparsers.add_parser("extract-all-teachers")
 
@@ -28,6 +29,9 @@ async def main():
         since = datetime.datetime.strptime(args.since, "%Y-%m-%d").date() if args.since else None
 
         for crawler in crawlers.values():
+            if args.school_number and crawler.school_number not in args.school_number:
+                continue
+
             for day in crawler.plan_processor.cache.get_days():
                 if since is not None and day < since:
                     continue
