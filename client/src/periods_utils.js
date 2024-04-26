@@ -80,6 +80,9 @@ export function getLabelOfPeriods(periods, block_config) {
     }
     // find key of block_config that contains periods
     let block = Object.keys(block_config).find(key => block_config[key].periods.includes(periods[0]));
+    if (block == null) {
+        return periods_to_periods_label(periods);
+    }
     let block_periods = block_config[block].periods;
     if (arraysEqual(block_periods, periods)) {
         return block_config[block].label;
