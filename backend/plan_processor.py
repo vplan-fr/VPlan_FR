@@ -268,12 +268,7 @@ class PlanProcessor:
         with events.Timer(self.school_number, events.MetaUpdate) as timer:
             data = {
                 "free_days": [date.isoformat() for date in self.meta_extractor.free_days()],
-                "block_configuration": {
-                    block: {
-                        "periods": periods,
-                        "label": self.block_config.get_label_of_periods(periods)
-                    } for block, periods in self.block_config.blocks.items()
-                }
+                "block_configuration": self.block_config.blocks
             }
             self.cache.store_meta_file(json.dumps(data), "meta.json")
             self.cache.store_meta_file(json.dumps(self.meta_extractor.dates_data()), "dates.json")

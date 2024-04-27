@@ -1,5 +1,3 @@
-import {arraysEqual} from "./utils.js";
-
 function increasingSequences(seq, key = x => x) {
     let out = [];
     let currentSeq = [];
@@ -185,13 +183,7 @@ class BlockConfiguration {
 export function getLabelOfPeriods(periods, block_config) {
     let _block_config = block_config == null ? {} : block_config;
 
-    let blocks = {};
-    for (const [key, value] of Object.entries(_block_config)) {
-        blocks[key] = value.periods;
-    }
-    console.log(blocks);
-
-    let block_config_instance = new BlockConfiguration(blocks);
+    let block_config_instance = new BlockConfiguration(_block_config);
 
     return block_config_instance.getLabelOfPeriods(periods);
 }
@@ -199,13 +191,7 @@ export function getLabelOfPeriods(periods, block_config) {
 export function getLabelOfBlock(block, block_config) {
     let _block_config = block_config == null ? {} : block_config;
 
-    let blocks = {};
-    for (const [key, value] of Object.entries(_block_config)) {
-        blocks[key] = value.periods;
-    }
-
-    console.log(blocks);
-    let block_config_instance = new BlockConfiguration(blocks);
+    let block_config_instance = new BlockConfiguration(_block_config);
 
     return block_config_instance.getLabelOfPeriods(block_config_instance.getPeriodsOfBlock(block));
 }
