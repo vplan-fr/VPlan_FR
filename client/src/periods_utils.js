@@ -25,7 +25,7 @@ function increasingSequences(seq, key = x => x) {
 }
 
 
-class BlockConfiguration {
+export class BlockConfiguration {
     /**
      * Different schools have different ways of organizing their schedules. Periods get grouped into blocks. An object of
      * this class represents these decisions. Blocks are relevant for grouping lessons, as only lessons belonging to
