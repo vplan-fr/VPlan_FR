@@ -12,7 +12,7 @@ def parse_room(room_str: str) -> Room:
     E: Erweiterungsbau (kleines Haus, oder auch Schlümpfe Bau ;) )
     Z.B. E003: Erweiterungsbau, 0. Etage, Raum 3
     """
-    exceptions = "SH", "Feld", "Gang", "C", "Aula"
+    exceptions = ()  # "SH", "Feld", "Gang", "C", "Aula"
 
     for exception in exceptions:
         if room_str.startswith(exception):
