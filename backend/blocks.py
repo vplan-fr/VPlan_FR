@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
-import itertools
 import typing
 
 from . import models, vplan_utils
@@ -20,31 +19,47 @@ class BlockConfiguration:
     blocks, we always fall back to "Stunde X" when labelling.
     """
     # dict of logical block number to contained periods
+    # when empty, the schedule is assumed to consist of single periods
     blocks: dict[int, list[int]]
 
-    TRIVIAL: typing.ClassVar[BlockConfiguration]
+    TRIVIAL: typing.ClassVar[BlockConfiguration]  # with blocks = {}
 
     def get_block_of_period(self, period: int) -> int:
-        if not self.blocks:
-            return period
-
         for block, periods in self.blocks.items():
             if period in periods:
                 return block
 
-        # raise ValueError(f"Period {period} not found in any block.")
-        # this is a hideous workaround :((
+        # any period after the last block is assumed to be in its own block
         # unfortunately many schools just don't report their periods properly
         # this ensures that we don't crash
-        max_block = max(self.blocks)
+
+        max_block = max(self.blocks, default=0)
+        min_block = min(self.blocks, default=0)
+
         max_period = max(self.get_periods_of_block(max_block))
-        return max_block + (period - max_period)
+        min_period = min(self.get_periods_of_block(min_block))
+
+        if period > min_period:
+            return max_block + (period - max_period)
+        else:
+            return min_block - (min_period - period)
 
     def get_periods_of_block(self, block: int) -> list[int]:
         if not self.blocks:
             return [block]
 
-        return self.blocks[block]
+        try:
+            return self.blocks[block]
+        except KeyError:
+            max_block = max(self.blocks)
+            min_block = min(self.blocks)
+
+            if block < min_block:
+                min_period = min(self.get_periods_of_block(min_block))
+                return [block + min_block - min_period]
+            else:
+                max_period = max(self.get_periods_of_block(max_block))
+                return [block - max_block + max_period]
 
     def has_abstract_blocks(self) -> bool:
         return any(len(periods) == 1 for periods in self.blocks.values())
@@ -86,7 +101,10 @@ class BlockConfiguration:
     def get_label_of_periods(self, periods: typing.Iterable[int]) -> str:
         periods = sorted(set(periods))
 
-        if self.has_abstract_blocks():
+        if not self.blocks or self.has_abstract_blocks():
+            return self._label_periods(periods)
+
+        if any(len(self.get_periods_of_block(self.get_block_of_period(p))) == 1 for p in periods):
             return self._label_periods(periods)
 
         # work out whether we can display as "Block X" or "Stunde X"
