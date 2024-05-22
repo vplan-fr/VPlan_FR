@@ -369,7 +369,7 @@
     $: $logged_in && (get_settings(), get_favorites(navigate_favorite));
     $: ($settings && Object.keys($settings).length !== 0) && localStorage.setItem("settings", `${JSON.stringify($settings)}`);
     $: update_colors($settings);
-    $: $logged_in && get_greeting();
+    $: $logged_in && ($settings.normal_greetings || $settings.chatgpt_greetings) && get_greeting();
 
     $: selected_form && set_plan("forms", selected_form);
     $: gen_form_arr(grouped_forms);
@@ -449,7 +449,9 @@
         {:else if $logged_in}
             <!-- !!! Update NotFound protected_routes when adding a new route !!! -->
             {#if $current_page.substring(0, 4) === "plan" || $current_page.substring(0, 8) === "weekplan"}
+                {#if $settings.normal_greetings || $settings.chatgpt_greetings}
                 <h1 class="responsive-heading">{emoji} {greeting}</h1>
+                {/if}
                 <!-- {#if $selected_favorite !== -1 && $favorites[$selected_favorite]}
                     Gewählter Favorit: {$favorites[$selected_favorite].name}
                     <br>
