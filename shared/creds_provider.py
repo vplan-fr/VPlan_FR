@@ -52,7 +52,7 @@ class MongoDbCredsProvider(CredsProvider):
         return {elem["short_name"]: elem for elem in out}
 
 
-def creds_provider_factory(creds_filepath: Path | None) -> CredsProvider:
+def get_creds_provider(creds_filepath: Path | None) -> CredsProvider:
     dotenv = DotEnv(dotenv_path=find_dotenv())
 
     if (mongo_uri := dotenv.get("MONGO_URL")) is not None:
