@@ -93,8 +93,15 @@ class PlanProcessor:
             except FileNotFoundError:
                 vplan_kl = None
 
+            all_rooms = self.meta_extractor.rooms()
+
             students_plan_extractor = StudentsPlanExtractor(
-                plan_kl, vplan_kl, self.teachers, self.block_config, logger=self._logger
+                plan_kl=plan_kl,
+                vplan_kl=vplan_kl,
+                teachers=self.teachers,
+                rooms=all_rooms,
+                block_config=self.block_config,
+                logger=self._logger
             )
         except FileNotFoundError:
             self._logger.warning(f"=> Could not find Indiware form plan for date {date!s} and timestamp {timestamp!s}.")
@@ -150,7 +157,6 @@ class PlanProcessor:
                 "exams.json"
             )
 
-            all_rooms = self.meta_extractor.rooms()
             rooms_data = {
                 "used_rooms_by_period": (used_rooms := students_plan_extractor.used_rooms_by_period()),
                 "free_rooms_by_period": (free_rooms := students_plan_extractor.free_rooms_by_period(all_rooms)),
@@ -197,7 +203,12 @@ class PlanProcessor:
                 pass
             else:
                 teachers_plan_extractor = TeachersPlanExtractor(
-                    plan_le, plan_ra, self.teachers, logger=self._logger, block_config=self.block_config
+                    plan_le=plan_le,
+                    plan_ra=plan_ra,
+                    teachers=self.teachers,
+                    rooms=all_rooms,
+                    logger=self._logger,
+                    block_config=self.block_config
                 )
 
                 teachers_plans = {
