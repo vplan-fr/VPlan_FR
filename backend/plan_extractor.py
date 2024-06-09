@@ -197,7 +197,7 @@ class SubPlanExtractor:
             .group_blocks_and_lesson_info(origin_plan_type="forms", block_config=block_config)
         )
 
-        if self.plan_type in ("rooms", "teachers"):
+        if self.plan_type in ("teachers", ):
             self.forms_lessons_grouped = self.forms_lessons_grouped.filter(lambda l: not l.is_internal)
 
         for lesson in self.forms_lessons_grouped:
