@@ -171,8 +171,8 @@ class DefaultPlan:
 
         taking_place_lessons = []
         for i, lesson in enumerate(lessons):
-            lesson._origin_plan_lesson_id = i
-            taking_place_lessons.append(dataclasses.replace(lesson, takes_place=True, _origin_plan_lesson_id=i))
+            lesson._origin_plan_lesson_ids = {i}
+            taking_place_lessons.append(dataclasses.replace(lesson, takes_place=True, _origin_plan_lesson_ids={i}))
 
         lessons.lessons += taking_place_lessons
 
