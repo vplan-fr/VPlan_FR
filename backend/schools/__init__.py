@@ -5,7 +5,7 @@ from ..room import Room
 from ..teacher import Teacher
 
 teacher_scrapers: dict[str, typing.Callable[[], list[Teacher]]] = {
-    # "10001329": ostwald.scrape_teachers,  # TODO
+    "10001329": ostwald.scrape_teachers,
     # "10453929": taro.get_teachers,
 }
 
