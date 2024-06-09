@@ -1,3 +1,4 @@
+import collections
 import itertools
 import typing
 from collections import defaultdict
@@ -12,9 +13,9 @@ from shared import creds_provider
 def main():
     plt.style.use('Solarize_Light2')
 
-    SINCE = datetime.datetime.combine(datetime.date.today() - datetime.timedelta(days=7), datetime.time.min)
+    SINCE = datetime.datetime.combine(datetime.date.today() - datetime.timedelta(days=14), datetime.time.min)
 
-    creds = creds_provider.creds_provider_factory(None).get_creds(ignore_disabled=True)
+    creds = creds_provider.get_creds_provider(None).get_creds(ignore_disabled=True)
 
     creds = {
         v["_id"]: v["display_name"] for v in creds.values()
@@ -113,7 +114,7 @@ def main():
         plot_basic(is_log, data, title)
 
     def num_proxies(is_log: bool = False):
-        data: dict[str, list[tuple[datetime.datetime, float]]] = defaultdict(list)
+        data: dict[str, list[tuple[datetime.datetime, int]]] = defaultdict(list)
         for event in events.iterate_events(events.PlanDownload, since=SINCE):
             y = event.proxies_used
             if y is None:
@@ -123,16 +124,29 @@ def main():
             data[creds[event.school_number]].append((x, y))
 
         title = f"Anzahl benutzer Proxies pro Download"
+        plot_basic(is_log, data.copy(), title, unit=None)
 
-        plot_basic(is_log, data, title, unit=None)
+        counts = collections.Counter()
+        for points in data.values():
+            for _, num in points:
+                counts[num] += 1
 
-    plan_size(is_log=True)
-    time_from_upload_till_available(is_log=True)
-    time_from_upload_till_download(is_log=True)
-    duration_of(events.PlanCrawlCycle, is_log=True)
-    duration_of(events.StudentsRevisionProcessed, is_log=True)
-    duration_of(events.TeacherScrape, is_log=True)
-    duration_of(events.MetaUpdate, is_log=True)
+        fig, ax = plt.subplots()
+        ax.bar(counts.keys(), counts.values())
+        # add data labels
+        for i, v in counts.items():
+            ax.text(i, v + 10, str(v), ha='center', va='bottom')
+        # ax.set_yscale('log')
+        ax.set_xlabel('Anzahl benutzer Proxies')
+        plt.show()
+
+    # plan_size(is_log=True)
+    # time_from_upload_till_available(is_log=True)
+    # time_from_upload_till_download(is_log=True)
+    # duration_of(events.PlanCrawlCycle, is_log=True)
+    # duration_of(events.StudentsRevisionProcessed, is_log=True)
+    # duration_of(events.TeacherScrape, is_log=True)
+    # duration_of(events.MetaUpdate, is_log=True)
     num_proxies(is_log=True)
 
 

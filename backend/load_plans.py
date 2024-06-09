@@ -15,7 +15,7 @@ from stundenplan24_py import (
 )
 
 from . import events
-from shared.creds_provider import creds_provider_factory
+from shared.creds_provider import get_creds_provider
 from .plan_downloader import PlanDownloader
 from shared.cache import Cache
 from .plan_processor import PlanProcessor
@@ -80,7 +80,7 @@ class PlanCrawler:
 async def get_crawlers(session: requests.Session | None = None,
                        proxy_provider: proxies.ProxyProvider | None = None,
                        create_clients: bool = True) -> dict[str, PlanCrawler]:
-    creds_provider = creds_provider_factory(Path("creds.json"))
+    creds_provider = get_creds_provider(Path("creds.json"))
     _creds = creds_provider.get_creds()
 
     crawlers = {}
