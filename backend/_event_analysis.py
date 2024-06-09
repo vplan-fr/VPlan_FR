@@ -140,13 +140,13 @@ def main():
         ax.set_xlabel('Anzahl benutzer Proxies')
         plt.show()
 
-    # plan_size(is_log=True)
-    # time_from_upload_till_available(is_log=True)
-    # time_from_upload_till_download(is_log=True)
-    # duration_of(events.PlanCrawlCycle, is_log=True)
-    # duration_of(events.StudentsRevisionProcessed, is_log=True)
-    # duration_of(events.TeacherScrape, is_log=True)
-    # duration_of(events.MetaUpdate, is_log=True)
+    plan_size(is_log=True)
+    time_from_upload_till_available(is_log=True)
+    time_from_upload_till_download(is_log=True)
+    duration_of(events.PlanCrawlCycle, is_log=True)
+    duration_of(events.StudentsRevisionProcessed, is_log=True)
+    duration_of(events.TeacherScrape, is_log=True)
+    duration_of(events.MetaUpdate, is_log=True)
     num_proxies(is_log=True)
 
 
