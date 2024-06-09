@@ -5,7 +5,6 @@ import json
 import logging
 import xml.etree.ElementTree as ET
 
-from shared import comm
 from . import schools, default_plan, events, blocks
 from shared.cache import Cache
 from .meta_extractor import MetaExtractor
@@ -183,11 +182,6 @@ class PlanProcessor:
                 date=date,
                 revision=timestamp,
                 has_vplan=vplan_kl is not None
-            ))
-            comm.send_message(comm.NewRevisionAvailable(
-                school_number=self.school_number,
-                date=date,
-                revision=timestamp
             ))
 
             _t1 = events.now()
