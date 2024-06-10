@@ -41,7 +41,7 @@ class Lesson:
     _group_count: int = 1
 
     _origin_plan_type: typing.Literal["forms", "teachers", "rooms"] = None
-    _origin_plan_lesson_ids: set[int] = None
+    _origin_plan_lesson_ids: set[int] = dataclasses.field(default_factory=set)
     _is_scheduled: bool | None = None
     _grouped_form_plan_current_course: str = None
     _grouped_form_plan_current_teachers: set[str] = None
@@ -411,8 +411,16 @@ class Lessons:
             if not taking_place_lesson.takes_place:
                 continue
 
+            if taking_place_lesson.is_internal:
+                out.append(
+                    PlanLesson.create(taking_place_lesson, None, plan_type, plan_value)
+                )
+                continue
+
             for not_taking_place_lesson in not_taking_place_lessons:
-                if taking_place_lesson._origin_plan_lesson_ids.issubset(not_taking_place_lesson._origin_plan_lesson_ids):
+                if taking_place_lesson._origin_plan_lesson_ids.issubset(
+                    not_taking_place_lesson._origin_plan_lesson_ids
+                ):
                     out.append(
                         PlanLesson.create(taking_place_lesson, not_taking_place_lesson, plan_type, plan_value)
                     )
@@ -603,6 +611,7 @@ class Lessons:
                 previous_lesson_block = block_config.get_block_of_period(next(iter(previous_lesson.periods)))
                 current_lesson_block = block_config.get_block_of_period(next(iter(lesson.periods)))
                 can_get_grouped &= previous_lesson_block == current_lesson_block
+                can_get_grouped &= previous_lesson.is_internal == lesson.is_internal
 
                 if can_get_grouped:
                     if origin_plan_type == "forms":
