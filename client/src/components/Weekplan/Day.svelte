@@ -229,6 +229,7 @@
             {/if}
         {:else}
             {#if plan_type !== "room_overview"}
+                <!-- TODO WEEKPLAN BLOCKING REFACTOR -->
                 <!-- Day Content -->
                 {#each {length: block_count} as _, i}
                     <div class="block">
