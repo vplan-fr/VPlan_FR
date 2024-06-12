@@ -599,7 +599,7 @@ class LessonInfoParagraph:
                  plan_type: typing.Literal["forms", "teachers", "rooms"]) -> LessonInfoParagraph:
         messages = [
             LessonInfoMessage.from_str(message.strip(), lesson, i, plan_type)
-            for i, message in enumerate(paragraph.split(","))
+            for i, message in enumerate(paragraph.split(",")) if message.strip()
         ]
         new_messages = []
         for message in messages:
@@ -634,7 +634,7 @@ class ParsedLessonInfo:
                  ) -> ParsedLessonInfo:
         return cls([
             LessonInfoParagraph.from_str(paragraph.strip(), lesson, i, plan_type)
-            for i, paragraph in enumerate(info.split(";"))
+            for i, paragraph in enumerate(info.split(";")) if paragraph.strip()
         ])
 
     def serialize(self, lesson_date: datetime.date, block_config: blocks.BlockConfiguration) -> list:
