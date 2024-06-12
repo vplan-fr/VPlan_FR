@@ -178,8 +178,13 @@
         // TODO: after block refactor
         let tmp_out = Array.from({length: block_count}, (v, i) => [[], [], []]); // [[blocks], [top halfs], [bottom halfs]]
         for(const lesson of lessons) {
+            let tmp_out_index = Math.floor((lesson.periods[0] + 1) / 2)-1;
+            if (tmp_out_index < 0) {
+                continue;
+            }
+
             tmp_out[
-                Math.floor((lesson.periods[0] + 1) / 2)-1
+                tmp_out_index
                 ][
                     lesson.periods.length > 1 ? 0 : (lesson.periods[0] % 2 == 0 ? 2 : 1)
                 ].push(lesson);
