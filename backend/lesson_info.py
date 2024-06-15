@@ -19,10 +19,15 @@ from . import models
 
 
 class _InfoParsers:
-    _teacher_name = (r"[A-ZÄÖÜ][a-zäöüß]+"
-                     r"(?: (?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*\.?)*"
-                     r"(?: van)?"
-                     r"(?: (?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*)")
+    _name_element = r"(?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*\.?"
+    _teacher_name = (
+        # title
+        fr"(?:{_name_element})"
+        # name
+        fr"(?: {_name_element})*"
+        r"(?: van)?"
+        fr"(?: {_name_element})"
+    )
     _teacher_abbreviation = r"[A-ZÄÖÜ][A-ZÄÖÜa-zäöüß]{2,}"
     _teacher = fr"(?:{_teacher_name})|(?:{_teacher_abbreviation})"
 
@@ -594,7 +599,7 @@ class LessonInfoParagraph:
                  plan_type: typing.Literal["forms", "teachers", "rooms"]) -> LessonInfoParagraph:
         messages = [
             LessonInfoMessage.from_str(message.strip(), lesson, i, plan_type)
-            for i, message in enumerate(paragraph.split(","))
+            for i, message in enumerate(paragraph.split(",")) if message.strip()
         ]
         new_messages = []
         for message in messages:
@@ -629,7 +634,7 @@ class ParsedLessonInfo:
                  ) -> ParsedLessonInfo:
         return cls([
             LessonInfoParagraph.from_str(paragraph.strip(), lesson, i, plan_type)
-            for i, paragraph in enumerate(info.split(";"))
+            for i, paragraph in enumerate(info.split(";")) if paragraph.strip()
         ])
 
     def serialize(self, lesson_date: datetime.date, block_config: blocks.BlockConfiguration) -> list:
@@ -762,20 +767,20 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
 
 
 def process_additional_info(info: list[str], parsed_existing_forms: list[ParsedForm],
-                            teachers: teacher_model.Teachers, date: datetime.date
+                            teachers: teacher_model.Teachers, date: datetime.date, rooms: set[str]
                             ) -> list[list[LessonInfoTextSegment]]:
     info = info.copy()
     while info and not info[-1]:
         info.pop()
 
     return [
-        process_additional_info_line(line, parsed_existing_forms, teachers, date)
+        process_additional_info_line(line, parsed_existing_forms, teachers, date, rooms=rooms)
         for line in info
     ]
 
 
 def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedForm],
-                                 teachers: teacher_model.Teachers, date: datetime.date
+                                 teachers: teacher_model.Teachers, date: datetime.date, rooms: set[str]
                                  ) -> list[LessonInfoTextSegment]:
     if text is None:
         return []
@@ -786,7 +791,8 @@ def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedFo
 
     funcs = (
         lambda s: add_fuzzy_teacher_links(s, teachers, date),
-        lambda s: add_fuzzy_form_links(s, parsed_existing_forms, date)
+        lambda s: add_fuzzy_form_links(s, parsed_existing_forms, date),
+        lambda s: add_fuzzy_room_links(s, rooms, date)
     )
 
     segments = [LessonInfoTextSegment(text)]
@@ -875,8 +881,20 @@ def add_fuzzy_teacher_links(text: str, teachers: teacher_model.Teachers, date: d
     def validator(match: re.Match) -> list[LessonInfoTextSegment] | None:
         surname_or_abbreviation = match.group()
 
+        replacements = {
+            "Hr": "Herr",
+            "Hr.": "Herr",
+            "Fr": "Frau",
+            "Fr.": "Frau",
+            "Herrn": "Herr"
+        }
+
+        _surname_or_abbreviation = surname_or_abbreviation
+        for k, v in replacements.items():
+            _surname_or_abbreviation = _surname_or_abbreviation.replace(k, v)
+
         try:
-            plan_short = teachers.query_plan_teacher(surname_or_abbreviation).plan_short
+            plan_short = teachers.query_plan_teacher(_surname_or_abbreviation).plan_short
         except LookupError:
             return
 
@@ -888,6 +906,19 @@ def add_fuzzy_teacher_links(text: str, teachers: teacher_model.Teachers, date: d
         ]
 
     return add_fuzzy_with_validator(text, [_InfoParsers._teacher, r"\b\w+"], validator)
+
+
+def add_fuzzy_room_links(text: str, rooms: set[str], date: datetime.date):
+    def validator(match: re.Match) -> list[LessonInfoTextSegment] | None:
+        room = match.group()
+        return [
+            LessonInfoTextSegment(
+                room,
+                link=LessonInfoTextSegmentLink("rooms", [room], date, None)
+            )
+        ]
+
+    return add_fuzzy_with_validator(text, list(rooms), validator)
 
 
 def group_text_segments(segments: list[LessonInfoTextSegment]) -> list[LessonInfoTextSegment]:

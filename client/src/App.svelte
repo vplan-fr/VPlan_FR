@@ -507,7 +507,7 @@
                 {#if $current_page.substring(0, 4) === "plan"}
                     <Plan bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta revision_arr={revision_arr} bind:enabled_dates bind:free_days bind:block_config bind:available_plan_version external_times={$settings.external_times} />
                 {:else}
-                    <Weekplan bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:enabled_dates bind:free_days />
+                    <Weekplan bind:school_num bind:date bind:plan_type bind:plan_value bind:all_rooms bind:meta bind:enabled_dates bind:free_days bind:block_config />
                 {/if}
             {:else if $current_page === "school_manager"}
                 <SchoolManager bind:school_num bind:date bind:plan_type bind:plan_value />

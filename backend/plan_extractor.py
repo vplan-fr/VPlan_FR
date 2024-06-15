@@ -19,6 +19,7 @@ class PlanExtractor:
     _logger: logging.Logger
     plan: Plan
     teachers: Teachers
+    rooms: set[str]
     block_config: blocks.BlockConfiguration
 
     def fill_in_lesson_times(self):
@@ -76,9 +77,11 @@ class PlanExtractor:
             "processed_additional_info": [
                 [i.serialize() for i in line]
                 for line in process_additional_info(
-                    self.plan.additional_info, parsed_forms,
-                    self.teachers,
-                    self.plan.indiware_plan.date
+                    info=self.plan.additional_info,
+                    parsed_existing_forms=parsed_forms,
+                    teachers=self.teachers,
+                    rooms=self.rooms,
+                    date=self.plan.indiware_plan.date
                 )
             ],
             "timestamp": self.plan.indiware_plan.timestamp.isoformat() if self.plan.indiware_plan.timestamp else None,
@@ -89,10 +92,11 @@ class PlanExtractor:
 
 class StudentsPlanExtractor(PlanExtractor):
     def __init__(self, plan_kl: str, vplan_kl: str | None, teachers: Teachers, block_config: blocks.BlockConfiguration,
-                 *, logger: logging.Logger):
+                 rooms: set[str], *, logger: logging.Logger):
         self._logger = logger
         self.teachers = teachers
         self.block_config = block_config
+        self.rooms = rooms
 
         form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_kl))
         self.plan = Plan.from_form_plan(form_plan)
@@ -197,7 +201,7 @@ class SubPlanExtractor:
             .group_blocks_and_lesson_info(origin_plan_type="forms", block_config=block_config)
         )
 
-        if self.plan_type in ("rooms", "teachers"):
+        if self.plan_type in ("teachers", ):
             self.forms_lessons_grouped = self.forms_lessons_grouped.filter(lambda l: not l.is_internal)
 
         for lesson in self.forms_lessons_grouped:
@@ -246,13 +250,14 @@ class SubPlanExtractor:
 
 class TeachersPlanExtractor:
     def __init__(self, plan_le: str, plan_ra: str | None, teachers: Teachers, block_config: blocks.BlockConfiguration,
-                 *, logger: logging.Logger):
+                 rooms: set[str], *, logger: logging.Logger):
         self._logger = logger
 
         teacher_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plan_le))
         self.teacher_plan_extractor = PlanExtractor()
         self.teacher_plan_extractor.plan = Plan.from_teacher_plan(teacher_plan)
         self.teacher_plan_extractor.teachers = teachers
+        self.teacher_plan_extractor.rooms = rooms
         self.teacher_plan_extractor.block_config = block_config
         self.teacher_plan_extractor._logger = logger
         self.teacher_plan_extractor.fill_in_lesson_times()
@@ -262,6 +267,7 @@ class TeachersPlanExtractor:
             self.room_plan_extractor = PlanExtractor()
             self.room_plan_extractor.plan = Plan.from_room_plan(room_plan)
             self.room_plan_extractor.teachers = teachers
+            self.room_plan_extractor.rooms = rooms
             self.room_plan_extractor.block_config = block_config
             self.room_plan_extractor._logger = logger
             self.room_plan_extractor.fill_in_lesson_times()

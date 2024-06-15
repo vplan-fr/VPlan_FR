@@ -177,6 +177,25 @@ export class BlockConfiguration {
             return BlockConfiguration.labelPeriods(periods);
         }
     }
+
+    /** Iterate all blocks. */
+    iterBlocks() {
+        if (this.hasAbstractBlocks()){
+            return [];
+        } else {
+            return Object.keys(this.blocks).map(Number);
+        }
+    }
+
+    /** Iterate all periods. */
+    iterPeriods() {
+        if (Object.keys(this.blocks).length === 0) {
+            // return numbers from 1 to 10
+            return Array.from({length: 10}, (_, i) => i + 1);
+        } else {
+            return Object.values(this.blocks).flat();
+        }
+    }
 }
 
 

@@ -38,9 +38,10 @@ class Lesson:
 
     is_internal: bool = False
     _lesson_date: datetime.date = None
+    _group_count: int = 1
 
     _origin_plan_type: typing.Literal["forms", "teachers", "rooms"] = None
-    _origin_plan_lesson_id: int = None
+    _origin_plan_lesson_ids: set[int] = dataclasses.field(default_factory=set)
     _is_scheduled: bool | None = None
     _grouped_form_plan_current_course: str = None
     _grouped_form_plan_current_teachers: set[str] = None
@@ -395,7 +396,7 @@ class Lessons:
         #   render as cancelled
         out = []
 
-        not_taking_place_lessons = [lesson for lesson in lessons if not lesson.takes_place]
+        not_taking_place_lessons = copy.deepcopy([lesson for lesson in lessons if not lesson.takes_place])
 
         lessons.sort(key=lambda l: (
             l.subject_changed,
@@ -406,17 +407,27 @@ class Lessons:
             l.course if l.course else "",
         ))
 
-        # TODO: potentially multiple NTP lessons per TPL lesson bc they get grouped
         for taking_place_lesson in lessons:
             if not taking_place_lesson.takes_place:
                 continue
 
+            if taking_place_lesson.is_internal:
+                out.append(
+                    PlanLesson.create(taking_place_lesson, None, plan_type, plan_value)
+                )
+                continue
+
             for not_taking_place_lesson in not_taking_place_lessons:
-                if taking_place_lesson._origin_plan_lesson_id == not_taking_place_lesson._origin_plan_lesson_id:
+                if taking_place_lesson._origin_plan_lesson_ids.issubset(
+                    not_taking_place_lesson._origin_plan_lesson_ids
+                ):
                     out.append(
                         PlanLesson.create(taking_place_lesson, not_taking_place_lesson, plan_type, plan_value)
                     )
-                    not_taking_place_lessons.remove(not_taking_place_lesson)
+                    not_taking_place_lesson._origin_plan_lesson_ids -= taking_place_lesson._origin_plan_lesson_ids
+                    # not_taking_place_lesson._group_count -= 1
+                    if not not_taking_place_lesson._origin_plan_lesson_ids:
+                        not_taking_place_lessons.remove(not_taking_place_lesson)
                     break
             else:
                 for not_taking_place_lesson in not_taking_place_lessons:
@@ -600,6 +611,7 @@ class Lessons:
                 previous_lesson_block = block_config.get_block_of_period(next(iter(previous_lesson.periods)))
                 current_lesson_block = block_config.get_block_of_period(next(iter(lesson.periods)))
                 can_get_grouped &= previous_lesson_block == current_lesson_block
+                can_get_grouped &= previous_lesson.is_internal == lesson.is_internal
 
                 if can_get_grouped:
                     if origin_plan_type == "forms":
@@ -619,6 +631,8 @@ class Lessons:
                     previous_lesson._is_scheduled = (
                         None if previous_lesson._is_scheduled != lesson._is_scheduled else previous_lesson._is_scheduled
                     )
+                    previous_lesson._origin_plan_lesson_ids |= lesson._origin_plan_lesson_ids
+                    previous_lesson._group_count += lesson._group_count
                     break
             else:
                 grouped.append(copy.deepcopy(lesson))
@@ -798,7 +812,7 @@ class Plan:
                     l._grouped_form_plan_scheduled_forms = scheduled_lesson.forms
 
                     l._origin_plan_type = "forms"
-                    l._origin_plan_lesson_id = _id
+                    l._origin_plan_lesson_ids = {_id}
 
                 lessons.append(scheduled_lesson)
                 lessons.append(current_lesson)
@@ -889,7 +903,7 @@ class Plan:
 
                 for l in current_lesson, scheduled_lesson:
                     l._origin_plan_type = "teachers"
-                    l._origin_plan_lesson_id = _id
+                    l._origin_plan_lesson_ids = {_id}
 
                 lessons.append(scheduled_lesson)
                 lessons.append(current_lesson)
@@ -978,7 +992,7 @@ class Plan:
 
                 for l in current_lesson, scheduled_lesson:
                     l._origin_plan_type = "rooms"
-                    l._origin_plan_lesson_id = _id
+                    l._origin_plan_lesson_ids = {_id}
 
                 lessons.append(scheduled_lesson)
                 lessons.append(current_lesson)

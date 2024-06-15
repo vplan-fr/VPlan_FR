@@ -16,8 +16,9 @@ async def main():
     subparsers = argparser.add_subparsers(dest="subcommand")
 
     migrate_all = subparsers.add_parser("migrate-all")
-    migrate_all.add_argument("-since", type=str, help="Only migrate plans since this date (YYYY-MM-DD).")
-    migrate_all.add_argument("-school-number", action="append", help="Only migrate plans for this school number.", default=[])
+    migrate_all.add_argument("--since", type=str, help="Only migrate plans since this date (YYYY-MM-DD).")
+    migrate_all.add_argument("--school-number", action="append", help="Only migrate plans for this school number.", default=[])
+    migrate_all.add_argument("--just-newest-revision", action="store_true", help="Only migrate the newest revision.")
 
     extract_all_teachers = subparsers.add_parser("extract-all-teachers")
 
@@ -41,6 +42,9 @@ async def main():
                 for revision in crawler.plan_processor.cache.get_timestamps(day):
                     crawler.plan_processor._logger.info(f"Computing plans for {day} {revision}...")
                     crawler.plan_processor.compute_plan_revision(day, revision)
+
+                    if args.just_newest_revision:
+                        break
 
             crawler.plan_processor.update_after_plan_processing()
 

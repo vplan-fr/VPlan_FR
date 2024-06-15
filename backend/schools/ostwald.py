@@ -7,81 +7,60 @@ from backend.teacher import Teacher
 from backend.room import Room
 
 
-def scrape_teachers() -> list[Teacher]:
-    r = requests.post("https://www.ostwaldgymnasium.de/index.php/schule/lehrer", data={"limit": "0"})
+def _scrape_teachers_url(url: str) -> list[Teacher]:
+    r = requests.post(url, data={"limit": "0"})
 
     soup = BeautifulSoup(r.text, features="html.parser")
-    soup = soup.find("ul", {"class": "category"})
+    soup = soup.find("table", {"id": "contactList"}).find("tbody")
 
-    teachers = soup.find_all("li")
+    teachers = soup.find_all("tr")
     teacher_data = []
 
     for teacher in teachers:
-        teacher_link = teacher.find("a")["href"]
-        """
+        name_and_subjects_a = teacher.find("a")
+
+        teacher_link = name_and_subjects_a["href"]
+
         # very slow
-        teacher_link = teacher.find("a")["href"]
-        teacher_data.append(
-            scrape_teacher(f"https://www.ostwaldgymnasium.de{teacher_link}")
-        )"""
-        name, faecher = [elem.strip() for elem in teacher.find("a").text.strip().split(" -")[:2]]
-        teacher.find("a").decompose()
-        additional_info = teacher.find("div", {"class": "list-title"}).text.strip()
-        kuerzel = teacher.find("div", {"class": "span3"}).text.strip()
+        # teacher_link = teacher.find("a")["href"]
+        # teacher_data.append(
+        #     scrape_teacher(f"https://www.ostwaldgymnasium.de{teacher_link}")
+        # )
+
+        if "-" not in name_and_subjects_a.text:
+            name = name_and_subjects_a.text.strip()
+            subjects = set()
+        else:
+            name, subjects_str = [elem.strip() for elem in name_and_subjects_a.text.strip().split(" -")[:2]]
+            subjects = set(subjects_str.replace("G/R/W", "GRW").split())
+
+        name_and_subjects_a.decompose()
+
+        additional_info = "\n".join(c.text.strip() for c in teacher.find("td").contents if c.text.strip())
+        kuerzel = teacher.find("li", {"class": "kuerzel"}).find("span", {"class": "field-value"}).text.strip()
 
         if teacher_link:
             teacher_link = f"https://www.ostwaldgymnasium.de{teacher_link}#display-form"
+
         teacher_data.append(
             Teacher(
                 full_name=None,
                 full_surname=name,
                 plan_long=Teacher.strip_titles(name.replace("Madame", "Frau").replace("Monsieur", "Herr")),
                 plan_short=kuerzel,
-                subjects=set(faecher.replace("G/R/W", "GRW").split()),
-                info=additional_info,
+                subjects=subjects,
+                info=additional_info if additional_info else None,
                 contact_link=teacher_link
             )
         )
 
-    r2 = requests.get("https://www.ostwaldgymnasium.de/index.php/kontakte/12-schulleitung")
-    soup = BeautifulSoup(r2.text, features="html.parser")
-    soup = soup.find("ul", {"class": "category"})
-    teachers = soup.find_all("li")
-    for teacher in teachers:
-        teacher_link = teacher.find("a")["href"]
-        teacher_data.append(
-            scrape_teacher(f"https://www.ostwaldgymnasium.de{teacher_link}")
-        )
     return teacher_data
 
 
-def scrape_teacher(teacher_link: str) -> Teacher:
-    r = requests.get(teacher_link)
-    soup = BeautifulSoup(r.text, features="html.parser")
-    name_field = soup.find("span", {"class": "contact-name"}).text.strip()
-    if "-" in name_field:
-        name, subjects, _ = name_field.split(" -")
-        name, subjects = name.strip(), subjects.strip()
-        subjects = subjects.split()
-    else:
-        name = name_field
-        subjects = soup.find("span", {"class": "contact-misc"}).find("p").text.strip().split("/")
-        subjects = sum((s.split() for s in subjects), [])
-
-    additional_info = soup.find("dd", {"itemprop": "jobTitle"})
-    if additional_info:
-        additional_info = additional_info.text.strip()
-    else:
-        additional_info = ""
-    kuerzel = soup.find("span", {"class": "contact-mobile", "itemprop": "telephone"}).text.strip()
-    return Teacher(
-        full_name=None,
-        full_surname=name,
-        plan_long=Teacher.strip_titles(name.replace("Madame", "Frau").replace("Monsieur", "Herr")),
-        subjects=set(subjects),
-        plan_short=kuerzel,
-        info=additional_info,
-        contact_link=f"{teacher_link}#display-form"
+def scrape_teachers() -> list[Teacher]:
+    return (
+        _scrape_teachers_url("https://www.ostwaldgymnasium.de/index.php/schule/lehrer")
+        + _scrape_teachers_url("https://www.ostwaldgymnasium.de/index.php/kontakte/12-schulleitung")
     )
 
 
@@ -148,4 +127,5 @@ def parse_room(room_str: str) -> Room:
 
 
 if __name__ == "__main__":
-    ...
+    a = scrape_teachers()
+    breakpoint()

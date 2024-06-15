@@ -4,6 +4,7 @@
     import {gen_location_hash, getDateDisabled} from "../../plan.js";
     import {selected_favorite, settings, title} from "../../stores.js";
     import Day from "./Day.svelte";
+    import {BlockConfiguration} from "../../periods_utils.js";
 
     // Force date to be monday
     $: date, (() => {
@@ -19,6 +20,7 @@
     export let all_rooms;
     export let enabled_dates;
     export let free_days;
+    export let block_config;
     const pad = (n, s = 2) => (`${new Array(s).fill(0)}${n}`).slice(-s);
     let used_rooms_hidden = true;
     let show_left_key = true;
@@ -94,13 +96,8 @@
 
     let preferences_apply = true;
 
-    const lesson_start = 1;
-    const lesson_end = 10;
-    const lesson_count = lesson_end - lesson_start + 1;
+    $: block_config_obj = new BlockConfiguration(block_config);
 
-    const block_start = 1;
-    const block_end = 5;
-    const block_count = block_end - block_start + 1;
 
     // Update visibility of date switching buttons
     $: date && enabled_dates && update_date_btns();
@@ -145,13 +142,13 @@
         <div class="week">
             <div class="time-indicators" class:hidden={plan_type === "room_overview"}>
                 <div class="block-col">
-                    {#each {length: block_count} as _, i}
-                        <span>{i + block_start}</span>
+                    {#each block_config_obj.iterBlocks() as block_number}
+                        <span>{block_number}</span>
                     {/each}
                 </div>
                 <div class="lesson-col">
-                    {#each {length: lesson_count} as _, i}
-                        <span>{i + lesson_start}</span>
+                    {#each block_config_obj.iterPeriods() as period_number}
+                        <span>{period_number}</span>
                     {/each}
                 </div>
             </div>
@@ -172,7 +169,7 @@
                     enabled_dates={enabled_dates}
                     free_days={free_days}
                     date={week_date}
-                    block_count={block_count}
+                    block_count={5}
                     meta={meta} />
             {/each}
         </div>

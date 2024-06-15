@@ -1,7 +1,7 @@
+import datetime
 import json
 import os
 
-from shared import comm
 from shared import mongodb
 
 import pywebpush
@@ -29,29 +29,26 @@ def send_message(subscription: dict, data: dict):
     )
 
 
-def msg_handler(msg: comm.Message) -> comm.Message | None:
-    if isinstance(msg, comm.NewRevisionAvailable):
-        if not mongodb.ENABLED:
-            return None
-        res = _USERS_COLLECTION.find({
-            "authorized_schools": msg.school_number,
-            "webpush_subscriptions": {"$exists": True}
-        })
-        for user in res:
-            for subscription in user.get("webpush_subscriptions", []):
-                data = {
-                    "type": "new-revision-available",
-                    "data": msg.serialize()
+def handle_new_revision(school_number: str, date: datetime.date, revision: datetime.datetime):
+    if not mongodb.ENABLED:
+        return None
+    res = _USERS_COLLECTION.find({
+        "authorized_schools": school_number,
+        "webpush_subscriptions": {"$exists": True}
+    })
+    for user in res:
+        for subscription in user.get("webpush_subscriptions", []):
+            data = {
+                "type": "new-revision-available",
+                "data": {
+                    "school_number": school_number,
+                    "date": date.isoformat(),
+                    "revision": revision.isoformat()
                 }
+            }
 
-                try:
-                    send_message(subscription, data)
-                except pywebpush.WebPushException as e:
-                    print(e.response.text)
-                    return None
-
-    return None
-
-
-def start_listen():
-    comm.listen_messages(msg_handler)
+            try:
+                send_message(subscription, data)
+            except pywebpush.WebPushException as e:
+                print(e.response.text)
+                return None
