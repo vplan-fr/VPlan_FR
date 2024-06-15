@@ -1,7 +1,7 @@
 <script>
     import { fade } from 'svelte/transition';
     import { onMount } from "svelte";
-    import { title, register_button_visible } from "../stores";
+    import { title, register_button_visible, logged_in } from "../stores";
     import Button from "../base_components/Button.svelte";
     import {navigate_page, update_hash} from "../utils.js";
 
@@ -114,7 +114,7 @@
              on:enterViewport={() => $register_button_visible = true}
              on:exitViewport={() => $register_button_visible = false}>
             <Button background="var(--accent-color)" on:click={() => navigate_page('login')}>
-                Anmelden
+                {#if $logged_in}Plan öffnen{:else}Anmelden{/if}
             </Button>
         </div>
     </section>
@@ -217,7 +217,7 @@
     <section class="final-cta">
         <h2 class="responsive-heading">Steige jetzt auf das neue Modell um</h2>
         <Button background='var(--accent-color)' on:click={() => navigate_page('login')}>
-            Anmelden
+            {#if $logged_in}Plan öffnen{:else}Anmelden{/if}
         </Button>
     </section>
 </div>
