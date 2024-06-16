@@ -589,6 +589,33 @@ class LessonInfoMessage:
         }
 
 
+def split_parens_aware(string: str, sep: str, parens: dict[str, str] = None) -> list[str]:
+    assert len(sep) == 1
+
+    parens = {"(": ")"} if parens is None else parens
+
+    parens_stack: list[str] = []
+    sep_indexes: list[int] = []
+
+    for i, char in enumerate(string):
+        if char in parens:
+            parens_stack.append(parens[char])
+        elif parens_stack and char == parens_stack[-1]:
+            parens_stack.pop()
+        elif char == sep and not parens_stack:
+            sep_indexes.append(i)
+
+    out = []
+    start_index = 0
+    for sep_index in sep_indexes:
+        out.append(string[start_index:sep_index])
+        start_index = sep_index + len(sep)
+
+    out.append(string[start_index:])
+
+    return out
+
+
 @dataclasses.dataclass
 class LessonInfoParagraph:
     messages: list[LessonInfoMessage]
@@ -599,7 +626,7 @@ class LessonInfoParagraph:
                  plan_type: typing.Literal["forms", "teachers", "rooms"]) -> LessonInfoParagraph:
         messages = [
             LessonInfoMessage.from_str(message.strip(), lesson, i, plan_type)
-            for i, message in enumerate(paragraph.split(",")) if message.strip()
+            for i, message in enumerate(split_parens_aware(paragraph, ",")) if message.strip()
         ]
         new_messages = []
         for message in messages:
@@ -634,7 +661,7 @@ class ParsedLessonInfo:
                  ) -> ParsedLessonInfo:
         return cls([
             LessonInfoParagraph.from_str(paragraph.strip(), lesson, i, plan_type)
-            for i, paragraph in enumerate(info.split(";")) if paragraph.strip()
+            for i, paragraph in enumerate(split_parens_aware(info, ";")) if paragraph.strip()
         ])
 
     def serialize(self, lesson_date: datetime.date, block_config: blocks.BlockConfiguration) -> list:
