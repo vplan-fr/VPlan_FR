@@ -121,7 +121,7 @@ async def get_crawlers(session: requests.Session | None = None,
         # create crawler
         p = PlanCrawler(specifier, plan_downloader, plan_processor)
 
-        crawlers[school_name] = p
+        crawlers[specifier] = p
 
     return crawlers
 

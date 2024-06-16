@@ -6,25 +6,31 @@ from pathlib import Path
 
 from backend import meta_extractor
 from backend.load_plans import get_crawlers
+from shared import cache
 
 
 async def main():
     logging.basicConfig(level="DEBUG", format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S")
 
-    argparser = argparse.ArgumentParser(epilog="The cache is always the .cache directory.")
+    argparser = argparse.ArgumentParser(description="The cache is always the .cache directory.")
 
-    subparsers = argparser.add_subparsers(dest="subcommand")
+    subparsers = argparser.add_subparsers(dest="subcommand", required=True)
 
     migrate_all = subparsers.add_parser("migrate-all")
     migrate_all.add_argument("--since", type=str, help="Only migrate plans since this date (YYYY-MM-DD).")
-    migrate_all.add_argument("--school-number", action="append", help="Only migrate plans for this school number.", default=[])
+    migrate_all.add_argument("--school-number", action="append", help="Only migrate plans for this school number.",
+                             default=[])
     migrate_all.add_argument("--just-newest-revision", action="store_true", help="Only migrate the newest revision.")
 
     extract_all_teachers = subparsers.add_parser("extract-all-teachers")
 
     import_plankl_files = subparsers.add_parser("import-plankl-files")
     import_plankl_files.add_argument("directory", type=str, help="Directory containing the PlanKl.xml files to import.")
+
+    merge_cache = subparsers.add_parser("merge-cache",
+                                        description="Merge another directory of school caches into the current one.")
+    merge_cache.add_argument("foreign_cache_dir", type=str)
 
     args = argparser.parse_args()
 
@@ -93,6 +99,36 @@ async def main():
         await asyncio.gather(
             *[client.plan_processor.do_full_update() for client in crawlers.values()]
         )
+
+    elif args.subcommand == "merge-cache":
+        for folder in Path(args.foreign_cache_dir).iterdir():
+            if not folder.is_dir():
+                continue
+
+            school_num = folder.stem
+
+            print(f"=> {school_num!r}")
+            foreign_cache = cache.Cache(folder)
+            try:
+                this_cache = crawlers[school_num].plan_downloader.cache
+            except KeyError as e:
+                print(" -> Not in local cache. Not implemented. Skipping.")
+                continue
+
+            for day in foreign_cache.get_days():
+                for rev in foreign_cache.get_timestamps(day):
+                    path = foreign_cache.get_plan_path(day, rev)
+
+                    for file in path.iterdir():
+                        if file.name.endswith(".xml"):
+                            if not this_cache.plan_file_exists(day, rev, file.name):
+                                print(f" --> {day!s} {rev!s} {file.name!r}")
+                                this_cache.store_plan_file(
+                                    day,
+                                    rev,
+                                    foreign_cache.get_plan_file(day, rev, file.name),
+                                    file.name
+                                )
 
 
 if __name__ == '__main__':
