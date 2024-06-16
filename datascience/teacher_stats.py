@@ -1,7 +1,10 @@
 from shared.cache import Cache
 from backend.models import Plan, Lessons, PlanLesson
+from backend.teacher import Teachers
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+import matplotlib.patches as mpatches
 
 from stundenplan24_py import indiware_mobil
 
@@ -15,6 +18,8 @@ import json
 def main():
     cache = Cache(Path(".cache/10000000"))
 
+    teachers = Teachers.deserialize(json.loads(cache.get_meta_file("teachers.json")))
+
     out: dict[str, dict[str, dict[str, tuple[bool, bool]]]] = defaultdict(lambda: defaultdict(dict))
 
     for day in cache.get_days():
@@ -22,7 +27,10 @@ def main():
 
         revisions = cache.get_timestamps(day)
 
-        xml_file = cache.get_plan_file(day, revisions[0], filename="PlanKl.xml", newest_before=True)
+        try:
+            xml_file = cache.get_plan_file(day, revisions[0], filename="PlanKl.xml", newest_before=True)
+        except FileNotFoundError:
+            continue
 
         indiware_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ElementTree.fromstring(xml_file))
 
@@ -44,6 +52,9 @@ def main():
             }
         }
         """
+
+        for teacher in teachers.teachers.values():
+            out[teacher.plan_short][day.isoformat()] = {}
 
         for teacher, lessons in plan_lessons.items():
             lessons_by_period = Lessons(lessons).group_by("periods")
@@ -90,9 +101,9 @@ def get_yticklabel(start_date: datetime.date, ytick: int) -> str:
 
 def get_color(lesson_values: list[bool]) -> str:
     if lesson_values is None:
-        return "orange"
+        return 'lightgrey'
     elif lesson_values == [True, True]:
-        return 'darkgreen'
+        return 'blue'
     elif lesson_values == [False, True]:
         return 'green'
     elif lesson_values == [False, False]:
@@ -106,6 +117,7 @@ def plot():
     with open("testout.json", "r") as f:
         out = json.load(f)
     data = out[teacher]
+    data = {k: v for k, v in data.items() if k >= "2023-08-20"}
     bars = []
     start_date = datetime.date.fromisoformat(min(data.keys()))
     for date, date_data in data.items():
@@ -137,9 +149,21 @@ def plot():
 
     plt.gca().invert_yaxis()
     plt.title(f"Lehrer: {teacher}")
+
+    legend_elements = [
+        mpatches.Patch(color='blue', label='findet außerplanmäßig statt'),
+        mpatches.Patch(color='green', label='findet regulär statt'),
+        mpatches.Patch(color='red', label='fällt aus'),
+        mpatches.Patch(color='lightgrey', label='kein Unterricht')
+    ]
+
+    ax.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True,
+              ncol=2)
+
     plt.tight_layout()
-    plt.savefig('test.png', dpi=300)
+    plt.savefig(f'{teacher}.png', dpi=300)
 
 
 if __name__ == "__main__":
+    # main()
     plot()
