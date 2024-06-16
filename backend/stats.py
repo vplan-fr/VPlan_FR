@@ -71,3 +71,7 @@ class LessonsStatistics:
 
     def serialize(self) -> dict:
         return dataclasses.asdict(self)
+
+    @classmethod
+    def deserialize(cls, data: dict):
+        return cls(**data)
