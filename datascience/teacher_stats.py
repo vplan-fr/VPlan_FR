@@ -1,8 +1,6 @@
 from shared.cache import Cache
 from backend.models import Plan, Lessons, PlanLesson
-from pprint import pprint
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 from matplotlib.ticker import FuncFormatter
 
 from stundenplan24_py import indiware_mobil
@@ -13,9 +11,10 @@ from pathlib import Path
 from collections import defaultdict
 import json
 
+
 def main():
     cache = Cache(Path(".cache/10000000"))
-    
+
     out: dict[str, dict[str, dict[str, tuple[bool, bool]]]] = defaultdict(lambda: defaultdict(dict))
 
     for day in cache.get_days():
@@ -48,17 +47,16 @@ def main():
 
         for teacher, lessons in plan_lessons.items():
             lessons_by_period = Lessons(lessons).group_by("periods")
-            
+
             for period, period_lessons in lessons_by_period.items():
                 period_lessons: list[PlanLesson]
                 is_unplanned = max([period_lesson.is_unplanned for period_lesson in period_lessons])
                 takes_place = max([period_lesson.takes_place for period_lesson in period_lessons])
 
                 out[teacher][day.isoformat()][period] = is_unplanned, takes_place
-    
+
     with open("testout.json", "w") as f:
         json.dump(out, f)
-    
 
 
 def get_position(date: datetime.date, period: int, start_date: datetime.date) -> tuple[float, float, float, float]:
@@ -74,7 +72,7 @@ def get_position(date: datetime.date, period: int, start_date: datetime.date) ->
     week_height = week_height_total - week_pad
     weeks_since_start_date = (date - start_date).days // 7
 
-    x1 = (day_width + day_pad) * date.weekday() + (period-1) * period_width
+    x1 = (day_width + day_pad) * date.weekday() + (period - 1) * period_width
     y1 = weeks_since_start_date * (week_height + week_pad)
 
     return x1 - day_width / 2, y1 - week_height / 2, period_width, week_height
@@ -85,7 +83,7 @@ def get_yticklabel(start_date: datetime.date, ytick: int) -> str:
         return ""
     else:
         start_date -= datetime.timedelta(days=start_date.weekday())
-        week_monday = start_date + datetime.timedelta(days=ytick*7)
+        week_monday = start_date + datetime.timedelta(days=ytick * 7)
 
         return f"{week_monday:%d.%m.%Y} (KW {str(week_monday.isocalendar().week):0>2})"
 
@@ -112,8 +110,9 @@ def plot():
     start_date = datetime.date.fromisoformat(min(data.keys()))
     for date, date_data in data.items():
         for i in range(1, 11):
-            bars.append((get_position(datetime.date.fromisoformat(date), i, start_date), get_color(date_data.get(str(i)))))
-    
+            bars.append(
+                (get_position(datetime.date.fromisoformat(date), i, start_date), get_color(date_data.get(str(i)))))
+
     fig, ax = plt.subplots()
 
     for bar in bars:
@@ -121,15 +120,15 @@ def plot():
         x, y, width, height = bbox
 
         ax.fill_between(
-            x=[x, x+width],
+            x=[x, x + width],
             y1=[y, y],
-            y2=[y+height, y+height],
+            y2=[y + height, y + height],
             color=color
         )
 
     ax.xaxis.set_label_position('top')
     ax.xaxis.tick_top()
-    ax.set_xticks([0,1,2,3,4])
+    ax.set_xticks([0, 1, 2, 3, 4])
     ax.set_xticklabels(['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'])
 
     formatter = FuncFormatter(lambda ytick, tick_pos: get_yticklabel(start_date, ytick))
@@ -140,7 +139,6 @@ def plot():
     plt.title(f"Lehrer: {teacher}")
     plt.tight_layout()
     plt.savefig('test.png', dpi=300)
-    
 
 
 if __name__ == "__main__":
