@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import datetime
 import logging
+from pathlib import Path
 
 from backend import meta_extractor
 from backend.load_plans import get_crawlers
@@ -11,7 +12,7 @@ async def main():
     logging.basicConfig(level="DEBUG", format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S")
 
-    argparser = argparse.ArgumentParser()
+    argparser = argparse.ArgumentParser(epilog="The cache is always the .cache directory.")
 
     subparsers = argparser.add_subparsers(dest="subcommand")
 
@@ -21,6 +22,9 @@ async def main():
     migrate_all.add_argument("--just-newest-revision", action="store_true", help="Only migrate the newest revision.")
 
     extract_all_teachers = subparsers.add_parser("extract-all-teachers")
+
+    import_plankl_files = subparsers.add_parser("import-plankl-files")
+    import_plankl_files.add_argument("directory", type=str, help="Directory containing the PlanKl.xml files to import.")
 
     args = argparser.parse_args()
 
@@ -64,6 +68,31 @@ async def main():
             extractor._daily_extractors = NullDict()
             crawler.plan_processor.teachers.add_teachers(*extractor.teachers())
             crawler.plan_processor.store_teachers()
+
+    elif args.subcommand == "import-plank-files":
+        directory = Path(args.directory)
+
+        for file in directory.iterdir():
+            school_nr, _date, _timestamp = file.stem.split("_")
+
+            timestamp = datetime.datetime.fromtimestamp(int(_timestamp))
+
+            crawlers[school_nr].plan_downloader.cache.store_plan_file(
+                datetime.datetime.strptime(_date, "%Y%m%d").date(),
+                timestamp,
+                file.read_text("utf-8"),
+                "PlanKl.xml"
+            )
+            crawlers[school_nr].plan_downloader.cache.store_plan_file(
+                datetime.datetime.strptime(_date, "%Y%m%d").date(),
+                timestamp,
+                "",
+                ".processed"
+            )
+
+        await asyncio.gather(
+            *[client.plan_processor.do_full_update() for client in crawlers.values()]
+        )
 
 
 if __name__ == '__main__':
