@@ -227,8 +227,22 @@ def get_school_by_id(school_num: str):
 
 
 # doesn't get the passwords
-def get_all_schools():
-    pipeline = [
+def get_all_schools(only_shown: bool = True, include_ids: list[str] = None):
+    if only_shown:
+        pipeline = [
+            {
+                "$match": {
+                    "$or": [
+                        {"is_shown": True},
+                        {"_id": {"$in": include_ids}}
+                    ]
+                }
+            }
+        ]
+    else:
+        pipeline = []
+
+    pipeline += [
         {
             "$match": {
                 "is_shown": True
@@ -246,6 +260,7 @@ def get_all_schools():
             }
         }
     ]
+
     schools_list = list(creds.aggregate(pipeline))
     for ind, elem in enumerate(schools_list):
         schools_list[ind]["creds_needed"] = True if elem["hosting"]["creds"] else False
