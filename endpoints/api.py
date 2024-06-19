@@ -157,6 +157,7 @@ def authorize(school_num: str) -> Response:
     embed.set_footer("A detailed log can be found under .cache/auth.log")
     embed.set_timestamp()
     webhook_send("WEBHOOK_SCHOOL_AUTHORIZATION", embeds=[embed])
+
     with open(".cache/auth.log", "a") as f:
         f.write(f"New auth attempt for {request.form.get('school_num')}\nargs: {request.args}\nbody: {request.form}")
     if not school_data:
