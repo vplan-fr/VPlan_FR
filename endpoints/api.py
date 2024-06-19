@@ -22,8 +22,11 @@ api = Blueprint('api', __name__)
 @api.route(f"/api/v69.420/schools", methods=["GET"])
 @login_required
 def schools() -> Response:
-    # school_data = get_all_schools_by_number()
-    school_data = get_all_schools()
+    if current_user.get_field("admin"):
+        school_data = get_all_schools(only_shown=False)
+    else:
+        school_data = get_all_schools(only_shown=True, include_ids=current_user.get_authorized_schools())
+
     return send_success(school_data)
 
 
