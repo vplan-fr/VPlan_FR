@@ -230,6 +230,11 @@ def get_school_by_id(school_num: str):
 def get_all_schools():
     pipeline = [
         {
+            "$match": {
+                "is_shown": True
+            }
+        },
+        {
             "$sort": {"count": pymongo.DESCENDING}
         },
         {
