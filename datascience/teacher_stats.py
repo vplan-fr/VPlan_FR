@@ -57,7 +57,7 @@ def main():
             out[teacher.plan_short][day.isoformat()] = {}
 
         for teacher, lessons in plan_lessons.items():
-            lessons_by_period = Lessons(lessons).group_by("periods")
+            lessons_by_period = Lessons(lessons).filter(lambda l: not l.is_internal).group_by("periods")
 
             for period, period_lessons in lessons_by_period.items():
                 period_lessons: list[PlanLesson]
