@@ -122,7 +122,7 @@ def _submit_event(event: Event):
 
 def submit_event(event: Event):
     if not shared.mongodb.ENABLED:
-        logging.debug("MongoDB event collection disabled. Not submitting event.")
+        # logging.debug("MongoDB event collection disabled. Not submitting event.")
         return
 
     return _THREAD_POOL_EXECUTOR.submit(_submit_event, event)
