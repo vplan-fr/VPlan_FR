@@ -122,11 +122,7 @@ def _increasing_sequences(seq: typing.Iterable, key=lambda x: x) -> list[list]:
     last = None
 
     for elem in seq:
-        if last == elem:
-            # fallback if something bad happens
-            return [[elem] for elem in seq]
-
-        if last is None or key(elem) == key(last) + 1:
+        if last is None or key(elem) in (key(last), key(last) + 1):
             current_seq.append(elem)
         else:
             out.append(current_seq)
