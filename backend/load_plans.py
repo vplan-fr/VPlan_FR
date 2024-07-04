@@ -32,7 +32,7 @@ class PlanCrawler:
 
     async def check_infinite(self, interval: int = 60, *, once: bool = False, ignore_exceptions: bool = False):
         try:
-            self.plan_downloader.migrate_all()
+            self.plan_downloader.update_all_newest()
             self.plan_processor.do_full_update()
         except Exception as e:
             if not ignore_exceptions:
@@ -162,12 +162,12 @@ async def main():
     try:
         if args.only_process:
             for crawler in crawlers.values():
-                crawler.plan_downloader.migrate_all()
+                crawler.plan_downloader.update_all_newest()
                 crawler.plan_processor.do_full_update()
         elif args.only_download:
             if args.once:
                 for crawler in crawlers.values():
-                    crawler.plan_downloader.migrate_all()
+                    crawler.plan_downloader.update_all_newest()
                 await asyncio.gather(
                     *[crawler.plan_downloader.update_fetch() for crawler in crawlers.values()]
                 )

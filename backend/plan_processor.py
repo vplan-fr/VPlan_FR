@@ -58,17 +58,23 @@ class PlanProcessor:
 
         self._logger.info(f"=> Loaded {len(self.teachers.teachers)} cached teachers.")
 
-    def update_all_plans(self):
+    def update_all_plans(self) -> bool:
         self._logger.info("* Migrating cache...")
 
-        for day in self.cache.get_days():
-            self.update_day_plans(day)
+        did_migrate_a_plan = False
 
-    def update_day_plans(self, day: datetime.date):
-        self.cache.update_newest(day)
+        for day in self.cache.get_days():
+            did_migrate_a_plan |= self.update_day_plans(day)
+
+        return did_migrate_a_plan
+
+    def update_day_plans(self, day: datetime.date) -> bool:
+        did_migrate_a_plan = False
 
         for revision in self.cache.get_timestamps(day):
-            self.update_plan_revision(day, revision)
+            did_migrate_a_plan |= self.update_plan_revision(day, revision)
+
+        return did_migrate_a_plan
 
     def update_plan_revision(self, day: datetime.date, timestamp: datetime.datetime) -> bool:
         if self.cache.plan_file_exists(day, timestamp, ".processed"):
@@ -383,8 +389,8 @@ class PlanProcessor:
         )
 
     def do_full_update(self):
-        self.update_all_plans()
-        self.update_after_plan_processing()
+        if self.update_all_plans():
+            self.update_after_plan_processing()
 
     def update_after_plan_processing(self):
         self.update_meta()

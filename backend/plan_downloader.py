@@ -54,7 +54,7 @@ class PlanDownloader:
         self.cache = cache
 
     async def check_infinite(self, interval: int = 60, *, ignore_exceptions: bool = False):
-        self.migrate_all()
+        self.update_all_newest()
         # await asyncio.sleep(random.randint(0, 5))
 
         while True:
@@ -271,7 +271,7 @@ class PlanDownloader:
 
             return {(date, revision, downloaded_file)}
 
-    def migrate_all(self):
+    def update_all_newest(self):
         self._logger.debug(f"* Migrating cache ({self.__class__.__name__})...")
 
         for day in self.cache.get_days():
