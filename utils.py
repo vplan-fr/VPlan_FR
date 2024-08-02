@@ -1,3 +1,4 @@
+import secrets
 import threading
 import os
 import json
@@ -25,6 +26,7 @@ load_dotenv()
 assert shared.mongodb.DATABASE is not None
 
 users = shared.mongodb.DATABASE.get_collection("users")
+ical_tokens = shared.mongodb.DATABASE.get_collection("ical_tokens")
 creds = shared.mongodb.DATABASE.get_collection("creds")
 VALID_SCHOOLS = [elem["_id"] for elem in list(creds.find({}))]
 meta = shared.mongodb.DATABASE.get_collection("meta")
@@ -103,11 +105,7 @@ class User(UserMixin):
 
     # get setting for user, if setting not set get default setting
     def get_setting(self, setting_key):
-        self.get_user()
-        return self.user.get("settings", {}).get(setting_key, DEFAULT_SETTINGS.get(setting_key, None))
-
-    def get_favorites(self) -> Response:
-        return send_success(self.user.get("favourites", {}))
+        return self.get_field("settings", {}).get(setting_key, DEFAULT_SETTINGS.get(setting_key, None))
 
     """
         what does a favorite need:
@@ -159,6 +157,40 @@ class User(UserMixin):
         users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'favourites': new_favorites}})
         return send_success(new_favorites)
 
+    def generate_ical_tokens(self, overwrite: bool = False):
+        if not overwrite:
+            if ical_tokens.find_one({"user_id": self.mongo_id}):
+                return
+
+        ical_tokens.delete_many({"user_id": self.mongo_id})
+
+        favs = self.get_field("favourites", [])
+        new_favs = []
+
+        for i, fav in enumerate(favs):
+            token = secrets.token_hex(32)
+            new_favs.append(
+                fav | {
+                    "token": token,
+                }
+            )
+
+            ical_tokens.update_one(
+                {"token": token},
+                {"$set": {"user_id": self.mongo_id, "favorite_index": i}},
+                upsert=True
+            )
+
+        users.update_one({'_id': ObjectId(self.mongo_id)}, {"$set": {'favourites': new_favs}})
+
+
+def resolve_ical_token(token: str) -> tuple[str, int] | None:
+    token_data = ical_tokens.find_one({"token": token})
+    if token_data is None:
+        return None
+    else:
+        return token_data["user_id"], token_data["favorite_index"]
+
 
 def get_user(user_id):
     try:
@@ -175,6 +207,7 @@ def is_admin(func):
         if not current_user.user.get("admin"):
             return send_error("Du bist kein Admin")
         return func(*args, **kwargs)
+
     wrapper.__name__ = func.__name__
     return wrapper
 
