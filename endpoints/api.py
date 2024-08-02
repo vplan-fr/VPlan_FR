@@ -174,7 +174,10 @@ def plan_ical(token: str) -> Response:
     import html
 
     def generate_html_list(elements: list[str]) -> str:
-        return "<ul>" + "".join(f"<li>{html.escape(element)}</li>" for element in elements) + "</ul>"
+        if not elements:
+            return ""
+        else:
+            return "<ul>" + "".join(f"<li>{html.escape(element)}</li>" for element in elements) + "</ul>"
 
     if plan_type != "forms":
         calendar = icalendar.Calendar()
@@ -244,11 +247,10 @@ def plan_ical(token: str) -> Response:
 
             event = icalendar.Event()
             event.add("summary", summary)
-            if info_paragraphs:
-                event.add("description", (
-                    generate_html_list(info_paragraphs)
-                    + f"<br><small>{datetime.datetime.now().isoformat()}</small>"
-                ))
+            event.add("description", (
+                generate_html_list(info_paragraphs)
+                + f"<br><small>{datetime.datetime.now().isoformat()}</small>"
+            ))
             event.add("dtstart", begin)
             event.add("dtend", end)
             event.add("dtstamp", datetime.datetime.now())
