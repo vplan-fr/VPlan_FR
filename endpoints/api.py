@@ -190,6 +190,8 @@ def plan_ical(token: str) -> Response:
         calendar.add("x-wr-timezone", "Europe/Berlin")
         calendar.add("prodid", "-//VPlan FR//vplan.fr//DE")
         calendar.add("version", "2.0")
+        calendar.add("method", "PUBLISH")
+        calendar.add("calscale", "GREGORIAN")
 
         return Response(
             calendar.to_ical(),
@@ -202,9 +204,12 @@ def plan_ical(token: str) -> Response:
     calendar.add("x-wr-timezone", "Europe/Berlin")
     calendar.add("prodid", "-//VPlan FR//vplan.fr//DE")
     calendar.add("version", "2.0")
+    calendar.add("method", "PUBLISH")
+    calendar.add("calscale", "GREGORIAN")
 
     today = datetime.date.today()
     for date in cache.get_days():
+        break
         if date < today:
             continue
 
@@ -215,7 +220,7 @@ def plan_ical(token: str) -> Response:
 
         lessons = data.get(plan_type, {}).get(plan_value, [])
 
-        for lesson in lessons:
+        for i, lesson in enumerate(lessons):
             if lesson["class_number"] in preferences:
                 continue
 
@@ -249,6 +254,8 @@ def plan_ical(token: str) -> Response:
                 event.add("description", generate_html_list(info_paragraphs))
             event.add("dtstart", begin)
             event.add("dtend", end)
+            event.add("dtstamp", datetime.datetime.now())
+            event.add("uid", f"{school_num}_{plan_type}_{plan_value}_{date.isoformat()}_{i}@vplan.fr")
 
             if lesson["current_rooms"]:
                 event.add("location", ", ".join(lesson["current_rooms"]))
