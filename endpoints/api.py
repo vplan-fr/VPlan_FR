@@ -1,4 +1,5 @@
 import logging
+import random
 from typing import List
 
 import json
@@ -169,14 +170,6 @@ def plan_ical(token: str) -> Response:
 
     cache = shared.cache.Cache(Path(".cache") / school_num)
 
-    description = (
-        "Stundenplankalender, exportiert von vplan.fr\n"
-        f"Schulnummer: {school_num}\n"
-        f"Planart: {plan_type!r}\n"
-        f"Planwert: {plan_value!r}\n"
-        f"Benutzer: „{user.get_field('nickname')}“"
-    )
-
     import icalendar
     import html
 
@@ -186,12 +179,10 @@ def plan_ical(token: str) -> Response:
     if plan_type != "forms":
         calendar = icalendar.Calendar()
         calendar.add("x-wr-calname", f"NICHT UNTERSTÜTZT :( {fav['name']} (vplan.fr)")
-        calendar.add("x-wr-caldesc", description + "\nAktuell werden leider nur Klassenpläne unterstützt. :(")
+        calendar.add("x-wr-caldesc", "Aktuell werden leider nur Klassenpläne unterstützt. :(")
         calendar.add("x-wr-timezone", "Europe/Berlin")
         calendar.add("prodid", "-//VPlan FR//vplan.fr//DE")
         calendar.add("version", "2.0")
-        calendar.add("method", "PUBLISH")
-        calendar.add("calscale", "GREGORIAN")
 
         return Response(
             calendar.to_ical(),
@@ -200,16 +191,20 @@ def plan_ical(token: str) -> Response:
 
     calendar = icalendar.Calendar()
     calendar.add("x-wr-calname", f"{fav['name']} (vplan.fr)")
-    calendar.add("x-wr-caldesc", description)
+    calendar.add("x-wr-caldesc", (
+        "Stundenplankalender, exportiert von vplan.fr\n"
+        f"Schulnummer: {school_num}\n"
+        f"Planart: {plan_type!r}\n"
+        f"Planwert: {plan_value!r}\n"
+        f"Benutzer: „{user.get_field('nickname')}“"
+    ))
     calendar.add("x-wr-timezone", "Europe/Berlin")
-    calendar.add("prodid", "-//github.com/allenporter/ical//8.1.1//EN")
+    calendar.add("prodid", f"-//vplan.fr//{token}//DE")
     calendar.add("version", "2.0")
-    # calendar.add("method", "PUBLISH")
-    # calendar.add("calscale", "GREGORIAN")
 
     today = datetime.date.today()
     for date in cache.get_days():
-        if date < today:
+        if date < today - datetime.timedelta(days=7 * 6):
             continue
 
         try:
@@ -230,19 +225,16 @@ def plan_ical(token: str) -> Response:
                 subject = lesson["current_class"] if lesson["current_class"] is not None else "-"
                 teacher = ", ".join(lesson["current_teachers"]) if lesson["current_teachers"] else "-"
 
-                # subject = subject if not lesson["subject_changed"] else f"[{subject}]"
-                # teacher = teacher if not lesson["teacher_changed"] else f"[{teacher}]"
+                subject = subject if not lesson["subject_changed"] else f"[{subject}]"
+                teacher = teacher if not lesson["teacher_changed"] else f"[{teacher}]"
 
                 summary = f"{subject} {teacher}"
             else:
                 scheduled_subject = lesson["scheduled_class"] if lesson["scheduled_class"] is not None else "-"
                 scheduled_teacher = ", ".join(lesson["scheduled_teachers"]) if lesson["scheduled_teachers"] else "-"
 
-                # summary = (
-                #     f"({scheduled_subject} {scheduled_teacher})"
-                # )
                 summary = (
-                    f"{scheduled_subject} {scheduled_teacher}"
+                    f"({scheduled_subject} {scheduled_teacher})"
                 )
 
             info_paragraphs = []
@@ -253,11 +245,14 @@ def plan_ical(token: str) -> Response:
             event = icalendar.Event()
             event.add("summary", summary)
             if info_paragraphs:
-                event.add("description", generate_html_list(info_paragraphs))
+                event.add("description", (
+                    generate_html_list(info_paragraphs)
+                    + f"<br><small>{datetime.datetime.now().isoformat()}</small>"
+                ))
             event.add("dtstart", begin)
             event.add("dtend", end)
             event.add("dtstamp", datetime.datetime.now())
-            event.add("uid", f"{school_num}_{plan_type}_{plan_value}_{date.isoformat()}_{i}@vplan.fr")
+            event.add("uid", f"{token}-{random.randbytes(16).hex()}@vplan.fr")
 
             if lesson["current_rooms"]:
                 event.add("location", ", ".join(lesson["current_rooms"]))
