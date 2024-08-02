@@ -199,9 +199,9 @@ def plan_ical(token: str) -> Response:
         )
 
     calendar = icalendar.Calendar()
-    # calendar.add("x-wr-calname", f"{fav['name']} (vplan.fr)")
-    # calendar.add("x-wr-caldesc", description)
-    # calendar.add("x-wr-timezone", "Europe/Berlin")
+    calendar.add("x-wr-calname", f"{fav['name']} (vplan.fr)")
+    calendar.add("x-wr-caldesc", description)
+    calendar.add("x-wr-timezone", "Europe/Berlin")
     calendar.add("prodid", "-//github.com/allenporter/ical//8.1.1//EN")
     calendar.add("version", "2.0")
     # calendar.add("method", "PUBLISH")
