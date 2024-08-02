@@ -199,17 +199,16 @@ def plan_ical(token: str) -> Response:
         )
 
     calendar = icalendar.Calendar()
-    calendar.add("x-wr-calname", f"{fav['name']} (vplan.fr)")
-    calendar.add("x-wr-caldesc", description)
-    calendar.add("x-wr-timezone", "Europe/Berlin")
-    calendar.add("prodid", "-//VPlan FR//vplan.fr//DE")
+    # calendar.add("x-wr-calname", f"{fav['name']} (vplan.fr)")
+    # calendar.add("x-wr-caldesc", description)
+    # calendar.add("x-wr-timezone", "Europe/Berlin")
+    calendar.add("prodid", "-//github.com/allenporter/ical//8.1.1//EN")
     calendar.add("version", "2.0")
-    calendar.add("method", "PUBLISH")
-    calendar.add("calscale", "GREGORIAN")
+    # calendar.add("method", "PUBLISH")
+    # calendar.add("calscale", "GREGORIAN")
 
     today = datetime.date.today()
     for date in cache.get_days():
-        break
         if date < today:
             continue
 
@@ -231,16 +230,19 @@ def plan_ical(token: str) -> Response:
                 subject = lesson["current_class"] if lesson["current_class"] is not None else "-"
                 teacher = ", ".join(lesson["current_teachers"]) if lesson["current_teachers"] else "-"
 
-                subject = subject if not lesson["subject_changed"] else f"[{subject}]"
-                teacher = teacher if not lesson["teacher_changed"] else f"[{teacher}]"
+                # subject = subject if not lesson["subject_changed"] else f"[{subject}]"
+                # teacher = teacher if not lesson["teacher_changed"] else f"[{teacher}]"
 
                 summary = f"{subject} {teacher}"
             else:
                 scheduled_subject = lesson["scheduled_class"] if lesson["scheduled_class"] is not None else "-"
                 scheduled_teacher = ", ".join(lesson["scheduled_teachers"]) if lesson["scheduled_teachers"] else "-"
 
+                # summary = (
+                #     f"({scheduled_subject} {scheduled_teacher})"
+                # )
                 summary = (
-                    f"({scheduled_subject} {scheduled_teacher})"
+                    f"{scheduled_subject} {scheduled_teacher}"
                 )
 
             info_paragraphs = []
