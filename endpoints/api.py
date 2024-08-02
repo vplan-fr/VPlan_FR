@@ -187,6 +187,9 @@ def plan_ical(token: str) -> Response:
         calendar = icalendar.Calendar()
         calendar.add("x-wr-calname", f"NICHT UNTERSTÜTZT :( {fav['name']} (vplan.fr)")
         calendar.add("x-wr-caldesc", description + "\nAktuell werden leider nur Klassenpläne unterstützt. :(")
+        calendar.add("x-wr-timezone", "Europe/Berlin")
+        calendar.add("prodid", "-//VPlan FR//vplan.fr//DE")
+        calendar.add("version", "2.0")
 
         return Response(
             calendar.to_ical(),
@@ -196,6 +199,9 @@ def plan_ical(token: str) -> Response:
     calendar = icalendar.Calendar()
     calendar.add("x-wr-calname", f"{fav['name']} (vplan.fr)")
     calendar.add("x-wr-caldesc", description)
+    calendar.add("x-wr-timezone", "Europe/Berlin")
+    calendar.add("prodid", "-//VPlan FR//vplan.fr//DE")
+    calendar.add("version", "2.0")
 
     today = datetime.date.today()
     for date in cache.get_days():
