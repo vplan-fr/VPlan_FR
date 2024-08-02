@@ -98,8 +98,4 @@ def sw() -> Response:
 
 if __name__ == "__main__":
     update_database()
-    try:
-        endpoints.webpush.start_listen()
-    except Exception as e:
-        logging.getLogger("server.py").error("Failed to setup webpush listener.", exc_info=e)
-    app.run(debug=DEBUG)
+    app.run(debug=DEBUG, host="0.0.0.0")
