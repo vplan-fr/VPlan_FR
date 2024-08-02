@@ -163,19 +163,96 @@ def plan_ical(token: str) -> Response:
         return Response(status=404)
 
     preferences = fav.get("preferences", [])  # disabled class ids
+    school_num = fav.get("school_num")
+    plan_type = fav.get("plan_type")
+    plan_value = fav.get("plan_value")
 
-    from ical.calendar import Calendar
-    from ical.event import Event
-    from ical.calendar_stream import IcsCalendarStream
+    cache = shared.cache.Cache(Path(".cache") / school_num)
 
-    calendar = Calendar()
-    calendar.events.append(
-        Event(summary="Event summary", start=datetime.date(2022, 7, 3), end=datetime.date(2022, 7, 4)),
+    description = (
+        "Stundenplankalender, exportiert von vplan.fr\n"
+        f"Schulnummer: {school_num}\n"
+        f"Planart: {plan_type!r}\n"
+        f"Planwert: {plan_value!r}\n"
+        f"Benutzer: „{user.get_field('nickname')}“"
     )
 
-    ical_str = IcsCalendarStream.calendar_to_ics(calendar)
+    import icalendar
+    import html
 
-    return Response(ical_str, mimetype="text/calendar")
+    def generate_html_list(elements: list[str]) -> str:
+        return "<ul>" + "".join(f"<li>{html.escape(element)}</li>" for element in elements) + "</ul>"
+
+    if plan_type != "forms":
+        calendar = icalendar.Calendar()
+        calendar.add("x-wr-calname", f"NICHT UNTERSTÜTZT :( {fav['name']} (vplan.fr)")
+        calendar.add("x-wr-caldesc", description + "\nAktuell werden leider nur Klassenpläne unterstützt. :(")
+
+        return Response(
+            calendar.to_ical(),
+            content_type="text/calendar",
+        )
+
+    calendar = icalendar.Calendar()
+    calendar.add("x-wr-calname", f"{fav['name']} (vplan.fr)")
+    calendar.add("x-wr-caldesc", description)
+
+    today = datetime.date.today()
+    for date in cache.get_days():
+        if date < today:
+            continue
+
+        try:
+            data = json.loads(cache.get_plan_file(date, ".newest", "plans.json"))
+        except FileNotFoundError:
+            continue
+
+        lessons = data.get(plan_type, {}).get(plan_value, [])
+
+        for lesson in lessons:
+            if lesson["class_number"] in preferences:
+                continue
+
+            begin = datetime.datetime.combine(date, datetime.time.fromisoformat(lesson["begin"]))
+            end = datetime.datetime.combine(date, datetime.time.fromisoformat(lesson["end"]))
+
+            if lesson["takes_place"]:
+                subject = lesson["current_class"] if lesson["current_class"] is not None else "-"
+                teacher = ", ".join(lesson["current_teachers"]) if lesson["current_teachers"] else "-"
+
+                subject = subject if not lesson["subject_changed"] else f"[{subject}]"
+                teacher = teacher if not lesson["teacher_changed"] else f"[{teacher}]"
+
+                summary = f"{subject} {teacher}"
+            else:
+                scheduled_subject = lesson["scheduled_class"] if lesson["scheduled_class"] is not None else "-"
+                scheduled_teacher = ", ".join(lesson["scheduled_teachers"]) if lesson["scheduled_teachers"] else "-"
+
+                summary = (
+                    f"({scheduled_subject} {scheduled_teacher})"
+                )
+
+            info_paragraphs = []
+            for paragraph in lesson["info"]:
+                for line in paragraph:
+                    info_paragraphs.append("".join(s["text"] for s in line["text_segments"]))
+
+            event = icalendar.Event()
+            event.add("summary", summary)
+            if info_paragraphs:
+                event.add("description", generate_html_list(info_paragraphs))
+            event.add("dtstart", begin)
+            event.add("dtend", end)
+
+            if lesson["current_rooms"]:
+                event.add("location", ", ".join(lesson["current_rooms"]))
+
+            calendar.add_component(event)
+
+    return Response(
+        calendar.to_ical(),
+        content_type="text/calendar",
+    )
 
 
 @api.route(f"/api/v69.420/plan_ical_renew_links", methods=["GET"])
