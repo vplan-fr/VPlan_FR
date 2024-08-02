@@ -13,3 +13,4 @@ brotlicffi~=1.1.0.0
 pywebpush~=1.14.0
 py-vapid~=1.9.0
 aiohttp~=3.9.3
+ical~=8.1.1

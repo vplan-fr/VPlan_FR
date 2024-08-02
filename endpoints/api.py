@@ -8,6 +8,8 @@ from pathlib import Path
 
 from flask import Blueprint, request, Response
 from flask_login import login_required, current_user
+
+import utils
 from endpoints.authorization import school_authorized
 import endpoints.webpush
 
@@ -143,6 +145,47 @@ def plan(school_num: str) -> Response:
     return send_success(data)
 
 
+@api.route(f"/api/v69.420/plan_ical/<token>", methods=["GET"])
+def plan_ical(token: str) -> Response:
+    out = utils.resolve_ical_token(token)
+    if out is None:
+        return Response(status=404)
+
+    user_id, favorite_index = out
+
+    user = utils.User(user_id)
+
+    favs = user.get_field("favourites", {})
+
+    try:
+        fav = favs[favorite_index]
+    except IndexError:
+        return Response(status=404)
+
+    preferences = fav.get("preferences", [])  # disabled class ids
+
+    from ical.calendar import Calendar
+    from ical.event import Event
+    from ical.calendar_stream import IcsCalendarStream
+
+    calendar = Calendar()
+    calendar.events.append(
+        Event(summary="Event summary", start=datetime.date(2022, 7, 3), end=datetime.date(2022, 7, 4)),
+    )
+
+    ical_str = IcsCalendarStream.calendar_to_ics(calendar)
+
+    return Response(ical_str, mimetype="text/calendar")
+
+
+@api.route(f"/api/v69.420/plan_ical_renew_links", methods=["GET"])
+@login_required
+def plan_ical_renew_links() -> Response:
+    current_user.generate_ical_tokens(overwrite=True)
+
+    return send_success()
+
+
 @api.route(f"{API_BASE_URL}/authorize", methods=["POST"])
 @login_required
 def authorize(school_num: str) -> Response:
@@ -201,7 +244,8 @@ def instant_authorize(school_num: str) -> Response:
 @login_required
 def favorites() -> Response:
     if request.method == "GET":
-        return send_success(current_user.get_user().get("favourites", []))
+        current_user.generate_ical_tokens()
+        return send_success(current_user.get_field("favourites", []))
     try:
         data = json.loads(request.data)
     except json.JSONDecodeError:
