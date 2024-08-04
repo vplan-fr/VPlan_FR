@@ -43,14 +43,6 @@ class Lesson:
     _origin_plan_type: typing.Literal["forms", "teachers", "rooms"] = None
     _origin_plan_lesson_ids: set[int] = dataclasses.field(default_factory=set)
     _is_scheduled: bool | None = None
-    _grouped_form_plan_current_course: str = None
-    _grouped_form_plan_current_teachers: set[str] = None
-    _grouped_form_plan_current_rooms: set[str] = None
-    _grouped_form_plan_current_forms: set[str] = None
-    _grouped_form_plan_scheduled_course: str = None
-    _grouped_form_plan_scheduled_teachers: set[str] = None
-    _grouped_form_plan_scheduled_rooms: set[str] = None
-    _grouped_form_plan_scheduled_forms: set[str] = None
 
     @property
     def _origin_plan_value(self) -> set[str]:
@@ -802,15 +794,6 @@ class Plan:
                 #     scheduled_lesson.class_ = None
 
                 for l in current_lesson, scheduled_lesson:
-                    l._grouped_form_plan_current_course = current_lesson.course
-                    l._grouped_form_plan_current_teachers = current_lesson.teachers
-                    l._grouped_form_plan_current_rooms = current_lesson.rooms
-                    l._grouped_form_plan_current_forms = current_lesson.forms
-                    l._grouped_form_plan_scheduled_course = scheduled_lesson.course
-                    l._grouped_form_plan_scheduled_teachers = scheduled_lesson.teachers
-                    l._grouped_form_plan_scheduled_rooms = scheduled_lesson.rooms
-                    l._grouped_form_plan_scheduled_forms = scheduled_lesson.forms
-
                     l._origin_plan_type = "forms"
                     l._origin_plan_lesson_ids = {_id}
 

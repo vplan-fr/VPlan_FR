@@ -129,15 +129,6 @@ class PlanProcessor:
                 "_default_plan.json"
             )
 
-            self.cache.store_plan_file(
-                date, timestamp,
-                json.dumps(
-                    students_plan_extractor.form_plan_extractor.grouped_form_plans(),
-                    default=lambda plan_lesson: PlanLesson.serialize(plan_lesson, block_config=self.block_config)
-                ),
-                "grouped_form_plans.json"
-            )
-
             # from .models import Lessons
             # self.cache.store_plan_file(
             #     date, timestamp,

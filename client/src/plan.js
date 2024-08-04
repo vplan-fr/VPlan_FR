@@ -144,9 +144,9 @@ export function gen_location_hash(location_name, school_num, date, plan_type, pl
     }
 }
 
-export function load_lessons(data, school_num, plan_type, plan_value, use_grouped_form_plans, meta, plan_var_resetter, update_lessons) {
+export function load_lessons(data, school_num, plan_type, plan_value, meta, plan_var_resetter, update_lessons) {
     // Check if settings and data are loaded
-    if(use_grouped_form_plans === undefined || data === undefined || data.length == 0) {
+    if(data === undefined || data.length == 0) {
         return;
     }
     // Check the presence of necessary variables
@@ -172,10 +172,9 @@ export function load_lessons(data, school_num, plan_type, plan_value, use_groupe
         }
     }
 
-    let plan_key = use_grouped_form_plans ? "grouped_form_plans": "plans";
     update_lessons("rooms_data", data.rooms);
     if (plan_type !== "room_overview") {
-        update_lessons("all_lessons", data[plan_key][plan_type] ? data[plan_key][plan_type][plan_value] || [] : []);
+        update_lessons("all_lessons", data["plans"][plan_type] ? data["plans"][plan_type][plan_value] || [] : []);
     }
 }
 

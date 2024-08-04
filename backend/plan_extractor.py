@@ -237,16 +237,6 @@ class SubPlanExtractor:
     def plan(self):
         return self.forms_lessons_grouped.make_plan(self.plan_type, plan_type=self.plan_type)
 
-    def grouped_form_plans(self) -> dict[str, dict[str, list]]:
-        return {
-            "forms": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_forms",
-                                                          "_grouped_form_plan_scheduled_forms", plan_type="forms"),
-            "rooms": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_rooms",
-                                                          "_grouped_form_plan_scheduled_rooms", plan_type="forms"),
-            "teachers": self.forms_lessons_grouped.make_plan("_grouped_form_plan_current_teachers",
-                                                             "_grouped_form_plan_scheduled_teachers", plan_type="forms")
-        }
-
 
 class TeachersPlanExtractor:
     def __init__(self, plan_le: str, plan_ra: str | None, teachers: Teachers, block_config: blocks.BlockConfiguration,

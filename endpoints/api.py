@@ -96,7 +96,6 @@ def plan(school_num: str) -> Response:
             "rooms": json.loads(cache.get_plan_file(date, revision, "rooms.json")),
             "plans": json.loads(cache.get_plan_file(date, revision, "plans.json")),
             "exams": json.loads(cache.get_plan_file(date, revision, "exams.json")),
-            "grouped_form_plans": json.loads(cache.get_plan_file(date, revision, "grouped_form_plans.json")),
             "is_default_plan": False
         }
     except FileNotFoundError:
@@ -138,7 +137,6 @@ def plan(school_num: str) -> Response:
             "rooms": None,
             "plans": plans,
             "exams": {},
-            "grouped_form_plans": plans,
             "is_default_plan": True
         }
 

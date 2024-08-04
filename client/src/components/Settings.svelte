@@ -89,7 +89,6 @@
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.rainbow}>Regenbogen 🌈</span>
         <h2 class="category-heading">Nerd Section</h2>
         <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.show_revision_selector}>Planversion auswählbar machen</span>
-        <span class="responsive-text"><input type="checkbox" bind:checked={temp_settings.use_grouped_form_plans}>Lehrer/Raumpläne nur als umgeordnete Klassenpläne anzeigen. (Bsp.: Lehreränderung bei Klassenplan wird nicht zu Ausfall im Lehrerplan des ursprünglichen Lehrers)</span>
         {#if is_admin}
             <h2 class="category-heading">Admin-Section</h2>
             <h2 class="category-heading">Push-Benachrichtigungen</h2>

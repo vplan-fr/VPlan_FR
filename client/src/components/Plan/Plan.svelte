@@ -200,7 +200,7 @@
         handle_last_updated, handle_loading_state, handle_plan_data, renew_abort_controller
     );
     // Load the new lessons on change to selected plan
-    $: meta && load_lessons(plan_data, school_num, plan_type, plan_value, $settings.use_grouped_form_plans, meta, reset_plan_vars, update_lessons);
+    $: meta && load_lessons(plan_data, school_num, plan_type, plan_value, meta, reset_plan_vars, update_lessons);
     // Apply Preferences to lessons
     $: lessons = apply_preferences(plan_type, preferences_apply, $selected_favorite, $favorites, all_lessons);
 
