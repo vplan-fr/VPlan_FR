@@ -10,6 +10,7 @@ from pathlib import Path
 from flask import Blueprint, request, Response
 from flask_login import login_required, current_user
 
+import backend.teacher
 import utils
 from endpoints.authorization import school_authorized
 import endpoints.webpush
@@ -169,6 +170,7 @@ def plan_ical(token: str) -> Response:
     plan_value = fav.get("plan_value")
 
     cache = shared.cache.Cache(Path(".cache") / school_num)
+    teachers = backend.teacher.Teachers.deserialize(json.loads(cache.get_meta_file("teachers.json")))
 
     import icalendar
     import html
@@ -177,7 +179,7 @@ def plan_ical(token: str) -> Response:
         if not elements:
             return ""
         else:
-            return "<ul>" + "".join(f"<li>{html.escape(element)}</li>" for element in elements) + "</ul>"
+            return "<ul>" + "".join(f"<li>{element}</li>" for element in elements) + "</ul>"
 
     if plan_type != "forms":
         calendar = icalendar.Calendar()
@@ -196,9 +198,9 @@ def plan_ical(token: str) -> Response:
     calendar.add("x-wr-calname", f"{fav['name']} (vplan.fr)")
     calendar.add("x-wr-caldesc", (
         "Stundenplankalender, exportiert von vplan.fr\n"
-        f"Schulnummer: {school_num}\n"
-        f"Planart: {plan_type!r}\n"
-        f"Planwert: {plan_value!r}\n"
+        f"Schulnummer: „{school_num}“\n"
+        f"Planart: „{plan_type}“\n"
+        f"Planwert: „{plan_value}“\n"
         f"Benutzer: „{user.get_field('nickname')}“"
     ))
     calendar.add("x-wr-timezone", "Europe/Berlin")
@@ -224,14 +226,15 @@ def plan_ical(token: str) -> Response:
             begin = datetime.datetime.combine(date, datetime.time.fromisoformat(lesson["begin"]))
             end = datetime.datetime.combine(date, datetime.time.fromisoformat(lesson["end"]))
 
+            subject = lesson["current_class"] if lesson["current_class"] is not None else "-"
+
             if lesson["takes_place"]:
-                subject = lesson["current_class"] if lesson["current_class"] is not None else "-"
                 teacher = ", ".join(lesson["current_teachers"]) if lesson["current_teachers"] else "-"
 
-                subject = subject if not lesson["subject_changed"] else f"[{subject}]"
+                subject_ = subject if not lesson["subject_changed"] else f"[{subject}]"
                 teacher = teacher if not lesson["teacher_changed"] else f"[{teacher}]"
 
-                summary = f"{subject} {teacher}"
+                summary = f"{subject_} {teacher}"
             else:
                 scheduled_subject = lesson["scheduled_class"] if lesson["scheduled_class"] is not None else "-"
                 scheduled_teacher = ", ".join(lesson["scheduled_teachers"]) if lesson["scheduled_teachers"] else "-"
@@ -240,16 +243,85 @@ def plan_ical(token: str) -> Response:
                     f"({scheduled_subject} {scheduled_teacher})"
                 )
 
+            def annotate_teacher(plan_short: str | list[str]):
+                if isinstance(plan_short, list):
+                    return " ".join(annotate_teacher(x) for x in plan_short)
+                else:
+                    teacher = teachers.query_plan_teacher(plan_short)
+                    if teacher is not None:
+                        return f'<abbr title="{teacher.fullest_available_name}">{plan_short}</abbr>'
+                    else:
+                        return plan_short
+
             info_paragraphs = []
             for paragraph in lesson["info"]:
+                lines = []
                 for line in paragraph:
-                    info_paragraphs.append("".join(s["text"] for s in line["text_segments"]))
+                    line_parts = []
+                    for s in line["text_segments"]:
+                        if s["link"] is not None and s["link"]["type"] == "teachers":
+                            line_parts.append(annotate_teacher(s["link"]["value"]))
+                        else:
+                            line_parts.append(html.escape(s["text"]))
+                    lines.append("".join(line_parts))
+                info_paragraphs.append(lines)
+
+            description = []
+
+            if info_paragraphs:
+                description.append("".join(
+                    f"<p>{generate_html_list(paragraph)}</p>"
+                    for paragraph in info_paragraphs
+                ))
+
+            def cond_b(x: str, condition: bool) -> str:
+                if condition:
+                    return f"<b>{x}</b>"
+                else:
+                    return x
+
+            def s(x: str) -> str:
+                if not x:
+                    return x
+                return f"<s>{x}</s>"
+
+            current_teachers: list[str] = lesson["current_teachers"] or []
+            s_teachers = set(lesson["scheduled_teachers"] or []) - set(current_teachers)
+            current_rooms = lesson["current_rooms"] or []
+            s_rooms = set(lesson["scheduled_rooms"] or []) - set(current_rooms)
+
+            current_teachers = [annotate_teacher(teacher) for teacher in current_teachers]
+            s_teachers = [annotate_teacher(teacher) for teacher in s_teachers]
+
+            # current_forms = lesson["current_forms"]
+            # s_forms = set(lesson["scheduled_forms"]) - set(current_forms)
+
+            current_rooms = ["-"] if not (current_rooms or s_rooms) else current_rooms
+            current_teachers = ["-"] if not (current_teachers or s_teachers) else current_teachers
+            description.append(
+                "<table>"
+                # "<thead><tr><th>Attribut</th><th>Wert</th></tr></thead>"
+                "<tbody>"
+                f"<tr><td>Stunde</td><td>{', '.join(map(str, lesson['periods']))}</td></tr>"
+                f"<tr><td>Fach</td><td>{cond_b(subject, lesson['subject_changed'])}</td></tr>"
+                f"<tr><td>Lehrer</td><td>{cond_b(' '.join(current_teachers) + ' ' + s(' '.join(s_teachers)), lesson['teacher_changed'])}</td></tr>"
+                # f"<tr><td>Klassen</td><td>{', '.join(current_forms)} {s(', '.join(s_forms))}</td></tr>"
+                f"<tr><td>Raum</td><td>{', '.join(current_rooms)} {s(', '.join(s_rooms))}</td></tr>"
+                f"<tr><td>Findet statt</td><td>{'Ja' if lesson['takes_place'] else 'Nein'}</td></tr>"
+                "</tbody>"
+                "</table>"
+            )
+
+            description.append(
+                f"<small>Diese Anfrage: {datetime.datetime.now().isoformat()}</small><br>"
+                f"<small>Zuletzt auf neue Pläne überprüft: {json.loads(cache.get_meta_file('last_fetch.json'))['timestamp']}</small><br>"
+                f"<small>Zuletzt aktualisiert: {cache.get_timestamps(date)[0].isoformat()}"
+            )
 
             event = icalendar.Event()
             event.add("summary", summary)
             event.add("description", (
-                generate_html_list(info_paragraphs)
-                + f"<br><small>{datetime.datetime.now().isoformat()}</small>"
+                "<hr/>".join(description)
             ))
             event.add("dtstart", begin)
             event.add("dtend", end)

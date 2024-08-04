@@ -82,6 +82,10 @@ class Teacher:
     def strip_titles(surname: str) -> str:
         return " ".join(filter(lambda x: "." not in x, surname.split(" ")))
 
+    @property
+    def fullest_available_name(self) -> str:
+        return self.full_name or self.full_surname or self.plan_long or self.plan_short
+
 
 @dataclasses.dataclass
 class Teachers:
