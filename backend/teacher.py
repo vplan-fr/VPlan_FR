@@ -16,6 +16,7 @@ class Teacher:
                  contact_link: str | None = None,
                  image_path: str | None = None,
                  last_seen: datetime.date = datetime.date.min,
+                 first_seen: datetime.date = datetime.date.max,
                  plan_long: str = None):
         _plan_long = {} if _plan_long is None else _plan_long
         subjects = set() if subjects is None else subjects
@@ -32,6 +33,7 @@ class Teacher:
         self.contact_link = contact_link
         self.image_path = image_path
         self.last_seen = last_seen
+        self.first_seen = first_seen
 
     @property
     def plan_long(self) -> str:
@@ -48,7 +50,8 @@ class Teacher:
             "subjects": list(self.subjects),
             "contact_link": self.contact_link,
             "image_path": self.image_path,
-            "last_seen": self.last_seen.isoformat()
+            "last_seen": self.last_seen.isoformat(),
+            "first_seen": self.first_seen.isoformat(),
         }
 
     @classmethod
@@ -62,7 +65,8 @@ class Teacher:
             subjects=set(data["subjects"]),
             contact_link=data.get("contact_link"),
             image_path=data.get("image_path"),
-            last_seen=datetime.date.fromisoformat(data["last_seen"])
+            last_seen=datetime.date.fromisoformat(data["last_seen"]),
+            first_seen=datetime.date.fromisoformat(data["first_seen"]) if "first_seen" in data else datetime.date.max,
         )
 
     def merge(self, other: Teacher) -> Teacher:
@@ -75,7 +79,8 @@ class Teacher:
             subjects=other.subjects | self.subjects,
             contact_link=other.contact_link or self.contact_link,
             image_path=other.image_path or self.image_path,
-            last_seen=max(other.last_seen, self.last_seen)
+            last_seen=max(other.last_seen, self.last_seen),
+            first_seen=min(other.first_seen, self.first_seen),
         )
 
     @staticmethod
@@ -129,7 +134,7 @@ class Teachers:
         except StopIteration as e:
             raise LookupError("No teacher found matching the given attributes.") from e
 
-    def query_plan_teacher(self, long_or_short: str) -> Teacher:
+    def query_plan_teacher(self, long_or_short: str, date: datetime.date | None = None) -> Teacher:
         try:
             return self.teachers[long_or_short]
         except KeyError:
@@ -139,7 +144,13 @@ class Teachers:
             elif not out:
                 raise LookupError("No teacher found matching the given name.")
             else:
-                raise LookupError("Multiple teachers found matching the given name.")
+                if date is None:
+                    raise LookupError("Multiple teachers found matching the given name.")
+                else:
+                    return max(
+                        filter(lambda t: t.first_seen <= date <= t.last_seen, out),
+                        key=lambda t: t.last_seen
+                    )
 
 
 _UNSET = object()

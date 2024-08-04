@@ -537,7 +537,11 @@ class Lessons:
         out.sort_original()
         return out
 
-    def group_blocks_and_lesson_info(self, block_config: blocks.BlockConfiguration, origin_plan_type: typing.Literal["forms", "teachers", "rooms"]) -> Lessons:
+    def group_blocks_and_lesson_info(
+        self,
+        block_config: blocks.BlockConfiguration,
+        origin_plan_type: typing.Literal["forms", "teachers", "rooms"]
+    ) -> Lessons:
         assert all(len(x.periods) <= 1 for x in self.lessons), \
             "Lessons must be ungrouped. (Must only have one period.)"
 

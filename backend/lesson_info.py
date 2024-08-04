@@ -686,15 +686,15 @@ class ParsedLessonInfo:
             sorted(paragraphs, key=lambda p: [i.parsed.original_messages for i in p.messages])
         )
 
-    def resolve_teachers(self, teachers: teacher_model.Teachers):
+    def resolve_teachers(self, teachers: teacher_model.Teachers, date: datetime.date | None = None):
         for paragraph in self.paragraphs:
             for message in paragraph.messages:
                 if hasattr(message.parsed, "_teachers"):
                     try:
-                        message.parsed.other_info_value = [
-                            teachers.query_plan_teacher(teacher_str).plan_short for teacher_str in
+                        message.parsed.other_info_value = {
+                            teachers.query_plan_teacher(teacher_str, date=date).plan_short for teacher_str in
                             message.parsed._teachers
-                        ]
+                        }
                     except LookupError:
                         message.parsed.other_info_value = None
 
@@ -726,7 +726,11 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
     out: dict[str, teacher_model.Teacher] = {}
 
     for plan_short in lesson.teachers or ():
-        out[plan_short] = teacher_model.Teacher(plan_short, last_seen=lesson._lesson_date)
+        out[plan_short] = teacher_model.Teacher(
+            plan_short=plan_short,
+            last_seen=lesson._lesson_date,
+            first_seen=lesson._lesson_date
+        )
 
     if lesson._is_scheduled:
         return ()
@@ -787,7 +791,8 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                 out[abbreviation] = teacher_model.Teacher(
                     plan_short=abbreviation,
                     plan_long=surname,
-                    last_seen=lesson._lesson_date
+                    last_seen=lesson._lesson_date,
+                    first_seen=lesson._lesson_date,
                 )
 
     return out.values()
@@ -921,7 +926,7 @@ def add_fuzzy_teacher_links(text: str, teachers: teacher_model.Teachers, date: d
             _surname_or_abbreviation = _surname_or_abbreviation.replace(k, v)
 
         try:
-            plan_short = teachers.query_plan_teacher(_surname_or_abbreviation).plan_short
+            plan_short = teachers.query_plan_teacher(_surname_or_abbreviation, date=date).plan_short
         except LookupError:
             return
 

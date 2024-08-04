@@ -102,6 +102,10 @@ class StudentsPlanExtractor(PlanExtractor):
         self.plan = Plan.from_form_plan(form_plan)
 
         self._extract_teachers()
+        for lesson in self.plan.lessons:
+            lesson.parsed_info.resolve_teachers(teachers, date=form_plan.date)
+
+        self.recover_scheduled_infos_for_moved_lessons()
 
         if vplan_kl is None:
             self.substitution_plan = None
@@ -146,7 +150,10 @@ class StudentsPlanExtractor(PlanExtractor):
             teacher_name, periods = parse_absent_element(teacher_str)
 
             try:
-                teacher_abbreviation = self.teachers.query_plan_teacher(teacher_name).plan_short
+                teacher_abbreviation = self.teachers.query_plan_teacher(
+                    teacher_name,
+                    date=self.plan.indiware_plan.date
+                ).plan_short
             except LookupError:
                 self._logger.warning(f" --> Unknown teacher: {teacher_name!r}.")
                 continue
@@ -189,6 +196,24 @@ class StudentsPlanExtractor(PlanExtractor):
     def default_plan(self) -> default_plan.DefaultPlanInfo:
         return default_plan.DefaultPlanInfo.from_lessons(self.plan.lessons, self.plan.indiware_plan.week)
 
+    def recover_scheduled_infos_for_moved_lessons(self):
+        for lesson in self.plan.lessons:
+            if lesson.is_internal or not lesson._is_scheduled:
+                continue
+
+            moved_to_messages: list[lesson_info.MovedTo] = [
+                message.parsed for paragraph in lesson.parsed_info.paragraphs
+                for message in paragraph.messages
+                if isinstance(message.parsed, lesson_info.MovedTo)
+            ]
+
+            if len(moved_to_messages) == 1:
+                msg: lesson_info.MovedTo = moved_to_messages[0]
+                lesson.course = lesson.course or msg.course
+                assert msg.other_info_type == "teachers"
+                if msg.other_info_value is not None:
+                    lesson.teachers = lesson.teachers or msg.other_info_value
+
 
 class SubPlanExtractor:
     def __init__(self, forms_plan: Plan, plan_type: typing.Literal["forms", "rooms", "teachers"],
@@ -201,11 +226,8 @@ class SubPlanExtractor:
             .group_blocks_and_lesson_info(origin_plan_type="forms", block_config=block_config)
         )
 
-        if self.plan_type in ("teachers", ):
+        if self.plan_type in ("teachers",):
             self.forms_lessons_grouped = self.forms_lessons_grouped.filter(lambda l: not l.is_internal)
-
-        for lesson in self.forms_lessons_grouped:
-            lesson.parsed_info.resolve_teachers(teachers)
 
         self.extrapolate_lesson_times(self.forms_lessons_grouped)
 

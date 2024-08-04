@@ -18,17 +18,20 @@ class DailyMetaExtractor:
 
     def __init__(self, plankl_file: str):
         self.form_plan = indiware_mobil.IndiwareMobilPlan.from_xml(ET.fromstring(plankl_file))
-        self.plan = Plan.from_form_plan(self.form_plan)
+        # self.plan = Plan.from_form_plan(self.form_plan)
 
     def teachers(self) -> list[Teacher]:
         excluded_subjects = ["KL", "AnSt", "FÖ", "WB", "GTA", "EU4"]
 
         out = []
-        for lesson in self.plan.lessons:
-            for teacher in lesson.teachers or []:
-                out.append(Teacher(plan_short=teacher, last_seen=self.form_plan.date))
-
         for form in self.form_plan.forms:
+            for lesson in form.lessons:
+                out.append(Teacher(
+                    plan_short=lesson.teacher(),
+                    last_seen=self.form_plan.date,
+                    first_seen=self.form_plan.date
+                ))
+
             for class_ in form.classes.values():
                 subjects = set(s for s in class_.subject.split() if s not in excluded_subjects)
 
@@ -36,7 +39,12 @@ class DailyMetaExtractor:
                     if not teacher:
                         continue
 
-                    out.append(Teacher(plan_short=teacher, subjects=subjects, last_seen=self.form_plan.date))
+                    out.append(Teacher(
+                        plan_short=teacher,
+                        subjects=subjects,
+                        last_seen=self.form_plan.date,
+                        first_seen=self.form_plan.date
+                    ))
 
         return out
 
@@ -44,11 +52,12 @@ class DailyMetaExtractor:
         return [form.short_name for form in self.form_plan.forms]
 
     def rooms(self) -> set[str]:
-        return set(
-            room
-            for lesson in self.plan.lessons
-            for room in lesson.rooms or []
-        )
+        out = set()
+        for form in self.form_plan.forms:
+            for lesson in form.lessons:
+                out |= Plan.parse_rooms(lesson.room())
+
+        return out
 
     def courses(self, form_name: str) -> dict[str, dict]:
         classes: dict[str, dict] = {}

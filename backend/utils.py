@@ -66,11 +66,15 @@ async def main():
             crawler.plan_processor._logger.info("Extracting teachers...")
 
             class NullDict(dict):
-                def __setattr__(self, key, value):
-                    pass
+                def __setitem__(self, key, value):
+                    date, rev = key
+                    crawler.plan_processor._logger.info(f"Date: {date!s} Revision: {rev!s}")
 
-            extractor = meta_extractor.MetaExtractor(crawler.plan_processor.cache, num_last_days=None,
-                                                     logger=crawler.plan_processor._logger)
+            extractor = meta_extractor.MetaExtractor(
+                cache=crawler.plan_processor.cache,
+                num_last_days=None,
+                logger=crawler.plan_processor._logger
+            )
             extractor._daily_extractors = NullDict()
             crawler.plan_processor.teachers.add_teachers(*extractor.teachers())
             crawler.plan_processor.store_teachers()

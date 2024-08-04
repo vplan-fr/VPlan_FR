@@ -245,7 +245,7 @@ def plan_ical(token: str) -> Response:
                 if isinstance(plan_short, list):
                     return " ".join(annotate_teacher(x) for x in plan_short)
                 else:
-                    teacher = teachers.query_plan_teacher(plan_short)
+                    teacher = teachers.query_plan_teacher(plan_short, date=date)
                     if teacher is not None:
                         return f'<abbr title="{teacher.fullest_available_name}">{plan_short}</abbr>'
                     else:
