@@ -302,7 +302,7 @@ def plan_ical(token: str) -> Response:
                 "<tbody>"
                 f"<tr><td>Stunde</td><td>{', '.join(map(str, lesson['periods']))}</td></tr>"
                 f"<tr><td>Fach</td><td>{cond_b(subject, lesson['subject_changed'])}</td></tr>"
-                f"<tr><td>Lehrer</td><td>{cond_b(' '.join(current_teachers) + ' ' + s(' '.join(s_teachers)), lesson['teacher_changed'])}</td></tr>"
+                f"<tr><td>Lehrer</td><td>{cond_b(', '.join(current_teachers) + ' ' + s(' '.join(s_teachers)), lesson['teacher_changed'])}</td></tr>"
                 # f"<tr><td>Klassen</td><td>{', '.join(current_forms)} {s(', '.join(s_forms))}</td></tr>"
                 f"<tr><td>Raum</td><td>{', '.join(current_rooms)} {s(', '.join(s_rooms))}</td></tr>"
                 f"<tr><td>Findet statt</td><td>{'Ja' if lesson['takes_place'] else 'Nein'}</td></tr>"
