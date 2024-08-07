@@ -26,19 +26,17 @@ class DailyMetaExtractor:
         out = []
         for form in self.form_plan.forms:
             for lesson in form.lessons:
-                out.append(Teacher(
-                    plan_short=lesson.teacher(),
-                    last_seen=self.form_plan.date,
-                    first_seen=self.form_plan.date
-                ))
+                for teacher in Plan.parse_teachers(lesson.teacher()):
+                    out.append(Teacher(
+                        plan_short=teacher,
+                        last_seen=self.form_plan.date,
+                        first_seen=self.form_plan.date
+                    ))
 
             for class_ in form.classes.values():
                 subjects = set(s for s in class_.subject.split() if s not in excluded_subjects)
 
-                for teacher in class_.teacher.split():
-                    if not teacher:
-                        continue
-
+                for teacher in Plan.parse_teachers(class_.teacher):
                     out.append(Teacher(
                         plan_short=teacher,
                         subjects=subjects,
