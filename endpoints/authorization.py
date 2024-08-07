@@ -10,6 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from discord_webhook import DiscordEmbed
 
+import utils
 from user_settings import DEFAULT_SETTINGS
 from utils import User, users
 from utils import send_error, send_success
@@ -121,6 +122,9 @@ def settings() -> Response:
 @authorization.route(f'{AUTH_PATH}/authorized_schools', methods=['GET'])
 @login_required
 def authorized_schools() -> Response:
+    if current_user.get_field("admin"):
+        return send_success([elem["school_number"] for elem in utils.get_all_schools(only_shown=False)])
+
     return send_success(current_user.get_authorized_schools())
 
 

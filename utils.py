@@ -262,6 +262,7 @@ def get_school_by_id(school_num: str):
 # doesn't get the passwords
 def get_all_schools(only_shown: bool = True, include_ids: list[str] = None):
     if only_shown:
+        assert include_ids is not None
         pipeline = [
             {
                 "$match": {
@@ -277,32 +278,32 @@ def get_all_schools(only_shown: bool = True, include_ids: list[str] = None):
 
     pipeline += [
         {
-            "$match": {
-                "is_shown": True
-            }
-        },
-        {
             "$sort": {"count": pymongo.DESCENDING}
         },
         {
             "$project": {
-                # "_id": False,
-                "count": False,
-                # "hosting": False,
-                "comment": False,
+                "display_name": 1,
+                "school_number": 1,
+                "icon": 1,
+                "hosting": 1,
             }
-        }
+        },
+        {
+            "$set": {
+                "creds_needed": {
+                    "$gt": [
+                        "$hosting.creds",
+                        {}
+                    ]
+                }
+            }
+        },
+        {
+            "$unset": ["hosting"]
+        },
     ]
 
-    schools_list = list(creds.aggregate(pipeline))
-    for ind, elem in enumerate(schools_list):
-        schools_list[ind]["creds_needed"] = True if elem["hosting"]["creds"] else False
-        del schools_list[ind]["hosting"]
-    return schools_list
-
-
-def get_all_schools_by_number():
-    return {elem["_id"]: elem for elem in get_all_schools()}
+    return list(creds.aggregate(pipeline))
 
 
 def add_database_icons():
