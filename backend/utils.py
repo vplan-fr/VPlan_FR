@@ -32,6 +32,8 @@ async def main():
                                         description="Merge another directory of school caches into the current one.")
     merge_cache.add_argument("foreign_cache_dir", type=str)
 
+    clean_teachers = subparsers.add_parser("clean-teachers")
+
     args = argparser.parse_args()
 
     crawlers = await get_crawlers(create_clients=False)
@@ -133,6 +135,29 @@ async def main():
                                     foreign_cache.get_plan_file(day, rev, file.name),
                                     file.name
                                 )
+
+    elif args.subcommand == "clean-teachers":
+        for crawler in crawlers.values():
+            wrong_teachers = []
+            for key, teacher in crawler.plan_processor.teachers.teachers.items():
+                if teacher.plan_short is None:
+                    print(f"- {key!r}: plan_short is None")
+                    wrong_teachers.append(key)
+                    continue
+
+                if " " in teacher.plan_short:
+                    print(f"- {key!r}: plan_short contains space")
+                    wrong_teachers.append(key)
+
+                if not any(char.isalpha() for char in teacher.plan_short):
+                    print(f"- {key!r}: plan_short contains no letters")
+                    wrong_teachers.append(key)
+
+            print(f"=> Removing {len(wrong_teachers)} teachers...")
+            for teacher in wrong_teachers:
+                del crawler.plan_processor.teachers.teachers[teacher]
+
+            crawler.plan_processor.store_teachers()
 
 
 if __name__ == '__main__':

@@ -684,7 +684,7 @@ class Plan:
 
     @staticmethod
     def parse_teachers(teachers: str | None) -> set[str]:
-        return {t for t in teachers.split() if t} if teachers is not None else set()
+        return {t for t in teachers.split() if any(c.isalpha() for c in t)} if teachers is not None else set()
 
     @staticmethod
     def parse_rooms(rooms: str | None) -> set[str]:
@@ -711,7 +711,7 @@ class Plan:
                     _class = all_classes[lesson.class_number]
 
                     class_data = ClassData(
-                        teacher=_class.teacher,
+                        teacher=_class.teacher if any(c.isalpha() for c in _class.teacher) else None,
                         subject=_class.subject,
                         group=_class.group,
                         number=lesson.class_number

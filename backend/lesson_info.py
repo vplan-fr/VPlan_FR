@@ -785,7 +785,8 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
 
                 abbreviation = list(_class.values())[0].teacher
 
-                if not abbreviation:
+                if not any(c.isalpha() for c in abbreviation):
+                    logger.debug(f"Class {course!r} in form {lesson.forms!r} contains invalid teacher {abbreviation!r}")
                     continue
 
                 out[abbreviation] = teacher_model.Teacher(

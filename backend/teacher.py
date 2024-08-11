@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
+import logging
 import typing
 
 
@@ -112,7 +113,8 @@ class Teachers:
 
     def add_teachers(self, *teachers: Teacher):
         for teacher in teachers:
-            if teacher.plan_short == "":
+            if not any(c.isalpha() for c in teacher.plan_short):
+                logging.getLogger(__name__).debug(f"Trying to add invalid teacher {teacher.plan_short!r}.")
                 continue
 
             if teacher.plan_short not in self.teachers:
