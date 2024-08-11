@@ -150,7 +150,7 @@ class Teachers:
                     raise LookupError("Multiple teachers found matching the given name.")
                 else:
                     return max(
-                        filter(lambda t: t.first_seen <= date <= t.last_seen, out),
+                        filter(lambda t: t.first_seen <= date <= t.last_seen + datetime.timedelta(days=14), out),
                         key=lambda t: t.last_seen
                     )
 
