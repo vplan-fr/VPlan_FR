@@ -229,10 +229,14 @@ def plan_ical(token: str) -> Response:
             subject = lesson["current_class"] if lesson["current_class"] is not None else "-"
 
             if lesson["takes_place"]:
-                teacher = ", ".join(lesson["current_teachers"]) if lesson["current_teachers"] else "-"
+                if not lesson["current_teachers"] and lesson["scheduled_teachers"]:
+                    teacher = ", ".join(lesson["scheduled_teachers"]) if lesson["scheduled_teachers"] else "-"
+                    teacher = f"({teacher})"
+                else:
+                    teacher = ", ".join(lesson["current_teachers"]) if lesson["current_teachers"] else "-"
+                    teacher = teacher if not lesson["teacher_changed"] else f"[{teacher}]"
 
                 subject_ = subject if not lesson["subject_changed"] else f"[{subject}]"
-                teacher = teacher if not lesson["teacher_changed"] else f"[{teacher}]"
 
                 summary = f"{subject_} {teacher}"
             else:
