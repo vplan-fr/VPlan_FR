@@ -487,6 +487,9 @@ def contact() -> Response:
 @login_required
 def add_school() -> Response:
     data = request.form
+    contact = data.get("contact")
+    if contact is None:
+        return send_error("Keine Kontaktmöglichkeit angegeben")
     school_num = data.get("school_num")
     if school_num is None:
         return send_error("Keine Schulnummer angegeben")
@@ -504,6 +507,8 @@ def add_school() -> Response:
 
     candidate = SchoolCandidate("", school_num, username, pw)
     embed = BetterEmbed(title="Neue Schulanfrage!", color="ffffff", inline=False)
+    embed.add_embed_field("Nickname des users:", f"{current_user.get_field('nickname')}", inline=False)
+    embed.add_embed_field("Kontakt:", contact, inline=False)
     embed.add_embed_field("Schulnummer:", school_num, inline=False)
     embed.add_embed_field("Schulname:", display_name, inline=False)
     embed.add_embed_field("Nutzername:", username, inline=False)
