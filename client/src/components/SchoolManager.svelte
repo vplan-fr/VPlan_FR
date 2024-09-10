@@ -27,6 +27,7 @@
     let password_visible = false;
 
     let school_add_visible = false;
+    let contact = "";
     let add_school_name = "";
     let add_school_num = "";
     let add_school_username = "";
@@ -151,17 +152,18 @@
     function add_school() {
 
         let formData = new FormData();
+        formData.append('contact', contact);
         formData.append('display_name', add_school_name);
         formData.append('school_num', add_school_num);
         formData.append('username', add_school_username);
         formData.append('pw', add_school_password);
-        let tmp_api_base = `/api/v69.420/${authorize_school_id}`;
         customFetch(`/api/v69.420/add_school`, {
             method: 'POST',
             body: formData
         })
             .then(data => {
                 notifications.success(data);
+                contact = "";
                 school_add_visible = false;
                 add_school_name = "";
                 add_school_num = "";
@@ -258,6 +260,8 @@
                 <span class="material-symbols-outlined">keyboard_backspace</span>
             </button>
             <h1 class="responsive-heading">Schule hinzufügen</h1>
+            <label for="contact">Deine Kontaktdaten (Discord/E-Mail/Telefon)</label>
+            <input disabled={!school_add_visible} name="contact" bind:value={contact} type="text" required class="textfield" placeholder="max.musterman"/>
             <label for="add_school_name">Name der Schule</label>
             <input disabled={!school_add_visible} autocomplete="organization" name="add_school_name" bind:value={add_school_name} type="text" required class="textfield" placeholder="Name der Schule (z.B. Max-Mustermann-Gymnasium Löbau)"/>
             <label for="add_school_num">Schulnummer</label>
