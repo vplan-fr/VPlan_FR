@@ -1,8 +1,9 @@
 import dataclasses
 import datetime
+import logging
 import typing
 
-import pymongo
+import pymongo.errors
 
 import shared.mongodb
 
@@ -115,8 +116,14 @@ def _submit_event(event: Event):
         "data": out
     }
 
-    with pymongo.timeout(5):
-        _COLLECTION.insert_one(entity)
+    try:
+        with pymongo.timeout(5):
+            _COLLECTION.insert_one(entity)
+    except pymongo.errors.PyMongoError as e:
+        if e.timeout:
+            logging.getLogger(__name__).warning("MongoDB event submission timed out.")
+        else:
+            logging.getLogger(__name__).exception("MongoDB event submission failed.")
 
 
 def submit_event(event: Event):
