@@ -28,7 +28,7 @@ class PlanCrawler:
         self.school_number = school_number
         self.plan_downloader = plan_downloader
         self.plan_processor = plan_processor
-        self._plan_compute_executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
+        self._plan_compute_executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
 
     async def check_infinite(self, interval: int = 60, *, once: bool = False, ignore_exceptions: bool = False):
         try:
@@ -83,6 +83,8 @@ async def get_crawlers(session: requests.Session | None = None,
     creds_provider = get_creds_provider(Path("creds.json"))
     _creds = creds_provider.get_creds()
 
+    request_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+
     crawlers = {}
 
     for school_name, data in _creds.items():
@@ -108,10 +110,12 @@ async def get_crawlers(session: requests.Session | None = None,
             for plan_client in client.substitution_plan_clients:
                 plan_client.proxy_provider = proxy_provider
                 plan_client.no_delay = True
+                plan_client.request_executor = request_executor
 
             for plan_client in client.indiware_mobil_clients:
                 # plan_client.proxy_provider = proxy_provider
                 plan_client.no_delay = True
+                plan_client.request_executor = request_executor
         else:
             client = None
 
