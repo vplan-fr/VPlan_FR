@@ -6,7 +6,8 @@ import typing
 from collections import defaultdict
 from xml.etree import ElementTree as ET
 
-from stundenplan24_py import indiware_mobil, substitution_plan
+from stundenplan24_py import indiware_mobil
+from stundenplan24_py import substitution_plan as substitution_plan_sp24
 
 from . import lesson_info, default_plan, blocks
 from .lesson_info import process_additional_info
@@ -110,13 +111,14 @@ class StudentsPlanExtractor(PlanExtractor):
         if vplan_kl is None:
             self.substitution_plan = None
         else:
-            self.substitution_plan = substitution_plan.SubstitutionPlan.from_xml(ET.fromstring(vplan_kl))
+            self.substitution_plan = substitution_plan_sp24.SubstitutionPlan.from_xml(ET.fromstring(vplan_kl))
             self.add_lessons_for_unavailable_from_subst_plan()
 
         self.fill_in_lesson_times()
 
         self.form_plan_extractor = SubPlanExtractor(
             forms_plan=self.plan,
+            substitution_plan=self.substitution_plan,
             plan_type="forms",
             teachers=self.teachers,
             block_config=self.block_config,
@@ -124,6 +126,7 @@ class StudentsPlanExtractor(PlanExtractor):
         )
         self.room_plan_extractor = SubPlanExtractor(
             forms_plan=self.plan,
+            substitution_plan=self.substitution_plan,
             plan_type="rooms",
             teachers=self.teachers,
             block_config=self.block_config,
@@ -131,6 +134,7 @@ class StudentsPlanExtractor(PlanExtractor):
         )
         self.teacher_plan_extractor = SubPlanExtractor(
             forms_plan=self.plan,
+            substitution_plan=self.substitution_plan,
             plan_type="teachers",
             teachers=self.teachers,
             block_config=self.block_config,
@@ -180,18 +184,18 @@ class StudentsPlanExtractor(PlanExtractor):
                 lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
                 self.plan.lessons.lessons.append(lesson)
 
-        for form_str in self.substitution_plan.absent_forms:
-            form, periods = parse_absent_element(form_str)
-
-            for period in periods or range(1, 11):
-                info = f"Klasse {form}{' den ganzen Tag' if not periods else ''} abwesend laut Vertretungsplan"
-                lesson = Lesson.create_internal(self.plan.indiware_plan.date)
-                lesson.periods = {period}
-                lesson.forms = {form}
-                lesson.info = info
-                lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
-
-                self.plan.lessons.lessons.append(lesson)
+        # for form_str in self.substitution_plan.absent_forms:
+        #     form, periods = parse_absent_element(form_str)
+        #
+        #     for period in periods or range(1, 11):
+        #         info = f"Klasse {form}{' den ganzen Tag' if not periods else ''} abwesend laut Vertretungsplan"
+        #         lesson = Lesson.create_internal(self.plan.indiware_plan.date)
+        #         lesson.periods = {period}
+        #         lesson.forms = {form}
+        #         lesson.info = info
+        #         lesson.parsed_info = lesson_info.create_literal_parsed_info(info)
+        #
+        #         self.plan.lessons.lessons.append(lesson)
 
     def default_plan(self) -> default_plan.DefaultPlanInfo:
         return default_plan.DefaultPlanInfo.from_lessons(self.plan.lessons, self.plan.indiware_plan.week)
@@ -216,8 +220,16 @@ class StudentsPlanExtractor(PlanExtractor):
 
 
 class SubPlanExtractor:
-    def __init__(self, forms_plan: Plan, plan_type: typing.Literal["forms", "rooms", "teachers"],
-                 teachers: Teachers, block_config: blocks.BlockConfiguration, *, logger: logging.Logger):
+    def __init__(
+        self,
+        forms_plan: Plan,
+        substitution_plan: substitution_plan_sp24.SubstitutionPlan | None,
+        plan_type: typing.Literal["forms", "rooms", "teachers"],
+        teachers: Teachers,
+        block_config: blocks.BlockConfiguration,
+        *,
+        logger: logging.Logger
+    ):
         self._logger = logger
         self.plan_type = plan_type
         self.forms_lessons_grouped = (
@@ -226,10 +238,27 @@ class SubPlanExtractor:
             .group_blocks_and_lesson_info(origin_plan_type="forms", block_config=block_config)
         )
 
+        if substitution_plan is not None:
+            self.add_form_absent_info(substitution_plan)
+
         if self.plan_type in ("teachers",):
             self.forms_lessons_grouped = self.forms_lessons_grouped.filter(lambda l: not l.is_internal)
 
         self.extrapolate_lesson_times(self.forms_lessons_grouped)
+
+    def add_form_absent_info(self, substitution_plan: substitution_plan_sp24.SubstitutionPlan | None):
+        for form_str in substitution_plan.absent_forms:
+            form, periods = parse_absent_element(form_str)
+
+            info_str = f"Klasse {form}{' den ganzen Tag' if not periods else ''} abwesend laut Vertretungsplan"
+            info = lesson_info.create_literal_parsed_info(info_str)
+
+            for lesson in self.forms_lessons_grouped:
+                if (
+                    form in lesson.forms
+                    and (not periods or lesson.periods & set(periods))
+                ):
+                    lesson.parsed_info.paragraphs += info.paragraphs
 
     @staticmethod
     def extrapolate_lesson_times(lessons: Lessons):
