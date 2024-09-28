@@ -1,7 +1,5 @@
-import concurrent.futures
 import dataclasses
 import datetime
-import logging
 import typing
 
 import pymongo
@@ -117,7 +115,8 @@ def _submit_event(event: Event):
         "data": out
     }
 
-    _COLLECTION.insert_one(entity)
+    with pymongo.timeout(5):
+        _COLLECTION.insert_one(entity)
 
 
 def submit_event(event: Event):
@@ -125,7 +124,7 @@ def submit_event(event: Event):
         # logging.debug("MongoDB event collection disabled. Not submitting event.")
         return
 
-    return _THREAD_POOL_EXECUTOR.submit(_submit_event, event)
+    _submit_event(event)
 
 
 _T2 = typing.TypeVar("_T2", bound=Event)
@@ -173,8 +172,3 @@ def now() -> datetime.datetime:
 
 
 _COLLECTION = shared.mongodb.DATABASE.get_collection("events") if shared.mongodb.DATABASE is not None else None
-
-if shared.mongodb.ENABLED:
-    _THREAD_POOL_EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=2)
-else:
-    _THREAD_POOL_EXECUTOR = None
