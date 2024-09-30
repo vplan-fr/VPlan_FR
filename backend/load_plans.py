@@ -29,6 +29,7 @@ class PlanCrawler:
         self.plan_downloader = plan_downloader
         self.plan_processor = plan_processor
         self._plan_compute_executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
+        self._plan_compute_awaiter_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
     async def check_infinite(self, interval: int = 60, *, once: bool = False, ignore_exceptions: bool = False):
         try:
@@ -61,7 +62,7 @@ class PlanCrawler:
                 if updated_dates:
                     self.plan_processor._logger.debug("* Processing plans...")
                     self.plan_processor.meta_extractor.invalidate_cache()
-                    self._plan_compute_executor.submit(_process_plans, t_start=_t1)
+                    self._plan_compute_awaiter_executor.submit(_process_plans, t_start=_t1)
                 else:
                     self.plan_processor._logger.debug("* No plans to process.")
             except Exception as e:
