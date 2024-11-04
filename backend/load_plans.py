@@ -47,17 +47,23 @@ class PlanCrawler:
                 updated_dates = await self.plan_downloader.update_fetch()
 
                 def _process_plans(t_start: datetime.datetime):
-                    self._plan_compute_executor.map(
-                        self.plan_processor.update_day_plans, updated_dates
-                    )
-                    self.plan_processor.update_after_plan_processing()
-                    events.submit_event(
-                        events.PlanCrawlCycle(
-                            school_number=self.school_number,
-                            start_time=t_start,
-                            end_time=events.now(),
+                    try:
+                        self._plan_compute_executor.map(
+                            self.plan_processor.update_day_plans, updated_dates
                         )
-                    )
+                        self.plan_processor.update_after_plan_processing()
+                        events.submit_event(
+                            events.PlanCrawlCycle(
+                                school_number=self.school_number,
+                                start_time=t_start,
+                                end_time=events.now(),
+                            )
+                        )
+                    except Exception:
+                        if not ignore_exceptions:
+                            raise
+                        else:
+                            self.plan_processor._logger.error("An error occurred (_process_plans).", exc_info=True)
 
                 if updated_dates:
                     self.plan_processor._logger.debug("* Processing plans...")
@@ -65,11 +71,11 @@ class PlanCrawler:
                     self._plan_compute_awaiter_executor.submit(_process_plans, t_start=_t1)
                 else:
                     self.plan_processor._logger.debug("* No plans to process.")
-            except Exception as e:
+            except Exception:
                 if not ignore_exceptions:
                     raise
                 else:
-                    self.plan_processor._logger.error("An error occurred.", exc_info=e)
+                    self.plan_processor._logger.error("An error occurred.", exc_info=True)
 
             if once:
                 break
