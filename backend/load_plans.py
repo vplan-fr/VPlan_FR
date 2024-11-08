@@ -28,7 +28,7 @@ class PlanCrawler:
         self.school_number = school_number
         self.plan_downloader = plan_downloader
         self.plan_processor = plan_processor
-        self._plan_compute_executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
+        self._plan_compute_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         self._plan_compute_awaiter_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
     async def check_infinite(self, interval: int = 60, *, once: bool = False, ignore_exceptions: bool = False):
