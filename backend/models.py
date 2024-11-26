@@ -439,15 +439,9 @@ class Lessons:
                         not_taking_place_lessons.remove(not_taking_place_lesson)
                         break
                 else:
-                    if len(not_taking_place_lessons) == 1:
-                        out.append(
-                            PlanLesson.create(taking_place_lesson, not_taking_place_lessons[0], plan_type, plan_value)
-                        )
-                        not_taking_place_lessons.pop()
-                    else:
-                        out.append(
-                            PlanLesson.create(taking_place_lesson, None, plan_type, plan_value)
-                        )
+                    out.append(
+                        PlanLesson.create(taking_place_lesson, None, plan_type, plan_value)
+                    )
 
         for not_taking_place_lesson in not_taking_place_lessons:
             out.append(
@@ -596,7 +590,13 @@ class Lessons:
 
                 for remaining_plan_value in {"forms", "teachers", "rooms"} - {origin_plan_type}:
                     can_get_grouped &= (
-                        getattr(lesson, remaining_plan_value) == getattr(previous_lesson, remaining_plan_value)
+                        (
+                            getattr(lesson, remaining_plan_value) is None
+                        ) or (
+                            getattr(previous_lesson, remaining_plan_value) is None
+                        ) or (
+                            getattr(lesson, remaining_plan_value) == getattr(previous_lesson, remaining_plan_value)
+                        )
                     )
 
                 grouped_additional_info = self._group_lesson_info(lesson.parsed_info, previous_lesson.parsed_info)
@@ -610,14 +610,16 @@ class Lessons:
                 can_get_grouped &= previous_lesson.is_internal == lesson.is_internal
 
                 if can_get_grouped:
-                    if origin_plan_type == "forms":
-                        previous_lesson.forms |= lesson.forms
-                    elif origin_plan_type == "teachers":
-                        previous_lesson.teachers |= lesson.teachers
-                    elif origin_plan_type == "rooms":
-                        previous_lesson.rooms |= lesson.rooms
-                    else:
-                        raise NotImplementedError
+                    for plan_value_name in "forms", "teachers", "rooms":
+                        a = getattr(previous_lesson, plan_value_name)
+                        b = getattr(lesson, plan_value_name)
+
+                        if a is None is b:
+                            new_val = None
+                        else:
+                            new_val = (a or set()) | (b or set())
+
+                        setattr(previous_lesson, plan_value_name, new_val)
 
                     previous_lesson.parsed_info = grouped_additional_info
                     previous_lesson.periods |= lesson.periods
