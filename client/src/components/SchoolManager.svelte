@@ -1,8 +1,8 @@
 <script>
     import {notifications} from '../notifications.js';
     import { onMount } from "svelte";
-    import {settings, title} from "../stores";
-    import {customFetch, navigate_page, update_hash} from "../utils.js";
+    import {schools, authorized_school_ids, settings, title} from "../stores";
+    import {customFetch, navigate_page, update_hash, get_schools, get_authorized_schools} from "../utils.js";
     import Select from "../base_components/Select.svelte";
     import { fly } from 'svelte/transition';
     import Button from '../base_components/Button.svelte';
@@ -16,11 +16,9 @@
     let authorize_school_data = {};
     let username = "schueler";
     let password = "";
-    let schools = [];
     let authorized_schools = [];
     let unauthorized_schools = [];
     let schools_categorized = {};
-    let authorized_school_ids = [];
     let school_auth_visible = false;
     let is_admin = false;
     let school_id_arr = [];
@@ -35,32 +33,6 @@
 
     function isObjectInList(object, list) {
         return list.some(item => item.toString() === object.toString());
-    }
-
-    function get_schools() {
-        customFetch("/api/v69.420/schools")
-            .then(data => {
-                schools = data;
-                // put schools into form that works with the Select
-                schools = schools.map(obj => {
-                    const { _id, display_name, ...rest } = obj;
-                    return { id: _id, display_name: display_name, ...rest };
-                });
-            })
-            .catch(error => {
-                notifications.danger(error.message);
-            })
-    }
-
-    function get_authorized_schools() {
-        customFetch("/auth/authorized_schools")
-            .then(data => {
-                authorized_school_ids = data;
-            })
-            .catch(error => {
-                console.error("Autorisierte Schulen konnten nicht ermittelt werden.");
-            }
-        );
     }
     
     function get_admin_status() {
@@ -110,7 +82,7 @@
                 }
                 school_num = authorize_school_id;
                 localStorage.setItem("school_num", school_num);
-                authorized_school_ids = [...authorized_school_ids, authorize_school_id];
+                $authorized_school_ids = [...$authorized_school_ids, authorize_school_id];
                 navigate_page($settings.weekplan_default ? "weekplan" : "plan");
             })
             .catch(error => {
@@ -123,7 +95,7 @@
         if (!school_id) {
             return {};
         }
-        for (let school of schools) {
+        for (let school of $schools) {
             if (school.id === school_id.toString()) {
                 return school
             }
@@ -139,10 +111,10 @@
         update_hash("school_manager");
         title.set("Schule wählen");
     });
-
-    $: schools, school_id_arr = schools.map(obj => obj.id);
-    $: schools, authorized_schools = schools.filter(obj => authorized_school_ids.includes(obj.id));
-    $: schools, unauthorized_schools = schools.filter(obj => !authorized_school_ids.includes(obj.id));
+    
+    $: $schools, school_id_arr = $schools.map(obj => obj.id);
+    $: $schools, authorized_schools = $schools.filter(obj => $authorized_school_ids.includes(obj.id));
+    $: $schools, unauthorized_schools = $schools.filter(obj => !$authorized_school_ids.includes(obj.id));
     $: schools_categorized = [
         ["Autorisiert", authorized_schools],
         ["Unautorisiert", unauthorized_schools]
@@ -189,7 +161,7 @@
     {#if !school_auth_visible && !school_add_visible}
     <form transition:fly|local={{x: -600}} on:submit|preventDefault={() => {
             if (authorize_school_id) {
-                if(isObjectInList(authorize_school_id, authorized_school_ids) || is_admin) {
+                if(isObjectInList(authorize_school_id, $authorized_school_ids) || is_admin) {
                     if(school_num !== authorize_school_id) {
                         date = null;
                         plan_type = null;

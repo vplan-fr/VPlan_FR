@@ -13,7 +13,7 @@
     import SveltyPicker from 'svelty-picker';
     import {get_settings, group_rooms, update_colors, navigate_page, init_indexed_db, clear_plan_cache, get_favorites} from "./utils.js";
     import {notifications} from './notifications.js';
-    import {logged_in, title, current_page, settings, active_modal, pwa_prompt, selected_favorite, favorites, api_base} from './stores.js'
+    import {logged_in, title, current_page, settings, active_modal, pwa_prompt, selected_favorite, favorites, api_base, authorized_school_ids, schools} from './stores.js'
     import {getDateDisabled} from './plan.js';
     import SchoolManager from "./components/SchoolManager.svelte";
     import Changelog from "./components/Changelog.svelte";
@@ -368,6 +368,9 @@
     $: all_rooms && (grouped_rooms = group_rooms(all_rooms));
     $: $logged_in && (get_settings(), get_favorites(navigate_favorite));
     $: ($settings && Object.keys($settings).length !== 0) && localStorage.setItem("settings", `${JSON.stringify($settings)}`);
+    $: ($schools && Object.keys($schools).length !== 0) && localStorage.setItem("schools", `${JSON.stringify($schools)}`);
+    $: ($authorized_school_ids && Object.keys($authorized_school_ids).length !== 0) && localStorage.setItem("authorized_school_ids", `${JSON.stringify($authorized_school_ids)}`);
+
     $: update_colors($settings);
     $: $logged_in && ($settings.normal_greetings || $settings.chatgpt_greetings) && get_greeting();
 

@@ -1,4 +1,4 @@
-import {current_page, indexed_db, logged_in, register_button_visible, settings} from "./stores.js";
+import {authorized_school_ids, schools, current_page, indexed_db, logged_in, register_button_visible, settings} from "./stores.js";
 import {notifications} from "./notifications.js";
 import { get } from "svelte/store";
 import { favorites } from "./stores.js";
@@ -112,6 +112,33 @@ export function get_settings() {
             settings.set(JSON.parse(localStorage.getItem("settings")));
             console.error("Einstellungen konnten nicht geladen werden.");
         })
+}
+
+export function get_schools() {
+    customFetch("/api/v69.420/schools")
+        .then(data => {
+            // put schools into form that works with the Select
+            schools.set(data.map(obj => {
+                const { _id, display_name, ...rest } = obj;
+                return { id: _id, display_name: display_name, ...rest };
+            }));
+        })
+        .catch(error => {
+            schools.set(JSON.parse(localStorage.getItem("schools")));
+            console.error("Schulen konnten nicht geladen werden.");
+        })
+}
+
+export function get_authorized_schools() {
+    customFetch("/auth/authorized_schools")
+        .then(data => {
+            authorized_school_ids.set(data);
+        })
+        .catch(error => {
+            authorized_school_ids.set(JSON.parse(localStorage.getItem("authorized_school_ids")));
+            console.error("Autorisierte Schulen konnten nicht ermittelt werden.");
+        }
+    );
 }
 
 export function navigate_page(page_id) {

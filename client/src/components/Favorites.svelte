@@ -1,10 +1,10 @@
 <script>
-    import {customFetch, get_favorites, load_meta, update_hash} from "../utils.js";
+    import {customFetch, get_favorites, load_meta, update_hash, get_schools, get_authorized_schools} from "../utils.js";
     import Select from "../base_components/Select.svelte";
     import Button from "../base_components/Button.svelte";
     import {notifications} from "../notifications.js";
 
-    import {favorites, title, settings} from "../stores.js";
+    import {favorites, title, settings, schools, authorized_school_ids} from "../stores.js";
     import CollapsibleWrapper from "../base_components/CollapsibleWrapper.svelte";
     import Collapsible from "../base_components/Collapsible.svelte";
     import { onMount } from "svelte";
@@ -12,7 +12,6 @@
     let cur_favorites = [];
     let loading = true;
     let all_schools = {};
-    let authorized_school_ids = [];
     let school_nums = [];
     $: school_nums = [...new Set(cur_favorites.map(obj => obj.school_num).filter(school_num => school_num !== ""))];
     let all_meta = {};
@@ -37,32 +36,12 @@
         .then(data => {
             load_favorites()
         });
-
+        
+    $: all_schools = Object.fromEntries($schools.map(obj => [obj.id, obj]));
     onMount(() => {
         update_hash("favorites");
         title.set("Favoriten");
     });
-
-    // duplicate from school manager but hard to simplify
-    function get_schools() {
-        customFetch("/api/v69.420/schools")
-            .then(data => {
-                all_schools = Object.fromEntries(data.map(obj => [obj._id, obj]));
-            })
-            .catch(error => {
-                notifications.danger(error.message);
-            })
-    }
-    function get_authorized_schools() {
-        customFetch("/auth/authorized_schools")
-            .then(data => {
-                authorized_school_ids = data;
-            })
-            .catch(error => {
-                console.error("Autorisierte Schulen konnten nicht ermittelt werden.");
-            });
-    }
-
 
     /*
     preferences procedure:
@@ -249,7 +228,7 @@
 
     function update_authorized_schools() {
         authorized_schools = [];
-        for(const school_id of authorized_school_ids) {
+        for(const school_id of $authorized_school_ids) {
             if(all_schools.hasOwnProperty(school_id)) {
                 authorized_schools.push({
                     "display_name": all_schools[school_id].display_name,
@@ -264,7 +243,7 @@
     }
 
     let authorized_schools = [];
-    $: authorized_school_ids, all_schools, update_authorized_schools();
+    $: $authorized_school_ids, all_schools, update_authorized_schools();
 </script>
 
 <h1 class="responsive-heading">Favoriten</h1>
