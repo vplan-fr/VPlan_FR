@@ -25,8 +25,12 @@ class Cache:
         path = self.get_plan_path(day, timestamp) / filename
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(path, "w", encoding="utf-8") as f:
+        temp_file_path = path.with_name(f"{path.name}.tmp")
+
+        with open(temp_file_path, "w", encoding="utf-8") as f:
             f.write(content)
+
+        temp_file_path.rename(path)
 
     def remove_plan_file(self, day: datetime.date, timestamp: datetime.datetime | str, filename: str):
         """Remove a plan file from the cache."""
@@ -54,6 +58,12 @@ class Cache:
             else:
                 raise FileNotFoundError
         else:
+            if timestamp == ".newest":
+                try:
+                    timestamp = self.get_timestamps(day)[0]
+                except IndexError:
+                    raise FileNotFoundError
+
             path = self.get_plan_path(day, timestamp) / filename
 
             with open(path, "r", encoding="utf-8") as f:
@@ -65,8 +75,12 @@ class Cache:
         path = self.path / filename
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(path, "w", encoding="utf-8") as f:
+        temp_file_path = path.with_name(f"{path.name}.tmp")
+
+        with open(temp_file_path, "w", encoding="utf-8") as f:
             f.write(content)
+
+        temp_file_path.rename(path)
 
     def get_meta_file(self, filename: str) -> str:
         """Return the contents of a meta file from the cache."""
@@ -102,20 +116,23 @@ class Cache:
         ], reverse=True)
 
     def set_newest(self, day: datetime.date, timestamp: datetime.datetime):
-        newest_path = self.get_plan_path(day, ".newest")
-        target_path = self.get_plan_path(day, timestamp)
+        return
 
-        newest_path.unlink(missing_ok=True)
-        try:
-            newest_path.symlink_to(target_path, target_is_directory=True)
-        except FileExistsError:
-            pass
+        # newest_path = self.get_plan_path(day, ".newest")
+        # target_path = self.get_plan_path(day, timestamp)
+        #
+        # newest_path.unlink(missing_ok=True)
+        # try:
+        #     newest_path.symlink_to(target_path, target_is_directory=True)
+        # except FileExistsError:
+        #     pass
 
     def update_newest(self, day: datetime.date):
-        timestamps = self.get_timestamps(day)
-        self.get_plan_path(day, ".newest").unlink(missing_ok=True)
-        if timestamps:
-            self.set_newest(day, timestamps[0])
+        pass
+        # timestamps = self.get_timestamps(day)
+        # self.get_plan_path(day, ".newest").unlink(missing_ok=True)
+        # if timestamps:
+        #     self.set_newest(day, timestamps[0])
 
     def plan_file_exists(self,
                          day: datetime.date,
