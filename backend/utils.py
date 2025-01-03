@@ -163,17 +163,12 @@ async def main():
 
     elif args.subcommand == "clean-cache":
         for crawler in crawlers.values():
-            if args.school_number and crawler.school_number not in args.school_number:
-                continue
-
             for day in crawler.plan_processor.cache.get_days():
-                if since is not None and day < since:
-                    continue
-
-                for file in crawler.plan_processor.cache.get_plan_path(day, None).iterdir():
-                    if "xml" not in file.name:
-                        print(f"=> Removing {file!s}")
-                        file.unlink(missing_ok=True)
+                for revision in crawler.plan_processor.cache.get_timestamps(day):
+                    for file in crawler.plan_processor.cache.get_plan_path(day, revision).iterdir():
+                        if "xml" not in file.name:
+                            print(f"=> Removing {file!s}")
+                            file.unlink(missing_ok=True)
 
 
 if __name__ == '__main__':
