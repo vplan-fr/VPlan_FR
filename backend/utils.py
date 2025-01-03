@@ -32,6 +32,8 @@ async def main():
                                         description="Merge another directory of school caches into the current one.")
     merge_cache.add_argument("foreign_cache_dir", type=str)
 
+    clean_cache = subparsers.add_parser("clean-cache", description="Remove technically redundant .json-files from the cache.")
+
     clean_teachers = subparsers.add_parser("clean-teachers")
 
     args = argparser.parse_args()
@@ -158,6 +160,20 @@ async def main():
                 del crawler.plan_processor.teachers.teachers[teacher]
 
             crawler.plan_processor.store_teachers()
+
+    elif args.subcommand == "clean-cache":
+        for crawler in crawlers.values():
+            if args.school_number and crawler.school_number not in args.school_number:
+                continue
+
+            for day in crawler.plan_processor.cache.get_days():
+                if since is not None and day < since:
+                    continue
+
+                for file in crawler.plan_processor.cache.get_plan_path(day, None).iterdir():
+                    if "xml" not in file.name:
+                        print(f"=> Removing {file!s}")
+                        file.unlink(missing_ok=True)
 
 
 if __name__ == '__main__':
