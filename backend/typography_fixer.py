@@ -50,7 +50,7 @@ _REGEXES = {
 
         # whitespace erroneously before colon
         (r"(?<!\d)\b ?: ?\b(?!\d)", ": "),
-        (r"\b :\b", ": "),
+        (r"\b : \b", ": "),
     ],
     "apostrophes": [
         (r"\b[´`']\b", "’")
