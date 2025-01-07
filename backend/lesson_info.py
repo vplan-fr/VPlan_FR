@@ -11,7 +11,7 @@ from .vplan_utils import (
     get_label_of_periods, parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str, forms_to_str,
     _loose_parse_form_pattern
 )
-from . import teacher as teacher_model
+from . import teacher as teacher_model, typography_fixer
 from . import models
 
 
@@ -392,7 +392,7 @@ class FailedToParse(SerializeMixin, ParsedLessonInfoMessage):
 
     def _to_text_segments(self, lesson_date: datetime.date) -> list[LessonInfoTextSegment]:
         return [
-            LessonInfoTextSegment(", ".join(self.original_messages))
+            LessonInfoTextSegment(typography_fixer.fix_typography(", ".join(self.original_messages)))
         ]
 
 
@@ -782,9 +782,7 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
 def process_additional_info(info: list[str], parsed_existing_forms: list[ParsedForm],
                             teachers: teacher_model.Teachers, date: datetime.date
                             ) -> list[list[LessonInfoTextSegment]]:
-    info = info.copy()
-    while info and not info[-1]:
-        info.pop()
+    info = [l or "" for l in info]
 
     return [
         process_additional_info_line(line, parsed_existing_forms, teachers, date)
@@ -795,8 +793,8 @@ def process_additional_info(info: list[str], parsed_existing_forms: list[ParsedF
 def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedForm],
                                  teachers: teacher_model.Teachers, date: datetime.date
                                  ) -> list[LessonInfoTextSegment]:
-    if text is None:
-        return []
+    text = typography_fixer.fix_typography(text)
+
     # TODO: Dates, Rooms
     # remove spaces after slashes like in 5/ 3
     text = re.sub(r"\b/ {1,3}\b", "/", text.strip())
