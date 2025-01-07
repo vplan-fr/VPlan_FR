@@ -4,6 +4,7 @@ import datetime
 import logging
 from pathlib import Path
 
+import stundenplan24_py.indiware_mobil
 from backend import meta_extractor
 from backend.load_plans import get_crawlers
 from shared import cache
@@ -35,6 +36,8 @@ async def main():
     clean_cache = subparsers.add_parser("clean-cache", description="Remove technically redundant .json-files from the cache.")
 
     clean_teachers = subparsers.add_parser("clean-teachers")
+
+    get_all_additional_infos = subparsers.add_parser("get-all-additional-infos")
 
     args = argparser.parse_args()
 
@@ -169,6 +172,27 @@ async def main():
                         if "xml" not in file.name:
                             print(f"=> Removing {file!s}")
                             file.unlink(missing_ok=True)
+
+    elif args.subcommand == "get-all-additional-infos":
+        from xml.etree import ElementTree as ET
+
+        for crawler in crawlers.values():
+            out = set()
+            for day in crawler.plan_processor.cache.get_days():
+                for revision in crawler.plan_processor.cache.get_timestamps(day):
+                    print(f"> {crawler.school_number} {day} {revision}")
+                    try:
+                        xml_file = crawler.plan_processor.cache.get_plan_file(day, revision, "PlanLe.xml")
+                    except FileNotFoundError:
+                        continue
+
+                    tree = ET.fromstring(xml_file)
+
+                    p = stundenplan24_py.indiware_mobil.IndiwareMobilPlan.from_xml(tree)
+
+                out.update("\n".join(x for x in p.additional_info if x is not None).split("\n\n"))
+
+            print("\n\n".join(sorted(out)))
 
 
 if __name__ == '__main__':
