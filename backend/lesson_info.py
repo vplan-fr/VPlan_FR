@@ -517,7 +517,6 @@ def _parse_message(info: str, lesson: models.Lesson, plan_type: typing.Literal["
                    ) -> ParsedLessonInfoMessage:
     info = info.strip()
     info = re.sub(r"(?<=\w)/ ", "/", info)  # remove spaces after slashes like in G/ R/ W
-    info = re.sub(r"\b[´`]\b", "'", info)
 
     if plan_type == "forms":
         parsed_info, match = _parse_form_plan_message(info, lesson)
@@ -721,7 +720,7 @@ class ParsedLessonInfo:
         return ParsedLessonInfo(self.paragraphs + other.paragraphs)
 
 
-def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
+def extract_teachers(lesson: models.Lesson, classes: models.Classes, *,
                      logger: logging.Logger) -> typing.Iterable[teacher_model.Teacher]:
     out: dict[str, teacher_model.Teacher] = {}
 
@@ -751,7 +750,7 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                     continue
 
                 _class: dict[str, models.Class] = {
-                    class_nr: class_ for class_nr, class_ in classes.items()
+                    class_nr: class_ for class_nr, class_ in classes.classes_by_number.items()
                     if (
                         course == (class_.group or class_.subject)
                         and lesson.forms.issubset(class_.forms)
@@ -760,7 +759,7 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
 
                 if len(_class) == 0:
                     _class = {
-                        class_nr: class_ for class_nr, class_ in classes.items()
+                        class_nr: class_ for class_nr, class_ in classes.classes_by_number.items()
                         if (
                             course == class_.subject
                             and lesson.forms.issubset(class_.forms)
@@ -768,8 +767,8 @@ def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                     }
 
                 _name = surname.split()[1]
-                if len({c.teacher for c in _class.values()}) > 1 and lesson.class_opt.number:
-                    new_classes = {c_id: c for c_id, c in _class.items() if c_id == lesson.class_opt.number}
+                if len({c.teacher for c in _class.values()}) > 1 and lesson.class_number:
+                    new_classes = {c_id: c for c_id, c in _class.items() if c_id == lesson.class_number}
                     if new_classes:
                         _class = new_classes
 
@@ -816,9 +815,6 @@ def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedFo
     text = typography_fixer.fix_typography(text)
 
     # TODO: Dates, Rooms
-    # remove spaces after slashes like in 5/ 3
-    text = re.sub(r"\b/ {1,3}\b", "/", text.strip())
-    text = re.sub(r"\b {1,3}\b", " ", text.strip())
 
     funcs = (
         lambda s: add_fuzzy_teacher_links(s, teachers, date),
