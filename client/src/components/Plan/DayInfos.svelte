@@ -138,7 +138,7 @@
   }
 
   .info-spacer {
-    height: 5px;
+    height: .5em;
   }
 
   .fit-content-width {
