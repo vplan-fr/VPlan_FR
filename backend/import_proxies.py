@@ -13,6 +13,8 @@ def main():
     args = argparser.parse_args()
 
     proxy_provider = ProxyProvider(Path(args.proxies_json_file))
+    total = 0
+    new = 0
     with open(args.proxies_txt_file, "r") as f:
         for line in f.readlines():
             host, port, *_creds = line.rsplit(":", 3)
@@ -25,15 +27,18 @@ def main():
             else:
                 creds = None
 
+            total += 1
+
             port = int(port)
             if (host, port) in proxy_provider.proxies.proxies:
                 print(f"-> Proxy {host!r}:{port!r} already exists.")
                 continue
             proxy_provider.proxies.add_proxy(Proxy(host, int(port), creds))
+            new += 1
 
     proxy_provider.store_proxies()
 
-    print("...Done!")
+    print(f"...Done! New proxies: {new}/{total} = {new/total:%}")
 
 
 if __name__ == "__main__":
