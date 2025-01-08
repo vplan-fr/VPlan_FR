@@ -706,7 +706,7 @@ class ParsedLessonInfo:
         return ParsedLessonInfo(self.paragraphs + other.paragraphs)
 
 
-def extract_teachers(lesson: models.Lesson, classes: models.Classes, *,
+def extract_teachers(lesson: models.Lesson, classes: dict[str, models.Class], *,
                      logger: logging.Logger) -> typing.Iterable[teacher_model.Teacher]:
     out: dict[str, teacher_model.Teacher] = {}
 
@@ -732,7 +732,7 @@ def extract_teachers(lesson: models.Lesson, classes: models.Classes, *,
                     continue
 
                 _class: dict[str, models.Class] = {
-                    class_nr: class_ for class_nr, class_ in classes.classes_by_number.items()
+                    class_nr: class_ for class_nr, class_ in classes.items()
                     if (
                         course == (class_.group or class_.subject)
                         and lesson.forms.issubset(class_.forms)
@@ -741,7 +741,7 @@ def extract_teachers(lesson: models.Lesson, classes: models.Classes, *,
 
                 if len(_class) == 0:
                     _class = {
-                        class_nr: class_ for class_nr, class_ in classes.classes_by_number.items()
+                        class_nr: class_ for class_nr, class_ in classes.items()
                         if (
                             course == class_.subject
                             and lesson.forms.issubset(class_.forms)
@@ -749,8 +749,8 @@ def extract_teachers(lesson: models.Lesson, classes: models.Classes, *,
                     }
 
                 _name = surname.split()[1]
-                if len({c.teacher for c in _class.values()}) > 1 and lesson.class_number:
-                    new_classes = {c_id: c for c_id, c in _class.items() if c_id == lesson.class_number}
+                if len({c.teacher for c in _class.values()}) > 1 and lesson.class_opt.number:
+                    new_classes = {c_id: c for c_id, c in _class.items() if c_id == lesson.class_opt.number}
                     if new_classes:
                         _class = new_classes
 
