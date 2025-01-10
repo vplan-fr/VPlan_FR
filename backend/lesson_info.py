@@ -835,14 +835,16 @@ def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedFo
     return segments
 
 
-def add_fuzzy_with_validator(text: str, patterns: typing.Iterable[str | typing.Pattern[str]],
-                             validator: typing.Callable[[re.Match], list[LessonInfoTextSegment] | None]
-                             ) -> list[LessonInfoTextSegment]:
+def add_fuzzy_with_validator(
+    text: str,
+    patterns: typing.Iterable[re.Pattern],
+    validator: typing.Callable[[re.Match], list[LessonInfoTextSegment] | None]
+) -> list[LessonInfoTextSegment]:
     segments = []
 
     i = 0
     while i < len(text):
-        matches = (re.match(pattern, text[i:]) for pattern in patterns)
+        matches = (pattern.match(text, i) for pattern in patterns)
 
         for match in matches:
             if match is None:
@@ -932,7 +934,7 @@ def add_fuzzy_teacher_links(text: str, teachers: teacher_model.Teachers, date: d
             )
         ]
 
-    return add_fuzzy_with_validator(text, [_InfoParsers._teacher, r"\b\w+"], validator)
+    return add_fuzzy_with_validator(text, [re.compile(_InfoParsers._teacher), re.compile(r"\b\w+\b")], validator)
 
 
 def add_fuzzy_room_links(text: str, rooms: set[str], date: datetime.date):
@@ -945,7 +947,7 @@ def add_fuzzy_room_links(text: str, rooms: set[str], date: datetime.date):
             )
         ]
 
-    return add_fuzzy_with_validator(text, list(rooms), validator)
+    return add_fuzzy_with_validator(text, list(re.compile(fr"(?<!\S){r}(?=\s|[)!?:])") for r in rooms), validator)
 
 
 def group_text_segments(segments: list[LessonInfoTextSegment]) -> list[LessonInfoTextSegment]:
