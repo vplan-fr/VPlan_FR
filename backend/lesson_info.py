@@ -19,12 +19,13 @@ from . import models
 
 
 class _InfoParsers:
+    # TODO: this strict name parsing may not be necessary
     _name_element = r"(?:[A-ZÄÖÜ]')?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*\.?"
     _teacher_name = (
         # title
         fr"(?:{_name_element})"
         # name
-        fr"(?: {_name_element})*"
+        fr"(?: ?{_name_element})*"
         r"(?: van)?"
         fr"(?: {_name_element})"
     )
