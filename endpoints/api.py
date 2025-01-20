@@ -255,17 +255,23 @@ def plan_ical(token: str) -> Response:
                     else:
                         return plan_short
 
+            def text_segments_to_html(segments: list[dict]) -> str:
+                line_parts = []
+
+                for s in segments:
+                    if s["link"] is not None and s["link"]["type"] == "teachers":
+                        line_parts.append(annotate_teacher(s["link"]["value"]))
+                    else:
+                        line_parts.append(html.escape(s["text"]))
+
+                return "".join(line_parts)
+
             info_paragraphs = []
             for paragraph in lesson["info"]:
                 lines = []
                 for line in paragraph:
-                    line_parts = []
-                    for s in line["text_segments"]:
-                        if s["link"] is not None and s["link"]["type"] == "teachers":
-                            line_parts.append(annotate_teacher(s["link"]["value"]))
-                        else:
-                            line_parts.append(html.escape(s["text"]))
-                    lines.append("".join(line_parts))
+                    lines.append(text_segments_to_html(line["text_segments"]))
+
                 info_paragraphs.append(lines)
 
             description = []
@@ -313,6 +319,11 @@ def plan_ical(token: str) -> Response:
                 "</tbody>"
                 "</table>"
             )
+
+            if i == len(lessons) - 1:
+                description.append(
+                    "".join(f"<p>{text_segments_to_html(segs)}</p>" for segs in info_data["processed_additional_info"])
+                )
 
             description.append(
                 f"<small>Diese Anfrage: {datetime.datetime.now().isoformat()}</small><br>"
