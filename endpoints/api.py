@@ -214,6 +214,8 @@ def plan_ical(token: str) -> Response:
 
         try:
             data = json.loads(cache.get_plan_file(date, ".newest", "plans.json"))
+            data = json.loads(cache.get_plan_file(date, ".newest", "plans.json", newest_before=True))
+            info_data = json.loads(cache.get_plan_file(date, ".newest", "info.json", newest_before=True))
         except FileNotFoundError:
             continue
 
