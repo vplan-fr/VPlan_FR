@@ -205,13 +205,14 @@ def plan_ical(token: str) -> Response:
     calendar.add("prodid", f"-//vplan.fr//{token}//DE")
     calendar.add("version", "2.0")
 
+    utcnow = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
+
     today = datetime.date.today()
     for date in cache.get_days():
         if date < today - datetime.timedelta(days=7 * 6):
             continue
 
         try:
-            data = json.loads(cache.get_plan_file(date, ".newest", "plans.json"))
             data = json.loads(cache.get_plan_file(date, ".newest", "plans.json", newest_before=True))
             info_data = json.loads(cache.get_plan_file(date, ".newest", "info.json", newest_before=True))
         except FileNotFoundError:
@@ -303,40 +304,38 @@ def plan_ical(token: str) -> Response:
             current_teachers = [annotate_teacher(teacher) for teacher in current_teachers]
             s_teachers = [annotate_teacher(teacher) for teacher in s_teachers]
 
-            # current_forms = lesson["current_forms"]
-            # s_forms = set(lesson["scheduled_forms"]) - set(current_forms)
-
             current_rooms = ["-"] if not (current_rooms or s_rooms) else current_rooms
             current_teachers = ["-"] if not (current_teachers or s_teachers) else current_teachers
             description.append(
                 "<table>"
                 # "<thead><tr><th>Attribut</th><th>Wert</th></tr></thead>"
                 "<tbody>"
-                f"<tr><td>Stunde</td><td>{', '.join(map(str, lesson['periods']))}</td></tr>"
-                f"<tr><td>Fach</td><td>{cond_b(subject, lesson['subject_changed'])}</td></tr>"
-                f"<tr><td>Lehrer</td><td>{cond_b(', '.join(current_teachers) + ' ' + s(' '.join(s_teachers)), lesson['teacher_changed'])}</td></tr>"
+                f"<tr><td>Stunde: </td><td>{', '.join(map(str, lesson['periods']))}<br></td></tr>"
+                f"<tr><td>Fach: </td><td>{cond_b(subject, lesson['subject_changed'])}<br></td></tr>"
+                f"<tr><td>Lehrer: </td><td>{cond_b(', '.join(current_teachers) + ' ' + s(' '.join(s_teachers)), lesson['teacher_changed'])}<br></td></tr>"
                 # f"<tr><td>Klassen</td><td>{', '.join(current_forms)} {s(', '.join(s_forms))}</td></tr>"
-                f"<tr><td>Raum</td><td>{', '.join(current_rooms)} {s(', '.join(s_rooms))}</td></tr>"
-                f"<tr><td>Findet statt</td><td>{'Ja' if lesson['takes_place'] else 'Nein'}</td></tr>"
+                f"<tr><td>Raum: </td><td>{', '.join(current_rooms)} {s(', '.join(s_rooms))}<br></td></tr>"
+                # f"<tr><td>Klasse</td><td>{lesson['current_forms_str'] if lesson['current_forms'] else lesson['scheduled_forms_str']}</td></tr>"
+                f"<tr><td>Findet statt: </td><td>{'Ja' if lesson['takes_place'] else 'Nein'}<br></td></tr>"
                 "</tbody>"
                 "</table>"
             )
 
             if i == len(lessons) - 1:
                 description.append(
-                    "".join(f"<p>{text_segments_to_html(segs)}</p>" for segs in info_data["processed_additional_info"])
+                    "<p>" + ("<br>".join(text_segments_to_html(segs) for segs in info_data["processed_additional_info"])) + "</p>"
                 )
 
-            description.append(
-                f"<small>Diese Anfrage: {datetime.datetime.now().isoformat()}</small><br>"
-                f"<small>Zuletzt auf neue Pläne überprüft: {json.loads(cache.get_meta_file('last_fetch.json'))['timestamp']}</small><br>"
-                f"<small>Zuletzt aktualisiert: {cache.get_timestamps(date)[0].isoformat()}"
-            )
+                description.append(
+                    f"<small>Diese Anfrage:</small><br><small>{utcnow}</small><br>"
+                    f"<small>Zuletzt auf neue Pläne überprüft:</small><br><small>{json.loads(cache.get_meta_file('last_fetch.json'))['timestamp']}</small><br>"
+                    f"<small>Zuletzt aktualisiert:</small><br><small>{cache.get_timestamps(date)[0].isoformat()}"
+                )
 
             event = icalendar.Event()
             event.add("summary", summary)
             event.add("description", (
-                "<hr/>".join(description)
+                "<hr/><br>".join(description)
             ))
             event.add("dtstart", begin)
             event.add("dtend", end)
