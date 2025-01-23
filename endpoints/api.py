@@ -220,10 +220,9 @@ def plan_ical(token: str) -> Response:
 
         lessons = data.get(plan_type, {}).get(plan_value, [])
 
-        for i, lesson in enumerate(lessons):
-            if lesson["class_number"] in preferences:
-                continue
+        lessons = [lesson for lesson in lessons if lesson["class_number"] not in preferences]
 
+        for i, lesson in enumerate(lessons):
             begin = datetime.datetime.combine(date, datetime.time.fromisoformat(lesson["begin"]))
             end = datetime.datetime.combine(date, datetime.time.fromisoformat(lesson["end"]))
 
