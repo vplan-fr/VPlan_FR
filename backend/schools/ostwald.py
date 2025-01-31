@@ -59,8 +59,8 @@ def _scrape_teachers_url(url: str) -> list[Teacher]:
 
 def scrape_teachers() -> list[Teacher]:
     return (
-        _scrape_teachers_url("https://www.ostwaldgymnasium.de/index.php/schule/lehrer")
-        + _scrape_teachers_url("https://www.ostwaldgymnasium.de/index.php/kontakte/12-schulleitung")
+        _scrape_teachers_url("https://www.ostwaldgymnasium.de/index.php/schule/kollegium/lehrer")
+        + _scrape_teachers_url("https://www.ostwaldgymnasium.de/index.php/schule/kollegium/schulleitung")
     )
 
 
