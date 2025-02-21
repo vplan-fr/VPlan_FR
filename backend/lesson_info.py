@@ -13,6 +13,7 @@ from .vplan_utils import (
 )
 from . import teacher as teacher_model, blocks, typography_fixer
 from . import models
+from server import nlp  # import nlp for german (init in server)
 
 
 # Nicht verfügbare Räume:	1302 (1-2,7-10), 1306 (1-2,4,6)
@@ -818,9 +819,9 @@ def process_additional_info_line(text: str, parsed_existing_forms: list[ParsedFo
     # TODO: Dates, Rooms
 
     funcs = (
-        lambda s: add_fuzzy_teacher_links(s, teachers, date),
-        lambda s: add_fuzzy_form_links(s, parsed_existing_forms, date),
-        lambda s: add_fuzzy_room_links(s, rooms, date)
+        lambda s: add_fuzzy_teacher_links(s, text, teachers, date),
+        lambda s: add_fuzzy_form_links(s, text, parsed_existing_forms, date),
+        lambda s: add_fuzzy_room_links(s, text, rooms, date)
     )
 
     segments = [LessonInfoTextSegment(text)]
@@ -866,7 +867,7 @@ def add_fuzzy_with_validator(
     return segments
 
 
-def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], date: datetime.date
+def add_fuzzy_form_links(text: str, _, parsed_existing_forms: list[ParsedForm], date: datetime.date
                          ) -> list[LessonInfoTextSegment]:
     def validator(match: re.Match) -> list[LessonInfoTextSegment] | None:
         parsed_forms = ParsedForm.from_form_match(match)
@@ -907,8 +908,18 @@ def add_fuzzy_form_links(text: str, parsed_existing_forms: list[ParsedForm], dat
     return add_fuzzy_with_validator(text, [_loose_parse_form_pattern], validator)
 
 
-def add_fuzzy_teacher_links(text: str, teachers: teacher_model.Teachers, date: datetime.date):
+def add_fuzzy_teacher_links(text: str, context: str, teachers: teacher_model.Teachers, date: datetime.date):
     def validator(match: re.Match) -> list[LessonInfoTextSegment] | None:
+        # check if word can be teacher (by grammar rules)
+        doc = nlp(context)  # analyze info line
+        # find teacher in info
+        for i in doc:
+            if doc[i].text == text:
+                # check part of speach of suspected teacher
+                # has to be proper noun to be accepted
+                if doc[i].pos_ != "PROPN":
+                    return None
+
         surname_or_abbreviation = match.group()
 
         replacements = {
@@ -938,7 +949,7 @@ def add_fuzzy_teacher_links(text: str, teachers: teacher_model.Teachers, date: d
     return add_fuzzy_with_validator(text, [re.compile(_InfoParsers._teacher), re.compile(r"\b\w+\b")], validator)
 
 
-def add_fuzzy_room_links(text: str, rooms: set[str], date: datetime.date):
+def add_fuzzy_room_links(text: str, _, rooms: set[str], date: datetime.date):
     def validator(match: re.Match) -> list[LessonInfoTextSegment] | None:
         room = match.group()
         return [
