@@ -6,6 +6,7 @@ import datetime
 import logging
 import re
 import typing
+import spacy  # spacy for language analysis
 
 from .vplan_utils import (
     parse_periods, _parse_form_pattern, ParsedForm, parsed_forms_to_str, forms_to_str,
@@ -13,7 +14,8 @@ from .vplan_utils import (
 )
 from . import teacher as teacher_model, blocks, typography_fixer
 from . import models
-from server import nlp  # import nlp for german (init in server)
+
+nlp = spacy.load("de_core_news_sm")  # load german language model
 
 
 # Nicht verfügbare Räume:	1302 (1-2,7-10), 1306 (1-2,4,6)

@@ -15,8 +15,6 @@ from endpoints.api import api
 from endpoints.stats import stats
 import endpoints.webpush
 
-import spacy  # spacy for language analysis
-
 from utils import User, AddStaticFileHashFlask, get_user, send_error, update_database, meta_to_database
 
 
@@ -102,5 +100,4 @@ def sw() -> Response:
 
 if __name__ == "__main__":
     update_database()
-    nlp = spacy.load("de_core_news_sm")  # load german language model
     app.run(debug=DEBUG, host="0.0.0.0")
