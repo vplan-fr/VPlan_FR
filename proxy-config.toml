@@ -1,0 +1,21 @@
+[proxy-provider.attrs]
+blocked_tries = 8
+save_interval = 50  # updates
+fetch_interval = 10_000  # s
+shard_interval = 100  # updates
+shard_threshold = 0.10
+shard_length = 1000
+scoring_min_tries = 3
+scoring_untested_score = 1
+score_random_choice_exponent = 10
+rejudge_interval = 21_600 # 6 hours
+min_yield_delay = 1  # s
+
+[proxy-provider]
+cache_file = "proxies2-fixed.json"
+fetcher_sites_json = "proxies_sites.json"
+judges_json = "proxies_judges.json"
+ip_resolvers_json = "proxies_ip_resolvers.json"
+
+#[proxied-session]
+#internet_access_test_url = "http://www.gstatic.com/generate_204"

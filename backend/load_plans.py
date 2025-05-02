@@ -8,10 +8,11 @@ import asyncio
 import logging
 from pathlib import Path
 
-import requests
+import pipifax_proxy_manager
+import pipifax_proxy_manager.config
 
 from stundenplan24_py import (
-    IndiwareStundenplanerClient, Hosting, proxies
+    IndiwareStundenplanerClient, Hosting
 )
 
 from . import events
@@ -84,13 +85,14 @@ class PlanCrawler:
             await asyncio.sleep(interval)
 
 
-async def get_crawlers(session: requests.Session | None = None,
-                       proxy_provider: proxies.ProxyProvider | None = None,
-                       create_clients: bool = True) -> dict[str, PlanCrawler]:
+async def get_crawlers(
+    proxied_session: pipifax_proxy_manager.ProxiedSession | None = None,
+    create_clients: bool = True
+) -> dict[str, PlanCrawler]:
     creds_provider = get_creds_provider(Path("creds.json"))
     _creds = creds_provider.get_creds()
 
-    request_executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+    request_executor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
 
     crawlers = {}
 
@@ -112,16 +114,14 @@ async def get_crawlers(session: requests.Session | None = None,
                 hosting.indiware_mobil.teachers = None
                 hosting.substitution_plan.teachers = None
 
-            client = IndiwareStundenplanerClient(hosting, session)
+            client = IndiwareStundenplanerClient(hosting)
 
             for plan_client in client.substitution_plan_clients:
-                plan_client.proxy_provider = proxy_provider
-                plan_client.no_delay = True
+                plan_client.proxied_session = proxied_session
                 plan_client.request_executor = request_executor
 
             for plan_client in client.indiware_mobil_clients:
-                # plan_client.proxy_provider = proxy_provider
-                plan_client.no_delay = True
+                plan_client.proxied_session = proxied_session
                 plan_client.request_executor = request_executor
         else:
             client = None
@@ -165,11 +165,12 @@ async def main():
     logging.basicConfig(level=args.loglevel, format="[%(asctime)s] [%(levelname)8s] %(name)s: %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S", force=True)
 
-    proxy_provider = proxies.ProxyProvider(Path("proxies.json").absolute(),
-                                           never_raise_out_of_proxies=args.never_raise_out_of_proxies)
-    # list(proxy_provider.fetch_proxies())
+    logging.getLogger("pymongo").setLevel(logging.WARNING)
 
-    crawlers = await get_crawlers(proxy_provider=proxy_provider, create_clients=not args.only_process)
+    proxied_session = pipifax_proxy_manager.config.build_proxied_session(Path("proxy-config.toml"))
+    proxied_session.ignore_ssl = False
+
+    crawlers = await get_crawlers(proxied_session=proxied_session, create_clients=not args.only_process)
     try:
         if args.only_process:
             for crawler in crawlers.values():
@@ -197,10 +198,11 @@ async def main():
     finally:
         logging.info("Exit.")
         logging.debug("Closing clients...")
+        proxied_session.proxy_provider.close()
         if not args.only_process:
             await asyncio.gather(*(client.plan_downloader.client.close() for client in crawlers.values()),
                                  return_exceptions=True)
-            proxy_provider.store_proxies()
+            proxied_session.proxy_provider.store_proxies()
 
         for crawler in crawlers.values():
             crawler.plan_processor.store_teachers()
