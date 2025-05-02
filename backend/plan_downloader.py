@@ -17,8 +17,6 @@ from shared.cache import Cache
 
 import stundenplan24_py.client
 
-stundenplan24_py.client.set_min_delay_between_requests(0.2)
-
 
 @dataclasses.dataclass(frozen=True)
 class PlanFileMetadata:
