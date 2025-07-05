@@ -1,5 +1,5 @@
 <a href="https://vplan.fr/">
-    <img src="./client/public/base_static/images/better_vp_white.svg" alt="Better VPlan Logo" title="Better VPlan" align="right" height="60" />
+    <img src="./client/public/base_static/images/better_vp_white.svg" alt="Better VPlan Logo" title="Better VPlan" align="right" width="60" height="60" />
 </a>
 
 # vplan.fr
