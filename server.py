@@ -43,7 +43,6 @@ app.register_blueprint(authorization)
 app.register_blueprint(api)
 app.register_blueprint(stats, url_prefix="/stats")
 
-
 @app.after_request
 def after_request(resp):
     if request.path.startswith("/public"):
